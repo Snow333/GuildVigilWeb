@@ -104,4 +104,19 @@ export class Rng {
   static child(parentSeed: string, ...parts: (string | number)[]): Rng {
     return new Rng(`${parentSeed}:${parts.join(':')}`);
   }
+
+  /**
+   * Exact internal-state snapshot for persistence (CampaignSession serialize).
+   * Restore via fromSnapshot — NOT the constructor, whose zero-remap would
+   * corrupt a legitimately-zero mid-stream state.
+   */
+  snapshot(): number {
+    return this.state;
+  }
+
+  static fromSnapshot(state: number): Rng {
+    const rng = new Rng(1);
+    rng.state = state >>> 0;
+    return rng;
+  }
 }

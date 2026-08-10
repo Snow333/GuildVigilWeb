@@ -16,7 +16,8 @@
     "types": ["vitest/globals"],
     "paths": {
       "@sim/*": ["./src/sim/*"],
-      "@content/*": ["./src/content/*"]
+      "@content/*": ["./src/content/*"],
+      "@platform/*": ["./src/platform/*"]
     }
   },
   "include": ["src", "tests", "tools/*.ts"]
