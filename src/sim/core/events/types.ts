@@ -6,8 +6,8 @@
  *  - Events are FACTS. No prose, no presentation hints, no derived text.
  *  - Atomic facts + cause links: `cause` is the seq of the DIRECT trigger only.
  *  - Time: dispatch streams tick in 100ms integers; world streams in game-minutes.
- *  - FREEZE POLICY: after milestone 1.1, types may be ADDED but never renamed
- *    or removed (the manifest snapshot test enforces this).
+ *  - FREEZE POLICY: ★ FROZEN 2026-08-10 (milestone 1.1) ★ — types may be ADDED
+ *    but never renamed or removed (the manifest snapshot test enforces this).
  *  - Consumers meeting an unknown type must skip-and-log, never crash.
  */
 
@@ -126,16 +126,22 @@ export type EventType = keyof EventPayloads;
 
 // ── The envelope ─────────────────────────────────────────────────────────────
 
-export interface SimEvent<T extends EventType = EventType> {
-  /** Stream-local, monotonic. The identity other events reference via `cause`. */
-  seq: number;
-  /** Dispatch streams: 100ms integer ticks. World streams: game-minutes. */
-  tick: number;
-  type: T;
-  /** Seq of the DIRECT trigger only. Chains are walked, never pointed-through. */
-  cause?: number;
-  data: EventPayloads[T];
-}
+/**
+ * Distributive over EventType so `switch (ev.type)` narrows `ev.data` —
+ * SimEvent is a true discriminated union, not a correlated-generic bag.
+ */
+export type SimEvent<T extends EventType = EventType> = T extends EventType
+  ? {
+      /** Stream-local, monotonic. The identity other events reference via `cause`. */
+      seq: number;
+      /** Dispatch streams: 100ms integer ticks. World streams: game-minutes. */
+      tick: number;
+      type: T;
+      /** Seq of the DIRECT trigger only. Chains are walked, never pointed-through. */
+      cause?: number;
+      data: EventPayloads[T];
+    }
+  : never;
 
 export interface StreamHead {
   schemaVersion: number;

@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`dispatch summary derivation (the persisted artifact) > derives the fixture correctly (hand-checked values) 1`] = `
+{
+  "caution": "standard",
+  "combats": {
+    "count": 2,
+    "defeats": 0,
+    "fled": 0,
+    "stalemates": 0,
+    "victories": 2,
+  },
+  "dispatchId": "disp_1",
+  "exploration": {
+    "cluesFound": 1,
+    "locksOpened": 0,
+    "rests": 0,
+    "roomsCleared": 2,
+    "roomsEntered": 4,
+    "trapsDisarmed": 1,
+    "trapsTriggered": 0,
+  },
+  "heroes": {
+    "hero_1": {
+      "checksAttempted": 0,
+      "checksSucceeded": 0,
+      "damageDealt": 27,
+      "damageTaken": 0,
+      "died": false,
+      "healingDone": 0,
+      "kills": 2,
+      "timesDowned": 0,
+      "xp": 90,
+    },
+    "hero_2": {
+      "checksAttempted": 2,
+      "checksSucceeded": 2,
+      "damageDealt": 21,
+      "damageTaken": 11,
+      "died": false,
+      "healingDone": 0,
+      "kills": 1,
+      "timesDowned": 1,
+      "xp": 90,
+    },
+  },
+  "loot": {
+    "collected": [
+      {
+        "baseId": "shortbow",
+        "propertyIds": [],
+        "seed": "loot_disp_1_e1",
+        "tier": "masterwork",
+      },
+      {
+        "baseId": "longsword",
+        "propertyIds": [
+          "flaming",
+        ],
+        "seed": "loot_disp_1_e2",
+        "tier": "magical",
+      },
+    ],
+    "gold": 74,
+    "leftBehindCount": 0,
+  },
+  "outcome": "completed",
+  "partyId": "party_1",
+  "profile": "bossRush",
+  "schemaVersion": 1,
+  "ticks": 780,
+}
+`;

@@ -19,9 +19,11 @@ export class EventStream {
     if (prev && tick < prev.tick) {
       throw new Error(`EventStream: time went backwards (${prev.tick} -> ${tick}) emitting ${type}`);
     }
-    const ev: SimEvent<T> = cause === undefined
+    // Cast: the distributive conditional in SimEvent<T> stays deferred for a
+    // generic T; the shape is exactly the resolved branch.
+    const ev = (cause === undefined
       ? { seq: this.nextSeq++, tick, type, data }
-      : { seq: this.nextSeq++, tick, type, cause, data };
+      : { seq: this.nextSeq++, tick, type, cause, data }) as SimEvent<T>;
     this.events.push(ev as SimEvent);
     return ev;
   }
