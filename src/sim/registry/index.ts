@@ -4,7 +4,7 @@
  * Sim code reads content ONLY through here; no raw table scans in resolvers.
  */
 
-import { classes, enemies, quests } from '@content/generated';
+import { classes, enemies, quests, spells, warlock_spell_costs } from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
 // Key types widened to number: the generated `as const` tables produce literal
@@ -12,6 +12,12 @@ import type { XpSourceResolver } from '@sim/heroes/xp';
 export const enemiesById = new Map<number, (typeof enemies)[number]>(enemies.map((e) => [e.id, e]));
 export const questsById = new Map<number, (typeof quests)[number]>(quests.map((q) => [q.id, q]));
 export const classesById = new Map<number, (typeof classes)[number]>(classes.map((c) => [c.id, c]));
+export const spellsById = new Map<number, (typeof spells)[number]>(spells.map((s) => [s.id, s]));
+export const spellsByName = new Map<string, (typeof spells)[number]>(spells.map((s) => [s.name, s]));
+/** Warlock pact energy cost by spell level (the hand-set 0/6/10/15/21/28/36 curve). */
+export const warlockCostByLevel = new Map<number, number>(
+  warlock_spell_costs.map((w) => [w.spell_level as number, w.energy_cost as number]),
+);
 
 /** Production XP source resolver over the real registries. */
 export const contentXpResolver: XpSourceResolver = {

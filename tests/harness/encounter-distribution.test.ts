@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runEncounter } from '@sim/combat/encounter';
 import type { Combatant } from '@sim/combat/types';
-import { enemiesById } from '@sim/registry';
+import { enemiesById, spellsByName } from '@sim/registry';
 import { combatant } from '../combat/conditions.test';
 
 /**
@@ -92,6 +92,34 @@ describe('encounter distribution harness — golden scenarios', () => {
     expect(d.stalemateRate).toBeLessThan(0.01);
     expect(d.winRate).toBeGreaterThan(0.05); // not a guaranteed wipe...
     expect(d.winRate).toBeLessThan(0.98);    // ...and not free — the bimodal-collapse tripwire
+    expect(d).toMatchSnapshot();
+  });
+
+  it('a caster party vs the orcs: spells and heals shift the distribution, no degeneracy', () => {
+    const fireballId = spellsByName.get('Fireball')!.id;
+    const healId = spellsByName.get('Heal')!.id;
+    const d = measure('casters_orcs', () => ({
+      heroes: [
+        partyFighter('hero_1'),
+        combatant({
+          id: 'hero_2', name: 'cleric', attackBonus: 6, damageDice: '1d6+1', maxHp: 26, hp: 26, ac: 17,
+          isCaster: true, initiativeBonus: 5,
+          casting: { attackBonus: 7, dc: 17, casterLevel: 5, kind: 'slots', slots: [0, 3, 2], pactEnergy: 0 },
+          loadout: [{ action: 'cast', spellId: healId, condition: { kind: 'allyHpBelow', pct: 0.4 }, target: 'lowestAlly' }],
+        }),
+        combatant({
+          id: 'hero_3', name: 'wizard', attackBonus: 4, damageDice: '1d4', maxHp: 20, hp: 20, ac: 15,
+          isCaster: true, initiativeBonus: 6,
+          casting: { attackBonus: 8, dc: 18, casterLevel: 5, kind: 'slots', slots: [0, 3, 2, 2], pactEnergy: 0 },
+          loadout: [{ action: 'cast', spellId: fireballId, condition: { kind: 'always' }, target: 'scoredEnemy' }],
+        }),
+      ],
+      enemies: [fromRegistry(11, 'e1'), fromRegistry(11, 'e2'), fromRegistry(11, 'e3')],
+    }));
+    expect(d.hangGuardHits).toBe(0);
+    expect(d.stalemateRate).toBeLessThan(0.01);
+    expect(d.winRate).toBeGreaterThan(0.05);
+    expect(d.winRate).toBeLessThan(1);
     expect(d).toMatchSnapshot();
   });
 

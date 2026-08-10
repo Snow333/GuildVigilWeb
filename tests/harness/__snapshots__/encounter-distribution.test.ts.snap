@@ -11,6 +11,17 @@ exports[`encounter distribution harness — golden scenarios > 2 fighters + rogu
 }
 `;
 
+exports[`encounter distribution harness — golden scenarios > a caster party vs the orcs: spells and heals shift the distribution, no degeneracy 1`] = `
+{
+  "durationP50": 54,
+  "durationP90": 110,
+  "hangGuardHits": 0,
+  "heroDeathEvents": 87,
+  "stalemateRate": 0,
+  "winRate": 0.8233333333333334,
+}
+`;
+
 exports[`encounter distribution harness — golden scenarios > level-appropriate pressure: the party vs 3 Orc Warriors — winnable, never free 1`] = `
 {
   "durationP50": 91,

@@ -45,10 +45,29 @@ export interface Combatant {
 
   speed: number;
   wounded: number;
+  /** Character/base level (Rage temp HP, scaling fallbacks). */
+  level: number;
   /** Heroes: perception + init feats. Enemies: level + 2 folded in at build. */
   initiativeBonus: number;
   /** AI threat flag (+75 target weight). */
   isCaster: boolean;
+  saves: { fort: number; ref: number; will: number };
+  /** Absorbs damage before hp (Rage). */
+  tempHp: number;
+  /** null = pure martial. slots[n] = remaining slots of spell level n (index 0 unused). */
+  casting: {
+    attackBonus: number;
+    dc: number;
+    casterLevel: number;
+    kind: 'slots' | 'pact';
+    slots: number[];
+    pactEnergy: number;
+  } | null;
+  /** Ordered ability priorities (core-loop D4); empty = always strike. */
+  loadout: import('./loadout').LoadoutEntry[];
+  /** Reaction capabilities ('aoo', 'nimbleDodge'); enemies get 'aoo' intrinsically. */
+  reactions: string[];
+  lastReactionTick: number;
 
   // Continuous-time state
   conditions: Map<string, ActiveCondition>;

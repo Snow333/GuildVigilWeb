@@ -10,8 +10,9 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     id: 'hero_1', name: 'Testa', side: 'heroes', isHero: true, pos: { x: 0, y: 0 },
     maxHp: 30, hp: 30, ac: 16, attackBonus: 7, damageDice: '1d8', weaponRange: 1,
     weaponAgile: false, weaponPenalty: 0, weaponSpecBonus: 0, isWeaponProficient: true,
-    sneakAttackDice: '', speed: 5, wounded: 0, initiativeBonus: 3, isCaster: false,
-    conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
+    sneakAttackDice: '', speed: 5, wounded: 0, level: 3, initiativeBonus: 3, isCaster: false,
+    saves: { fort: 5, ref: 5, will: 3 }, tempHp: 0, casting: null, loadout: [], reactions: [],
+    lastReactionTick: -100, conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
     ...over,
   };
 }
