@@ -3,7 +3,7 @@
 Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored,
 continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 **Stack:** TS strict · React 19 · Vite (single-file artifact) · Tauri 2 · Vitest · Playwright.
-**Phase:** 1 (headless sim core). Milestones 1.0–1.2 done; 1.3 (combat) is next.
+**Phase:** 3 (art direction — "The Cartographer's Table", brief #8 APPROVED). Phases 1–2 complete: 267 tests + 4 e2e green; beat-feed contract pinned; content slice shipped.
 
 ## Authoritative documents — read before designing anything
 
@@ -29,6 +29,9 @@ continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 src/sim/        pure sim (core/ heroes/ combat/ dungeon/ world/ campaign/ save/ registry/)
 src/content/    typed registries; generated/ is machine-written (converter) — NEVER hand-edit
 src/ui/         React app (may import sim; sim may NEVER import it)
+src/ui/styles/  brief #8 style layer: tokens → materials → grammar components.
+                Status set is FROZEN + label-paired; zero image assets — both
+                guarded by tests/ui/style-tokens.test.ts. Reference: #style-drawer.
 src/platform/   SaveStore impls, Tauri glue (same rule)
 tools/          converter, layout tool, harnesses (Node scripts)
 tests/          Vitest (unit, fixtures, property); e2e/ Playwright (Phase 2+)

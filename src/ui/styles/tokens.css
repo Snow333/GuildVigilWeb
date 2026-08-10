@@ -1,0 +1,68 @@
+/**
+ * Guild Vigil design tokens — brief #8 "The Cartographer's Table" (APPROVED 2026-08-10).
+ * SINGLE SOURCE for the art direction: components consume tokens, never raw values.
+ *
+ * Two hard rules enforced by tests/ui/tokens.test.ts:
+ *  - The status set is FROZEN (#0ca30c/#fab219/#ec835a/#d03b3b), always label-paired,
+ *    never themed. It appears here ONCE; everything else must use var(--gv-s*).
+ *  - Zero image assets in the UI layer: every url() in src/ui/styles is a data: URI
+ *    (feTurbulence grain, inline SVG). Generated art arrives later as content, not chrome.
+ */
+:root {
+  /* leather (the desk) */
+  --gv-desk: #2a211c;
+  --gv-desk-warm: #322822;
+  --gv-desk-edge: #191210;
+  --gv-desk-bar: #241c16;
+
+  /* vellum ages — information age: fresh = current, aged = standing, old = history */
+  --gv-vellum: #ece0c2;
+  --gv-vellum-aged: #e2d2a8;
+  --gv-vellum-old: #d8c494;
+  --gv-vellum-edge: #b3a075;
+
+  /* ink */
+  --gv-ink: #3a2d1c;
+  --gv-ink-soft: #5c4a30;
+  --gv-ink-muted: #7d6a4c;
+  --gv-ink-faint: #a89370;
+
+  /* red ink = the world talking back; wax = irreversible commitment */
+  --gv-red-ink: #9c3428;
+  --gv-wax: #8c2f28;
+  --gv-wax-hi: #a63d2f;
+  --gv-wax-lo: #6e1f18;
+
+  /* brass = actionable hardware (pins, plates, plaque) */
+  --gv-brass-hi: #c9a86a;
+  --gv-brass-mid: #a4854c;
+  --gv-brass-deep: #8a6c38;
+  --gv-brass-lo: #6e5426;
+  --gv-brass-edge: #55401c;
+
+  /* FROZEN validated status set — label-paired ALWAYS, never themed, never alone */
+  --gv-s0: #0ca30c; /* quiet / ready / success        */
+  --gv-s1: #fab219; /* caution / resting / attention  */
+  --gv-s2: #ec835a; /* threatened / wounded / warning */
+  --gv-s3: #d03b3b; /* overrun / critical / failure   */
+
+  /* textures — feTurbulence data-URIs (zero image assets, per brief) */
+  --gv-tex-leather: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.16'/></svg>");
+  --gv-tex-leather-coarse: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='700' height='700' filter='url(%23g)' opacity='0.10'/></svg>");
+  --gv-tex-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
+  --gv-tex-fiber: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23f)' opacity='0.05'/></svg>");
+  --gv-tex-felt: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='f2'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23f2)' opacity='0.2'/></svg>");
+
+  /* type — system stand-ins until the licensed-face task (brief #8 out-of-scope note) */
+  --gv-serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --gv-sans: 'Segoe UI', system-ui, sans-serif;
+
+  /* shape + depth */
+  --gv-radius-sheet: 2px 3px 2px 3px;
+  --gv-shadow-sheet: 0 4px 12px #00000059, 0 1px 3px #00000040;
+  --gv-shadow-lift: 0 9px 22px #00000073, 0 2px 5px #00000040;
+  --gv-shadow-hardware: 0 2px 3px #00000088, inset 0 -1px 2px #00000055;
+
+  /* motion */
+  --gv-lift: 0.16s ease;
+}

@@ -6,6 +6,7 @@
 
 import { buildFixtureDispatch } from '@sim/fixtures/dispatchFixture';
 import { interpretStream } from './beats/interpret';
+import { StyleDrawer } from './styles/StyleDrawer';
 import { GameProvider, useGame } from './state/GameProvider';
 import { TitleScreen } from './screens/TitleScreen';
 import { TownHub } from './screens/TownHub';
@@ -66,6 +67,8 @@ export function App() {
     <main style={{ fontFamily: 'monospace', padding: 24 }}>
       {window.location.hash === '#beat-fixture' ? (
         <BeatFixtureRoute />
+      ) : window.location.hash === '#style-drawer' ? (
+        <StyleDrawer />
       ) : (
         <GameProvider>
           <Router />
