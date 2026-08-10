@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guild Vigil — UI Style Exploration 01</title>
+<style>
+  /* ================= base / chrome (not part of any direction) ============ */
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0e0e10; color: #ddd; }
+  .chrome { max-width: 1080px; margin: 0 auto; padding: 28px 20px 8px; }
+  .chrome h1 { font-size: 26px; letter-spacing: .5px; }
+  .chrome p { color: #9a9aa2; line-height: 1.55; margin-top: 10px; font-size: 14px; max-width: 78ch; }
+  nav.jump { position: sticky; top: 0; z-index: 50; background: #0e0e10ee; backdrop-filter: blur(4px);
+    border-bottom: 1px solid #26262c; padding: 10px 20px; display: flex; gap: 8px; flex-wrap: wrap;
+    max-width: 1080px; margin: 14px auto 0; }
+  nav.jump a { color: #cfcfd6; text-decoration: none; font-size: 13px; padding: 5px 11px;
+    border: 1px solid #3a3a42; border-radius: 999px; }
+  nav.jump a:hover { border-color: #8a8a96; }
+  .rules { max-width: 1080px; margin: 18px auto 30px; padding: 0 20px; }
+  .rules div { border: 1px dashed #3a3a42; border-radius: 8px; padding: 14px 18px; color: #a8a8b2;
+    font-size: 13px; line-height: 1.6; }
+  .rules b { color: #ddd; }
+
+  /* ================= direction sections =================================== */
+  section.dir { padding: 44px 0 60px; border-top: 4px solid #000; background: var(--surface); color: var(--ink); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  .dir-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .dir-head .no { font-size: 13px; opacity: .55; letter-spacing: 2px; }
+  .dir-head h2 { font-family: var(--display); font-size: 30px; letter-spacing: var(--display-ls);
+    text-transform: var(--display-tt); color: var(--surface-ink, var(--ink)); }
+  .pitch { color: var(--surface-muted, var(--muted)); font-size: 14px; line-height: 1.55; max-width: 80ch; margin-bottom: 18px; }
+
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 26px; }
+  .sw { width: 92px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 10px; }
+  .sw i { display: block; height: 34px; }
+  .sw b { display: block; padding: 3px 6px 1px; font-weight: 600; color: var(--surface-ink, var(--ink)); }
+  .sw span { display: block; padding: 0 6px 4px; color: var(--surface-muted, var(--muted)); }
+
+  /* ---- the vignette (IDENTICAL markup per direction; tokens do the work) - */
+  .vig { display: grid; gap: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--panel-shadow); position: relative; }
+  .panel > h3 { font-family: var(--display); font-size: 15px; letter-spacing: var(--display-ls);
+    text-transform: var(--display-tt); color: var(--head-ink, var(--ink)); margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .topbar .t { font-family: var(--display); font-size: 20px; letter-spacing: var(--display-ls);
+    text-transform: var(--display-tt); }
+  .topbar .stats { display: flex; gap: 14px; color: var(--muted); font-size: 13px; }
+  .topbar .stats b { color: var(--ink); font-weight: 600; }
+
+  .btn { font: inherit; font-size: 13px; padding: 7px 14px; border-radius: var(--radius); cursor: pointer;
+    border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--btn-ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .dlg { display: flex; gap: 12px; }
+  .dlg .portrait-s { flex: 0 0 56px; }
+  .dlg blockquote { font-size: 14px; line-height: 1.6; color: var(--ink); }
+  .dlg .who { display: block; font-family: var(--display); font-size: 12.5px; letter-spacing: var(--display-ls);
+    text-transform: var(--display-tt); color: var(--accent-text, var(--accent)); margin-bottom: 3px; }
+  .dlg .choices { margin-top: 9px; }
+
+  table.roster { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.roster td { padding: 8px 10px 8px 0; border-top: 1px solid var(--line); vertical-align: middle; }
+  table.roster tr:first-child td { border-top: 0; }
+  .hero-name { font-weight: 600; }
+  .hero-sub { color: var(--muted); font-size: 12px; }
+  .xp { width: 130px; height: 8px; background: var(--well); border-radius: 999px; overflow: hidden; }
+  .xp i { display: block; height: 100%; border-radius: 999px 0 0 999px; background: var(--accent); }
+
+  .portrait, .portrait-s { border-radius: var(--p-radius); border: var(--p-border); box-shadow: var(--p-shadow);
+    background: var(--well); display: block; }
+  .portrait { width: 72px; height: 88px; }
+  .portrait-s { width: 56px; height: 68px; }
+  .treats { display: flex; gap: 14px; flex-wrap: wrap; }
+  .treat { text-align: center; font-size: 11px; color: var(--muted); }
+  .treat figure { margin-bottom: 5px; }
+  .tr-haven svg { filter: sepia(.35) saturate(1.05) brightness(1.02); }
+  .tr-krath svg { filter: grayscale(.55) brightness(.92) contrast(1.06); }
+  .tr-wound svg { filter: grayscale(.9) brightness(.82) contrast(1.1); }
+  .tr-elite { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .meters { display: grid; gap: 8px; }
+  .meter { display: grid; grid-template-columns: 150px 118px 1fr; align-items: center; gap: 10px; font-size: 13px; }
+  .meter .bar { height: 9px; background: var(--well); border-radius: 999px; overflow: hidden; }
+  .meter .bar i { display: block; height: 100%; border-radius: 999px 0 0 999px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink); }
+  .chip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid #00000033; }
+
+  table.board { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.board td { padding: 8px 10px 8px 0; border-top: 1px solid var(--line); }
+  table.board tr:first-child td { border-top: 0; }
+  table.board .qn { font-weight: 600; }
+  table.board .qs { color: var(--muted); font-size: 12px; }
+
+  .fc { display: grid; gap: 7px; font-size: 12.5px; }
+  .fc .row { display: grid; grid-template-columns: 84px 1fr 46px; gap: 10px; align-items: center; }
+  .fc .bar { height: 12px; background: var(--well); border-radius: 4px; position: relative; overflow: hidden; }
+  .fc .bar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+  .fc .n { color: var(--muted); text-align: right; }
+
+  .typespec { display: flex; gap: 26px; flex-wrap: wrap; align-items: baseline; color: var(--muted); font-size: 12px; }
+  .typespec .d { font-family: var(--display); font-size: 21px; color: var(--ink);
+    letter-spacing: var(--display-ls); text-transform: var(--display-tt); }
+
+  .flourish-slot { border: 1.5px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: var(--radius); padding: 6px 10px; font-size: 11px; color: var(--muted); }
+
+  .react { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 12px;
+    color: var(--surface-muted, var(--muted)); font-size: 12.5px; line-height: 1.6; max-width: 86ch; }
+  .react b { color: var(--surface-ink, var(--ink)); }
+
+  /* ================= per-direction flourish layers ======================== */
+  /* D1 Gilded Ledger: hairline gold rules + corner ticks */
+  .f-gilded .panel::before { content: ""; position: absolute; inset: 4px; pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius: calc(var(--radius) - 2px); }
+  /* D2 Vigil Indigo: soft gem glow on headers */
+  .f-vigil .panel > h3 { text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 35%, transparent); }
+  /* D3 Daylight Chronicle: rubricated headers, no glow */
+  .f-daylight .panel > h3 { color: var(--accent); border-bottom-width: 2px; }
+  /* D4 Ember & Iron: hard edges + ember underline on primary actions */
+  .f-ember .btn.primary { box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .f-ember .panel { border-left: 3px solid var(--line); }
+  /* D5 Cartographer's Table: pinned vellum cards on the desk */
+  .f-carto .vig > .panel { transform: rotate(var(--tilt, 0deg)); }
+  .f-carto .vig > .panel:nth-child(odd) { --tilt: -.35deg; }
+  .f-carto .vig > .panel:nth-child(even) { --tilt: .3deg; }
+  .f-carto .panel::after { content: ""; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px;
+    border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d8d2c4, #6d6055 60%, #3a332c);
+    box-shadow: 0 1px 2px #00000088; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="skinA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a483"/><stop offset="1" stop-color="#8a6a4d"/>
+    </linearGradient>
+    <linearGradient id="skinB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fa06a"/><stop offset="1" stop-color="#5c6b42"/>
+    </linearGradient>
+    <linearGradient id="bgPl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4352"/><stop offset="1" stop-color="#23262e"/>
+    </linearGradient>
+    <!-- placeholder bust A: hooded human -->
+    <g id="bust-a">
+      <rect width="72" height="88" fill="url(#bgPl)"/>
+      <path d="M36 12 C20 12 14 30 15 46 L15 88 L57 88 L57 46 C58 30 52 12 36 12 Z" fill="#2c2620"/>
+      <ellipse cx="36" cy="42" rx="13" ry="16" fill="url(#skinA)"/>
+      <path d="M36 14 C24 14 19 28 21 38 C26 30 46 30 51 38 C53 28 48 14 36 14 Z" fill="#241f1a"/>
+      <path d="M18 88 C20 66 30 62 36 62 C42 62 52 66 54 88 Z" fill="#413528"/>
+      <path d="M29 47 l4 2 M43 47 l-4 2" stroke="#4a3524" stroke-width="1.6" fill="none"/>
+    </g>
+    <!-- placeholder bust B: tusked orc -->
+    <g id="bust-b">
+      <rect width="72" height="88" fill="url(#bgPl)"/>
+      <ellipse cx="36" cy="40" rx="16" ry="18" fill="url(#skinB)"/>
+      <path d="M14 88 C16 64 28 60 36 60 C44 60 56 64 58 88 Z" fill="#4a4038"/>
+      <path d="M27 50 l-2 -7 l4 1 Z M45 50 l2 -7 l-4 1 Z" fill="#e8e0cc"/>
+      <path d="M24 34 q4 -4 9 -2 M48 34 q-4 -4 -9 -2" stroke="#3a4527" stroke-width="2" fill="none"/>
+      <path d="M20 24 q16 -10 32 0 l-3 8 q-13 -7 -26 0 Z" fill="#2e2a24"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="chrome">
+  <h1>Guild Vigil — UI Style Exploration 01</h1>
+  <p>Five directions over <b>byte-identical markup</b> — every vignette below is stamped from one
+  template; only a token set and a small labeled flourish layer differ. That is the Phase 3 thesis
+  (reskin-by-stylesheet) working in miniature. Directions 1–3 follow the brief closely, 4 pushes
+  the brief's spirit, 5 is the out-of-the-box pitch.</p>
+</div>
+
+<nav class="jump">
+  <a href="#d1">1 · Gilded Ledger</a><a href="#d2">2 · Vigil Indigo</a><a href="#d3">3 · Daylight Chronicle</a>
+  <a href="#d4">4 · Ember &amp; Iron</a><a href="#d5">5 · The Cartographer's Table</a>
+</nav>
+
+<div class="rules"><div>
+  <b>System rules that hold in every direction:</b> the status set (Quiet/Restless/Threatened/Overrun,
+  outcome bars) is <b>fixed and never themed</b> — validated <code>#0ca30c · #fab219 · #ec835a · #d03b3b</code>,
+  always paired with its text label, never color alone. Text wears ink tokens, never status color.
+  Portraits are placeholder SVG busts standing in for ChatGPT-generated art; the <b>treatment strip</b>
+  in each direction shows the compositing layer (tint/wound/elite) that will unify hundreds of
+  generated images. Dashed outlines mark <b>flourish slots</b> — where cut-up secondary art would land.
+  Typefaces are system stand-ins; real faces get licensed after a direction wins.
+</div></div>
+
+<template id="vignette">
+  <div class="vig">
+    <div class="panel topbar">
+      <span class="t">Test01 — Town Hub</span>
+      <span class="stats"><span>Week <b>12</b></span><span>Gold <b>1,240</b></span><span>Stash <b>7</b></span></span>
+      <span class="btnrow">
+        <button class="btn primary">Advance Week ▸</button>
+        <button class="btn">Quest board</button>
+        <button class="btn" disabled>Dispatch</button>
+      </span>
+    </div>
+
+    <div class="panel">
+      <h3>The Marshal's Table</h3>
+      <div class="dlg">
+        <svg class="portrait-s" viewBox="0 0 72 88"><use href="#bust-a"/></svg>
+        <blockquote>
+          <span class="who">Marshal Edrin Vale</span>
+          "Iron shoes. Legion steel. It's the Dominion, and it isn't a raid — it's a survey.
+          Whatever they're measuring for, we are in the way of it."
+          <div class="choices btnrow"><button class="btn">"Then we push back."</button>
+          <button class="btn">"What do they want here?"</button></div>
+        </blockquote>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Roster</h3>
+      <table class="roster">
+        <tr>
+          <td style="width:66px"><svg class="portrait-s" viewBox="0 0 72 88"><use href="#bust-a"/></svg></td>
+          <td><span class="hero-name">Torvald</span><br><span class="hero-sub">Fighter 2 · HP 31 · AC 16</span></td>
+          <td><div class="xp"><i style="width:62%"></i></div><span class="hero-sub">624/1000 xp</span></td>
+          <td><span class="chip"><i data-status="0"></i>ready</span></td>
+        </tr>
+        <tr>
+          <td><svg class="portrait-s" viewBox="0 0 72 88"><use href="#bust-b"/></svg></td>
+          <td><span class="hero-name">Shade</span><br><span class="hero-sub">Rogue 2 · HP 26 · AC 15</span></td>
+          <td><div class="xp"><i style="width:38%"></i></div><span class="hero-sub">381/1000 xp</span></td>
+          <td><span class="chip"><i data-status="2"></i>wounded 1</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h3>Portrait treatment layer</h3>
+      <div class="treats">
+        <div class="treat"><figure><svg class="portrait" viewBox="0 0 72 88"><use href="#bust-b"/></svg></figure>generated art (raw)</div>
+        <div class="treat tr-haven"><figure><svg class="portrait" viewBox="0 0 72 88"><use href="#bust-b"/></svg></figure>Haven grade</div>
+        <div class="treat tr-krath"><figure><svg class="portrait" viewBox="0 0 72 88"><use href="#bust-b"/></svg></figure>Krath grade</div>
+        <div class="treat tr-wound"><figure><svg class="portrait" viewBox="0 0 72 88"><use href="#bust-b"/></svg></figure>wounded</div>
+        <div class="treat"><figure class="tr-elite"><svg class="portrait" viewBox="0 0 72 88"><use href="#bust-b"/></svg></figure>elite frame</div>
+        <div class="treat flourish-slot" style="align-self:center">flourish slot:<br>cut-up frame art</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Regional pressure</h3>
+      <div class="meters">
+        <div class="meter"><span>The Vigil Lands</span><span class="chip"><i data-status="0"></i>T0 Quiet</span><div class="bar"><i data-statusbar="0" style="width:6%"></i></div></div>
+        <div class="meter"><span>The Ashmark</span><span class="chip"><i data-status="2"></i>T2 Threatened</span><div class="bar"><i data-statusbar="2" style="width:56%"></i></div></div>
+        <div class="meter"><span>Gravel Downs</span><span class="chip"><i data-status="3"></i>T3 Overrun</span><div class="bar"><i data-statusbar="3" style="width:88%"></i></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Quest board</h3>
+      <table class="board">
+        <tr>
+          <td><span class="qn">#104 The Supply Cache</span><br><span class="qs">Lv 3 · challenge 4 · The Ashmark · expires wk 14</span></td>
+          <td style="text-align:right"><span class="qs">450g / 320xp</span></td>
+          <td style="width:90px; text-align:right"><button class="btn primary">Accept</button></td>
+        </tr>
+        <tr>
+          <td><span class="qn">#6 Wolf Pack Menace</span><br><span class="qs">Lv 1 · challenge 1 · Thornwood Reach · expires wk 13</span></td>
+          <td style="text-align:right"><span class="qs">100g / 80xp</span></td>
+          <td style="text-align:right"><button class="btn">Accept</button></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h3>Forecast — 20 simulated dispatches</h3>
+      <div class="fc">
+        <div class="row"><span>complete</span><div class="bar"><i data-statusbar="0" style="width:55%"></i></div><span class="n">11/20</span></div>
+        <div class="row"><span>retreat</span><div class="bar"><i data-statusbar="1" style="width:25%"></i></div><span class="n">5/20</span></div>
+        <div class="row"><span>wipe</span><div class="bar"><i data-statusbar="3" style="width:20%"></i></div><span class="n">4/20</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Type &amp; controls</h3>
+      <div class="typespec">
+        <span class="d">Display Aa</span><span>body 13.5px / 1.6</span>
+        <span class="btnrow"><button class="btn primary">Primary</button><button class="btn">Secondary</button><button class="btn" disabled>Disabled</button></span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<div id="sections"></div>
+
+<script>
+const STATUS = ['#0ca30c', '#fab219', '#ec835a', '#d03b3b'];
+
+const DIRECTIONS = [
+  {
+    id: 'd1', no: 'DIRECTION 01 · CLOSE TO BRIEF', name: 'Gilded Ledger', flourish: 'f-gilded',
+    pitch: 'The guild’s own chronicle: deep umber surfaces, candle-warm ink, gold-leaf discipline. Serif display, hairline double-rules inside every panel. The most "classic RPG codex" of the five — quiet, warm, bookish authority.',
+    react: '<b>React to:</b> is the warmth right, or too candlelit? Do the gold hairlines feel premium or fussy? This is the safest direction — does it excite you enough?',
+    tokens: {
+      '--surface':'#221c14', '--panel':'#2b2318', '--well':'#1b1610', '--ink':'#ecdfc3', '--muted':'#a8946f',
+      '--accent':'#c9a227', '--accent-ink':'#221c14', '--accent-text':'#d9b544', '--line':'#4a3c26',
+      '--radius':'4px', '--display':'Georgia, "Iowan Old Style", serif', '--display-ls':'0.5px', '--display-tt':'none',
+      '--btn-bg':'#332a1c', '--btn-border':'#5c4a2c', '--btn-ink':'#ecdfc3',
+      '--panel-shadow':'0 1px 0 #00000055', '--p-radius':'4px', '--p-border':'1px solid #5c4a2c', '--p-shadow':'0 0 0 1px #00000066',
+    },
+    swatches: [['surface','#221c14'],['panel','#2b2318'],['ink','#ecdfc3'],['muted','#a8946f'],['gold accent','#c9a227'],['line','#4a3c26']],
+  },
+  {
+    id: 'd2', no: 'DIRECTION 02 · CLOSE TO BRIEF', name: 'Vigil Indigo', flourish: 'f-vigil',
+    pitch: 'Dark fantasy in jewel tones: moonlit indigo panels, silvered ink, amber-gem accents with a faint glow on headers. Smallcaps display. The archetypal "modern dark fantasy game UI" executed cleanly — cool where Gilded Ledger is warm.',
+    react: '<b>React to:</b> warm (D1) vs cool (this) is the first big fork. Does the glow read premium or video-game-y? Would you want jewel accents per-faction later?',
+    tokens: {
+      '--surface':'#1c2130', '--panel':'#242b3f', '--well':'#161b28', '--ink':'#e6e8f0', '--muted':'#9aa5c0',
+      '--accent':'#d9a441', '--accent-ink':'#1c2130', '--accent-text':'#e3b658', '--line':'#3a4460',
+      '--radius':'6px', '--display':'"Segoe UI", system-ui, sans-serif', '--display-ls':'2px', '--display-tt':'uppercase',
+      '--btn-bg':'#2b3350', '--btn-border':'#46527a', '--btn-ink':'#e6e8f0',
+      '--panel-shadow':'0 2px 10px #00000045', '--p-radius':'6px', '--p-border':'1px solid #46527a', '--p-shadow':'0 2px 8px #00000066',
+    },
+    swatches: [['surface','#1c2130'],['panel','#242b3f'],['ink','#e6e8f0'],['muted','#9aa5c0'],['amber accent','#d9a441'],['line','#3a4460']],
+  },
+  {
+    id: 'd3', no: 'DIRECTION 03 · CLOSE TO BRIEF', name: 'Daylight Chronicle', flourish: 'f-daylight',
+    pitch: 'The one light candidate: warm linen surfaces, oak-brown ink, rubricated red headers like an illuminated manuscript set in a clean modern grid. Airy, legible, friendly for long sessions — the direction that photographs least "gamer" and most "beautiful software."',
+    react: '<b>React to:</b> does Guild Vigil FEEL like a daytime game to you? Light UIs age well and read superbly, but the dungeon playback screen would live in deliberate contrast. Note the status colors lean on their labels here (validated trade-off).',
+    tokens: {
+      '--surface':'#f2ead8', '--panel':'#faf5e8', '--well':'#e6dcc4', '--ink':'#2e2418', '--muted':'#7a6a52',
+      '--accent':'#8c2f2f', '--accent-ink':'#faf5e8', '--accent-text':'#8c2f2f', '--line':'#d8c9a8',
+      '--radius':'5px', '--display':'Georgia, "Iowan Old Style", serif', '--display-ls':'0.3px', '--display-tt':'none',
+      '--btn-bg':'#efe5cd', '--btn-border':'#c9b68e', '--btn-ink':'#2e2418',
+      '--panel-shadow':'0 1px 3px #00000018', '--p-radius':'5px', '--p-border':'1px solid #c9b68e', '--p-shadow':'0 1px 3px #00000022',
+    },
+    swatches: [['surface','#f2ead8'],['panel','#faf5e8'],['ink','#2e2418'],['muted','#7a6a52'],['rubric accent','#8c2f2f'],['line','#d8c9a8']],
+  },
+  {
+    id: 'd4', no: 'DIRECTION 04 · SPIRIT OF THE BRIEF, PUSHED', name: 'Ember & Iron', flourish: 'f-ember',
+    pitch: 'The war answers back: near-black iron, bone-grey ink, forge-ember accents that glow only on the actions that matter. Letterspaced uppercase display, hard 2px corners, panels shouldered by an iron rib. The Dominion’s aesthetic captured and turned to Haven’s use — tense, martial, focused.',
+    react: '<b>React to:</b> this trades coziness for urgency. Does the guild-management half of the game (shop, roster, leveling) still feel like home here, or does it read all-war-no-hearth?',
+    tokens: {
+      '--surface':'#191a1c', '--panel':'#202225', '--well':'#131416', '--ink':'#d8d3c8', '--muted':'#83817a',
+      '--accent':'#e0703c', '--accent-ink':'#191a1c', '--accent-text':'#e88a58', '--line':'#35383d',
+      '--radius':'2px', '--display':'"Segoe UI", system-ui, sans-serif', '--display-ls':'3px', '--display-tt':'uppercase',
+      '--btn-bg':'#26282c', '--btn-border':'#45484e', '--btn-ink':'#d8d3c8',
+      '--panel-shadow':'none', '--p-radius':'2px', '--p-border':'1px solid #45484e', '--p-shadow':'none',
+    },
+    swatches: [['surface','#191a1c'],['panel','#202225'],['ink','#d8d3c8'],['muted','#83817a'],['ember accent','#e0703c'],['line','#35383d']],
+  },
+  {
+    id: 'd5', no: 'DIRECTION 05 · THE PITCH', name: 'The Cartographer’s Table', flourish: 'f-carto',
+    pitch: 'My out-of-the-box pitch: the UI IS the guildmaster’s desk. Panels are vellum sheets pinned to a leather map-table — each card carries a brass pin, a hair of rotation, real paper shadow. The Marshal’s dialogue is a letter on the desk; the forecast is a scribe’s tally; the beat feed becomes marginalia. Diegetic without skeuomorphic kitsch: underneath the tilt everything is a strict modern grid with full accessibility, and the desk fades from attention in seconds while the FEELING of running a guild from a war-desk stays. No other tactics/management game on the web looks like this, and it is pure CSS — zero asset cost, perfectly consistent, and generated portraits sit on vellum like pasted daguerreotypes, which flattens style drift better than any dark frame.',
+    react: '<b>React to:</b> squint test — charming or precious? The tilt is 0.35° and disable-able (accessibility setting flattens the desk). If this intrigues you but feels risky, its DNA (vellum cards, wax accents, pinned notes) can hybridize into any of D1–D3.',
+    tokens: {
+      '--surface':'#2c2420', '--panel':'#ece0c4', '--well':'#ddceab', '--ink':'#33291c', '--muted':'#7d6c50',
+      '--accent':'#a63d2f', '--accent-ink':'#f4ecd8', '--accent-text':'#a63d2f', '--line':'#c9b88f',
+      '--radius':'3px', '--display':'Georgia, "Iowan Old Style", serif', '--display-ls':'0.4px', '--display-tt':'none',
+      '--btn-bg':'#e2d4b2', '--btn-border':'#b3a075', '--btn-ink':'#33291c',
+      '--surface-ink':'#e8dcc0', '--surface-muted':'#a5947a',
+      '--panel-shadow':'0 3px 9px #00000055, 0 1px 2px #00000033', '--p-radius':'2px', '--p-border':'1px solid #b3a075', '--p-shadow':'0 2px 5px #00000033',
+    },
+    swatches: [['desk','#2c2420'],['vellum','#ece0c4'],['ink','#33291c'],['muted','#7d6c50'],['wax accent','#a63d2f'],['line','#c9b88f']],
+  },
+];
+
+const tpl = document.getElementById('vignette');
+const host = document.getElementById('sections');
+for (const d of DIRECTIONS) {
+  const sec = document.createElement('section');
+  sec.className = `dir ${d.flourish}`;
+  sec.id = d.id;
+  for (const [k, v] of Object.entries(d.tokens)) sec.style.setProperty(k, v);
+  const wrap = document.createElement('div');
+  wrap.className = 'wrap';
+  wrap.innerHTML = `
+    <div class="dir-head"><span class="no">${d.no}</span><h2>${d.name}</h2></div>
+    <p class="pitch">${d.pitch}</p>
+    <div class="swatches">
+      ${d.swatches.map(([n, h]) => `<div class="sw"><i style="background:${h}"></i><b>${h}</b><span>${n}</span></div>`).join('')}
+      ${STATUS.map((h, i) => `<div class="sw"><i style="background:${h}"></i><b>${h}</b><span>status T${i} (fixed)</span></div>`).join('')}
+    </div>`;
+  const vig = tpl.content.cloneNode(true);
+  wrap.appendChild(vig);
+  const react = document.createElement('div');
+  react.className = 'react';
+  react.innerHTML = d.react;
+  wrap.appendChild(react);
+  sec.appendChild(wrap);
+  host.appendChild(sec);
+}
+// Status chips/bars: fixed set, applied uniformly after stamping.
+for (const el of document.querySelectorAll('[data-status]')) el.style.background = STATUS[Number(el.dataset.status)];
+for (const el of document.querySelectorAll('[data-statusbar]')) el.style.background = STATUS[Number(el.dataset.statusbar)];
+</script>
+</body>
+</html>

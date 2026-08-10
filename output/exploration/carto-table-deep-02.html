@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cartographer's Table — Deep Exploration 02</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  :root {
+    --desk: #2a211c; --desk-edge: #191210;
+    --vellum: #ece0c2; --vellum-aged: #e2d2a8; --vellum-old: #d8c494;
+    --ink: #3a2d1c; --ink-soft: #5c4a30; --muted: #7d6a4c;
+    --red-ink: #9c3428; --wax: #8c2f28; --brass-hi: #c9a86a; --brass-lo: #6e5426;
+    --s0: #0ca30c; --s1: #fab219; --s2: #ec835a; --s3: #d03b3b;
+    --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  }
+  body {
+    font-family: var(--serif); color: var(--ink);
+    background:
+      radial-gradient(120% 90% at 50% 0%, #00000000 55%, #00000066 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.16'/></svg>"),
+      linear-gradient(160deg, #322822, #2a211c 40%, #211a15);
+    background-attachment: fixed;
+    padding: 40px 18px 80px;
+  }
+  .desk { max-width: 1060px; margin: 0 auto; position: relative;
+    border: 2px dashed #4a3a2c55; border-radius: 14px; padding: 34px 30px 44px; }
+  .desk::before { content: ""; position: absolute; inset: -14px; border-radius: 20px;
+    border: 1px solid #00000055; box-shadow: inset 0 0 60px #00000066; pointer-events: none; }
+
+  /* ============ sheets (the vellum system) ============ */
+  .sheet {
+    position: relative; background:
+      radial-gradient(140% 110% at 30% 20%, #ffffff26 0%, #00000000 55%),
+      radial-gradient(120% 120% at 50% 50%, #00000000 62%, #6e50281f 100%),
+      var(--pv, var(--vellum));
+    color: var(--ink); padding: 18px 22px; margin: 0 0 26px;
+    border: 1px solid #b3a075; border-radius: 2px 3px 2px 3px;
+    box-shadow: 0 4px 12px #00000059, 0 1px 3px #00000040;
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform .16s ease, box-shadow .16s ease;
+  }
+  .sheet::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
+    opacity: .14; mix-blend-mode: multiply; }
+  .sheet:hover { transform: rotate(0deg) translateY(-2px); box-shadow: 0 9px 22px #00000073, 0 2px 5px #00000040; }
+  .sheet.aged { --pv: var(--vellum-aged); }
+  .sheet.old { --pv: var(--vellum-old); }
+  .sheet.stained::after { content: ""; position: absolute; right: 8%; bottom: 10%; width: 90px; height: 74px;
+    border-radius: 50% 60% 55% 45%; pointer-events: none;
+    background: radial-gradient(closest-side, #6e502800 40%, #6e502822 78%, #6e502800 100%); }
+
+  .pin { position: absolute; top: -6px; left: 50%; width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, var(--brass-hi), #8a6c38 55%, var(--brass-lo));
+    box-shadow: 0 2px 3px #00000088, inset 0 -1px 2px #00000055; z-index: 2; }
+  .pin.left { left: 18px; } .pin.right { left: auto; right: 18px; }
+  .tape { position: absolute; top: -9px; width: 74px; height: 20px; left: 50%; transform: translateX(-50%) rotate(-1.5deg);
+    background: #d8ccaa99; border-left: 1px dashed #00000022; border-right: 1px dashed #00000022;
+    box-shadow: 0 1px 2px #00000033; z-index: 2; }
+
+  h3.head { font-size: 16.5px; letter-spacing: .4px; margin-bottom: 10px; padding-bottom: 6px;
+    border-bottom: 1px solid #b3a07588; display: flex; align-items: baseline; gap: 10px; }
+  h3.head .sub { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 10.5px; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--muted); }
+
+  .btn { font-family: var(--serif); font-size: 13.5px; padding: 6px 14px; cursor: pointer;
+    background: #e2d4b2; color: var(--ink); border: 1px solid #a8905e; border-radius: 2px;
+    box-shadow: 0 1px 0 #00000022; }
+  .btn:hover { background: #d9c9a2; }
+  .btn.seal { background: linear-gradient(160deg, #a63d2f, #8c2f28); color: #f4ecd8; border-color: #6e1f18;
+    text-shadow: 0 1px 1px #00000055; }
+  .btn.seal:hover { filter: brightness(1.07); }
+  .btn.ghost { background: transparent; border-style: dashed; color: var(--muted); }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #00000038;
+    box-shadow: inset 0 1px 1px #ffffff44; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* intro strip */
+  .intro { max-width: 620px; margin: 0 auto 30px; --tilt: -.4deg; }
+  .intro p { font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); }
+  .intro .toggle { margin-top: 10px; }
+
+  /* material studies */
+  .mats { display: flex; gap: 20px; flex-wrap: wrap; }
+  .mats .sheet { width: 200px; margin: 0; font-size: 12px; color: var(--muted); }
+  .mats b { display: block; font-size: 14px; color: var(--ink); margin-bottom: 2px; }
+
+  /* ledger ruling */
+  .ledger { background-image: repeating-linear-gradient(#00000000 0 27px, #8c6a3a22 27px 28px); line-height: 28px; }
+  .ledger table { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 28px; }
+  .ledger td { padding: 0 10px 0 0; vertical-align: middle; }
+  .marg { color: var(--red-ink); font-style: italic; font-size: 12px; }
+
+  .portrait { width: 60px; height: 74px; display: block; border: 1px solid #a8905e;
+    box-shadow: 0 2px 4px #00000040, inset 0 0 0 3px #f4ecd8; background: #23262e;
+    transform: rotate(-1.2deg); }
+  .portrait.r2 { transform: rotate(.9deg); }
+  .xp { height: 7px; background: #cbb98d66; border-radius: 2px; overflow: hidden; width: 120px; }
+  .xp i { display: block; height: 100%; background: linear-gradient(90deg, #8c6a3a, #6e5426); }
+
+  /* letter */
+  .letter { --tilt: .35deg; }
+  .letter .crease { position: absolute; left: 4%; right: 4%; height: 2px; pointer-events: none;
+    background: linear-gradient(90deg, #00000000, #00000014 20% 80%, #00000000); }
+  .letter blockquote { font-size: 14.5px; line-height: 1.7; max-width: 62ch; }
+  .letter .sig { font-style: italic; margin-top: 8px; color: var(--ink-soft); }
+  .seal-wax { position: absolute; right: 26px; bottom: 20px; width: 54px; height: 54px; border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #b8504040, #00000000 60%),
+                radial-gradient(circle at 50% 55%, #a63d2f, #7a241c 70%, #5c1712);
+    box-shadow: 0 2px 5px #00000066, inset 0 0 0 5px #00000022, inset 0 0 0 11px #ffffff14;
+    display: grid; place-items: center; color: #e8c9b0; font-size: 20px; transform: rotate(-6deg); }
+
+  /* quest notices */
+  .notices { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .notice { width: 300px; margin: 0; padding-bottom: 24px; font-size: 13px;
+    clip-path: polygon(0 0, 100% 0, 100% 94%, 96% 97%, 88% 95%, 78% 99%, 66% 96%, 55% 99%, 42% 96%, 30% 99%, 18% 96%, 8% 99%, 0 95%); }
+  .notice .qn { font-size: 15px; font-weight: 700; }
+  .notice .qs { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 4px 0 8px; }
+  .notice .reward { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; border: 1.5px solid var(--ink-soft); display: inline-block; padding: 2px 8px;
+    border-radius: 2px; color: var(--ink-soft); margin-bottom: 8px; }
+  .stamp { position: absolute; top: 34px; right: -8px; transform: rotate(8deg);
+    font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 2.5px;
+    color: var(--red-ink); border: 2.5px solid var(--red-ink); padding: 3px 9px; border-radius: 3px;
+    opacity: .7; mix-blend-mode: multiply; }
+
+  /* pressure + tally */
+  .meter { display: grid; grid-template-columns: 140px 128px 1fr; gap: 12px; align-items: center;
+    font-size: 13.5px; line-height: 28px; }
+  .meter .bar { height: 8px; border-radius: 2px; background: #cbb98d66; overflow: hidden; }
+  .meter .bar i { display: block; height: 100%; }
+  .tallyrow { display: grid; grid-template-columns: 90px 1fr 44px; gap: 12px; align-items: center; font-size: 13.5px; }
+  .tally { display: flex; gap: 9px; align-items: center; height: 22px; }
+  .tally svg { display: block; }
+  .tno { color: var(--muted); text-align: right; font-size: 12.5px; }
+
+  /* map chart */
+  .chart { padding: 10px; }
+  .chart svg { display: block; width: 100%; height: auto; }
+
+  /* component gallery */
+  .gallery { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; font-size: 11.5px; color: var(--muted); }
+  .gallery .item { text-align: center; width: 118px; }
+  .gallery .box { position: relative; height: 74px; margin-bottom: 6px; display: grid; place-items: center; }
+  .thread { position: absolute; inset: 0; pointer-events: none; }
+
+  .note-foot { font-size: 12.5px; color: var(--ink-soft); line-height: 1.65; }
+  .note-foot b { color: var(--ink); }
+
+  /* flat mode (accessibility) */
+  body.flat .sheet, body.flat .sheet:hover { transform: none; }
+  body.flat .sheet::before { display: none; }
+  body.flat .portrait { transform: none; }
+  body.flat .stamp { transform: none; }
+</style>
+</head>
+<body>
+<div class="desk">
+
+  <div class="sheet intro aged stained"><span class="pin"></span>
+    <h3 class="head">The Cartographer's Table <span class="sub">deep exploration · round 02</span></h3>
+    <p>Everything on this desk is still <b>pure CSS and inline SVG</b> — grain, mottling, stains,
+    pins, wax, thread. No image files. Hover any sheet: it lifts and squares up (0.16s). The
+    <b>Flat mode</b> toggle is the accessibility setting — tilt, grain, and stamps switch off and
+    the same strict grid underneath is all that remains.</p>
+    <p class="toggle"><button class="btn ghost" onclick="document.body.classList.toggle('flat')">Toggle flat mode</button></p>
+  </div>
+
+  <div class="sheet" style="--tilt:-.3deg"><span class="pin left"></span><span class="pin right"></span>
+    <h3 class="head">Material studies <span class="sub">vellum ages · pinning</span></h3>
+    <div class="mats">
+      <div class="sheet" style="--tilt:-.6deg"><span class="pin"></span><b>Fresh vellum</b>
+        New sheets: saves, dialogs, anything current. Brightest surface, faint grain.</div>
+      <div class="sheet aged" style="--tilt:.5deg"><span class="tape"></span><b>Aged vellum</b>
+        Standing records: roster, ledgers. Warmer, deeper mottle. Taped, not pinned.</div>
+      <div class="sheet old stained" style="--tilt:-.4deg"><span class="pin"></span><b>Old vellum</b>
+        History: after-action reports, past seasons. Stained, darkened at the edges.</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sheet letter"><span class="seal-wax">V</span>
+      <span class="crease" style="top:34%"></span><span class="crease" style="top:67%"></span>
+      <h3 class="head">The Marshal's letter <span class="sub">dialogue as correspondence</span></h3>
+      <blockquote>
+        "Iron shoes. Legion steel. I wrote letters about this for a year and got seals and
+        silence back. It's the Dominion, and it isn't a raid — it's a survey. Whatever they're
+        measuring for, we are in the way of it."
+        <div class="sig">— Marshal Edrin Vale, by his own hand</div>
+      </blockquote>
+      <p style="margin-top:12px"><button class="btn seal">"Then we push back."</button>
+      <button class="btn">"What do they want here?"</button></p>
+    </div>
+
+    <div class="sheet aged ledger" style="--tilt:.4deg"><span class="tape"></span>
+      <h3 class="head">Roster <span class="sub">the guild ledger</span></h3>
+      <table>
+        <tr>
+          <td style="width:70px"><img class="portrait" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 88'><rect width='72' height='88' fill='%232b3040'/><ellipse cx='36' cy='42' rx='13' ry='16' fill='%23c9a483'/><path d='M36 14 C24 14 19 28 21 38 C26 30 46 30 51 38 C53 28 48 14 36 14 Z' fill='%23241f1a'/><path d='M18 88 C20 66 30 62 36 62 C42 62 52 66 54 88 Z' fill='%23413528'/></svg>"></td>
+          <td><b>Torvald</b> · Fighter 2<br><span style="color:var(--muted);font-size:12px">HP 31 · AC 16</span></td>
+          <td><div class="xp"><i style="width:62%"></i></div><span style="color:var(--muted);font-size:11.5px">624/1000</span></td>
+          <td><span class="chip"><i style="background:var(--s0)"></i>ready</span></td>
+        </tr>
+        <tr>
+          <td><img class="portrait r2" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 88'><rect width='72' height='88' fill='%232b3040'/><ellipse cx='36' cy='40' rx='16' ry='18' fill='%238fa06a'/><path d='M27 50 l-2 -7 l4 1 Z M45 50 l2 -7 l-4 1 Z' fill='%23e8e0cc'/><path d='M20 24 q16 -10 32 0 l-3 8 q-13 -7 -26 0 Z' fill='%232e2a24'/><path d='M14 88 C16 64 28 60 36 60 C44 60 56 64 58 88 Z' fill='%234a4038'/></svg>"></td>
+          <td><b>Shade</b> · Rogue 2<br><span style="color:var(--muted);font-size:12px">HP 26 · AC 15</span></td>
+          <td><div class="xp"><i style="width:38%"></i></div><span style="color:var(--muted);font-size:11.5px">381/1000</span></td>
+          <td><span class="chip"><i style="background:var(--s2)"></i>wounded 1</span><br><span class="marg">limping — rest her?</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="sheet chart" style="--tilt:-.25deg"><span class="pin left"></span><span class="pin right"></span>
+    <h3 class="head" style="margin:8px 12px 2px">The frontier <span class="sub">world map as a working chart</span></h3>
+    <svg viewBox="0 0 640 310" role="img" aria-label="Hand-drawn map of the frontier">
+      <defs>
+        <marker id="xm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7">
+          <path d="M2 2 L8 8 M8 2 L2 8" stroke="#9c3428" stroke-width="1.8"/>
+        </marker>
+      </defs>
+      <!-- neatline -->
+      <rect x="8" y="8" width="624" height="294" fill="none" stroke="#5c4a30" stroke-width="1.6"/>
+      <rect x="13" y="13" width="614" height="284" fill="none" stroke="#5c4a30" stroke-width=".6"/>
+      <!-- coordinate ticks -->
+      <g stroke="#5c4a30" stroke-width=".8">
+        <line x1="8" y1="80" x2="14" y2="80"/><line x1="8" y1="160" x2="14" y2="160"/><line x1="8" y1="240" x2="14" y2="240"/>
+        <line x1="160" y1="8" x2="160" y2="14"/><line x1="320" y1="8" x2="320" y2="14"/><line x1="480" y1="8" x2="480" y2="14"/>
+      </g>
+      <!-- coast (east) -->
+      <path d="M560 20 q-14 40 4 74 q18 36 -2 70 q-20 36 6 74 q12 22 4 54" fill="none" stroke="#3a2d1c" stroke-width="1.8"/>
+      <g stroke="#3a2d1c" stroke-width=".6" opacity=".55">
+        <path d="M572 40 q-10 30 3 60" fill="none"/><path d="M584 66 q-8 26 2 52" fill="none"/>
+        <path d="M576 160 q-12 30 4 62" fill="none"/><path d="M590 190 q-8 24 2 48" fill="none"/>
+      </g>
+      <!-- river -->
+      <path d="M300 22 q-16 40 6 66 q22 26 4 58 q-16 28 8 52 L330 240" fill="none" stroke="#5c4a30" stroke-width="1.4" stroke-dasharray="1 0"/>
+      <!-- mountains NW (hatched) -->
+      <g stroke="#3a2d1c" stroke-width="1.3" fill="none">
+        <path d="M70 70 l14 -22 l14 22"/><path d="M104 76 l12 -19 l12 19"/><path d="M60 100 l12 -18 l12 18"/>
+        <path d="M96 106 l14 -21 l14 21"/><path d="M134 92 l11 -17 l11 17"/>
+      </g>
+      <g stroke="#3a2d1c" stroke-width=".5" opacity=".5">
+        <path d="M76 66 l8 12 M110 72 l7 11 M66 96 l7 10 M104 100 l8 12 M140 88 l6 10" fill="none"/>
+      </g>
+      <!-- forest N -->
+      <g fill="none" stroke="#4a5230" stroke-width="1.1">
+        <circle cx="220" cy="60" r="7"/><circle cx="238" cy="52" r="6"/><circle cx="254" cy="62" r="7"/>
+        <circle cx="230" cy="74" r="6"/><circle cx="208" cy="76" r="5"/>
+      </g>
+      <!-- Haven keep -->
+      <g transform="translate(170,186)">
+        <rect x="-9" y="-8" width="18" height="14" fill="none" stroke="#3a2d1c" stroke-width="1.6"/>
+        <path d="M-9 -8 l0 -5 l4 0 l0 3 l5 0 l0 -3 l4 0 l0 3 l5 0 l0 -3 l4 0 l0 5" fill="none" stroke="#3a2d1c" stroke-width="1.4"/>
+        <text x="0" y="26" text-anchor="middle" font-size="12" font-family="Georgia, serif" font-style="italic" fill="#3a2d1c">HAVEN</text>
+      </g>
+      <!-- POIs -->
+      <g font-family="Georgia, serif" font-size="10.5" fill="#9c3428">
+        <path d="M420 108 l8 8 M428 108 l-8 8" stroke="#9c3428" stroke-width="1.8"/>
+        <text x="434" y="112">#104 supply cache</text>
+        <path d="M472 208 l8 8 M480 208 l-8 8" stroke="#9c3428" stroke-width="1.8"/>
+        <text x="486" y="212">#107 the fort?</text>
+      </g>
+      <!-- route: dashed red ink Haven → 104 -->
+      <path d="M182 182 C 240 150, 330 118, 416 114" fill="none" stroke="#9c3428" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#xm)"/>
+      <text x="286" y="132" font-size="10.5" font-family="Georgia, serif" font-style="italic" fill="#9c3428" transform="rotate(-8 286 132)">4 days by the north road</text>
+      <!-- region labels -->
+      <g font-family="Georgia, serif" fill="#5c4a30" opacity=".85">
+        <text x="90" y="140" font-size="13" letter-spacing="4" transform="rotate(-4 90 140)">THORNWOOD</text>
+        <text x="400" y="66" font-size="13" letter-spacing="5">THE ASHMARK</text>
+        <text x="360" y="268" font-size="13" letter-spacing="4">GRAVEL DOWNS</text>
+      </g>
+      <!-- pressure wash: Ashmark threatened -->
+      <ellipse cx="430" cy="90" rx="120" ry="52" fill="#ec835a" opacity=".10"/>
+      <ellipse cx="410" cy="248" rx="110" ry="40" fill="#d03b3b" opacity=".10"/>
+      <!-- compass rose -->
+      <g transform="translate(576,254)" stroke="#3a2d1c" fill="#3a2d1c">
+        <circle r="17" fill="none" stroke-width="1"/>
+        <path d="M0 -15 L4 0 L0 15 L-4 0 Z" stroke="none"/>
+        <path d="M-15 0 L0 -3 L15 0 L0 3 Z" stroke="none" opacity=".55"/>
+        <text y="-21" text-anchor="middle" font-size="9" stroke="none" font-family="Georgia, serif">N</text>
+      </g>
+      <!-- scale bar -->
+      <g transform="translate(30,282)" stroke="#3a2d1c">
+        <line x1="0" y1="0" x2="80" y2="0" stroke-width="1.4"/>
+        <line x1="0" y1="-4" x2="0" y2="4"/><line x1="40" y1="-3" x2="40" y2="3"/><line x1="80" y1="-4" x2="80" y2="4"/>
+        <text x="40" y="14" text-anchor="middle" font-size="9" stroke="none" fill="#5c4a30" font-family="Georgia, serif">two days' march</text>
+      </g>
+    </svg>
+    <p class="note-foot" style="margin:8px 12px 6px">Ink cartography over the same vellum: procedural
+    SVG (real data drives it — terrain, POIs, the A* route), red ink for anything actionable, and the
+    <b>pressure wash</b> — a region under threat literally reddens on the chart. The fort is marked
+    with a question mark until quest #107 finds it.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="sheet" style="--tilt:.35deg"><span class="pin"></span>
+      <h3 class="head">Quest notices <span class="sub">the board as posted bills</span></h3>
+      <div class="notices">
+        <div class="sheet notice aged" style="--tilt:-.8deg"><span class="pin"></span>
+          <span class="stamp">GUILD WORK</span>
+          <div class="qn">The Supply Cache</div>
+          <div class="qs">Lv 3 · challenge 4 · The Ashmark<br>expires week 14 · posting #104</div>
+          <span class="reward">450 gold · 320 xp</span><br>
+          <button class="btn seal">Accept</button> <button class="btn">Map</button>
+        </div>
+        <div class="sheet notice" style="--tilt:1deg"><span class="pin"></span>
+          <div class="qn">Wolf Pack Menace</div>
+          <div class="qs">Lv 1 · challenge 1 · Thornwood Reach<br>expires week 13 · posting #6</div>
+          <span class="reward">100 gold · 80 xp</span><br>
+          <button class="btn seal">Accept</button> <button class="btn">Map</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sheet aged" style="--tilt:-.4deg"><span class="tape"></span>
+        <h3 class="head">Regional pressure <span class="sub">the watch report</span></h3>
+        <div class="meter"><span>The Vigil Lands</span><span class="chip"><i style="background:var(--s0)"></i>T0 Quiet</span><div class="bar"><i style="width:6%;background:var(--s0)"></i></div></div>
+        <div class="meter"><span>The Ashmark</span><span class="chip"><i style="background:var(--s2)"></i>T2 Threatened</span><div class="bar"><i style="width:56%;background:var(--s2)"></i></div></div>
+        <div class="meter"><span>Gravel Downs</span><span class="chip"><i style="background:var(--s3)"></i>T3 Overrun</span><div class="bar"><i style="width:88%;background:var(--s3)"></i></div></div>
+      </div>
+
+      <div class="sheet" style="--tilt:.3deg"><span class="pin right"></span>
+        <h3 class="head">Forecast <span class="sub">the scribe's tally · 20 runs</span></h3>
+        <svg width="0" height="0"><defs>
+          <g id="t5" stroke="#3a2d1c" stroke-width="1.6" stroke-linecap="round">
+            <line x1="1" y1="2" x2="1" y2="18"/><line x1="7" y1="2" x2="7" y2="18"/>
+            <line x1="13" y1="2" x2="13" y2="18"/><line x1="19" y1="2" x2="19" y2="18"/>
+            <line x1="-3" y1="15" x2="24" y2="5"/>
+          </g>
+          <g id="t1" stroke="#3a2d1c" stroke-width="1.6" stroke-linecap="round"><line x1="1" y1="2" x2="1" y2="18"/></g>
+        </defs></svg>
+        <div class="tallyrow"><span>complete</span>
+          <span class="tally"><svg width="26" height="22"><use href="#t5"/></svg><svg width="26" height="22"><use href="#t5"/></svg><svg width="6" height="22"><use href="#t1"/></svg></span>
+          <span class="tno">11/20</span></div>
+        <div class="tallyrow"><span>retreat</span>
+          <span class="tally"><svg width="26" height="22"><use href="#t5"/></svg></span>
+          <span class="tno">5/20</span></div>
+        <div class="tallyrow"><span>wipe</span>
+          <span class="tally"><svg width="26" height="22"><use href="#t5"/></svg></span>
+          <span class="tno" style="color:var(--red-ink)">4/20</span></div>
+        <p class="note-foot" style="margin-top:8px">Counts stay explicit beside the tallies — the
+        flourish never replaces the number.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet old" style="--tilt:.25deg"><span class="pin left"></span><span class="pin right"></span>
+    <h3 class="head">Component drawer <span class="sub">the rest of the desk's vocabulary</span></h3>
+    <div class="gallery">
+      <div class="item"><div class="box"><span class="pin" style="position:static"></span></div>brass pin — pinned sheets are things you can act on</div>
+      <div class="item"><div class="box"><span class="tape" style="position:static;transform:rotate(-2deg)"></span></div>tape — standing records, not actionable</div>
+      <div class="item"><div class="box"><span class="seal-wax" style="position:static;transform:rotate(-4deg)">V</span></div>wax seal — commitment actions (Accept, Launch)</div>
+      <div class="item"><div class="box">
+        <svg class="thread" viewBox="0 0 118 74"><path d="M14 18 C 40 44, 80 10, 106 52" fill="none" stroke="#9c3428" stroke-width="1.4"/><circle cx="14" cy="18" r="4" fill="#8a6c38"/><circle cx="106" cy="52" r="4" fill="#8a6c38"/></svg>
+      </div>red thread — relates a quest to its place on the chart (hover link)</div>
+      <div class="item"><div class="box"><span class="stamp" style="position:static;transform:rotate(-6deg)">URGENT</span></div>ink stamp — arc beats, expiring postings</div>
+      <div class="item"><div class="box"><span class="marg" style="font-size:13px">a note in red ink</span></div>marginalia — the beat feed lives in the margins</div>
+    </div>
+    <p class="note-foot" style="margin-top:14px"><b>The grammar:</b> every physical affordance carries
+    one consistent meaning. Pins = actionable now. Tape = reference. Wax = irreversible commitment.
+    Red ink = the world talking back. That mapping IS the UX layer — the metaphor doing information
+    hierarchy, not decorating it.</p>
+  </div>
+
+</div>
+</body>
+</html>
