@@ -20,5 +20,5 @@
       "@platform/*": ["./src/platform/*"]
     }
   },
-  "include": ["src", "tests", "tools/*.ts"]
+  "include": ["src", "tests", "tools/*.ts", "e2e", "playwright.config.ts"]
 }

@@ -1,0 +1,105 @@
+import { expect, test, type Page } from '@playwright/test';
+
+/**
+ * The core flow (brief #5 §5): new campaign → advance week → accept quest →
+ * forecast renders → launch → skip replay → after-action → level-up → save →
+ * reload → state persists.
+ *
+ * The campaign is fully deterministic ("E2E Test" seeds the world), and the
+ * accept policy below (lowest challenge, then lowest quest id) reproduces a
+ * known trace: the first level-up lands on week 20, passing through camp
+ * fights, dungeon completions, a failure, and three wipes on the way — every
+ * outcome branch crosses the DOM in one run.
+ */
+
+const MAX_WEEKS = 24;
+
+/** Accept the easiest visible posting (challenge, then quest id) — the v1 policy by hand. */
+async function acceptEasiest(page: Page): Promise<void> {
+  await page.locator('button:has-text("Quest board")').click();
+  await page.locator('h1:has-text("Quest board")').waitFor();
+  const rows = page.locator('tbody tr');
+  const n = await rows.count();
+  let best = { challenge: Infinity, questId: Infinity, row: -1 };
+  for (let i = 0; i < n; i++) {
+    const cells = await rows.nth(i).locator('td').allTextContents();
+    const questId = Number(/#(\d+)/.exec(cells[0] ?? '')?.[1] ?? Infinity);
+    const challenge = Number(cells[2]);
+    if (challenge < best.challenge || (challenge === best.challenge && questId < best.questId)) {
+      best = { challenge, questId, row: i };
+    }
+  }
+  expect(best.row, 'a posting to accept').toBeGreaterThanOrEqual(0);
+  await rows.nth(best.row).locator('button:has-text("Accept")').click();
+  await page.locator('h1:has-text("Dispatch setup")').waitFor();
+}
+
+/** Launch, sit through playback (skip) or the surface resolution, take the report, go home. */
+async function launchAndReturn(page: Page): Promise<void> {
+  await page.locator('button:has-text("Launch dispatch")').click();
+  const playback = page.locator('h1:has-text("Dispatch playback")');
+  const surface = page.locator('text=resolved on the surface');
+  await expect(playback.or(surface)).toBeVisible();
+  if (await playback.isVisible()) {
+    await page.locator('button:has-text("Skip ▸▸")').click();
+    await page.locator('text=end of record').waitFor();
+    await page.locator('button:has-text("After-action ▸")').click();
+  } else {
+    await page.locator('button:has-text("After-action report")').click();
+  }
+  await page.locator('h1:has-text("After-action")').waitFor();
+  await page.locator('button:has-text("Return to town")').click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+}
+
+test('the core loop: play until a level-up, spend it, save, reload, persist', async ({ page }) => {
+  test.setTimeout(300_000); // ~20 deterministic weeks of real UI play
+
+  await page.goto('/');
+  await page.fill('input', 'E2E Test');
+  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+
+  // Forecast panel renders before the first launch (constraint 3 on screen).
+  await acceptEasiest(page);
+  await page.locator('button:has-text("Run forecast")').click();
+  await expect(page.locator('pre')).toContainText('median haul');
+  await launchAndReturn(page);
+
+  // Grind the deterministic trace until someone can level (wk 20 on this seed).
+  let leveled = false;
+  for (let week = 2; week <= MAX_WEEKS; week++) {
+    if (await page.locator('button:has-text("level up!")').first().isVisible()) {
+      leveled = true;
+      break;
+    }
+    await page.locator('button:has-text("Advance Week")').click();
+    await acceptEasiest(page);
+    await launchAndReturn(page);
+  }
+  expect(leveled, `a hero ready to level within ${MAX_WEEKS} weeks`).toBe(true);
+
+  // The wizard: class → skills → commit; the sheet must show the new level.
+  await page.locator('button:has-text("level up!")').first().click();
+  await page.locator('h1:has-text("Torvald")').waitFor();
+  await page.locator('button:has-text("Level up ●")').click();
+  await page.locator('button:has-text("Fighter → 2")').click();
+  const plus = page.locator('tr:has-text("athletics") button:has-text("+")');
+  while (await page.locator('button:has-text("Commit level-up")').isDisabled()) {
+    await plus.click();
+  }
+  await page.locator('button:has-text("Commit level-up")').click();
+  await expect(page.locator('h1')).toContainText('level 2');
+  await page.locator('button:has-text("◂ Town")').click();
+
+  // Save → quit → reload the page → load → identical status line.
+  await page.locator('button:has-text("Save")').first().click();
+  const saved = await page.locator('p').first().textContent();
+  expect(saved).toContain('Party level'); // sanity: we captured the status line
+  await page.locator('button:has-text("Quit to title")').click();
+  await page.locator('h1:has-text("GUILD VIGIL")').waitFor();
+  await page.reload();
+  await page.locator('button:has-text("Load")').click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+  expect(await page.locator('p').first().textContent()).toBe(saved);
+});

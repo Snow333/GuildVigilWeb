@@ -42,7 +42,7 @@ export default tseslint.config(
 
   // Tests and tools run in Node and may do IO, but still no ambient randomness in sim tests.
   {
-    files: ['tools/**', 'tests/**'],
+    files: ['tools/**', 'tests/**', 'e2e/**'],
     languageOptions: {
       globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly' },
     },

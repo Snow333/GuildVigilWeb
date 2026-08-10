@@ -4,6 +4,8 @@
  * history coupling.
  */
 
+import { buildFixtureDispatch } from '@sim/fixtures/dispatchFixture';
+import { interpretStream } from './beats/interpret';
 import { GameProvider, useGame } from './state/GameProvider';
 import { TitleScreen } from './screens/TitleScreen';
 import { TownHub } from './screens/TownHub';
@@ -42,12 +44,33 @@ function Router() {
   }
 }
 
+/**
+ * The Playwright half of the Phase 2 exit criterion (brief §4): the artifact
+ * renders the contract fixture's beat feed at #beat-fixture, and e2e asserts
+ * the DOM shows EXACTLY the lines the Vitest snapshot pinned.
+ */
+function BeatFixtureRoute() {
+  const feed = interpretStream(buildFixtureDispatch());
+  return (
+    <div>
+      <h1>Beat-feed contract fixture</h1>
+      {feed.lines.map((l, i) => (
+        <div key={i} data-beat="">{`${l.tick} [${l.tone}] ${l.text}`}</div>
+      ))}
+    </div>
+  );
+}
+
 export function App() {
   return (
     <main style={{ fontFamily: 'monospace', padding: 24 }}>
-      <GameProvider>
-        <Router />
-      </GameProvider>
+      {window.location.hash === '#beat-fixture' ? (
+        <BeatFixtureRoute />
+      ) : (
+        <GameProvider>
+          <Router />
+        </GameProvider>
+      )}
     </main>
   );
 }
