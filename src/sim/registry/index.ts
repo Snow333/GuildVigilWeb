@@ -4,7 +4,10 @@
  * Sim code reads content ONLY through here; no raw table scans in resolvers.
  */
 
-import { class_progression, classes, enemies, quests, spells, warlock_spell_costs } from '@content/generated';
+import {
+  buildings, class_progression, classes, enemies, quests, shop_stock, skills, spells,
+  warlock_spell_costs,
+} from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
 // Key types widened to number: the generated `as const` tables produce literal
@@ -27,6 +30,14 @@ export const progressionByClassLevel = new Map<string, (typeof class_progression
 export function progressionFor(classId: number, level: number): (typeof class_progression)[number] | null {
   return progressionByClassLevel.get(`${classId}:${level}`) ?? null;
 }
+
+export const buildingsById = new Map<number, (typeof buildings)[number]>(buildings.map((b) => [b.id, b]));
+
+/** Shop stock rows in table order (rotation subsets derive per week from these). */
+export const shopStockRows: readonly (typeof shop_stock)[number][] = shop_stock;
+
+/** Skill names in registry order — the level-up wizard's allocation vocabulary. */
+export const skillNames: readonly string[] = skills.map((s) => s.name.toLowerCase());
 
 /** Production XP source resolver over the real registries. */
 export const contentXpResolver: XpSourceResolver = {

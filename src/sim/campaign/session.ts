@@ -27,16 +27,24 @@ import {
   type DungeonDispatchResult,
   type MissionProfile,
 } from '@sim/dungeon/dispatch';
-import { partyDungeonBonus } from '@sim/heroes/featEffects';
-import { applyLevelUp, type LevelUpApplied, type LevelUpPlan } from '@sim/heroes/levelUp';
-import { characterLevel, type HeroState } from '@sim/heroes/types';
-import { awardXp, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
-import { contentXpResolver, progressionFor, questsById } from '@sim/registry';
+import { deriveItem, itemBasesById, type DerivedItem } from '@sim/heroes/equipment';
+import { featEffectsById, partyDungeonBonus } from '@sim/heroes/featEffects';
+import {
+  applyLevelUp, checkClassEligibility, isBoostLevel, skillPointsForLevel,
+  type LevelUpApplied, type LevelUpPlan,
+} from '@sim/heroes/levelUp';
+import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
+import { awardXp, canLevelUp, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
+import {
+  buildingsById, classesById, contentXpResolver, progressionFor, questsById, shopStockRows,
+  skillNames, spellsById,
+} from '@sim/registry';
 import { quests as questRows } from '@content/generated';
 import { generateWorld, type WorldMap } from '@sim/world/terrain';
 import { planTravel, type TravelPlan } from '@sim/world/travel';
 import { EscalationLedger, type EscalationFact } from '@sim/world/escalation';
-import { assembleParty, type HeroKit } from './assembly';
+import type { LoadoutEntry } from '@sim/combat/loadout';
+import { assembleHero, assembleParty, type HeroKit } from './assembly';
 
 export interface SessionConfig {
   campaignId: string;
@@ -73,6 +81,95 @@ export interface BoardEntry {
   rewardGold: number;
   rewardXp: number;
   pressureTier: number;
+  /** POI position (derived placement) — the world map draws tokens here. */
+  pos: { x: number; y: number };
+}
+
+/** Derived equipment view: the instance plus everything that recomputes from it. */
+export interface EquippedView {
+  slot: string;
+  instance: ItemInstance;
+  derived: DerivedItem;
+}
+
+export interface StashView {
+  index: number;
+  instance: ItemInstance;
+  derived: DerivedItem;
+  /** Sale price the shop would pay right now. */
+  sellPrice: number;
+}
+
+/** The full derived character sheet — the UI never computes a modifier (brief §1). */
+export interface HeroSheet {
+  id: string;
+  name: string;
+  status: HeroState['status'];
+  level: number;
+  xp: XpProgress;
+  classes: { classId: number; name: string; level: number }[];
+  abilities: Record<AbilityKey, { score: number; mod: number }>;
+  maxHp: number;
+  ac: number;
+  attackBonus: number;
+  damageDice: string;
+  saves: { fort: number; ref: number; will: number };
+  speed: number;
+  initiativeBonus: number;
+  skills: { name: string; ranks: number; total: number | null }[];
+  feats: { featId: number; name: string }[];
+  equipped: EquippedView[];
+  loadout: LoadoutEntry[];
+  wounded: number;
+  canLevelUp: boolean;
+}
+
+export interface LevelUpClassChoice {
+  classId: number;
+  name: string;
+  met: boolean;
+  reason: string;
+  keyAbility: string;
+  newClassLevel: number;
+  hpPerLevel: number | null;
+  skillPoints: number;
+}
+
+export interface LevelUpOptions {
+  eligible: boolean;
+  newCharacterLevel: number;
+  /** Reaching this level grants an ability boost (player's choice of ability). */
+  boostRequired: boolean;
+  skillNames: readonly string[];
+  classes: LevelUpClassChoice[];
+}
+
+export interface ShopOffer {
+  /** Stable handle for buyItem within the current rotation week. */
+  offerIndex: number;
+  buildingId: number;
+  buildingName: string;
+  itemBaseId: string;
+  derived: DerivedItem;
+  price: number;
+  /** null = unlimited stock this rotation. */
+  remaining: number | null;
+}
+
+export interface ForecastConfig {
+  profile: MissionProfile;
+  caution: Caution;
+}
+
+/** Outcome distribution over n headless dispatches on forked seeds (brief §1, risk R5). */
+export interface ForecastResult {
+  n: number;
+  completed: number;
+  retreated: number;
+  wiped: number;
+  medianHaulGold: number;
+  medianDurationMinutes: number;
+  travelEtaMinutes: number | null;
 }
 
 export interface RosterEntry {
@@ -120,7 +217,12 @@ export interface SessionSaveState {
   completed: [number, number][];
   active: { questId: number; postedWeek: number; acceptSeq: number } | null;
   escalation: { facts: EscalationFact[]; lastTier: [string, number][] };
+  /** Shop purchases this rotation week (2.2+; absent in 2.0 saves — backfills empty). */
+  shopSold?: { week: number; counts: [number, number][] };
 }
+
+/** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
+export const SHOP = { rotationSlots: 6, sellFraction: 0.5 } as const;
 
 /** Coarse region partition v1: Haven's home turf, then compass quadrants. */
 function regionFor(pos: { x: number; y: number }): string {
@@ -197,6 +299,9 @@ export class CampaignSession {
   private dispatchN = 0;
   private profile: MissionProfile = 'fullExplore';
   private caution: Caution = 'standard';
+  /** Purchases against the current rotation week (stock itself derives from seeds). */
+  private shopSoldWeek = 0;
+  private shopSoldCounts = new Map<number, number>();
 
   private constructor(config: SessionConfig, rng: Rng, ledger: EscalationLedger) {
     this.campaignId = config.campaignId;
@@ -411,6 +516,66 @@ export class CampaignSession {
     return applied;
   }
 
+  /**
+   * Stash → hero slot. Slot-compatibility is enforced HERE (brief §1) — the
+   * base's slot field is the law; an occupied slot swaps its item back to stash.
+   */
+  equip(heroId: string, stashIndex: number): void {
+    const kit = this.kitFor(heroId);
+    const instance = this.stash[stashIndex];
+    if (!instance) throw new Error(`equip: no stash item at index ${stashIndex}`);
+    const slot = itemBasesById.get(instance.baseId)?.slot as string | null | undefined;
+    if (!slot) throw new Error(`equip: ${instance.baseId} is not equippable (no slot)`);
+    this.stash.splice(stashIndex, 1);
+    const displaced = kit.equipped.findIndex((e) => (itemBasesById.get(e.baseId)?.slot as string | null) === slot);
+    if (displaced >= 0) this.stash.push(...kit.equipped.splice(displaced, 1));
+    kit.equipped.push(instance);
+  }
+
+  /** Hero slot → stash. */
+  unequip(heroId: string, slot: string): void {
+    const kit = this.kitFor(heroId);
+    const idx = kit.equipped.findIndex((e) => (itemBasesById.get(e.baseId)?.slot as string | null) === slot);
+    if (idx < 0) throw new Error(`unequip: nothing equipped in ${slot}`);
+    this.stash.push(...kit.equipped.splice(idx, 1));
+  }
+
+  /** Ordered priorities (core-loop D4): the list IS the strategy. */
+  setLoadout(heroId: string, entries: LoadoutEntry[]): void {
+    const kit = this.kitFor(heroId);
+    for (const entry of entries) {
+      if (entry.action === 'cast' && !spellsById.has(entry.spellId)) {
+        throw new Error(`setLoadout: unknown spell ${entry.spellId}`);
+      }
+    }
+    kit.loadout = jsonClone(entries);
+  }
+
+  /** Buy from the current rotation. Derived pricing; finite rows deplete until the next rotation. */
+  buyItem(offerIndex: number): void {
+    const offer = this.shopStock().find((o) => o.offerIndex === offerIndex);
+    if (!offer) throw new Error(`buyItem: no offer ${offerIndex} this rotation`);
+    if (offer.remaining !== null && offer.remaining <= 0) throw new Error(`buyItem: ${offer.derived.displayName} is sold out`);
+    if (this.gold < offer.price) throw new Error(`buyItem: need ${offer.price}g, have ${this.gold}g`);
+    this.touchShopWeek();
+    this.gold -= offer.price;
+    this.shopSoldCounts.set(offerIndex, (this.shopSoldCounts.get(offerIndex) ?? 0) + 1);
+    this.stash.push({
+      baseId: offer.itemBaseId,
+      tier: 'mundane',
+      propertyIds: [],
+      seed: `shop_${offer.buildingId}_w${this.week}_${offerIndex}_${this.shopSoldCounts.get(offerIndex)}`,
+    });
+  }
+
+  /** Sell from the stash at the derived price × sell fraction. */
+  sellItem(stashIndex: number): void {
+    const instance = this.stash[stashIndex];
+    if (!instance) throw new Error(`sellItem: no stash item at index ${stashIndex}`);
+    this.stash.splice(stashIndex, 1);
+    this.gold += Math.floor(deriveItem(instance).price * SHOP.sellFraction);
+  }
+
   // ── Queries (pure, no mutation) ───────────────────────────────────────────
 
   currentWeek(): number {
@@ -452,6 +617,197 @@ export class CampaignSession {
     return hero;
   }
 
+  /** The full derived sheet — assembly does the math; the UI only renders it. */
+  heroSheet(heroId: string): HeroSheet {
+    const kit = this.kitFor(heroId);
+    const hero = kit.hero;
+    const assembled = assembleHero(kit);
+    const c = assembled.c;
+
+    const abilities = {} as HeroSheet['abilities'];
+    for (const key of ['str', 'dex', 'con', 'int', 'wis', 'cha'] as AbilityKey[]) {
+      const score = hero.abilities[key];
+      abilities[key] = { score, mod: Math.floor((score - 10) / 2) };
+    }
+
+    const skills = skillNames.map((name) => ({
+      name,
+      ranks: hero.skills[name] ?? 0,
+      // Dungeon-check skills have full derived totals; others await their resolvers.
+      total: name in assembled.skills ? assembled.skills[name as keyof typeof assembled.skills] : null,
+    }));
+
+    return {
+      id: hero.id,
+      name: hero.name,
+      status: hero.status,
+      level: characterLevel(hero),
+      xp: xpForNextLevel(hero),
+      classes: hero.classLevels.map((cl) => ({
+        classId: cl.classId,
+        name: classesById.get(cl.classId)?.name ?? `class_${cl.classId}`,
+        level: cl.level,
+      })),
+      abilities,
+      maxHp: c.maxHp,
+      ac: c.ac,
+      attackBonus: c.attackBonus,
+      damageDice: c.damageDice,
+      saves: { ...c.saves },
+      speed: c.speed,
+      initiativeBonus: c.initiativeBonus,
+      skills,
+      feats: hero.feats.map((f) => ({
+        featId: f.featId,
+        name: featEffectsById.get(f.featId)?.featName ?? `feat_${f.featId}`,
+      })),
+      equipped: kit.equipped.map((instance) => {
+        const derived = deriveItem(instance);
+        return { slot: derived.slot ?? 'none', instance: jsonClone(instance), derived };
+      }),
+      loadout: jsonClone(kit.loadout),
+      wounded: hero.wounded,
+      canLevelUp: canLevelUp(hero),
+    };
+  }
+
+  /** The wizard's menu: every class with sim-judged eligibility (brief: eligibility from sim). */
+  levelUpOptions(heroId: string): LevelUpOptions {
+    const hero = this.heroState(heroId);
+    const newCharacterLevel = characterLevel(hero) + 1;
+    const boostRequired = isBoostLevel(newCharacterLevel);
+    const choices: LevelUpClassChoice[] = [];
+    for (const [classId, row] of classesById) {
+      const elig = checkClassEligibility(hero, classId);
+      const newClassLevel = (hero.classLevels.find((cl) => cl.classId === classId)?.level ?? 0) + 1;
+      const prog = progressionFor(classId, newClassLevel);
+      choices.push({
+        classId,
+        name: row.name,
+        met: elig.met && prog !== null,
+        reason: prog === null && elig.met ? 'No progression data at that level' : elig.reason,
+        keyAbility: (row.key_ability ?? 'str') as string,
+        newClassLevel,
+        hpPerLevel: prog ? (prog.hp_per_level as number) : null,
+        skillPoints: skillPointsForLevel(classId, hero),
+      });
+    }
+    return {
+      eligible: canLevelUp(hero),
+      newCharacterLevel,
+      boostRequired,
+      skillNames,
+      classes: choices.sort((a, b) => a.classId - b.classId),
+    };
+  }
+
+  /** Stash with derived views + live sell prices. */
+  stashView(): StashView[] {
+    return this.stash.map((instance, index) => {
+      const derived = deriveItem(instance);
+      return {
+        index,
+        instance: jsonClone(instance),
+        derived,
+        sellPrice: Math.floor(derived.price * SHOP.sellFraction),
+      };
+    });
+  }
+
+  /**
+   * The week's shop rotation — pure derivation from Seeds.rotation(buildingId, week)
+   * (constraint 7: never store what you can derive); only purchases are state.
+   */
+  shopStock(): ShopOffer[] {
+    const offers: ShopOffer[] = [];
+    const soldCounts = this.shopSoldWeek === this.week ? this.shopSoldCounts : new Map<number, number>();
+    const byBuilding = new Map<number, typeof shopStockRows[number][]>();
+    for (const row of shopStockRows) {
+      if ((row.required_building_level as number) > 1) continue; // building levels arrive with the town systems
+      const rows = byBuilding.get(row.building_id as number) ?? [];
+      rows.push(row);
+      byBuilding.set(row.building_id as number, rows);
+    }
+    for (const [buildingId, rows] of [...byBuilding.entries()].sort((a, b) => a[0] - b[0])) {
+      const rng = new Rng(Seeds.rotation(buildingId, this.week));
+      const rotation = rows.length <= SHOP.rotationSlots ? rows : rng.shuffle(rows).slice(0, SHOP.rotationSlots);
+      const building = buildingsById.get(buildingId);
+      const buildingName = (building?.shop_display_name as string | null) ?? building?.name ?? `building_${buildingId}`;
+      for (const row of rotation) {
+        const offerIndex = row.id as number; // stock-row id: stable across the rotation week
+        const baseId = String(row.item_id);
+        const derived = deriveItem({ baseId, tier: 'mundane', propertyIds: [], seed: `shop_preview_${offerIndex}` });
+        const quantity = row.stock_quantity as number;
+        const sold = soldCounts.get(offerIndex) ?? 0;
+        offers.push({
+          offerIndex,
+          buildingId,
+          buildingName,
+          itemBaseId: baseId,
+          derived,
+          price: Math.max(1, Math.round(derived.price * (row.price_modifier as number))),
+          remaining: quantity < 0 ? null : Math.max(quantity - sold, 0),
+        });
+      }
+    }
+    return offers;
+  }
+
+  /**
+   * n headless dispatches on forked seeds (Seeds.forecast) → outcome distribution.
+   * Forecast honesty (risk R5): forecast seeds ≠ live seed, SAME resolution path.
+   * Consumes no campaign RNG and mutates no hero state — pure by construction.
+   */
+  forecast(questId: number, cfg: ForecastConfig, n: number): ForecastResult {
+    const posting = this.open.find((o) => o.questId === questId) ??
+      (this.active?.questId === questId ? this.active : null);
+    if (!posting) throw new Error(`forecast: quest ${questId} is not available`);
+    const quest = questsById.get(questId)!;
+    const dungeonLevel = Math.max((quest.dungeon_level as number | null) ?? (quest.min_level as number), 1);
+    const pl = this.partyLevel();
+    const autoDetect = partyDungeonBonus(
+      this.kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
+      'auto_detect_traps_adjacent',
+    ).found;
+
+    let completed = 0, retreated = 0, wiped = 0;
+    const hauls: number[] = [];
+    const durations: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const result = runDungeonDispatch({
+        dispatchId: `forecast_${i}`,
+        partyId: Ids.party(1),
+        party: assembleParty(this.kits), // fresh combatants per run — real heroes untouched
+        tier: dungeonTierFor(dungeonLevel),
+        seed: Seeds.forecast(this.kits.length, i),
+        profile: cfg.profile,
+        caution: cfg.caution,
+        difficulty: dungeonLevel,
+        partyLevel: pl,
+        questId: String(questId),
+        regionId: posting.regionId,
+        autoDetectTraps: autoDetect,
+      });
+      if (result.outcome === 'completed') completed++;
+      else if (result.outcome === 'wiped') wiped++;
+      else retreated++;
+      hauls.push(result.gold);
+      durations.push(Math.ceil(result.ticks / 600));
+    }
+    hauls.sort((a, b) => a - b);
+    durations.sort((a, b) => a - b);
+    const plan = planTravel(this.map, WORLD.haven, posting.pos);
+    return {
+      n,
+      completed,
+      retreated,
+      wiped,
+      medianHaulGold: hauls[Math.floor(hauls.length / 2)] ?? 0,
+      medianDurationMinutes: durations[Math.floor(durations.length / 2)] ?? 0,
+      travelEtaMinutes: plan ? plan.etaMinutes : null,
+    };
+  }
+
   board(): BoardEntry[] {
     return this.open.map((o) => {
       const row = questsById.get(o.questId)!;
@@ -466,6 +822,7 @@ export class CampaignSession {
         rewardGold: row.reward_gold as number,
         rewardXp: row.reward_xp as number,
         pressureTier: this.ledger.pressureFor(o.regionId).tier,
+        pos: { ...o.pos },
       };
     });
   }
@@ -511,6 +868,7 @@ export class CampaignSession {
         ? { questId: this.active.questId, postedWeek: this.active.postedWeek, acceptSeq: this.active.acceptSeq }
         : null,
       escalation: this.ledger.serialize(),
+      shopSold: { week: this.shopSoldWeek, counts: [...this.shopSoldCounts.entries()] },
     });
   }
 
@@ -539,10 +897,33 @@ export class CampaignSession {
     session.active = data.active
       ? { ...session.rehydrateQuest(data.active.questId, data.active.postedWeek), acceptSeq: data.active.acceptSeq }
       : null;
+    // Backfill (constraint 8 spirit): 2.0 saves predate the shop — empty ledger.
+    session.shopSoldWeek = data.shopSold?.week ?? 0;
+    session.shopSoldCounts = new Map(data.shopSold?.counts ?? []);
     return session;
   }
 
+  /** Skill points for a prospective level-up, boost-aware (the fixed INT-boost ordering). */
+  skillPointsFor(heroId: string, classId: number, boost?: AbilityKey): number {
+    const hero = this.heroState(heroId);
+    return skillPointsForLevel(classId, hero, boost);
+  }
+
   // ── Internals ─────────────────────────────────────────────────────────────
+
+  private kitFor(heroId: string): HeroKit {
+    const kit = this.kits.find((k) => k.hero.id === heroId);
+    if (!kit) throw new Error(`unknown hero ${heroId}`);
+    return kit;
+  }
+
+  /** Purchases bind to a rotation week; entering a new week forgets the old ledger. */
+  private touchShopWeek(): void {
+    if (this.shopSoldWeek !== this.week) {
+      this.shopSoldWeek = this.week;
+      this.shopSoldCounts.clear();
+    }
+  }
 
   private rehydrateQuest(questId: number, postedWeek: number): OpenQuest {
     const row = questsById.get(questId);

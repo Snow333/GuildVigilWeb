@@ -7,13 +7,33 @@
  */
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
-import { CampaignSession, type SessionSaveState } from '@sim/campaign/session';
+import { CampaignSession, type QuestRecord, type SessionSaveState } from '@sim/campaign/session';
 import { starterParty } from '@sim/campaign/starterParty';
 import type { SaveStore } from '@sim/save/saveStore';
 import { makeEnvelope } from '@platform/envelope';
 import { LocalStorageSaveStore } from '@platform/localSaveStore';
 
-export type Screen = { kind: 'title' } | { kind: 'town' };
+export type Screen =
+  | { kind: 'title' }
+  | { kind: 'town' }
+  | { kind: 'hero'; heroId: string }
+  | { kind: 'board' }
+  | { kind: 'dispatch' }
+  | { kind: 'map'; questId: number | null }
+  | { kind: 'shop' }
+  | { kind: 'playback' }
+  | { kind: 'afterAction' }
+  | { kind: 'settings' };
+
+/** The launch hand-off: playback + after-action read this, never re-run the sim. */
+export interface LaunchContext {
+  record: QuestRecord;
+  questName: string;
+  /** world-stream length at launch — the after-action slice starts here. */
+  worldStart: number;
+}
+
+export type ReplaySpeed = 1 | 4 | 16;
 
 export interface GameContextValue {
   session: CampaignSession | null;
@@ -23,8 +43,14 @@ export interface GameContextValue {
   store: SaveStore;
   slotId: string | null;
   campaignName: string | null;
-  /** Run a session command synchronously; screens re-query on the version bump. */
-  exec: <T>(fn: (s: CampaignSession) => T) => T;
+  lastLaunch: LaunchContext | null;
+  lastError: string | null;
+  defaultSpeed: ReplaySpeed;
+  nav: (screen: Screen) => void;
+  /** Run a session command synchronously; null return = the command refused (see lastError). */
+  exec: <T>(fn: (s: CampaignSession) => T) => T | null;
+  setLastLaunch: (ctx: LaunchContext | null) => void;
+  setDefaultSpeed: (speed: ReplaySpeed) => void;
   startNew: (slotId: string, name: string) => Promise<void>;
   loadGame: (slotId: string) => Promise<boolean>;
   saveGame: () => Promise<void>;
@@ -44,13 +70,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [campaignName, setCampaignName] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   const [version, setVersion] = useState(0);
+  const [lastLaunch, setLastLaunch] = useState<LaunchContext | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [defaultSpeed, setDefaultSpeed] = useState<ReplaySpeed>(4);
+
+  const nav = useCallback((next: Screen): void => {
+    setLastError(null);
+    setScreen(next);
+  }, []);
 
   const exec = useCallback(
-    <T,>(fn: (s: CampaignSession) => T): T => {
+    <T,>(fn: (s: CampaignSession) => T): T | null => {
       if (!session) throw new Error('exec: no campaign in progress');
-      const result = fn(session);
-      setVersion((v) => v + 1);
-      return result;
+      try {
+        const result = fn(session);
+        setLastError(null);
+        return result;
+      } catch (e) {
+        setLastError(e instanceof Error ? e.message : String(e));
+        return null;
+      } finally {
+        setVersion((v) => v + 1);
+      }
     },
     [session],
   );
@@ -72,11 +113,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSession(fresh);
       setSlotId(slot);
       setCampaignName(name);
-      setScreen({ kind: 'town' });
+      setLastLaunch(null);
+      nav({ kind: 'town' });
       setVersion((v) => v + 1);
       await store.save(slot, makeEnvelope(fresh, slot, name));
     },
-    [store],
+    [store, nav],
   );
 
   const loadGame = useCallback(
@@ -87,23 +129,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSession(restored);
       setSlotId(slot);
       setCampaignName(envelope.meta.name);
-      setScreen({ kind: 'town' });
+      setLastLaunch(null);
+      nav({ kind: 'town' });
       setVersion((v) => v + 1);
       return true;
     },
-    [store],
+    [store, nav],
   );
 
   const quitToTitle = useCallback((): void => {
     setSession(null);
     setSlotId(null);
     setCampaignName(null);
-    setScreen({ kind: 'title' });
-  }, []);
+    setLastLaunch(null);
+    nav({ kind: 'title' });
+  }, [nav]);
 
   const value: GameContextValue = {
-    session, version, screen, store, slotId, campaignName,
-    exec, startNew, loadGame, saveGame, quitToTitle,
+    session, version, screen, store, slotId, campaignName, lastLaunch, lastError, defaultSpeed,
+    nav, exec, setLastLaunch, setDefaultSpeed, startNew, loadGame, saveGame, quitToTitle,
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
