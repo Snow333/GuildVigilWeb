@@ -41,6 +41,8 @@ export interface DungeonDispatchOptions {
   questId?: string;
   regionId?: string;
   templateId?: string;
+  /** Authored boss-room roster (brief #6): the quest pins its climax fight. */
+  bossRoster?: readonly number[];
   /** Trap Finder party bonus (wired from feats by the 1.5 assembly). */
   autoDetectTraps?: boolean;
 }
@@ -68,7 +70,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
         return t.templateId === opts.templateId ? t : t; // explicit ids resolve via pool in 1.5 glue
       })()
     : pickTemplate(opts.tier, opts.seed);
-  const pop = populate(template, opts.seed, opts.difficulty, opts.partyLevel);
+  const pop = populate(template, opts.seed, opts.difficulty, opts.partyLevel, opts.bossRoster);
   const stream = new EventStream('dispatch', opts.dispatchId);
   const regionId = opts.regionId ?? 'region_unknown';
 

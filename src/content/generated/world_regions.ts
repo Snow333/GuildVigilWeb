@@ -18,5 +18,50 @@ export const world_regions = [
   "danger_level": 4,
   "known_resources": "[\"timber\",\"farmland\",\"river_access\"]",
   "mysteries": "[\"Why did the last guild abandon Haven\",\"Grumply Ironpatch chose to retire here — why\",\"Multiple nations have agents already embedded here\"]"
+ },
+ {
+  "id": "region_haven",
+  "name": "The Vigil Lands",
+  "description": "Haven's home fields and the roads the guild keeps open. Quiet is a thing that gets made here, daily, by hand.",
+  "controlled_by": "Haven",
+  "danger_level": 1,
+  "known_resources": "[\"grain\",\"timber\"]",
+  "mysteries": "[]"
+ },
+ {
+  "id": "region_ne",
+  "name": "The Ashmark",
+  "description": "Burned-over frontier running toward the Dominion border. Named twice: once for the soil, once for this year.",
+  "controlled_by": null,
+  "danger_level": 4,
+  "known_resources": "[\"iron\",\"salt\"]",
+  "mysteries": "[\"Krathite survey-marks\",\"the opened barrows\"]"
+ },
+ {
+  "id": "region_nw",
+  "name": "Thornwood Reach",
+  "description": "Old forest and older footpaths. The wargs came through here, which means something taught them the way.",
+  "controlled_by": null,
+  "danger_level": 3,
+  "known_resources": "[\"timber\",\"furs\"]",
+  "mysteries": "[\"war-bred wargs far from any pen\"]"
+ },
+ {
+  "id": "region_se",
+  "name": "The Fallow Coast",
+  "description": "Low farmland and river caves the maps undersell. Smugglers have always liked it; lately, so does someone's buyer.",
+  "controlled_by": null,
+  "danger_level": 2,
+  "known_resources": "[\"fish\",\"clay\"]",
+  "mysteries": "[\"the ledger's unnamed buyer\"]"
+ },
+ {
+  "id": "region_sw",
+  "name": "Gravel Downs",
+  "description": "Scrub hills, dry barrows, and the only ground flat enough to assemble engines out of sight of the walls.",
+  "controlled_by": null,
+  "danger_level": 3,
+  "known_resources": "[\"stone\"]",
+  "mysteries": "[\"fresh cart-ruts leading nowhere on any map\"]"
  }
 ] as const;

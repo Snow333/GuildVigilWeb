@@ -65,6 +65,8 @@ export function populate(
   seed: string,
   difficulty: number,
   partyLevel: number,
+  /** Authored boss-room roster (brief #6): quest-pinned climaxes skip the band roll. */
+  bossRoster?: readonly number[],
 ): PopulatedDungeon {
   const rng = new Rng(`pop_${seed}_${template.templateId}`);
   const rooms = new Map<number, PopulatedRoom>();
@@ -105,14 +107,18 @@ export function populate(
     if (type === 'combat') {
       enemyIds = pickEnemies(rng.int(ENCOUNTERS.combatRoomEnemies.min, ENCOUNTERS.combatRoomEnemies.max), minL, maxL, difficulty, rng);
     } else if (type === 'boss') {
-      // Boss rooms budget at their own elevated level — the spike is the point.
-      enemyIds = pickEnemies(
-        rng.int(ENCOUNTERS.bossRoomEnemies.min, ENCOUNTERS.bossRoomEnemies.max),
-        difficulty + 1,
-        difficulty + ENCOUNTERS.bossLevelBonus,
-        difficulty + 1,
-        rng,
-      );
+      if (bossRoster && bossRoster.length > 0) {
+        enemyIds = [...bossRoster]; // the quest authored this fight
+      } else {
+        // Boss rooms budget at their own elevated level — the spike is the point.
+        enemyIds = pickEnemies(
+          rng.int(ENCOUNTERS.bossRoomEnemies.min, ENCOUNTERS.bossRoomEnemies.max),
+          difficulty + 1,
+          difficulty + ENCOUNTERS.bossLevelBonus,
+          difficulty + 1,
+          rng,
+        );
+      }
     }
 
     rooms.set(node.n, {

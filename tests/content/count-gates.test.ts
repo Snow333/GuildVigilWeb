@@ -14,7 +14,7 @@ const GATES: Record<string, number> = {
   class_proficiency_tiers: 112,
   items: 183,
   item_properties: 33,
-  enemies: 24,
+  enemies: 45, // 24 + 21 "Vanguard's Shadow" (brief #6)
   classes: 13,
   ancestries: 6,
   skills: 15,
@@ -23,7 +23,7 @@ const GATES: Record<string, number> = {
   loot_tables: 97,
   shop_stock: 105,
   buildings: 18,
-  quests: 12,
+  quests: 22, // 12 + 10 "Vanguard's Shadow"
   warlock_spell_costs: 7,
   bloodlines: 8,
   bloodline_spells: 40,
@@ -31,6 +31,13 @@ const GATES: Record<string, number> = {
   nations: 9,
   nation_leaders: 35,
   eight_pillars: 8,
+  // Narrative layer, first populated by the vertical slice (brief #6):
+  npcs: 2,
+  storylines: 1,
+  storyline_quests: 10,
+  story_dialogue: 4,
+  lore_references: 6,
+  world_regions: 7, // 5 sim regions + 2 legacy lore rows (append-only)
 };
 
 describe('content count gates', () => {

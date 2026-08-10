@@ -151,6 +151,59 @@ describe('shop v1 — seeded rotation, derived prices, finite stock', () => {
   });
 });
 
+describe('abandon (finding #1: free return) and expiry cooldown (finding #2)', () => {
+  it('abandon returns the quest to the board with its ORIGINAL posting week — no parking', () => {
+    const s = newSession('abandon_0');
+    s.advanceWeek(); // week 1: postings arrive
+    const target = s.board()[0]!;
+    s.acceptQuest(target.questId);
+    expect(s.board().some((b) => b.questId === target.questId)).toBe(false);
+    s.abandonQuest();
+    expect(s.activeQuest()).toBeNull();
+    const back = s.board().find((b) => b.questId === target.questId);
+    expect(back).toBeDefined();
+    expect(back!.postedWeek).toBe(target.postedWeek); // the expiry clock never stopped
+    expect(() => s.abandonQuest()).toThrow(/no active quest/);
+    // Parking is impossible: the abandoned posting still expires on schedule.
+    s.advanceWeek();
+    s.advanceWeek(); // week 3: week - postedWeek(1) >= 2
+    expect(s.board().some((b) => b.questId === target.questId)).toBe(false);
+    expect(s.world.byType('world.quest_expired').some((e) => e.data.questId === String(target.questId))).toBe(true);
+  });
+
+  it('expired quests sit out the cooldown; the pool rotates fresh trouble in behind them', () => {
+    const s = newSession('cooldown_0');
+    s.advanceWeek(); // wk 1: board fills
+    const week1Ids = s.board().map((b) => b.questId);
+    expect(week1Ids.length).toBeGreaterThan(0);
+    s.advanceWeek(); // wk 2: still posted (expiry needs 2 full weeks)
+    s.advanceWeek(); // wk 3: week-1 postings expire — and STAY DOWN for the cooldown
+    for (const id of week1Ids) {
+      expect(s.board().some((b) => b.questId === id), `quest ${id} must cool down`).toBe(false);
+    }
+    s.advanceWeek(); // wk 4: cooldown holds for the wk-3 expiries
+    const expiredAtW3 = week1Ids;
+    for (const id of expiredAtW3) {
+      expect(s.board().some((b) => b.questId === id)).toBe(false);
+    }
+    s.advanceWeek(); // wk 5: cooldown over — the originals may return
+    expect(s.board().some((b) => expiredAtW3.includes(b.questId))).toBe(true);
+  });
+
+  it('cooldown state survives serialize/deserialize (reload cannot forgive an expiry)', () => {
+    const s = newSession('cooldown_1');
+    for (let w = 0; w < 3; w++) s.advanceWeek(); // wk 3: week-1 postings just expired
+    const expiredIds = s.world.byType('world.quest_expired').map((e) => Number(e.data.questId));
+    expect(expiredIds.length).toBeGreaterThan(0);
+    const restored = CampaignSession.deserialize(s.serialize());
+    restored.advanceWeek(); // wk 4: cooldown must still hold after reload
+    for (const id of expiredIds) {
+      expect(restored.board().some((b) => b.questId === id)).toBe(false);
+    }
+    expect(restored.serialize()).toEqual((() => { s.advanceWeek(); return s.serialize(); })());
+  });
+});
+
 describe('forecast — honesty by construction (risk R5)', () => {
   it('same inputs → same distribution; campaign state completely untouched', () => {
     const s = newSession('fc_0');

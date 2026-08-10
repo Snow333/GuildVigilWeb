@@ -62,7 +62,19 @@ export function DispatchSetup() {
   return (
     <div>
       <h1>Dispatch setup — quest #{active.questId} ({active.regionId})</h1>
-      <p><button onClick={() => nav({ kind: 'town' })}>◂ Town</button> <button onClick={() => nav({ kind: 'map', questId: active.questId })}>Map</button></p>
+      <p>
+        <button onClick={() => nav({ kind: 'town' })}>◂ Town</button>{' '}
+        <button onClick={() => nav({ kind: 'map', questId: active.questId })}>Map</button>{' '}
+        <button
+          onClick={() => {
+            exec((s) => s.abandonQuest());
+            nav({ kind: 'board' });
+          }}
+        >
+          Abandon quest ◂ back to board
+        </button>{' '}
+        <small>(no penalty — but its expiry clock never stopped)</small>
+      </p>
 
       <h3>Team (party_1 — multi-team arrives later)</h3>
       <p>{roster.map((r) => `${r.name} L${r.level}`).join(' · ')}</p>

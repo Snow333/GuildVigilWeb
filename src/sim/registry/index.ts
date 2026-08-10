@@ -5,8 +5,8 @@
  */
 
 import {
-  buildings, class_progression, classes, enemies, quests, shop_stock, skills, spells,
-  warlock_spell_costs,
+  buildings, class_progression, classes, enemies, npcs, quests, shop_stock, skills, spells,
+  story_dialogue, storyline_quests, storylines, warlock_spell_costs, world_regions,
 } from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
@@ -32,6 +32,23 @@ export function progressionFor(classId: number, level: number): (typeof class_pr
 }
 
 export const buildingsById = new Map<number, (typeof buildings)[number]>(buildings.map((b) => [b.id, b]));
+export const npcsById = new Map<number, (typeof npcs)[number]>(npcs.map((n) => [n.id, n]));
+export const storylinesById = new Map<number, (typeof storylines)[number]>(storylines.map((s) => [s.id, s]));
+export const worldRegionsById = new Map<string, (typeof world_regions)[number]>(world_regions.map((r) => [r.id, r]));
+
+/** Storyline membership by quest id: {storylineId, sequence, predecessor quest id}. */
+export const storylineByQuestId = new Map<number, { storylineId: number; sequence: number; prevQuestId: number | null }>(
+  storyline_quests.map((sq) => {
+    const prev = storyline_quests.find(
+      (p) => p.storyline_id === sq.storyline_id && p.sequence === sq.sequence - 1,
+    );
+    return [sq.quest_id, { storylineId: sq.storyline_id, sequence: sq.sequence, prevQuestId: prev?.quest_id ?? null }];
+  }),
+);
+
+/** Dialogue rows in sequence order (trigger semantics live in the session query). */
+export const storyDialogueRows: readonly (typeof story_dialogue)[number][] =
+  [...story_dialogue].sort((a, b) => a.sequence - b.sequence);
 
 /** Shop stock rows in table order (rotation subsets derive per week from these). */
 export const shopStockRows: readonly (typeof shop_stock)[number][] = shop_stock;

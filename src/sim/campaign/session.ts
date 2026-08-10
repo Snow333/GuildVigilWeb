@@ -36,8 +36,9 @@ import {
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
 import { awardXp, canLevelUp, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
 import {
-  buildingsById, classesById, contentXpResolver, progressionFor, questsById, shopStockRows,
-  skillNames, spellsById,
+  buildingsById, classesById, contentXpResolver, npcsById, progressionFor, questsById,
+  shopStockRows, skillNames, spellsById, storyDialogueRows, storylineByQuestId, storylinesById,
+  worldRegionsById,
 } from '@sim/registry';
 import { quests as questRows } from '@content/generated';
 import { generateWorld, type WorldMap } from '@sim/world/terrain';
@@ -219,6 +220,8 @@ export interface SessionSaveState {
   /** Board postings; pos/region re-derive from the POI placement. */
   open: { questId: number; postedWeek: number }[];
   completed: [number, number][];
+  /** Expiry-cooldown ledger (finding #2; absent in older saves — backfills empty). */
+  expired?: [number, number][];
   active: { questId: number; postedWeek: number; acceptSeq: number } | null;
   escalation: { facts: EscalationFact[]; lastTier: [string, number][] };
   /** Shop purchases this rotation week (2.2+; absent in 2.0 saves — backfills empty). */
@@ -237,8 +240,8 @@ function regionFor(pos: { x: number; y: number }): string {
 }
 
 /** Deterministic, reachable POI placement: farther out for higher-level quests. */
-function placePoi(map: WorldMap, poiId: number, minLevel: number): { x: number; y: number } {
-  const rng = new Rng(Seeds.poi(map.seed, poiId));
+function placePoi(map: WorldMap, seed: string, minLevel: number): { x: number; y: number } {
+  const rng = new Rng(seed);
   for (let attempt = 0; attempt < 60; attempt++) {
     const radius = 8 + minLevel * 5 + rng.float(-3, 8);
     const angle = rng.float(0, Math.PI * 2);
@@ -290,7 +293,7 @@ export class CampaignSession {
   private readonly kits: HeroKit[];
   private readonly heroes: HeroState[];
   private readonly rng: Rng;
-  private readonly poiCache = new Map<number, { x: number; y: number }>();
+  private readonly poiCache = new Map<string, { x: number; y: number }>();
 
   private week = 0;
   private minute = 0;
@@ -299,6 +302,12 @@ export class CampaignSession {
   private open: OpenQuest[] = [];
   /** questId → week completed; the board reposts it after a cooldown (the world restocks trouble). */
   private completed = new Map<number, number>();
+  /**
+   * questId → week expired; expired postings sit out the SAME cooldown before
+   * reposting (playtest finding #2, Steven-approved: the neglected board
+   * visibly breathes instead of silently cycling). Balance change, re-baselined.
+   */
+  private expired = new Map<number, number>();
   private active: ActiveQuest | null = null;
   private dispatchN = 0;
   private profile: MissionProfile = 'fullExplore';
@@ -337,20 +346,33 @@ export class CampaignSession {
       const q = this.open[i]!;
       if (week - q.postedWeek >= SCHEDULER.expiryWeeks) {
         this.open.splice(i, 1);
+        this.expired.set(q.questId, week);
         this.world.emit(this.minute, 'world.quest_expired', { questId: String(q.questId), regionId: q.regionId });
         this.recordFact(week, q.regionId, 'quest_expired', String(q.questId));
       }
     }
 
     // ── Posting: authored pool, level band, region drift widens the top ──
+    // Storyline quests scan FIRST (brief #6): the board is how the arc reaches
+    // the player, and four filler slots must not drown the opener. Within each
+    // group, table order — deterministic.
     const pl = this.partyLevel();
-    for (const row of questRows) {
+    const postingOrder = [...questRows].sort((a, b) => {
+      const arcA = storylineByQuestId.has(a.id) && !this.completed.has(a.id) ? 0 : 1;
+      const arcB = storylineByQuestId.has(b.id) && !this.completed.has(b.id) ? 0 : 1;
+      return arcA - arcB || a.id - b.id;
+    });
+    for (const row of postingOrder) {
       if (this.open.length >= SCHEDULER.maxOpenQuests) break;
       const doneWeek = this.completed.get(row.id);
       if (doneWeek !== undefined && week - doneWeek < SCHEDULER.expiryWeeks) continue;
+      const expiredWeek = this.expired.get(row.id);
+      if (expiredWeek !== undefined && week - expiredWeek < SCHEDULER.expiryWeeks) continue;
       if (this.open.some((o) => o.questId === row.id)) continue;
+      if (!this.storylineUnlocked(row.id)) continue; // arc quests post in sequence (brief #6)
+      if (doneWeek !== undefined && storylineByQuestId.has(row.id)) continue; // arc beats happen ONCE
       if (this.active?.questId === row.id) continue; // live play: an accepted quest is off the board
-      const pos = this.poiPos(row.poi_id as number, row.min_level as number);
+      const pos = this.questPos(row);
       const regionId = regionFor(pos);
       const drift = this.ledger.effectsFor(regionId).questLevelDrift;
       if ((row.min_level as number) < pl - SCHEDULER.levelBandBelow) continue;
@@ -373,6 +395,23 @@ export class CampaignSession {
       questId: String(q.questId), partyId: Ids.party(1),
     });
     this.active = { ...q, acceptSeq: acceptEv.seq };
+  }
+
+  /**
+   * Return the active quest to the board, no penalty (playtest finding #1,
+   * Steven's call: free return). The posting keeps its ORIGINAL week — you
+   * cannot park a quest by accept/abandon cycling; its expiry clock never
+   * stopped. Re-emits quest_posted so feeds see it reappear.
+   */
+  abandonQuest(): void {
+    const q = this.active;
+    if (!q) throw new Error('abandonQuest: no active quest');
+    this.active = null;
+    this.open.push({ questId: q.questId, postedWeek: q.postedWeek, regionId: q.regionId, pos: q.pos });
+    this.world.emit(this.minute, 'world.quest_posted', {
+      questId: String(q.questId), regionId: q.regionId, kind: 'story',
+      expiresWeek: q.postedWeek + SCHEDULER.expiryWeeks,
+    });
   }
 
   configureDispatch(cfg: DispatchConfig): void {
@@ -432,7 +471,9 @@ export class CampaignSession {
         return { week, questId: q.questId, outcome: 'ambushKilled' };
       }
     }
-    this.world.emit(minute, 'dispatch.travel_arrived', { poiId: `poi_${quest.poi_id}` });
+    this.world.emit(minute, 'dispatch.travel_arrived', {
+      poiId: quest.poi_id !== null ? `poi_${quest.poi_id}` : `poi_q${q.questId}`,
+    });
 
     // ── The mission itself ──
     let outcome: QuestRecord['outcome'];
@@ -451,6 +492,12 @@ export class CampaignSession {
       else outcome = party.every((h) => h.c.hp <= 0 || h.c.conditions.has('dying') || h.c.conditions.has('unconscious')) ? 'wiped' : 'failed';
     } else {
       const dungeonLevel = Math.max((quest.dungeon_level as number | null) ?? (quest.min_level as number), 1);
+      // Brief #6: a DUNGEON quest with an authored enemy_group pins its boss
+      // room — the arc's climax is a guarantee, not a band roll.
+      const bossRoster = quest.enemy_group
+        ? (JSON.parse(quest.enemy_group as string) as { enemy_id: number; count: number }[])
+            .flatMap((g) => Array.from({ length: g.count }, () => g.enemy_id))
+        : undefined;
       dispatch = runDungeonDispatch({
         dispatchId,
         partyId: Ids.party(1),
@@ -463,6 +510,7 @@ export class CampaignSession {
         partyLevel: pl,
         questId: String(q.questId),
         regionId: q.regionId,
+        ...(bossRoster ? { bossRoster } : {}),
         autoDetectTraps: partyDungeonBonus(
           this.kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
           'auto_detect_traps_adjacent',
@@ -841,6 +889,43 @@ export class CampaignSession {
     return this.ledger.pressureFor(regionId);
   }
 
+  /** Authored region name (world_regions), falling back to the raw id. */
+  regionName(regionId: string): string {
+    return worldRegionsById.get(regionId)?.name ?? regionId;
+  }
+
+  /**
+   * Dialogue beats whose triggers have fired, in sequence (brief #6). Pure
+   * derivation from the completed map: trigger_value '' fires at arc start;
+   * a quest id fires once that quest is completed. The UI renders the log.
+   */
+  pendingDialogue(): { id: number; speaker: string; text: string; choices: { label: string }[] }[] {
+    const out: { id: number; speaker: string; text: string; choices: { label: string }[] }[] = [];
+    for (const row of storyDialogueRows) {
+      if (row.trigger_type !== 'quest') continue;
+      const value = row.trigger_value as string;
+      const storyline = storylinesById.get(row.storyline_id);
+      const fired = value === ''
+        ? storyline?.trigger_type === 'game_start'
+        : this.completed.has(Number(value));
+      if (!fired) continue;
+      let choices: { label: string }[] = [];
+      try {
+        choices = row.choices ? (JSON.parse(row.choices as string) as { label: string }[]) : [];
+      } catch {
+        // malformed choices JSON renders as no choices — never fatal
+      }
+      const npc = npcsById.get(row.npc_id);
+      out.push({
+        id: row.id,
+        speaker: (row.speaker as string) || npc?.name || `npc_${row.npc_id}`,
+        text: row.text as string,
+        choices,
+      });
+    }
+    return out;
+  }
+
   worldMap(): WorldMap {
     return this.map;
   }
@@ -870,6 +955,7 @@ export class CampaignSession {
       stash: this.stash,
       open: this.open.map((o) => ({ questId: o.questId, postedWeek: o.postedWeek })),
       completed: [...this.completed.entries()],
+      expired: [...this.expired.entries()],
       active: this.active
         ? { questId: this.active.questId, postedWeek: this.active.postedWeek, acceptSeq: this.active.acceptSeq }
         : null,
@@ -900,6 +986,7 @@ export class CampaignSession {
     session.stash = data.stash;
     session.open = data.open.map((o) => session.rehydrateQuest(o.questId, o.postedWeek));
     session.completed = new Map(data.completed);
+    session.expired = new Map(data.expired ?? []); // pre-cooldown saves backfill empty
     session.active = data.active
       ? { ...session.rehydrateQuest(data.active.questId, data.active.postedWeek), acceptSeq: data.active.acceptSeq }
       : null;
@@ -923,6 +1010,21 @@ export class CampaignSession {
     return kit;
   }
 
+  /**
+   * Storyline gating (brief #6): non-arc quests are always eligible; arc quests
+   * post when the opener's storyline has begun (game_start) and their
+   * predecessor is COMPLETED. Progress derives from the completed map
+   * (constraint 7) — old saves simply meet the arc at its start.
+   */
+  private storylineUnlocked(questId: number): boolean {
+    const membership = storylineByQuestId.get(questId);
+    if (!membership) return true;
+    if (membership.sequence === 1) {
+      return storylinesById.get(membership.storylineId)?.trigger_type === 'game_start';
+    }
+    return membership.prevQuestId !== null && this.completed.has(membership.prevQuestId);
+  }
+
   /** Purchases bind to a rotation week; entering a new week forgets the old ledger. */
   private touchShopWeek(): void {
     if (this.shopSoldWeek !== this.week) {
@@ -934,25 +1036,44 @@ export class CampaignSession {
   private rehydrateQuest(questId: number, postedWeek: number): OpenQuest {
     const row = questsById.get(questId);
     if (!row) throw new Error(`deserialize: unknown quest ${questId} in save`);
-    const pos = this.poiPos(row.poi_id as number, row.min_level as number);
+    const pos = this.questPos(row);
     return { questId, postedWeek, regionId: regionFor(pos), pos };
   }
 
-  private poiPos(poiId: number, minLevel: number): { x: number; y: number } {
-    const cached = this.poiCache.get(poiId);
+  /**
+   * Position for a quest's destination. Authored POIs (poi_id set) place via
+   * Seeds.poi and share across quests; null-poi quests place PER QUEST via
+   * Seeds.questPoi. (Phase 1 keyed the cache on poi_id alone, so all null-poi
+   * quests shared one slot whose position depended on which quest claimed it
+   * first — a reload could rehydrate a different claimant and desync resumes.
+   * Found by the resume-determinism test when the expiry cooldown let the
+   * posting scan reach the null-poi rows.)
+   */
+  private questPos(row: { id: number; poi_id: unknown; min_level: unknown }): { x: number; y: number } {
+    const poiId = row.poi_id as number | null;
+    const key = poiId !== null ? `p${poiId}` : `q${row.id}`;
+    const cached = this.poiCache.get(key);
     if (cached) return cached;
-    const pos = placePoi(this.map, poiId, minLevel);
-    this.poiCache.set(poiId, pos);
+    const seed = poiId !== null ? Seeds.poi(this.map.seed, poiId) : Seeds.questPoi(this.map.seed, row.id);
+    const pos = placePoi(this.map, seed, row.min_level as number);
+    this.poiCache.set(key, pos);
     return pos;
   }
 
   /** Escalation fact + tier-change event, one seam for every consequence. */
   private recordFact(week: number, regionId: string, kind: string, refId: string, minute = this.minute): void {
     const before = this.ledger.pressureFor(regionId).tier;
-    this.ledger.append({ week, regionId, kind, refId });
+    const { crossedUpTo } = this.ledger.append({ week, regionId, kind, refId });
     const after = this.ledger.pressureFor(regionId).tier;
     if (after !== before) {
       this.world.emit(minute, 'world.escalation_changed', { regionId, oldTier: before, newTier: after });
+    }
+    // Villain beats (brief #6): upward crossings give the arc's villain a voice —
+    // one beat per crossing, in order (escalation brief: fire once per crossing).
+    for (const tier of crossedUpTo) {
+      this.world.emit(minute, 'world.villain_beat_fired', {
+        regionId, villainId: 'vanguard_captain_ruk_mor_tal', beatId: `vanguard_${regionId}_t${tier}`,
+      });
     }
   }
 

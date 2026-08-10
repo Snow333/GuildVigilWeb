@@ -14,10 +14,19 @@ import { expect, test, type Page } from '@playwright/test';
 
 const MAX_WEEKS = 24;
 
-/** Accept the easiest visible posting (challenge, then quest id) — the v1 policy by hand. */
-async function acceptEasiest(page: Page): Promise<void> {
+/**
+ * Accept the easiest visible posting (challenge, then quest id) — the v1 policy
+ * by hand. Returns false on a bare board (the expiry cooldown makes those real:
+ * the guild waits out a restock).
+ */
+async function acceptEasiest(page: Page): Promise<boolean> {
   await page.locator('button:has-text("Quest board")').click();
   await page.locator('h1:has-text("Quest board")').waitFor();
+  if (await page.locator('text=The board is bare').isVisible()) {
+    await page.locator('button:has-text("◂ Town")').click();
+    await page.locator('h1:has-text("Town Hub")').waitFor();
+    return false;
+  }
   const rows = page.locator('tbody tr');
   const n = await rows.count();
   let best = { challenge: Infinity, questId: Infinity, row: -1 };
@@ -32,6 +41,7 @@ async function acceptEasiest(page: Page): Promise<void> {
   expect(best.row, 'a posting to accept').toBeGreaterThanOrEqual(0);
   await rows.nth(best.row).locator('button:has-text("Accept")').click();
   await page.locator('h1:has-text("Dispatch setup")').waitFor();
+  return true;
 }
 
 /** Launch, sit through playback (skip) or the surface resolution, take the report, go home. */
@@ -61,12 +71,13 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
   await page.locator('h1:has-text("Town Hub")').waitFor();
 
   // Forecast panel renders before the first launch (constraint 3 on screen).
-  await acceptEasiest(page);
+  expect(await acceptEasiest(page)).toBe(true); // week 1 always posts
   await page.locator('button:has-text("Run forecast")').click();
   await expect(page.locator('pre')).toContainText('median haul');
   await launchAndReturn(page);
 
-  // Grind the deterministic trace until someone can level (wk 20 on this seed).
+  // Grind the deterministic trace until someone can level (wk 21 on this seed,
+  // post rank-cap + expiry-cooldown rebalance).
   let leveled = false;
   for (let week = 2; week <= MAX_WEEKS; week++) {
     if (await page.locator('button:has-text("level up!")').first().isVisible()) {
@@ -74,8 +85,9 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
       break;
     }
     await page.locator('button:has-text("Advance Week")').click();
-    await acceptEasiest(page);
-    await launchAndReturn(page);
+    if (await acceptEasiest(page)) {
+      await launchAndReturn(page);
+    }
   }
   expect(leveled, `a hero ready to level within ${MAX_WEEKS} weeks`).toBe(true);
 

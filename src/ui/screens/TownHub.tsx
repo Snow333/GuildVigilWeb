@@ -19,6 +19,8 @@ export function TownHub() {
   const active = session.activeQuest();
   const regions = REGION_IDS.map((id) => session.pressure(id));
 
+  const dialogue = session.pendingDialogue();
+
   const advance = (): void => {
     exec((s) => s.advanceWeek());
     void saveGame(); // autosave point (brief §2)
@@ -41,6 +43,22 @@ export function TownHub() {
         <button onClick={() => void saveGame()}>Save</button>{' '}
         <button onClick={quitToTitle}>Quit to title</button>
       </p>
+
+      {dialogue.length > 0 && (
+        <>
+          <h2>The Marshal's Table</h2>
+          <div style={{ border: '1px solid #444', padding: 8, maxWidth: 640 }}>
+            {dialogue.map((d) => (
+              <p key={d.id}>
+                <b>{d.speaker}</b> — {d.text}
+                {d.choices.length > 0 && (
+                  <><br />{d.choices.map((c, i) => <button key={i}>{c.label}</button>)}</>
+                )}
+              </p>
+            ))}
+          </div>
+        </>
+      )}
 
       <h2>Roster</h2>
       <table border={1} cellPadding={6}>
@@ -78,7 +96,7 @@ export function TownHub() {
         <tbody>
           {regions.map((r) => (
             <tr key={r.regionId}>
-              <td>{r.regionId}</td>
+              <td>{session.regionName(r.regionId)}</td>
               <td>T{r.tier} {r.tierName}</td>
               <td>{r.score}</td>
             </tr>

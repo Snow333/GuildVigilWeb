@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "e2e": "pnpm build && playwright test",
     "convert": "node tools/convert-content.mjs",
+    "db:apply": "node tools/apply-seed.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "dependencies": {

@@ -49,7 +49,7 @@ export function QuestBoard() {
                   <td>#{b.questId} {b.name}</td>
                   <td>{b.minLevel}</td>
                   <td>{b.challenge}</td>
-                  <td>{b.regionId}</td>
+                  <td>{session.regionName(b.regionId)}</td>
                   <td>wk {b.expiresWeek}</td>
                   <td>{b.rewardGold}g / {b.rewardXp}xp</td>
                   <td>{travel ? `${travel.etaMinutes} min` : 'unreachable'}</td>

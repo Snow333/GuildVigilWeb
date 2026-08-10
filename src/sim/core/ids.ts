@@ -20,6 +20,8 @@ export const Seeds = {
   dispatch: (dispatchId: string) => `dispatch_${dispatchId}`,
   campaign: (campaignId: string) => `campaign_${campaignId}`,
   poi: (worldSeed: number, poiId: number) => `poi_${worldSeed}_${poiId}`,
+  /** Placement seed for quests WITHOUT an authored POI (poi_id null) — per quest, never shared. */
+  questPoi: (worldSeed: number, questId: number) => `poi_${worldSeed}_q${questId}`,
   ambush: (campaignId: string, week: number) => `ambush_${campaignId}_w${week}`,
   population: (dispatchId: string, templateId: string) => `pop_${dispatchId}_${templateId}`,
   loot: (dispatchId: string, sourceId: string) => `loot_${dispatchId}_${sourceId}`,

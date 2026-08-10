@@ -15,7 +15,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dbPath = process.argv[2] ?? join(repoRoot, '..', 'GuildVigil', 'project', 'data', 'game_data.db');
+// The db moved INTO this repo with the content workstream (brief #6) — the old
+// Godot repo is frozen source material and is no longer read by any tool.
+const dbPath = process.argv[2] ?? join(repoRoot, 'data', 'game_data.db');
 const outDir = join(repoRoot, 'src', 'content', 'generated');
 
 // Hard gates on the tables whose hand-tuned values are irreplaceable.
@@ -26,7 +28,7 @@ const EXPECTED_COUNTS = {
   class_proficiency_tiers: 112,
   items: 183,
   item_properties: 33,
-  enemies: 24,
+  enemies: 45, // 24 originals + 21 "Vanguard's Shadow" order of battle (brief #6)
   classes: 13,
   ancestries: 6,
   skills: 15,
@@ -35,7 +37,7 @@ const EXPECTED_COUNTS = {
   loot_tables: 97,
   shop_stock: 105,
   buildings: 18,
-  quests: 12,
+  quests: 22, // 12 originals + 10 "Vanguard's Shadow" (brief #6)
   warlock_spell_costs: 7,
   bloodlines: 8,
   bloodline_spells: 40,
@@ -43,13 +45,19 @@ const EXPECTED_COUNTS = {
   nations: 9,
   nation_leaders: 35,
   eight_pillars: 8,
+  // Narrative layer, first populated by the vertical slice (brief #6):
+  npcs: 2,
+  storylines: 1,
+  storyline_quests: 10,
+  story_dialogue: 4,
+  lore_references: 6,
+  world_regions: 7, // 5 sim regions + 2 legacy lore rows (append-only)
 };
 
 // Empty-by-design tables (narrative layer, populated later) — converted but ungated.
 const KNOWN_EMPTY_OK = new Set([
-  'factions', 'lore_references', 'npc_combat_data', 'npc_preferences', 'npcs',
-  'story_dialogue', 'story_heroes', 'storyline_quests', 'storylines',
-  'class_prerequisites', 'world_regions',
+  'factions', 'npc_combat_data', 'npc_preferences', 'story_heroes',
+  'class_prerequisites',
 ]);
 
 const db = new Database(dbPath, { readonly: true });
