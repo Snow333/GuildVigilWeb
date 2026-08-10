@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Rng (string-seeded, constraint #5) > golden values are stable across builds (replay contract) 1`] = `
+[
+  0.1902854754589498,
+  0.4157989399973303,
+  0.41473203315399587,
+  0.9346444436814636,
+]
+`;
