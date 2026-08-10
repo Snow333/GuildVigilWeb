@@ -30,7 +30,7 @@ import {
 import { deriveItem, itemBasesById, type DerivedItem } from '@sim/heroes/equipment';
 import { featEffectsById, partyDungeonBonus } from '@sim/heroes/featEffects';
 import {
-  applyLevelUp, checkClassEligibility, isBoostLevel, skillPointsForLevel,
+  applyLevelUp, checkClassEligibility, isBoostLevel, maxSkillRanks, skillPointsForLevel,
   type LevelUpApplied, type LevelUpPlan,
 } from '@sim/heroes/levelUp';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
@@ -141,6 +141,10 @@ export interface LevelUpOptions {
   /** Reaching this level grants an ability boost (player's choice of ability). */
   boostRequired: boolean;
   skillNames: readonly string[];
+  /** Ranks already held, by skill — the wizard greys + at the cap. */
+  currentRanks: Record<string, number>;
+  /** Rank ceiling at the NEW level (= character level, PF2-style — finding #4). */
+  maxRanks: number;
   classes: LevelUpClassChoice[];
 }
 
@@ -697,6 +701,8 @@ export class CampaignSession {
       newCharacterLevel,
       boostRequired,
       skillNames,
+      currentRanks: Object.fromEntries(skillNames.map((n) => [n, hero.skills[n] ?? 0])),
+      maxRanks: maxSkillRanks(newCharacterLevel),
       classes: choices.sort((a, b) => a.classId - b.classId),
     };
   }

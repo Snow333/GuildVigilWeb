@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applyLevelUp, checkClassEligibility, hpGainForLevel, isBoostLevel, skillPointsForLevel,
+  applyLevelUp, checkClassEligibility, hpGainForLevel, isBoostLevel, maxSkillRanks,
+  skillPointsForLevel,
 } from '@sim/heroes/levelUp';
 import { characterLevel, type HeroState } from '@sim/heroes/types';
 
@@ -134,5 +135,34 @@ describe('atomic apply', () => {
   it('hp gain floors at 1 even with terrible CON', () => {
     const h = hero({ abilities: { ...hero().abilities, con: 3 } }); // mod −4 (PF floor)
     expect(hpGainForLevel(3, h)).toBe(1);
+  });
+});
+
+describe('THE SKILL RANK CAP (finding #4): ranks ≤ character level, PF2-style', () => {
+  it('exactly at cap passes: fighter 4 → 5 may hold 5 ranks', () => {
+    const h = hero(); // athletics 4 at level 4 — exactly legal
+    applyLevelUp(h, { classId: 1, hpPerLevel: 10, skillRanks: { athletics: 1 }, feats: [], autoGrantedFeatIds: [] });
+    expect(h.skills['athletics']).toBe(5); // = new character level
+  });
+
+  it('over cap throws BEFORE mutation (atomicity holds)', () => {
+    const h = hero();
+    const before = JSON.stringify(h);
+    expect(() =>
+      applyLevelUp(h, { classId: 1, hpPerLevel: 10, skillRanks: { athletics: 2 }, feats: [], autoGrantedFeatIds: [] }),
+    ).toThrow(/cap is 5/);
+    expect(JSON.stringify(h)).toBe(before);
+  });
+
+  it('the cap binds fresh skills too: no 3-rank stealth at level 2', () => {
+    const h = hero({ classLevels: [{ classId: 1, level: 1, orderTaken: 1 }], skills: {} });
+    expect(() =>
+      applyLevelUp(h, { classId: 1, hpPerLevel: 10, skillRanks: { stealth: 3 }, feats: [], autoGrantedFeatIds: [] }),
+    ).toThrow(/cap is 2/);
+  });
+
+  it('maxSkillRanks is the character level', () => {
+    expect(maxSkillRanks(1)).toBe(1);
+    expect(maxSkillRanks(7)).toBe(7);
   });
 });

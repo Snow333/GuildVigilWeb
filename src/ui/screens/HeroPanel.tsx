@@ -143,19 +143,24 @@ function LevelUpTab({ heroId }: { heroId: string }) {
       )}
       {chosen && boostOk && (
         <>
-          <h3>Skill points: {spent}/{points}</h3>
+          <h3>Skill points: {spent}/{points} <small>(rank cap {options.maxRanks} = character level)</small></h3>
           <table border={1} cellPadding={4}>
             <tbody>
-              {options.skillNames.map((name) => (
-                <tr key={name}>
-                  <td>{name}</td>
-                  <td>{ranks[name] ?? 0}</td>
-                  <td>
-                    <button disabled={spent >= points} onClick={() => setRanks({ ...ranks, [name]: (ranks[name] ?? 0) + 1 })}>+</button>
-                    <button disabled={(ranks[name] ?? 0) <= 0} onClick={() => setRanks({ ...ranks, [name]: (ranks[name] ?? 0) - 1 })}>−</button>
-                  </td>
-                </tr>
-              ))}
+              {options.skillNames.map((name) => {
+                const held = options.currentRanks[name] ?? 0;
+                const adding = ranks[name] ?? 0;
+                const atCap = held + adding >= options.maxRanks;
+                return (
+                  <tr key={name}>
+                    <td>{name}</td>
+                    <td>{held + adding}{adding > 0 ? ` (+${adding})` : ''}{atCap ? ' MAX' : ''}</td>
+                    <td>
+                      <button disabled={spent >= points || atCap} onClick={() => setRanks({ ...ranks, [name]: adding + 1 })}>+</button>
+                      <button disabled={adding <= 0} onClick={() => setRanks({ ...ranks, [name]: adding - 1 })}>−</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <p>

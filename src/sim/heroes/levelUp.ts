@@ -94,6 +94,18 @@ export function checkClassEligibility(
 }
 
 /**
+ * SKILL RANK CAP (playtest finding #4, Steven-approved 2026-08-10): a skill's
+ * ranks may never exceed CHARACTER LEVEL, PF2-style. The Godot original never
+ * enforced a ceiling (its fixtures shipped 4-rank level-1 heroes) — hand play
+ * exposed the dump-stat lever, so the rule lands here as a deliberate,
+ * documented divergence. Creation-time stats must also obey it (the starter
+ * wedge was re-statted in the same commit).
+ */
+export function maxSkillRanks(characterLevelValue: number): number {
+  return characterLevelValue;
+}
+
+/**
  * Skill points for a level-up: class base + Int mod, floor 1 — computed from the
  * EFFECTIVE Int including a pending Int boost (the fixed bug).
  */
@@ -139,6 +151,16 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
   if (!eligibility.met) throw new Error(`applyLevelUp: ${eligibility.reason}`);
 
   const priorCharacterLevel = characterLevel(hero);
+
+  // Rank cap: validated against the NEW character level, before any mutation.
+  const cap = maxSkillRanks(priorCharacterLevel + 1);
+  for (const [skill, ranks] of Object.entries(plan.skillRanks)) {
+    const after = (hero.skills[skill] ?? 0) + ranks;
+    if (after > cap) {
+      throw new Error(`applyLevelUp: ${skill} would reach ${after} ranks — cap is ${cap} (character level)`);
+    }
+  }
+
   const hpGain = hpGainForLevel(plan.hpPerLevel, hero, plan.boost);
 
   // Retroactive CON HP computed against PRIOR levels (the new level's HP already

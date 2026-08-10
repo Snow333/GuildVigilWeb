@@ -17,10 +17,10 @@
 import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
-import { isBoostLevel, skillPointsForLevel } from '@sim/heroes/levelUp';
+import { isBoostLevel, maxSkillRanks, skillPointsForLevel } from '@sim/heroes/levelUp';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
 import { canLevelUp } from '@sim/heroes/xp';
-import { classesById, progressionFor } from '@sim/registry';
+import { classesById, progressionFor, skillNames } from '@sim/registry';
 import type { WorldMap } from '@sim/world/terrain';
 import type { EscalationLedger } from '@sim/world/escalation';
 import type { HeroKit } from './assembly';
@@ -66,10 +66,28 @@ export function buildAutoLevelUpPlan(
   const classRow = classesById.get(primary.classId);
   const boost = isBoostLevel(newCharLevel) ? ((classRow?.key_ability ?? 'str') as AbilityKey) : undefined;
   const points = skillPointsForLevel(primary.classId, hero, boost);
+
+  // Round-robin the priority list, RESPECTING the rank cap (= new character
+  // level); capped skills spill to the rest of the registry in order. If every
+  // skill is capped (16 × level ≥ points long before that), points are forfeit.
+  const cap = maxSkillRanks(newCharLevel);
+  const order = [...priorities, ...skillNames.filter((n) => !priorities.includes(n))];
   const skillRanks: Record<string, number> = {};
-  for (let i = 0; i < points; i++) {
-    const skill = priorities[i % priorities.length]!;
-    skillRanks[skill] = (skillRanks[skill] ?? 0) + 1;
+  const rankAfter = (skill: string): number => (hero.skills[skill] ?? 0) + (skillRanks[skill] ?? 0);
+  let cursor = 0;
+  for (let spent = 0; spent < points; ) {
+    let placed = false;
+    for (let probe = 0; probe < order.length; probe++) {
+      const skill = order[(cursor + probe) % order.length]!;
+      if (rankAfter(skill) < cap) {
+        skillRanks[skill] = (skillRanks[skill] ?? 0) + 1;
+        cursor = (cursor + probe + 1) % order.length;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) break; // everything capped — forfeit the remainder
+    spent++;
   }
   return {
     classId: primary.classId,

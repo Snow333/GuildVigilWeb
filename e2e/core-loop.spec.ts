@@ -84,9 +84,10 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
   await page.locator('h1:has-text("Torvald")').waitFor();
   await page.locator('button:has-text("Level up ●")').click();
   await page.locator('button:has-text("Fighter → 2")').click();
-  const plus = page.locator('tr:has-text("athletics") button:has-text("+")');
+  // Spend every point wherever the rank cap leaves headroom (the wizard greys
+  // capped skills — finding #4: ranks ≤ character level).
   while (await page.locator('button:has-text("Commit level-up")').isDisabled()) {
-    await plus.click();
+    await page.locator('button:text-is("+"):enabled').first().click();
   }
   await page.locator('button:has-text("Commit level-up")').click();
   await expect(page.locator('h1')).toContainText('level 2');

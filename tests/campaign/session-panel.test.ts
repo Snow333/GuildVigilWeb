@@ -26,7 +26,7 @@ describe('heroSheet — assembly on a plate', () => {
     expect(sheet.equipped.map((e) => e.slot).sort()).toEqual(['armor', 'main_hand']);
     expect(sheet.damageDice).toMatch(/\+3$/); // STR to damage
     expect(sheet.canLevelUp).toBe(false);
-    expect(sheet.skills.find((sk) => sk.name === 'athletics')?.ranks).toBe(2);
+    expect(sheet.skills.find((sk) => sk.name === 'athletics')?.ranks).toBe(1); // cap-legal L1 wedge
   });
 
   it('regear moves stats: unequip armor → AC drops, sheet re-derives', () => {
@@ -71,15 +71,25 @@ describe('the 2.1 done criterion — hand-played level-up + regear round-trip', 
 
     const points = s.skillPointsFor('hero_1', 1);
     expect(points).toBeGreaterThanOrEqual(1);
-    const applied = s.applyLevelUp('hero_1', {
-      classId: 1, skillRanks: { athletics: points }, feats: [], autoGrantedFeatIds: [],
-    });
+    // Allocate cap-aware, as the wizard forces: 1 rank per skill with headroom.
+    const skillRanks: Record<string, number> = {};
+    let toSpend = points;
+    for (const name of options.skillNames) {
+      if (toSpend === 0) break;
+      const headroom = options.maxRanks - (options.currentRanks[name] ?? 0);
+      if (headroom > 0) {
+        skillRanks[name] = Math.min(headroom, 1);
+        toSpend -= skillRanks[name]!;
+      }
+    }
+    expect(toSpend).toBe(0); // 16 skills × cap 2 has room for any L2 point pool
+    const applied = s.applyLevelUp('hero_1', { classId: 1, skillRanks, feats: [], autoGrantedFeatIds: [] });
     expect(applied.newCharacterLevel).toBe(2);
 
     s.unequip('hero_1', 'armor');
     const sheetBefore = s.heroSheet('hero_1');
     expect(sheetBefore.level).toBe(2);
-    expect(sheetBefore.skills.find((sk) => sk.name === 'athletics')?.ranks).toBe(2 + points);
+    expect(sheetBefore.skills.find((sk) => sk.name === 'athletics')?.ranks).toBe(1 + (skillRanks['athletics'] ?? 0));
 
     const restored = CampaignSession.deserialize(s.serialize());
     expect(restored.heroSheet('hero_1')).toEqual(sheetBefore);

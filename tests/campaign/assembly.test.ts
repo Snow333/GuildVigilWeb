@@ -63,10 +63,11 @@ describe('hero → combatant assembly (the sheet becomes a fighter)', () => {
   });
 
   it('dispatch skills: rank + governing ability + feat skill mods (Trap Finder +1 thievery)', () => {
-    // Shade: thievery 4 ranks + DEX 3 + Trap Finder 1 = 8.
-    expect(rogue.skills.thievery).toBe(8);
+    // Shade after the rank-cap re-stat (finding #4: ranks ≤ level, so 1 at L1):
+    // thievery 1 rank + DEX 3 + Trap Finder 1 = 5.
+    expect(rogue.skills.thievery).toBe(5);
     // Trap Finder's additional perception +1 applies unconditionally (documented completion).
-    expect(rogue.skills.perception).toBe(2 + 1 + 1);
+    expect(rogue.skills.perception).toBe(1 + 1 + 1);
   });
 
   it('the party carries the Trap Finder dungeon bonus for dispatch wiring', () => {

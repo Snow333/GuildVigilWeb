@@ -33,7 +33,12 @@ export function mkHero(
   };
 }
 
-/** Fighter / Rogue / Cleric / Wizard — the classic wedge, level 1. */
+/**
+ * Fighter / Rogue / Cleric / Wizard — the classic wedge, level 1.
+ * Re-statted 2026-08-10 for the SKILL RANK CAP (finding #4): ranks ≤ character
+ * level, so level-1 heroes hold at most 1 rank anywhere. This moved the career
+ * harness baseline — the diff is the cap's cost, justified in the same commit.
+ */
 export function starterParty(): HeroKit[] {
   const heal = spellsByName.get('Heal')!.id;
   const magicMissile = spellsByName.get('Magic Missile')!.id;
@@ -43,7 +48,7 @@ export function starterParty(): HeroKit[] {
       // Longsword + Chain Mail; AoO arrives via the fighter class feature.
       hero: mkHero('hero_1', 'Torvald', 1,
         { str: 16, dex: 12, con: 14, int: 10, wis: 12, cha: 8 }, freshHeroMaxHp(10, 2),
-        { athletics: 2, perception: 1 }),
+        { athletics: 1, perception: 1 }),
       equipped: [inst(3), inst(25)],
       loadout: [],
     },
@@ -51,7 +56,7 @@ export function starterParty(): HeroKit[] {
       // Rapier (finesse) + Leather; Sneak Attack #68, Nimble Dodge #69, Trap Finder #70.
       hero: mkHero('hero_2', 'Shade', 4,
         { str: 12, dex: 16, con: 12, int: 12, wis: 12, cha: 10 }, freshHeroMaxHp(8, 1),
-        { thievery: 4, perception: 2, athletics: 1 },
+        { thievery: 1, perception: 1, athletics: 1 },
         [{ featId: 68 }, { featId: 69 }, { featId: 70 }]),
       equipped: [inst(9), inst(22)],
       loadout: [],
@@ -60,7 +65,7 @@ export function starterParty(): HeroKit[] {
       // Mace + Scale Mail; heals the wedge when someone drops low.
       hero: mkHero('hero_3', 'Mira', 3,
         { str: 12, dex: 10, con: 14, int: 10, wis: 16, cha: 12 }, freshHeroMaxHp(8, 2),
-        { perception: 2, athletics: 1 }),
+        { perception: 1, athletics: 1 }),
       equipped: [inst(7), inst(26)],
       loadout: [{ action: 'cast', spellId: heal, condition: { kind: 'allyHpBelow', pct: 0.4 }, target: 'lowestAlly' }],
     },
