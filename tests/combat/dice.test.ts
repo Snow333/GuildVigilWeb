@@ -76,11 +76,11 @@ describe('flurry decay — the continuous-time MAP', () => {
     expect(flurryPenalty(2, true)).toBe(-8);
   });
 
-  it('decays one step per 30 ticks without swinging', () => {
+  it('decays one step per 10 ticks without swinging — a normal cadence clears the burst', () => {
     expect(decayFlurry(2, 0)).toBe(2);
-    expect(decayFlurry(2, 29)).toBe(2);
-    expect(decayFlurry(2, 30)).toBe(1);
-    expect(decayFlurry(2, 60)).toBe(0);
+    expect(decayFlurry(2, 9)).toBe(2);
+    expect(decayFlurry(2, 10)).toBe(1);
+    expect(decayFlurry(2, 20)).toBe(0); // fully clear by the next attack interval
     expect(decayFlurry(1, 900)).toBe(0); // floors at 0
   });
 });

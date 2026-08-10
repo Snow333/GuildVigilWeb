@@ -1,0 +1,34 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`encounter distribution harness — golden scenarios > 2 fighters + rogue vs 3 goblins (level-appropriate): heroes strongly favored, zero hangs 1`] = `
+{
+  "durationP50": 32,
+  "durationP90": 39,
+  "hangGuardHits": 0,
+  "heroDeathEvents": 0,
+  "stalemateRate": 0,
+  "winRate": 1,
+}
+`;
+
+exports[`encounter distribution harness — golden scenarios > level-appropriate pressure: the party vs 3 Orc Warriors — winnable, never free 1`] = `
+{
+  "durationP50": 91,
+  "durationP90": 143,
+  "hangGuardHits": 0,
+  "heroDeathEvents": 111,
+  "stalemateRate": 0,
+  "winRate": 0.9533333333333334,
+}
+`;
+
+exports[`encounter distribution harness — golden scenarios > outnumbered: a LEVEL-1 hero vs 4 goblins — losses dominate but fights END 1`] = `
+{
+  "durationP50": 82,
+  "durationP90": 119,
+  "hangGuardHits": 0,
+  "heroDeathEvents": 0,
+  "stalemateRate": 0,
+  "winRate": 0.5,
+}
+`;

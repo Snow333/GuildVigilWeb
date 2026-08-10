@@ -45,6 +45,10 @@ export interface Combatant {
 
   speed: number;
   wounded: number;
+  /** Heroes: perception + init feats. Enemies: level + 2 folded in at build. */
+  initiativeBonus: number;
+  /** AI threat flag (+75 target weight). */
+  isCaster: boolean;
 
   // Continuous-time state
   conditions: Map<string, ActiveCondition>;
