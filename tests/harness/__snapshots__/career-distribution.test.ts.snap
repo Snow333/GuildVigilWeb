@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`career distribution harness — the guild across seasons > THE BASELINE: exact distribution snapshot — drift must justify itself 1`] = `
+{
+  "ambushDeaths": 0,
+  "avgFinalLevelX100": 200,
+  "completionRate": 0.788,
+  "failRate": 0.048,
+  "goldP50": 4286,
+  "idleWeekRate": 0,
+  "itemsP50": 23,
+  "levelUpsTotal": 80,
+  "maxEscalationTier": 3,
+  "weeksWithQuestActivity": 480,
+  "wipeRate": 0.165,
+}
+`;

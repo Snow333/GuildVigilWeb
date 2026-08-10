@@ -65,6 +65,23 @@ export class EventStream {
     return this.events.filter((e) => e.cause === seq);
   }
 
+  /**
+   * Absorb another stream's events (e.g. a combat resolved by runEncounter)
+   * into this one: ticks re-based, seq/cause remapped. The donor is unchanged.
+   */
+  absorb(other: EventStream, tickOffset: number): void {
+    const seqOffset = this.nextSeq;
+    for (const ev of other.all()) {
+      const prev = this.events[this.events.length - 1];
+      const tick = tickOffset + ev.tick;
+      if (prev && tick < prev.tick) throw new Error('absorb: time went backwards');
+      const copy = { ...ev, seq: ev.seq + seqOffset, tick } as SimEvent;
+      if (ev.cause !== undefined) (copy as { cause?: number }).cause = ev.cause + seqOffset;
+      this.events.push(copy);
+    }
+    this.nextSeq += other.length;
+  }
+
   /** Deterministic content hash for replay verification (FNV-1a over JSON). */
   hash(): string {
     let h = 0x811c9dc5;

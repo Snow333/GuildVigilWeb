@@ -193,14 +193,14 @@ export function deriveDispatchSummary(stream: EventStream): DispatchSummary {
         break;
 
       case 'loot.collected':
+        // Authoritative take-home: dispatches emit exactly one at exit, and its
+        // gold already includes mid-run cache pickups — cache_looted events are
+        // narration, not accounting (double-count fix, 2026-08-11).
         summary.loot.gold += ev.data.gold;
         summary.loot.collected.push(...ev.data.items);
         break;
       case 'loot.left_behind':
         summary.loot.leftBehindCount += ev.data.items.length;
-        break;
-      case 'explore.cache_looted':
-        summary.loot.gold += ev.data.gold;
         break;
 
       default:

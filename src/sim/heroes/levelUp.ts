@@ -22,6 +22,20 @@ import { abilityMod, characterLevel, type AbilityKey, type HeroFeat, type HeroSt
 
 export const CHARACTER_LEVEL_CAP = 20;
 export const CLASS_LEVEL_CAP = 20;
+
+/**
+ * DELIBERATE DIVERGENCE (career-harness finding, 1.5): fresh heroes add
+ * PF2E-style ancestry base HP at creation. The Godot factory's per-level-only
+ * formula produced 7–12 HP level-1 heroes — below the band the combat system
+ * was tuned and harness-validated against (~18 HP "level-appropriate"), and
+ * they folded to any single hit. Level-up gains are unchanged.
+ */
+export const ANCESTRY_BASE_HP = 8;
+
+/** Creation-time max HP: ancestry base + the level-1 gain (same floor as level-ups). */
+export function freshHeroMaxHp(hpPerLevel: number, conMod: number): number {
+  return ANCESTRY_BASE_HP + Math.max(1, hpPerLevel + conMod);
+}
 export const PRESTIGE_CLASS_LEVEL_CAP = 10;
 export const MAX_CLASSES = 5;
 export const ABILITY_BOOST_LEVELS = [5, 10, 15, 20] as const;

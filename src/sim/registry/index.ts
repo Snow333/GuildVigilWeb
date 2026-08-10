@@ -4,7 +4,7 @@
  * Sim code reads content ONLY through here; no raw table scans in resolvers.
  */
 
-import { classes, enemies, quests, spells, warlock_spell_costs } from '@content/generated';
+import { class_progression, classes, enemies, quests, spells, warlock_spell_costs } from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
 // Key types widened to number: the generated `as const` tables produce literal
@@ -18,6 +18,15 @@ export const spellsByName = new Map<string, (typeof spells)[number]>(spells.map(
 export const warlockCostByLevel = new Map<number, number>(
   warlock_spell_costs.map((w) => [w.spell_level as number, w.energy_cost as number]),
 );
+
+/** Per-class-level progression row (hp/level, feat slots, spell slots). */
+export const progressionByClassLevel = new Map<string, (typeof class_progression)[number]>(
+  class_progression.map((r) => [`${r.class_id}:${r.level}`, r]),
+);
+
+export function progressionFor(classId: number, level: number): (typeof class_progression)[number] | null {
+  return progressionByClassLevel.get(`${classId}:${level}`) ?? null;
+}
 
 /** Production XP source resolver over the real registries. */
 export const contentXpResolver: XpSourceResolver = {
