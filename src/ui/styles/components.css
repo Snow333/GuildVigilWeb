@@ -252,6 +252,25 @@
   font-size: 12.5px;
 }
 
+/* ============ ink input (charter fields) ============ */
+.gv-input {
+  font-family: var(--gv-serif);
+  font-size: 13.5px;
+  color: var(--gv-ink);
+  background: #f4ecd8aa;
+  border: 1px solid #a8905e;
+  border-radius: 2px;
+  padding: 6px 10px;
+}
+.gv-input:focus {
+  outline: 2px solid var(--gv-brass-deep);
+  outline-offset: 1px;
+}
+.gv-input::placeholder {
+  color: var(--gv-ink-muted);
+  font-style: italic;
+}
+
 /* ============ ambience layer (accessories) ============ */
 .gv-acc {
   position: absolute;

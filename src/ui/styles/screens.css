@@ -255,3 +255,37 @@
   width: 100%;
   height: auto;
 }
+
+/* ============ remaining surfaces: title + shop ============ */
+.gv-title {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.gv-title h1 {
+  font-size: 34px;
+  letter-spacing: 6px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.gv-title-motto {
+  text-align: center;
+  font-style: italic;
+  color: var(--gv-ink-faint);
+  margin: 0 0 26px;
+}
+.gv-shop {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+.gv-counters {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.gv-counters .gv-sheet {
+  flex: 1 1 480px;
+  margin-bottom: 0;
+}
+.gv-counters .gv-sheet:nth-child(2n) { --gv-tilt: 0.3deg; }
+.gv-counters .gv-sheet:nth-child(2n + 1) { --gv-tilt: -0.35deg; }
