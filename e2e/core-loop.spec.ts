@@ -27,13 +27,14 @@ async function acceptEasiest(page: Page): Promise<boolean> {
     await page.locator('h1:has-text("Town Hub")').waitFor();
     return false;
   }
-  const rows = page.locator('tbody tr');
+  // Step-3 conversion: postings are notices carrying data-quest-id/data-challenge —
+  // same accept policy as the old table-cell parse (lowest challenge, then lowest id).
+  const rows = page.locator('[data-posting]');
   const n = await rows.count();
   let best = { challenge: Infinity, questId: Infinity, row: -1 };
   for (let i = 0; i < n; i++) {
-    const cells = await rows.nth(i).locator('td').allTextContents();
-    const questId = Number(/#(\d+)/.exec(cells[0] ?? '')?.[1] ?? Infinity);
-    const challenge = Number(cells[2]);
+    const questId = Number(await rows.nth(i).getAttribute('data-quest-id'));
+    const challenge = Number(await rows.nth(i).getAttribute('data-challenge'));
     if (challenge < best.challenge || (challenge === best.challenge && questId < best.questId)) {
       best = { challenge, questId, row: i };
     }

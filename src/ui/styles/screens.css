@@ -50,3 +50,70 @@
   padding: 0 8px 0 0;
   vertical-align: middle;
 }
+
+/* ============ rollout step 3: Quest Board ============ */
+.gv-board {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+.gv-board h1 {
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  color: #d8bd85;
+  text-shadow: 0 1px 2px #000000cc;
+  margin: 0 0 12px;
+  font-weight: 400;
+}
+.gv-notices {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.gv-notices .gv-sheet--notice {
+  width: 300px;
+  margin: 0;
+  padding-bottom: 24px;
+  font-size: 13px;
+}
+/* deterministic hand-placement: nth-child tilt, no randomness */
+.gv-notices .gv-sheet--notice:nth-child(3n+1) { --gv-tilt: -0.7deg; }
+.gv-notices .gv-sheet--notice:nth-child(3n+2) { --gv-tilt: 0.8deg; }
+.gv-notices .gv-sheet--notice:nth-child(3n)   { --gv-tilt: -0.4deg; }
+.gv-notice-name {
+  font-size: 15px;
+  font-weight: 700;
+  padding-right: 30px; /* clear of the stamp */
+}
+.gv-notice-meta {
+  color: var(--gv-ink-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 4px 0 8px;
+}
+.gv-reward {
+  font-family: var(--gv-sans);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: 1.5px solid var(--gv-ink-soft);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  color: var(--gv-ink-soft);
+}
+.gv-slot-empty {
+  width: 300px;
+  border: 1.5px dashed #a8937055;
+  border-radius: 3px;
+  padding: 26px 12px;
+  text-align: center;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--gv-ink-faint);
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+}
