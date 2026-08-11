@@ -40,6 +40,10 @@
   --gv-brass-lo: #6e5426;
   --gv-brass-edge: #55401c;
 
+  /* chart ink (step 5) — the surveyor's green for forest masses; everything
+     else on the chart draws with the ink/red tokens above */
+  --gv-chart-forest: #4a5230;
+
   /* FROZEN validated status set — label-paired ALWAYS, never themed, never alone */
   --gv-s0: #0ca30c; /* quiet / ready / success        */
   --gv-s1: #fab219; /* caution / resting / attention  */

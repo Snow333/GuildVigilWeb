@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { autopilotWeek } from '@sim/campaign/campaign';
-import { CampaignSession } from '@sim/campaign/session';
+import { CampaignSession, REGION_IDS, regionAnchors, regionFor } from '@sim/campaign/session';
+import { storylineByQuestId } from '@sim/registry';
 import { starterParty } from '../fixtures/party-fixture';
 
 /**
@@ -85,5 +86,64 @@ describe('CampaignSession — queries derive, never store', () => {
     expect(s.goldAmount()).toBe(0);
     expect(s.roster()).toHaveLength(4);
     expect(s.roster().every((r) => r.level === 1)).toBe(true);
+  });
+});
+
+describe('chart discovery — brief #8 step 5 (the "?" rule lives in the sim)', () => {
+  it('a fresh campaign has surveyed nothing: every posting is discovered=false', () => {
+    const s = newSession();
+    s.advanceWeek();
+    expect(s.board().length).toBeGreaterThan(0);
+    expect(s.board().every((b) => !b.discovered)).toBe(true);
+  });
+
+  it('completing a quest surveys its POI: the repost carries discovered=true, the rest stay "?"', () => {
+    // Hand-driven, no level-ups: the party stays level 1, so the level band keeps
+    // the early fillers posting and a completed one can repost after its cooldown
+    // (autopilot outlevels the low band before the cooldown lets anything back).
+    const s = newSession();
+    let surveyedId: number | null = null;
+    for (let w = 0; w < 40; w++) {
+      s.advanceWeek();
+      if (surveyedId !== null) {
+        const back = s.board().find((b) => b.questId === surveyedId);
+        if (!back) continue; // cooldown or a crowded board — keep waiting
+        expect(back.discovered).toBe(true);
+        for (const b of s.board()) {
+          // The current pool's authored POIs are one-per-quest, so surveyed ⇔
+          // completed (shared poi_id would widen discovery — see poiSurveyed).
+          expect(b.discovered, `quest ${b.questId}`).toBe(b.questId === surveyedId);
+        }
+        return;
+      }
+      // Take the easiest non-arc posting (arc beats happen once — they never repost).
+      const pick = s
+        .board()
+        .filter((b) => !storylineByQuestId.has(b.questId))
+        .sort((a, b) => a.challenge - b.challenge || a.questId - b.questId)[0];
+      if (!pick) continue;
+      s.acceptQuest(pick.questId);
+      if (s.launchDispatch().outcome === 'completed') surveyedId = pick.questId;
+    }
+    expect.fail(`no repost of a completed quest within 40 weeks (completed: ${surveyedId})`);
+  });
+
+  it('discovery survives serialize → deserialize (derived from the completed map)', () => {
+    const s = newSession();
+    for (let w = 0; w < 12; w++) autopilotWeek(s, PRIORITIES);
+    const restored = CampaignSession.deserialize(s.serialize());
+    expect(restored.board().map((b) => [b.questId, b.discovered])).toEqual(
+      s.board().map((b) => [b.questId, b.discovered]),
+    );
+  });
+});
+
+describe('regionAnchors — chart geometry stays inside its partition', () => {
+  it('covers all five regions and every anchor lies in the region it draws', () => {
+    const anchors = regionAnchors();
+    expect(anchors.map((a) => a.regionId).sort()).toEqual([...REGION_IDS].sort());
+    for (const a of anchors) {
+      expect(regionFor({ x: a.cx, y: a.cy }), a.regionId).toBe(a.regionId);
+    }
   });
 });

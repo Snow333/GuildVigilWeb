@@ -121,3 +121,74 @@
   line-height: 1.7;
   margin: 0 0 6px;
 }
+
+/* ============ rollout step 5: the chart ============ */
+.gv-chartwrap {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+.gv-chart {
+  padding: 10px 10px 4px;
+}
+.gv-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.gv-chart svg text {
+  font-family: var(--gv-serif);
+}
+.gv-chart .gv-head {
+  margin: 8px 12px 2px;
+}
+.gv-chart-note {
+  font-size: 12.5px;
+  color: var(--gv-ink-soft);
+  line-height: 1.6;
+  margin: 8px 12px 6px;
+}
+
+/* chart ink: geometry lives in the SVG, color lives here (tokens only) */
+.gv-chart-ink {
+  stroke: var(--gv-ink);
+  fill: none;
+}
+.gv-chart-soft {
+  stroke: var(--gv-ink-soft);
+  fill: none;
+}
+.gv-chart-forest {
+  stroke: var(--gv-chart-forest);
+  fill: none;
+}
+.gv-chart-red {
+  stroke: var(--gv-red-ink);
+  fill: none;
+}
+.gv-chart-fill-ink {
+  fill: var(--gv-ink);
+}
+.gv-chart-fill-soft {
+  fill: var(--gv-ink-soft);
+}
+.gv-chart-text {
+  fill: var(--gv-ink);
+}
+.gv-chart-redtext {
+  fill: var(--gv-red-ink);
+  font-style: italic;
+}
+.gv-chart-cartouche {
+  fill: var(--gv-vellum);
+  stroke: var(--gv-ink);
+}
+
+/* pressure wash: frozen status fill at low opacity — the paired red-ink
+   annotation renders in the same group, never separately */
+.gv-chart-wash {
+  opacity: 0.1;
+}
+.gv-chart-wash--s0 { fill: var(--gv-s0); }
+.gv-chart-wash--s1 { fill: var(--gv-s1); }
+.gv-chart-wash--s2 { fill: var(--gv-s2); }
+.gv-chart-wash--s3 { fill: var(--gv-s3); }

@@ -84,6 +84,12 @@ export interface BoardEntry {
   pressureTier: number;
   /** POI position (derived placement) — the world map draws tokens here. */
   pos: { x: number; y: number };
+  /**
+   * The guild has surveyed this destination — some completed quest resolved at
+   * its POI (brief #8 step 5). Unsurveyed chart markers render "?" and must not
+   * leak the name.
+   */
+  discovered: boolean;
 }
 
 /** Derived equipment view: the instance plus everything that recomputes from it. */
@@ -231,12 +237,49 @@ export interface SessionSaveState {
 /** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
 export const SHOP = { rotationSlots: 6, sellFraction: 0.5 } as const;
 
+/** Haven's home-turf radius in the coarse partition (shared with the chart's anchors). */
+export const HAVEN_REGION_RADIUS = 12;
+
 /** Coarse region partition v1: Haven's home turf, then compass quadrants. */
-function regionFor(pos: { x: number; y: number }): string {
+export function regionFor(pos: { x: number; y: number }): string {
   const dx = pos.x - WORLD.haven.x;
   const dy = pos.y - WORLD.haven.y;
-  if (Math.hypot(dx, dy) <= 12) return 'region_haven';
+  if (Math.hypot(dx, dy) <= HAVEN_REGION_RADIUS) return 'region_haven';
   return `region_${dy < 0 ? 'n' : 's'}${dx < 0 ? 'w' : 'e'}`;
+}
+
+/** A region's representative point + footprint on the chart, in CELL coordinates. */
+export interface RegionAnchor {
+  regionId: string;
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+}
+
+/**
+ * Chart geometry for the region partition (brief #8 step 5): where a region's
+ * pressure wash and name sit on the chart. Lives beside regionFor so the
+ * partition and the geometry drawn over it cannot drift apart — the anchor
+ * test pins every anchor inside its own region. The UI reads this; it derives
+ * nothing.
+ */
+export function regionAnchors(): RegionAnchor[] {
+  const { haven, width, height } = WORLD;
+  const quadrant = (regionId: string, x0: number, x1: number, y0: number, y1: number): RegionAnchor => ({
+    regionId,
+    cx: (x0 + x1) / 2,
+    cy: (y0 + y1) / 2,
+    rx: ((x1 - x0) / 2) * 0.72,
+    ry: ((y1 - y0) / 2) * 0.72,
+  });
+  return [
+    { regionId: 'region_haven', cx: haven.x, cy: haven.y, rx: HAVEN_REGION_RADIUS, ry: HAVEN_REGION_RADIUS },
+    quadrant('region_nw', 0, haven.x, 0, haven.y),
+    quadrant('region_ne', haven.x, width, 0, haven.y),
+    quadrant('region_sw', 0, haven.x, haven.y, height),
+    quadrant('region_se', haven.x, width, haven.y, height),
+  ];
 }
 
 /** Deterministic, reachable POI placement: farther out for higher-level quests. */
@@ -877,8 +920,25 @@ export class CampaignSession {
         rewardXp: row.reward_xp as number,
         pressureTier: this.ledger.pressureFor(o.regionId).tier,
         pos: { ...o.pos },
+        discovered: this.poiSurveyed(row),
       };
     });
+  }
+
+  /**
+   * Chart discovery (brief #8 step 5): a destination is surveyed once ANY
+   * completed quest resolved at its POI — authored POIs (poi_id) are shared
+   * across quests; per-quest placements (null poi_id) count only their own
+   * quest. Pure derivation from the completed map (constraint 7: no new stored
+   * state), so saves need no migration and the flag can never desync.
+   */
+  private poiSurveyed(row: { id: number; poi_id: unknown }): boolean {
+    const poiId = row.poi_id as number | null;
+    if (poiId === null) return this.completed.has(row.id);
+    for (const qid of this.completed.keys()) {
+      if ((questsById.get(qid)?.poi_id as number | null | undefined) === poiId) return true;
+    }
+    return false;
   }
 
   activeQuest(): { questId: number; regionId: string } | null {
