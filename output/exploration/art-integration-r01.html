@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guild Vigil — Art Integration · Exploration Round 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans+SC:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GUILD VIGIL · ART INTEGRATION r01
+   Wireframe for brief #10. Treatment-layer CSS here is the
+   DRAFT IMPLEMENTATION SPEC — class names and filter recipes
+   are proposed as-is for src/ui/styles.
+   ============================================================ */
+:root{
+  --leather-1:#3b2d1f; --leather-2:#221809;
+  --vellum-fresh:#eee2c9; --vellum-aged:#e2d2ae; --vellum-old:#d2bd94;
+  --ink:#2c2318; --ink-faint:#5f5240;
+  --red-ink:#8f2318;
+  --brass-hi:#dcbc6d; --brass:#a9853d; --brass-lo:#6f5326;
+  --slate:#2e3138;
+  --ok:#0ca30c; --warn:#fab219; --hurt:#ec835a; --bad:#d03b3b;
+  --serif:'Alegreya',Georgia,serif;
+  --sc:'Alegreya Sans SC','Segoe UI',sans-serif;
+  --turb:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box}
+body{margin:0;padding:34px 40px 80px;font-family:var(--serif);color:var(--ink);
+  background:radial-gradient(1200px 700px at 30% 0%,rgba(255,225,170,.07),transparent 60%),
+             linear-gradient(160deg,var(--leather-1),var(--leather-2));
+  min-height:100vh}
+h1,h2{font-family:var(--sc);font-weight:800}
+.deskplate{display:inline-block;background:linear-gradient(175deg,var(--brass-hi),var(--brass) 45%,var(--brass-lo));
+  color:#241a08;padding:10px 26px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,244,210,.6);
+  font-family:var(--sc);font-weight:800;font-size:20px;letter-spacing:.08em}
+.subtitle{color:#cdb98f;font-style:italic;margin:10px 0 0;font-size:15px}
+.section{margin-top:44px}
+.section>h2{color:#e6d6ae;font-size:15px;letter-spacing:.14em;font-weight:700;
+  border-bottom:1px solid rgba(230,214,174,.25);padding-bottom:6px}
+.note{color:#cdb98f;font-size:13.5px;font-style:italic;max-width:70em}
+
+/* ---------- vellum sheets ---------- */
+.sheet{position:relative;background:var(--vellum-fresh);border-radius:2px;padding:20px 24px;
+  box-shadow:0 3px 10px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);color:var(--ink)}
+.sheet::before{content:"";position:absolute;inset:0;background-image:var(--turb);opacity:.10;pointer-events:none;border-radius:2px}
+.sheet--aged{background:var(--vellum-aged)}
+.sheet--old{background:var(--vellum-old)}
+.sheet--old::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:2px;
+  background:radial-gradient(180px 90px at 85% 8%,rgba(122,89,38,.18),transparent 70%),
+             radial-gradient(140px 90px at 6% 92%,rgba(122,89,38,.14),transparent 70%)}
+.pin{position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#f2dfa2,var(--brass) 55%,var(--brass-lo));
+  box-shadow:0 3px 4px rgba(0,0,0,.45);z-index:3}
+.tapestrip{position:absolute;width:74px;height:22px;background:rgba(235,224,196,.6);
+  box-shadow:0 1px 3px rgba(0,0,0,.25);z-index:3;backdrop-filter:blur(.5px)}
+.lab{font-family:var(--sc);font-weight:700;font-size:12px;letter-spacing:.05em;color:var(--ink-faint)}
+.marg{font-style:italic;color:var(--red-ink);font-size:13.5px;line-height:1.35}
+.stamp{display:inline-block;font-family:var(--sc);font-weight:800;color:var(--red-ink);
+  border:2.5px solid var(--red-ink);border-radius:3px;padding:1px 10px;letter-spacing:.14em;
+  transform:rotate(-5deg);opacity:.8;font-size:13px}
+
+/* ---------- status chips (frozen colors, ALWAYS label-paired) ---------- */
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--sc);font-weight:700;font-size:11.5px;
+  letter-spacing:.04em;padding:2px 9px;border:1px solid rgba(44,35,24,.4);border-radius:3px;background:rgba(255,252,242,.4)}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex:none}
+
+/* ============================================================
+   THE TREATMENT LAYER (draft implementation spec — bible §5)
+   Markup contract:
+   <figure class="gv-paste t-base [t-haven|t-krath] [c-wounded|c-lost] [f-elite]">
+     <span class="gv-paste-mat"><img class="gv-art" …>
+       <span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span>
+     </span>
+   </figure>
+   ============================================================ */
+.gv-paste{margin:0;position:relative;display:inline-block;transform:rotate(-.6deg)}
+.gv-paste:nth-child(even){transform:rotate(.45deg)}
+.gv-paste-mat{position:relative;display:block;background:#fff;padding:5px 5px 7px;
+  box-shadow:0 2px 6px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.3)}
+.gv-art{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--slate)}
+.gv-tint,.gv-grain,.gv-vig{position:absolute;inset:5px 5px 7px;pointer-events:none}
+/* base daguerreotype grade */
+.t-base .gv-art{filter:sepia(.22) contrast(1.07) saturate(.9) brightness(1.02)}
+.t-base .gv-vig{box-shadow:inset 0 0 26px rgba(43,28,14,.55)}
+.t-base .gv-grain{background-image:var(--turb);opacity:.32;mix-blend-mode:multiply}
+/* faction grades — driven by allegiance data, never hand-picked */
+.t-haven .gv-tint{background:rgba(224,166,74,.16);mix-blend-mode:soft-light}
+.t-krath .gv-art{filter:sepia(.1) contrast(1.13) saturate(.78) brightness(.94)}
+.t-krath .gv-tint{background:rgba(96,124,152,.20);mix-blend-mode:multiply}
+/* condition overlays — flourish twin of the numeric label, never its replacement */
+.c-wounded .gv-art{filter:sepia(.12) contrast(1.05) saturate(.42) brightness(.85)}
+.c-lost .gv-art{filter:grayscale(1) contrast(1.02) brightness(.76)}
+.c-lost .gv-vig{box-shadow:inset 0 0 40px rgba(18,11,5,.8)}
+/* elite brass frame — rank lives in the frame, not the artwork */
+.f-elite .gv-paste-mat{padding:0;background:none;box-shadow:none}
+.f-elite .gv-frame{display:block;padding:7px;background:linear-gradient(135deg,var(--brass-hi),var(--brass-lo) 38%,#e6c87c 55%,var(--brass-lo) 78%,var(--brass-hi));
+  box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 0 0 1px rgba(60,42,12,.7)}
+.f-elite .gv-tint,.f-elite .gv-grain,.f-elite .gv-vig{inset:7px}
+/* paste tape (physicality only — semantic tape stays on sheets) */
+.gv-paste .ptape{position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(-2deg);
+  width:46px;height:15px;background:rgba(235,224,196,.55);box-shadow:0 1px 2px rgba(0,0,0,.2);z-index:2}
+
+/* ---------- flat mode (bible §5 decision: portrait+frame stay; ornament off; condition desat stays) ---------- */
+.gv-flat{background:#efe9dc}
+.gv-flat .sheet{background:#faf6ec;box-shadow:none;border:1px solid #c9bfa8}
+.gv-flat .sheet::before,.gv-flat .sheet::after{display:none}
+.gv-flat .pin,.gv-flat .tapestrip,.gv-flat .gv-paste .ptape{display:none}
+.gv-flat .gv-paste{transform:none}
+.gv-flat .gv-grain,.gv-flat .gv-tint,.gv-flat .gv-vig{display:none}
+.gv-flat .gv-art{filter:none}
+.gv-flat .c-wounded .gv-art{filter:saturate(.42) brightness(.85)}   /* label-paired — stays */
+.gv-flat .c-lost .gv-art{filter:grayscale(1) brightness(.76)}       /* label-paired — stays */
+.gv-flat .f-elite .gv-frame{background:var(--brass);padding:5px}    /* rank is data — frame stays, ungraded */
+.gv-flat .stamp{transform:none}
+.gv-flat .section>h2,.gv-flat .subtitle,.gv-flat .note{color:#5f5240}
+.gv-flat .deskplate{background:var(--brass);box-shadow:none}
+
+/* ---------- in-situ surfaces ---------- */
+.surfaces{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:28px;margin-top:18px;align-items:start}
+.ledger-row{display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid rgba(44,35,24,.25)}
+.ledger-row:last-child{border-bottom:none}
+.gv-paste--chip{width:52px;flex:none;transform:rotate(-1deg)}
+.gv-paste--chip .gv-paste-mat{padding:3px}
+.gv-paste--chip .gv-tint,.gv-paste--chip .gv-grain,.gv-paste--chip .gv-vig{inset:3px}
+.gv-paste--chip .gv-vig{box-shadow:inset 0 0 12px rgba(43,28,14,.5)}
+.gv-sil{display:block;width:100%;aspect-ratio:1/1;background:var(--slate);position:relative}
+.gv-sil::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 34%,#4a505c 26%,transparent 27%),
+             radial-gradient(120% 90% at 50% 108%,#4a505c 38%,transparent 39%)}
+.gv-sil::after{content:"";position:absolute;inset:4px;outline:1.5px dashed rgba(230,214,174,.4)}
+.who{flex:1;min-width:0}
+.who .nm{font-weight:700;font-size:15.5px}
+.who .cls{font-family:var(--sc);font-size:11.5px;color:var(--ink-faint);letter-spacing:.06em}
+.hero-head{display:flex;gap:18px;align-items:flex-start}
+.gv-paste--lg{width:150px;flex:none}
+.statline{display:flex;justify-content:space-between;font-family:var(--sc);font-size:12.5px;border-bottom:1px dotted rgba(44,35,24,.35);padding:3px 0}
+.dstrip{background:linear-gradient(160deg,#46372a,#31241a);border:1px solid rgba(230,214,174,.22);border-radius:3px;padding:12px 16px}
+.dstrip .cap2{font-family:var(--sc);color:#e6d6ae;font-size:12px;letter-spacing:.12em;font-weight:700}
+.dteam{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.dmember{text-align:center;width:58px}
+.dmember .gv-paste--chip{width:52px;margin:0 auto}
+.dmember .mnm{font-family:var(--sc);font-size:10.5px;color:#d8c69c;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dmember .mhp{font-family:var(--sc);font-size:10px;font-weight:700}
+.aae{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(44,35,24,.2)}
+.aae:last-child{border-bottom:none}
+.aae .txt{flex:1;font-size:13.5px;line-height:1.4}
+
+/* ---------- muster sheet (recruit flow — player-chosen ancestry) ---------- */
+.muster-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.mtile{cursor:pointer;text-align:center;border:1px solid rgba(44,35,24,.4);border-radius:3px;padding:9px 6px 7px;background:rgba(255,252,242,.35);font-family:var(--serif)}
+.mtile[aria-pressed="true"]{border-color:var(--red-ink);box-shadow:inset 0 0 0 2px rgba(143,35,24,.5)}
+.mtile .gv-paste,.mtile .gv-sil{width:62px;margin:0 auto;display:block}
+.mtile .gv-paste{transform:none}
+.mtile .gv-paste-mat{display:block}
+.mtile img.gv-art{width:100%;aspect-ratio:1/1;display:block}
+.mtile .mnm{display:block;font-family:var(--sc);font-weight:700;font-size:12px;margin-top:6px;letter-spacing:.05em}
+.mtile .mavail{display:block;font-size:10.5px;font-style:italic;color:var(--ink-faint);margin-top:1px}
+.muster-side{display:flex;flex-direction:column;gap:12px;align-items:center}
+.wax{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#c25a4a,#8f2318 55%,#5f150c);
+  box-shadow:0 3px 7px rgba(0,0,0,.45),inset 0 1px 2px rgba(255,200,180,.4);
+  color:#f3d9c8;font-family:var(--sc);font-weight:800;font-size:10.5px;letter-spacing:.04em}
+.wax:active{transform:translateY(1px)}
+.gv-flat .wax{border-radius:4px;background:#8f2318;box-shadow:none}
+.gv-flat .dstrip{background:#faf6ec;border:1px solid #c9bfa8}
+.gv-flat .dstrip .cap2,.gv-flat .dmember .mnm{color:#5f5240}
+.gv-flat .gv-paste--chip,.gv-flat .gv-paste--lg{transform:none}
+.gv-flat .gv-sil::after{outline-color:#a89a7c}
+
+/* ---------- demo scaffolding ---------- */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:22px;margin-top:18px}
+.tile{text-align:center}
+.tile .gv-paste{width:100%;max-width:170px}
+.tile figcaption{margin-top:9px}
+.tile .cap{font-family:var(--sc);font-weight:700;font-size:12px;letter-spacing:.06em;color:#e6d6ae}
+.gv-flat .tile .cap{color:#5f5240}
+.tile .capnote{font-size:11.5px;font-style:italic;color:#b7a37c;margin-top:2px}
+.gv-flat .tile .capnote{color:#8a7c62}
+.controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.btn{font-family:var(--sc);font-weight:700;font-size:13px;letter-spacing:.05em;cursor:pointer;
+  background:linear-gradient(175deg,#f4ecd8,#ddd0b2);border:1px solid #8a7a58;border-radius:3px;
+  padding:7px 14px;color:var(--ink);box-shadow:0 2px 3px rgba(0,0,0,.35)}
+.btn:active{transform:translateY(1px)}
+.presspair{display:inline-flex;border:1px solid #8a7a58;border-radius:3px;overflow:hidden}
+.presspair .btn{border:none;border-radius:0;box-shadow:none;background:#e7dcc2}
+.presspair .btn[aria-pressed="true"]{background:#5a4a2e;color:#f2e8d0;box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+input[type=file]{display:none}
+</style>
+</head>
+<body id="demo">
+<header>
+  <div class="deskplate">GUILD VIGIL · ART INTEGRATION</div>
+  <p class="subtitle">Exploration round 01 — treatment layer · portrait surfaces · recruit muster &nbsp;·&nbsp; wireframe for brief #10 &nbsp;·&nbsp; 2026-08-11</p>
+  <div class="controls">
+    <label class="btn" for="imgload">⎗ Load test image…</label>
+    <input type="file" id="imgload" accept="image/*">
+    <span class="presspair" role="group" aria-label="Flat mode">
+      <button class="btn" id="flatoff" aria-pressed="true">Desk</button>
+      <button class="btn" id="flaton" aria-pressed="false">Flat mode</button>
+    </span>
+    <span class="note">The figure below is a stand-in. Load any anchor sheet or fresh generation to see it under every grade — nothing leaves your machine.</span>
+  </div>
+</header>
+
+<!-- ================= SECTION A · TREATMENT LAYER ================= -->
+<div class="section">
+  <h2>A · THE TREATMENT LAYER — ONE IMAGE, EVERY GRADE (BIBLE §5)</h2>
+  <p class="note">Grades are applied by data (allegiance, condition, rank), never hand-picked per image. Toggle flat mode above: pastes and frames stay, ornament grades drop, condition desat stays (it is label-paired).</p>
+  <div class="tgrid">
+    <figure class="gv-paste tile-raw"><span class="gv-paste-mat"><img class="gv-art" alt="raw generation"></span></figure>
+    <figure class="gv-paste t-base"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="base grade"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+    <figure class="gv-paste t-base t-haven"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="haven grade"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+    <figure class="gv-paste t-base t-krath"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="krath grade"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+    <figure class="gv-paste t-base c-wounded"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="wounded"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+    <figure class="gv-paste t-base c-lost"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="lost"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+    <figure class="gv-paste t-base f-elite"><span class="gv-paste-mat"><span class="gv-frame"><img class="gv-art" alt="elite"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></span></figure>
+  </div>
+  <div class="tgrid" style="margin-top:6px">
+    <figcaption class="tile"><div class="cap">RAW</div><div class="capnote">as generated — never shown in-app</div></figcaption>
+    <figcaption class="tile"><div class="cap">DAGUERREOTYPE BASE</div><div class="capnote">sepia shift · contrast lift · vignette · grain multiply · tilt</div></figcaption>
+    <figcaption class="tile"><div class="cap">HAVEN GRADE</div><div class="capnote">base + warm parchment bias</div></figcaption>
+    <figcaption class="tile"><div class="cap">KRATH GRADE</div><div class="capnote">base + cold iron bias, crushed shadows</div></figcaption>
+    <figcaption class="tile"><div class="cap">WOUNDED</div><div class="capnote">progressive desat — twin of the HP label, never its replacement</div></figcaption>
+    <figcaption class="tile"><div class="cap">LOST</div><div class="capnote">full desat + deeper vignette</div></figcaption>
+    <figcaption class="tile"><div class="cap">ELITE FRAME</div><div class="capnote">rank lives in the brass, not the artwork</div></figcaption>
+  </div>
+</div>
+<!-- ================= SECTION B · IN SITU — EVERYWHERE HEROES RENDER ================= -->
+<div class="section">
+  <h2>B · PORTRAIT FRAMES IN SITU — ROSTER · HERO SHEET · DISPATCH · AFTER-ACTION</h2>
+  <p class="note">Busts are crops from the hero sheets (crop-first per the bible). Where a hero's ancestry sheet hasn't been generated yet, the slot shows the sketch-pending silhouette — never a wrong portrait, never an empty hole.</p>
+  <div class="surfaces">
+
+    <div class="sheet sheet--aged" style="padding-top:26px">
+      <span class="tapestrip" style="top:-9px;left:26px;transform:rotate(-3deg)"></span>
+      <div class="lab" style="letter-spacing:.12em">ROSTER LEDGER</div>
+      <div class="ledger-row">
+        <figure class="gv-paste gv-paste--chip t-base"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div class="who"><div class="nm">Berrin Oakhart</div><div class="cls">HUMAN · FIGHTER · LV 4</div></div>
+        <span class="chip"><span class="dot" style="background:var(--ok)"></span>READY</span>
+      </div>
+      <div class="ledger-row">
+        <figure class="gv-paste gv-paste--chip t-base c-wounded"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div class="who"><div class="nm">Sela Thornwick</div><div class="cls">HALF-ORC · RANGER · LV 3</div></div>
+        <span class="chip"><span class="dot" style="background:var(--hurt)"></span>WOUNDED · HP 4/10</span>
+      </div>
+      <div class="ledger-row">
+        <figure class="gv-paste gv-paste--chip t-base"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div class="who"><div class="nm">Grosh Iron-Tally</div><div class="cls">HUMAN · CLERIC · LV 4</div></div>
+        <span class="chip"><span class="dot" style="background:var(--warn)"></span>ON DISPATCH</span>
+      </div>
+      <div class="ledger-row">
+        <span class="gv-sil" style="width:52px;flex:none"></span>
+        <div class="who"><div class="nm">Nim Fernwhistle</div><div class="cls">GNOME · WIZARD · LV 2</div></div>
+        <span class="chip"><span class="dot" style="background:var(--ok)"></span>READY</span>
+      </div>
+      <div class="marg" style="margin-top:8px">— no field sketch of the gnome yet; the clerk leaves the frame open</div>
+    </div>
+
+    <div class="sheet" style="padding-top:26px">
+      <span class="tapestrip" style="top:-9px;right:30px;left:auto;transform:rotate(2.5deg)"></span>
+      <div class="lab" style="letter-spacing:.12em">HERO SHEET — STANDING RECORD</div>
+      <div class="hero-head" style="margin-top:10px">
+        <figure class="gv-paste gv-paste--lg t-base"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:19px">Sela Thornwick</div>
+          <div class="cls lab">HALF-ORC · FEMALE · RANGER · LV 3</div>
+          <div style="margin-top:8px">
+            <div class="statline"><span>HP</span><span>4 / 10</span></div>
+            <div class="statline"><span>AC</span><span>17</span></div>
+            <div class="statline"><span>PERCEPTION</span><span>+7</span></div>
+            <div class="statline"><span>DEEDS</span><span>3 recorded</span></div>
+          </div>
+          <div style="margin-top:8px"><span class="chip"><span class="dot" style="background:var(--hurt)"></span>WOUNDED · HP 4/10</span></div>
+        </div>
+      </div>
+      <div class="marg" style="margin-top:10px">— took a warg's teeth at the bridge; resting until the wound closes</div>
+    </div>
+
+    <div class="dstrip">
+      <div class="cap2">DISPATCH · TEAM EMBER — WEEK 12 · SOUTH ROAD</div>
+      <div class="dteam">
+        <div class="dmember"><figure class="gv-paste gv-paste--chip t-base"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure><div class="mnm">Berrin</div><div class="mhp" style="color:var(--ok)">HP 12/12</div></div>
+        <div class="dmember"><figure class="gv-paste gv-paste--chip t-base c-wounded"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure><div class="mnm">Sela</div><div class="mhp" style="color:var(--hurt)">HP 4/10</div></div>
+        <div class="dmember"><figure class="gv-paste gv-paste--chip t-base"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure><div class="mnm">Grosh</div><div class="mhp" style="color:var(--ok)">HP 11/11</div></div>
+        <div class="dmember"><span class="gv-sil" style="width:52px;margin:0 auto"></span><div class="mnm">Nim</div><div class="mhp" style="color:var(--ok)">HP 8/8</div></div>
+      </div>
+    </div>
+
+    <div class="sheet sheet--old" style="padding-top:26px">
+      <span class="tapestrip" style="top:-9px;left:40%;transform:rotate(-2deg)"></span>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="lab" style="letter-spacing:.12em">AFTER-ACTION — WEEK 9, THE FEN CROSSING</div>
+        <span class="stamp">FALLEN</span>
+      </div>
+      <div class="aae" style="margin-top:8px">
+        <figure class="gv-paste gv-paste--chip t-base c-lost"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div class="txt"><b>Aldric Vane</b> — <span class="lab">LOST · WEEK 9</span><br>Held the causeway while the others withdrew. The ledger keeps his page.</div>
+      </div>
+      <div class="aae">
+        <figure class="gv-paste gv-paste--chip t-base"><span class="gv-paste-mat"><img class="gv-art" alt=""><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+        <div class="txt"><b>Berrin Oakhart</b> — <span class="lab">RETURNED</span><br>Carried the standard back. 240 gp recovered, 2 relics catalogued.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= SECTION C · MUSTER SHEET — PLAYER-CHOSEN ANCESTRY ================= -->
+<div class="section">
+  <h2>C · THE MUSTER SHEET — RECRUIT FLOW GAINS THE ANCESTRY CHOICE</h2>
+  <p class="note">Pinned = actionable now. The player picks ancestry and gender before signing; the wax seal is the irreversible commitment, per the grammar. Ancestries whose sheets aren't generated yet stay choosable — they simply muster with the sketch-pending silhouette until their batch lands.</p>
+  <div class="surfaces" style="grid-template-columns:minmax(340px,540px)">
+    <div class="sheet" style="padding-top:30px">
+      <span class="pin"></span>
+      <div class="lab" style="letter-spacing:.12em;text-align:center">MUSTER OF RECRUITS — WEEK 12</div>
+      <div style="display:flex;gap:20px;align-items:flex-start">
+        <div style="flex:1">
+          <div class="muster-grid" id="mgrid"></div>
+          <div style="margin-top:12px;text-align:center">
+            <span class="presspair" role="group" aria-label="Gender">
+              <button class="btn mg" data-g="f" aria-pressed="true">Female</button>
+              <button class="btn mg" data-g="m" aria-pressed="false">Male</button>
+            </span>
+          </div>
+        </div>
+        <div class="muster-side">
+          <figure class="gv-paste t-base" style="width:120px" id="mpreview"><span class="ptape"></span><span class="gv-paste-mat"><img class="gv-art" alt="chosen recruit"><span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span></span></figure>
+          <div class="lab" id="mlabel" style="text-align:center">HUMAN · FEMALE</div>
+          <button class="wax" id="mseal">SIGN</button>
+          <div class="lab" style="font-size:10.5px">SIGN &amp; MUSTER</div>
+        </div>
+      </div>
+      <div class="marg" id="mmarg" style="margin-top:12px">— a recruit waits on the guildmaster's hand; the quill lies out until the sheet is signed</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SECTION D · NOTES FOR REVIEW ================= -->
+<div class="section">
+  <h2>D · NOTES FOR REVIEW</h2>
+  <div class="surfaces" style="grid-template-columns:minmax(340px,640px)">
+    <div class="sheet sheet--aged">
+      <ul style="margin:6px 0;padding-left:20px;font-size:14px;line-height:1.55">
+        <li><b>Load a real image</b> (top of page) — an anchor sheet or a batch-1 generation — and judge every grade with it. The stand-in figure only proves the plumbing.</li>
+        <li><b>Grades compose by data</b>: faction from allegiance, condition from HP state, frame from rank. Wounded here shows base+wounded; Krath-graded enemies would show base+krath (+elite if ranked).</li>
+        <li><b>Sketch-pending silhouette</b> is the proposed fallback wherever art doesn't exist yet (8 of 12 hero sheets after batch 1). Alternative: hold portrait wiring until all 12 pass. Which?</li>
+        <li><b>Muster sheet</b> assumes the recruit flow gains an ancestry+gender choice sealed by wax. Where existing heroes (already-saved campaigns) get their ancestry is a system question for the interview, not this mock.</li>
+        <li><b>Flat mode</b> (toggle, top) — portrait + frame stay, tilt/tape/grain/grades drop, wounded/lost desat stays label-paired. Check it matches your reading of the bible §5 decision.</li>
+        <li><b>Busts are square crops</b> from the 3:2 sheets for now (object-fit center-top on the front view). Per-sheet crop tuning is a build-tool concern, not a UI one.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* painterly stand-in — replaced by any loaded image */
+  var PH = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'>"
+    + "<defs>"
+    + "<radialGradient id='key' cx='28%' cy='20%' r='80%'><stop offset='0%' stop-color='#e8c07a' stop-opacity='.45'/><stop offset='55%' stop-color='#e8c07a' stop-opacity='0'/></radialGradient>"
+    + "<linearGradient id='skin' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#8f8f70'/><stop offset='100%' stop-color='#4f5346'/></linearGradient>"
+    + "<linearGradient id='rim' x1='0' y1='0' x2='1' y2='0'><stop offset='68%' stop-color='#59c6c9' stop-opacity='0'/><stop offset='100%' stop-color='#59c6c9' stop-opacity='.5'/></linearGradient>"
+    + "</defs>"
+    + "<rect width='300' height='300' fill='#2e3138'/>"
+    + "<path d='M55 300 Q75 208 150 202 Q225 208 245 300 Z' fill='url(#skin)'/>"
+    + "<path d='M55 300 Q75 208 150 202 Q225 208 245 300 Z' fill='url(#rim)'/>"
+    + "<ellipse cx='150' cy='120' rx='50' ry='60' fill='url(#skin)'/>"
+    + "<ellipse cx='150' cy='120' rx='50' ry='60' fill='url(#rim)'/>"
+    + "<rect width='300' height='300' fill='url(#key)'/>"
+    + "</svg>";
+  var PHURI = "data:image/svg+xml;utf8," + encodeURIComponent(PH).replace(/'/g, "%27");
+  function setAll(src){
+    var imgs = document.querySelectorAll("img.gv-art");
+    for (var i=0;i<imgs.length;i++) imgs[i].src = src;
+  }
+  setAll(PHURI);
+
+  /* load test image — stays in memory, nothing uploaded */
+  document.getElementById("imgload").addEventListener("change", function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){ setAll(r.result); };
+    r.readAsDataURL(f);
+  });
+
+  /* flat mode toggle */
+  var demo = document.getElementById("demo");
+  var on = document.getElementById("flaton"), off = document.getElementById("flatoff");
+  function setFlat(v){
+    demo.classList.toggle("gv-flat", v);
+    on.setAttribute("aria-pressed", v ? "true" : "false");
+    off.setAttribute("aria-pressed", v ? "false" : "true");
+  }
+  on.addEventListener("click", function(){ setFlat(true); });
+  off.addEventListener("click", function(){ setFlat(false); });
+
+  /* muster picker — batch-1 availability: Human + Half-Orc only */
+  var ANC = [
+    {id:"human",   nm:"HUMAN",    art:true},
+    {id:"elf",     nm:"ELF",      art:false},
+    {id:"dwarf",   nm:"DWARF",    art:false},
+    {id:"halfling",nm:"HALFLING", art:false},
+    {id:"halforc", nm:"HALF-ORC", art:true},
+    {id:"gnome",   nm:"GNOME",    art:false}
+  ];
+  var sel = {anc:"human", g:"f"};
+  var grid = document.getElementById("mgrid");
+  ANC.forEach(function(a){
+    var b = document.createElement("button");
+    b.className = "mtile"; b.type = "button";
+    b.setAttribute("data-anc", a.id);
+    b.setAttribute("aria-pressed", a.id===sel.anc ? "true" : "false");
+    b.innerHTML = (a.art
+        ? "<span class='gv-paste t-base'><span class='gv-paste-mat'><img class='gv-art' src='"+PHURI+"' alt=''><span class='gv-tint'></span><span class='gv-grain'></span><span class='gv-vig'></span></span></span>"
+        : "<span class='gv-sil'></span>")
+      + "<span class='mnm'>"+a.nm+"</span>"
+      + "<span class='mavail'>"+(a.art ? "sheet on file" : "awaiting field sketch")+"</span>";
+    b.addEventListener("click", function(){
+      sel.anc = a.id;
+      var tiles = grid.querySelectorAll(".mtile");
+      for (var i=0;i<tiles.length;i++) tiles[i].setAttribute("aria-pressed","false");
+      b.setAttribute("aria-pressed","true");
+      refresh();
+    });
+    grid.appendChild(b);
+  });
+  var gbtns = document.querySelectorAll(".mg");
+  gbtns.forEach(function(g){
+    g.addEventListener("click", function(){
+      sel.g = g.getAttribute("data-g");
+      gbtns.forEach(function(x){ x.setAttribute("aria-pressed", x===g ? "true" : "false"); });
+      refresh();
+    });
+  });
+  function refresh(){
+    var a = ANC.filter(function(x){ return x.id===sel.anc; })[0];
+    document.getElementById("mlabel").textContent = a.nm + " · " + (sel.g==="f" ? "FEMALE" : "MALE");
+    var pv = document.getElementById("mpreview");
+    var mat = pv.querySelector(".gv-paste-mat");
+    if (a.art){
+      mat.innerHTML = "<img class='gv-art' src='"+curSrc()+"' alt='chosen recruit'><span class='gv-tint'></span><span class='gv-grain'></span><span class='gv-vig'></span>";
+    } else {
+      mat.innerHTML = "<span class='gv-sil'></span>";
+    }
+  }
+  function curSrc(){
+    var any = document.querySelector("#imgload").files;
+    var first = document.querySelector(".tgrid img.gv-art");
+    return first ? first.src : PHURI;
+  }
+  document.getElementById("mseal").addEventListener("click", function(){
+    var a = ANC.filter(function(x){ return x.id===sel.anc; })[0];
+    document.getElementById("mmarg").textContent =
+      "— signed. A " + a.nm.toLowerCase() + " " + (sel.g==="f"?"woman":"man") +
+      " takes the recruit's wraps; the quill returns to its well. (mock — no state saved)";
+  });
+})();
+</script>
+</body>
+</html>
