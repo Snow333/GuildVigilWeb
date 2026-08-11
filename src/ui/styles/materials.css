@@ -113,10 +113,40 @@
   transform: rotate(-0.4deg);
 }
 
-/* ============ ledger ruling ============ */
+/* ============ screen title on the leather ============ */
+.gv-desk h1 {
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  color: #d8bd85;
+  text-shadow: 0 1px 2px #000000cc;
+  margin: 0 0 12px;
+  font-weight: 400;
+}
+
+/* ============ ledger ruling + ledger tables ============ */
 .gv-ledger {
   background-image: repeating-linear-gradient(#00000000 0 27px, #8c6a3a22 27px 28px);
   line-height: 28px;
+}
+.gv-ledger table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 28px;
+}
+.gv-ledger th {
+  text-align: left;
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--gv-ink-muted);
+  font-weight: 600;
+  padding: 0 8px 0 0;
+}
+.gv-ledger td {
+  padding: 0 8px 0 0;
+  vertical-align: middle;
 }
 
 /* ============ flat mode (materials) ============ */

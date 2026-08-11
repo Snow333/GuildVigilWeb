@@ -19,50 +19,12 @@
   .gv-town { grid-template-columns: 1fr; }
 }
 
-.gv-town h1 {
-  font-size: 21px;
-  letter-spacing: 0.5px;
-  color: #d8bd85;
-  text-shadow: 0 1px 2px #000000cc;
-  margin: 0 0 12px;
-  font-weight: 400;
-}
 .gv-town .gv-sheet { margin-bottom: 22px; }
-
-/* the town ledger table (roster) */
-.gv-town .gv-ledger table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  line-height: 28px;
-}
-.gv-town .gv-ledger th {
-  text-align: left;
-  font-family: var(--gv-sans);
-  font-size: 10px;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--gv-ink-muted);
-  font-weight: 600;
-  padding: 0 8px 0 0;
-}
-.gv-town .gv-ledger td {
-  padding: 0 8px 0 0;
-  vertical-align: middle;
-}
 
 /* ============ rollout step 3: Quest Board ============ */
 .gv-board {
   max-width: 1140px;
   margin: 0 auto;
-}
-.gv-board h1 {
-  font-size: 21px;
-  letter-spacing: 0.5px;
-  color: #d8bd85;
-  text-shadow: 0 1px 2px #000000cc;
-  margin: 0 0 12px;
-  font-weight: 400;
 }
 .gv-notices {
   display: flex;
@@ -116,4 +78,46 @@
   align-self: stretch;
   display: grid;
   place-items: center;
+}
+
+/* ============ rollout step 4: Hero Panel ============ */
+.gv-hero {
+  max-width: 940px;
+  margin: 0 auto;
+}
+.gv-hero .gv-sheet { margin-bottom: 22px; }
+.gv-hero .gv-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0 0 20px;
+}
+/* the ability row: six brass-riveted stat blocks on the dossier */
+.gv-abilities {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.gv-abilities .gv-ab {
+  border: 1px solid #a8905e;
+  border-radius: 2px;
+  padding: 4px 10px;
+  background: #e2d4b266;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+.gv-abilities .gv-ab b {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 9.5px;
+  letter-spacing: 1.6px;
+  color: var(--gv-ink-muted);
+}
+.gv-statline {
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin: 0 0 6px;
 }

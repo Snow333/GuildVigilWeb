@@ -3,6 +3,13 @@
  * equipment ritual (ledger: psychological value), loadout reorder. Every number
  * on screen comes from heroSheet()/levelUpOptions() — the UI computes nothing.
  * Elective feat picks join the wizard with the content workstream.
+ *
+ * Brief #8 rollout step 4: the hero is a dossier of sheets — abilities as
+ * brass-riveted stat blocks, skills as the ruled ledger, the level-up wizard as
+ * a fresh pinned sheet whose Commit is the wax seal (a level, once taken, is
+ * taken). Gear/stash and loadout are standing records (taped, aged). All
+ * e2e-pinned texts (Level up ●, "{class} → {n}", +/−, Commit level-up) and all
+ * behavior are unchanged from Phase 2.
  */
 
 import { useState } from 'react';
@@ -19,24 +26,32 @@ export function HeroPanel({ heroId }: { heroId: string }) {
   const sheet = session.heroSheet(heroId);
 
   return (
-    <div>
-      <h1>{sheet.name} — level {sheet.level} {sheet.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}</h1>
-      <p>
-        <button onClick={() => nav({ kind: 'town' })}>◂ Town</button>{' '}
-        {(['sheet', 'levelup', 'gear', 'loadout'] as const).map((t) => (
-          <button key={t} disabled={tab === t} onClick={() => setTab(t)}>
-            {t === 'levelup' ? `Level up${sheet.canLevelUp ? ' ●' : ''}` : t}
-          </button>
-        ))}
-        {' '}
-        {session.roster().filter((r) => r.id !== heroId).map((r) => (
-          <button key={r.id} onClick={() => nav({ kind: 'hero', heroId: r.id })}>→ {r.name}</button>
-        ))}
-      </p>
-      {tab === 'sheet' && <SheetTab heroId={heroId} />}
-      {tab === 'levelup' && <LevelUpTab heroId={heroId} />}
-      {tab === 'gear' && <GearTab heroId={heroId} />}
-      {tab === 'loadout' && <LoadoutTab heroId={heroId} />}
+    <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
+      <div className="gv-hero">
+        <h1>{sheet.name} — level {sheet.level} {sheet.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}</h1>
+        <div className="gv-tabs">
+          <button className="gv-btn" onClick={() => nav({ kind: 'town' })}>◂ Town</button>
+          {(['sheet', 'levelup', 'gear', 'loadout'] as const).map((t) => (
+            <button
+              key={t}
+              className={t === 'levelup' && sheet.canLevelUp ? 'gv-btn gv-btn--seal' : 'gv-btn'}
+              disabled={tab === t}
+              onClick={() => setTab(t)}
+            >
+              {t === 'levelup' ? `Level up${sheet.canLevelUp ? ' ●' : ''}` : t}
+            </button>
+          ))}
+          {session.roster().filter((r) => r.id !== heroId).map((r) => (
+            <button className="gv-btn gv-btn--ghost" key={r.id} onClick={() => nav({ kind: 'hero', heroId: r.id })}>
+              → {r.name}
+            </button>
+          ))}
+        </div>
+        {tab === 'sheet' && <SheetTab heroId={heroId} />}
+        {tab === 'levelup' && <LevelUpTab heroId={heroId} />}
+        {tab === 'gear' && <GearTab heroId={heroId} />}
+        {tab === 'loadout' && <LoadoutTab heroId={heroId} />}
+      </div>
     </div>
   );
 }
@@ -46,34 +61,48 @@ function SheetTab({ heroId }: { heroId: string }) {
   const s = session!.heroSheet(heroId);
   return (
     <div>
-      <table border={1} cellPadding={6}>
-        <tbody>
-          <tr>
-            {ABILITIES.map((a) => (
-              <td key={a}><b>{a.toUpperCase()}</b> {s.abilities[a].score} ({s.abilities[a].mod >= 0 ? '+' : ''}{s.abilities[a].mod})</td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-      <p>
-        HP {s.maxHp} · AC {s.ac} · Attack +{s.attackBonus} ({s.damageDice}) · Speed {s.speed} ·
-        Init +{s.initiativeBonus} · Fort +{s.saves.fort} / Ref +{s.saves.ref} / Will +{s.saves.will} ·
-        Wounded {s.wounded} · XP {s.xp.atCap ? 'CAP' : `${s.xp.progress}/${s.xp.threshold}`}
-      </p>
-      <h3>Skills</h3>
-      <table border={1} cellPadding={4}>
-        <tbody>
-          {s.skills.filter((sk) => sk.ranks > 0 || sk.total !== null).map((sk) => (
-            <tr key={sk.name}>
-              <td>{sk.name}</td>
-              <td>{sk.ranks} ranks</td>
-              <td>{sk.total !== null ? `check +${sk.total}` : '—'}</td>
-            </tr>
+      <div className="gv-sheet gv-sheet--aged" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
+        <span className="gv-tape" />
+        <h3 className="gv-head">The measure of them <span className="gv-sub">derived — the desk computes nothing</span></h3>
+        <div className="gv-abilities">
+          {ABILITIES.map((a) => (
+            <span className="gv-ab" key={a}>
+              <b>{a.toUpperCase()}</b>
+              {s.abilities[a].score} ({s.abilities[a].mod >= 0 ? '+' : ''}{s.abilities[a].mod})
+            </span>
           ))}
-        </tbody>
-      </table>
-      <h3>Feats</h3>
-      <p>{s.feats.length > 0 ? s.feats.map((f) => f.name).join(' · ') : <em>none</em>}</p>
+        </div>
+        <p className="gv-statline">
+          HP {s.maxHp} · AC {s.ac} · Attack +{s.attackBonus} ({s.damageDice}) · Speed {s.speed} ·
+          Init +{s.initiativeBonus} · Fort +{s.saves.fort} / Ref +{s.saves.ref} / Will +{s.saves.will} ·
+          Wounded {s.wounded > 0 ? <span className="gv-marg">{s.wounded}</span> : s.wounded} ·
+          XP {s.xp.atCap ? 'CAP' : `${s.xp.progress}/${s.xp.threshold}`}
+        </p>
+      </div>
+
+      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '-0.35deg' }}>
+        <span className="gv-tape" />
+        <h3 className="gv-head">Skills <span className="gv-sub">ranks · check</span></h3>
+        <table>
+          <tbody>
+            {s.skills.filter((sk) => sk.ranks > 0 || sk.total !== null).map((sk) => (
+              <tr key={sk.name}>
+                <td>{sk.name}</td>
+                <td>{sk.ranks} ranks</td>
+                <td>{sk.total !== null ? `check +${sk.total}` : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="gv-sheet gv-sheet--old" style={{ ['--gv-tilt' as never]: '0.25deg' }}>
+        <span className="gv-pin gv-pin--left" />
+        <h3 className="gv-head">Feats <span className="gv-sub">the record</span></h3>
+        <p style={{ margin: 0, fontSize: 13.5 }}>
+          {s.feats.length > 0 ? s.feats.map((f) => f.name).join(' · ') : <em>none</em>}
+        </p>
+      </div>
     </div>
   );
 }
@@ -87,7 +116,11 @@ function LevelUpTab({ heroId }: { heroId: string }) {
 
   if (!options.eligible) {
     const xp = session!.heroSheet(heroId).xp;
-    return <p><em>Not enough XP yet ({xp.atCap ? 'at the level cap' : `${xp.progress}/${xp.threshold}`}).</em></p>;
+    return (
+      <div className="gv-sheet gv-sheet--old gv-sheet--stained" style={{ maxWidth: 460 }}>
+        <p style={{ margin: 0 }}><em>Not enough XP yet ({xp.atCap ? 'at the level cap' : `${xp.progress}/${xp.threshold}`}).</em></p>
+      </div>
+    );
   }
 
   const chosen = options.classes.find((c) => c.classId === classId) ?? null;
@@ -115,36 +148,45 @@ function LevelUpTab({ heroId }: { heroId: string }) {
   };
 
   return (
-    <div>
-      <h3>Level {options.newCharacterLevel}: choose a class</h3>
-      <table border={1} cellPadding={4}>
+    <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '-0.3deg' }}>
+      <span className="gv-pin" />
+      <h3 className="gv-head">Level {options.newCharacterLevel}: choose a class <span className="gv-sub">the commitment ritual</span></h3>
+      <table style={{ borderCollapse: 'collapse', fontSize: 13.5, lineHeight: 2 }}>
         <tbody>
           {options.classes.map((c) => (
             <tr key={c.classId}>
-              <td>
-                <button disabled={!c.met || classId === c.classId} onClick={() => { setClassId(c.classId); setRanks({}); }}>
+              <td style={{ paddingRight: 10 }}>
+                <button
+                  className="gv-btn"
+                  disabled={!c.met || classId === c.classId}
+                  onClick={() => { setClassId(c.classId); setRanks({}); }}
+                >
                   {c.name} → {c.newClassLevel}
                 </button>
               </td>
-              <td>{c.met ? `${c.hpPerLevel} hp/lvl · key ${c.keyAbility.toUpperCase()}` : <em>{c.reason}</em>}</td>
+              <td>{c.met ? `${c.hpPerLevel} hp/lvl · key ${c.keyAbility.toUpperCase()}` : <em className="gv-marg">{c.reason}</em>}</td>
             </tr>
           ))}
         </tbody>
       </table>
       {chosen && options.boostRequired && (
         <>
-          <h3>Ability boost (level {options.newCharacterLevel} milestone)</h3>
-          <p>
+          <h3 className="gv-head" style={{ marginTop: 14 }}>Ability boost <span className="gv-sub">level {options.newCharacterLevel} milestone</span></h3>
+          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {ABILITIES.map((a) => (
-              <button key={a} disabled={boost === a} onClick={() => { setBoost(a); setRanks({}); }}>+2 {a.toUpperCase()}</button>
+              <button className="gv-btn" key={a} disabled={boost === a} onClick={() => { setBoost(a); setRanks({}); }}>
+                +2 {a.toUpperCase()}
+              </button>
             ))}
           </p>
         </>
       )}
       {chosen && boostOk && (
         <>
-          <h3>Skill points: {spent}/{points} <small>(rank cap {options.maxRanks} = character level)</small></h3>
-          <table border={1} cellPadding={4}>
+          <h3 className="gv-head" style={{ marginTop: 14 }}>
+            Skill points: {spent}/{points} <span className="gv-sub">rank cap {options.maxRanks} = character level</span>
+          </h3>
+          <table style={{ borderCollapse: 'collapse', fontSize: 13.5, lineHeight: 2 }}>
             <tbody>
               {options.skillNames.map((name) => {
                 const held = options.currentRanks[name] ?? 0;
@@ -152,11 +194,11 @@ function LevelUpTab({ heroId }: { heroId: string }) {
                 const atCap = held + adding >= options.maxRanks;
                 return (
                   <tr key={name}>
-                    <td>{name}</td>
-                    <td>{held + adding}{adding > 0 ? ` (+${adding})` : ''}{atCap ? ' MAX' : ''}</td>
-                    <td>
-                      <button disabled={spent >= points || atCap} onClick={() => setRanks({ ...ranks, [name]: adding + 1 })}>+</button>
-                      <button disabled={adding <= 0} onClick={() => setRanks({ ...ranks, [name]: adding - 1 })}>−</button>
+                    <td style={{ paddingRight: 12 }}>{name}</td>
+                    <td style={{ paddingRight: 12 }}>{held + adding}{adding > 0 ? ` (+${adding})` : ''}{atCap ? ' MAX' : ''}</td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="gv-btn" disabled={spent >= points || atCap} onClick={() => setRanks({ ...ranks, [name]: adding + 1 })}>+</button>
+                      <button className="gv-btn" disabled={adding <= 0} onClick={() => setRanks({ ...ranks, [name]: adding - 1 })}>−</button>
                     </td>
                   </tr>
                 );
@@ -164,7 +206,7 @@ function LevelUpTab({ heroId }: { heroId: string }) {
             </tbody>
           </table>
           <p>
-            <button disabled={spent !== points} onClick={commit}>
+            <button className="gv-btn gv-btn--seal" disabled={spent !== points} onClick={commit}>
               Commit level-up {spent !== points ? `(allocate all ${points} points)` : ''}
             </button>
           </p>
@@ -180,37 +222,43 @@ function GearTab({ heroId }: { heroId: string }) {
   const stash = session!.stashView();
   return (
     <div>
-      <h3>Equipped</h3>
-      <table border={1} cellPadding={4}>
-        <tbody>
-          {sheet.equipped.map((e) => (
-            <tr key={e.slot}>
-              <td>{e.slot}</td>
-              <td>{e.derived.displayName}</td>
-              <td>{e.derived.damageDice ? `dmg ${e.derived.damageDice}` : e.derived.acBonus ? `AC +${e.derived.acBonus}` : '—'}</td>
-              <td><button onClick={() => exec((s) => s.unequip(heroId, e.slot))}>Unequip ▸ stash</button></td>
-            </tr>
-          ))}
-          {sheet.equipped.length === 0 && <tr><td><em>bare hands and courage</em></td></tr>}
-        </tbody>
-      </table>
-      <h3>Stash ({stash.length})</h3>
-      <table border={1} cellPadding={4}>
-        <tbody>
-          {stash.map((v) => (
-            <tr key={v.index}>
-              <td>{v.derived.displayName}</td>
-              <td>{v.derived.slot ?? 'not equippable'}</td>
-              <td>
-                {v.derived.slot && (
-                  <button onClick={() => exec((s) => s.equip(heroId, v.index))}>◂ Equip</button>
-                )}
-              </td>
-            </tr>
-          ))}
-          {stash.length === 0 && <tr><td><em>the stash is empty</em></td></tr>}
-        </tbody>
-      </table>
+      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
+        <span className="gv-tape" />
+        <h3 className="gv-head">Equipped <span className="gv-sub">slot by slot</span></h3>
+        <table>
+          <tbody>
+            {sheet.equipped.map((e) => (
+              <tr key={e.slot}>
+                <td>{e.slot}</td>
+                <td><b>{e.derived.displayName}</b></td>
+                <td>{e.derived.damageDice ? `dmg ${e.derived.damageDice}` : e.derived.acBonus ? `AC +${e.derived.acBonus}` : '—'}</td>
+                <td><button className="gv-btn" onClick={() => exec((s) => s.unequip(heroId, e.slot))}>Unequip ▸ stash</button></td>
+              </tr>
+            ))}
+            {sheet.equipped.length === 0 && <tr><td><em>bare hands and courage</em></td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '-0.3deg' }}>
+        <span className="gv-tape" />
+        <h3 className="gv-head">Stash ({stash.length}) <span className="gv-sub">the guild stores</span></h3>
+        <table>
+          <tbody>
+            {stash.map((v) => (
+              <tr key={v.index}>
+                <td><b>{v.derived.displayName}</b></td>
+                <td>{v.derived.slot ?? 'not equippable'}</td>
+                <td>
+                  {v.derived.slot && (
+                    <button className="gv-btn" onClick={() => exec((s) => s.equip(heroId, v.index))}>◂ Equip</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {stash.length === 0 && <tr><td><em>the stash is empty</em></td></tr>}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -239,29 +287,33 @@ function LoadoutTab({ heroId }: { heroId: string }) {
   };
 
   return (
-    <div>
-      <h3>Loadout priorities (top wins; falls back to a plain strike)</h3>
-      <table border={1} cellPadding={4}>
+    <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '0.35deg' }}>
+      <span className="gv-tape" />
+      <h3 className="gv-head">Loadout priorities <span className="gv-sub">top wins; falls back to a plain strike</span></h3>
+      <table>
         <tbody>
           {entries.map((e, i) => (
             <tr key={i}>
               <td>{i + 1}</td>
               <td>{describe(e)}</td>
-              <td>
-                <button disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
-                <button disabled={i === entries.length - 1} onClick={() => move(i, 1)}>▼</button>
-                <button onClick={() => exec((s) => s.setLoadout(heroId, entries.filter((_, j) => j !== i)))}>✕</button>
+              <td style={{ display: 'flex', gap: 6 }}>
+                <button className="gv-btn" disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
+                <button className="gv-btn" disabled={i === entries.length - 1} onClick={() => move(i, 1)}>▼</button>
+                <button className="gv-btn" onClick={() => exec((s) => s.setLoadout(heroId, entries.filter((_, j) => j !== i)))}>✕</button>
               </td>
             </tr>
           ))}
           {entries.length === 0 && <tr><td><em>no entries — defaults to strike the scored enemy</em></td></tr>}
         </tbody>
       </table>
-      <p>
-        <button onClick={() => exec((s) => s.setLoadout(heroId, [...entries, { action: 'strike', condition: { kind: 'always' }, target: 'nearestEnemy' }]))}>
+      <p style={{ marginBottom: 0 }}>
+        <button
+          className="gv-btn"
+          onClick={() => exec((s) => s.setLoadout(heroId, [...entries, { action: 'strike', condition: { kind: 'always' }, target: 'nearestEnemy' }]))}
+        >
           + add: strike nearest
         </button>{' '}
-        <small>(spell entries join the editor with the known-spells model — content workstream)</small>
+        <span className="gv-marg">spell entries join the editor with the known-spells model — content workstream</span>
       </p>
     </div>
   );
