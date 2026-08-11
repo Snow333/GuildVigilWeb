@@ -103,7 +103,7 @@
 /* ============ meter (watch report) — bar inherits the chip's status ============ */
 .gv-meter {
   display: grid;
-  grid-template-columns: 104px 112px 1fr;
+  grid-template-columns: 104px 118px 1fr auto;
   gap: 10px;
   align-items: center;
   font-size: 12.5px;

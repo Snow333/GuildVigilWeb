@@ -6,6 +6,7 @@ import { App } from './App';
 import './styles/tokens.css';
 import './styles/materials.css';
 import './styles/components.css';
+import './styles/screens.css';
 
 const el = document.getElementById('root');
 if (!el) throw new Error('no #root');

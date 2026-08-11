@@ -107,12 +107,14 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
 
   // Save → quit → reload the page → load → identical status line.
   await page.locator('button:has-text("Save")').first().click();
-  const saved = await page.locator('p').first().textContent();
-  expect(saved).toContain('Party level'); // sanity: we captured the status line
+  // Step-2 conversion: the status line is the deskbar's plates ([data-town-status]),
+  // same identity semantics as the old first-<p> check.
+  const saved = await page.locator('[data-town-status]').textContent();
+  expect(saved).toContain('PARTY LEVEL'); // sanity: we captured the status plates
   await page.locator('button:has-text("Quit to title")').click();
   await page.locator('h1:has-text("GUILD VIGIL")').waitFor();
   await page.reload();
   await page.locator('button:has-text("Load")').click();
   await page.locator('h1:has-text("Town Hub")').waitFor();
-  expect(await page.locator('p').first().textContent()).toBe(saved);
+  expect(await page.locator('[data-town-status]').textContent()).toBe(saved);
 });

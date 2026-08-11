@@ -1,0 +1,52 @@
+/**
+ * Per-screen desk layouts (brief #8 rollout, one block per converted screen).
+ * Vocabulary lives in components.css; this file only arranges sheets on the desk.
+ * Breakpoint rule (locked decision): content column grows first; single column
+ * below 980px.
+ */
+
+/* ============ rollout step 2: Town Hub ============ */
+.gv-town {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 0 22px;
+  align-items: start;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+.gv-town-full { grid-column: 1 / -1; }
+@media (max-width: 980px) {
+  .gv-town { grid-template-columns: 1fr; }
+}
+
+.gv-town h1 {
+  font-size: 21px;
+  letter-spacing: 0.5px;
+  color: #d8bd85;
+  text-shadow: 0 1px 2px #000000cc;
+  margin: 0 0 12px;
+  font-weight: 400;
+}
+.gv-town .gv-sheet { margin-bottom: 22px; }
+
+/* the town ledger table (roster) */
+.gv-town .gv-ledger table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 28px;
+}
+.gv-town .gv-ledger th {
+  text-align: left;
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--gv-ink-muted);
+  font-weight: 600;
+  padding: 0 8px 0 0;
+}
+.gv-town .gv-ledger td {
+  padding: 0 8px 0 0;
+  vertical-align: middle;
+}
