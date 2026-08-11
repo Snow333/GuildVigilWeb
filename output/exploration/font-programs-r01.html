@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guild Vigil — Font Programs, Round 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans+SC:wght@400;500;700;800&family=Vollkorn:ital,wght@0,400..900;1,400..900&family=Vollkorn+SC:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+  /* ===== tokens lifted verbatim from src/ui/styles/tokens.css ===== */
+  :root {
+    --gv-desk: #2a211c; --gv-desk-warm: #322822; --gv-desk-edge: #191210; --gv-desk-bar: #241c16;
+    --gv-vellum: #ece0c2; --gv-vellum-aged: #e2d2a8; --gv-vellum-old: #d8c494; --gv-vellum-edge: #b3a075;
+    --gv-ink: #3a2d1c; --gv-ink-soft: #5c4a30; --gv-ink-muted: #7d6a4c; --gv-ink-faint: #a89370;
+    --gv-red-ink: #9c3428; --gv-wax: #8c2f28; --gv-wax-hi: #a63d2f; --gv-wax-lo: #6e1f18;
+    --gv-brass-hi: #c9a86a; --gv-brass-mid: #a4854c; --gv-brass-deep: #8a6c38; --gv-brass-lo: #6e5426; --gv-brass-edge: #55401c;
+    --gv-s2: #ec835a;
+    --gv-tex-leather: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.16'/></svg>");
+    --gv-tex-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
+    --gv-shadow-sheet: 0 4px 12px #00000059, 0 1px 3px #00000040;
+    --gv-shadow-hardware: 0 2px 3px #00000088, inset 0 -1px 2px #00000055;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 20px 60px; color: var(--gv-ink);
+    background:
+      radial-gradient(120% 90% at 50% 0%, #00000000 55%, #00000066 100%),
+      var(--gv-tex-leather),
+      linear-gradient(165deg, var(--gv-desk-warm), var(--gv-desk) 55%, var(--gv-desk-edge));
+    background-attachment: fixed;
+  }
+  .intro { max-width: 900px; margin: 0 auto 30px; color: #d8bd85; }
+  .intro h1 { font: 400 24px/1.2 Georgia, serif; letter-spacing: 0.5px; margin: 0 0 8px; text-shadow: 0 1px 2px #000000cc; }
+  .intro p  { font: 400 13.5px/1.55 Georgia, serif; color: #c9b184; margin: 0 0 6px; max-width: 74ch; }
+  .intro .warn { color: #e0b06a; font-style: italic; }
+
+  .program { max-width: 900px; margin: 0 auto 46px; }
+  .program-head { display: flex; align-items: baseline; gap: 14px; margin: 0 0 12px; }
+  .program-head h2 { font: 400 19px/1.2 Georgia, serif; color: #d8bd85; letter-spacing: 2px; margin: 0; text-shadow: 0 1px 2px #000000cc; }
+  .program-head .faces { font: 400 12px Georgia, serif; color: #a98f5e; font-style: italic; }
+
+  /* ===== per-program font wiring ===== */
+  .p-baseline { --serif: Georgia, 'Iowan Old Style', 'Times New Roman', serif; --label: 'Segoe UI', system-ui, sans-serif; --label-case: uppercase; --label-weight: 600; }
+  .p-a { --serif: 'EB Garamond', Georgia, serif;  --label: 'Alegreya Sans SC', 'Segoe UI', sans-serif; --label-case: none; --label-weight: 700; }
+  .p-b { --serif: 'Alegreya', Georgia, serif;     --label: 'Alegreya Sans SC', 'Segoe UI', sans-serif; --label-case: none; --label-weight: 700; }
+  .p-c { --serif: 'Vollkorn', Georgia, serif;     --label: 'Vollkorn SC', Georgia, serif;              --label-case: none; --label-weight: 600; }
+  .p-a .cartouche-face { font-family: 'IM Fell English SC', 'EB Garamond', serif; }
+
+  /* ===== the shared sample board ===== */
+  .board { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 760px) { .board { grid-template-columns: 1fr; } }
+
+  .deskbar {
+    grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    background: linear-gradient(180deg, var(--gv-desk-bar), #1c1510);
+    border: 1px solid #000000aa; border-radius: 4px; padding: 9px 14px;
+    box-shadow: 0 3px 8px #00000066, inset 0 1px 0 #ffffff12;
+  }
+  .plaque {
+    font-family: var(--serif); font-size: 16px; letter-spacing: 3px; color: #d8bd85;
+    text-shadow: 0 1px 1px #000000cc; padding: 2px 12px; border: 1px solid var(--gv-brass-lo);
+    border-radius: 3px; background: linear-gradient(160deg, #4a3a1e, #2e2412);
+    box-shadow: inset 0 1px 0 #c9a86a33, 0 1px 2px #000000aa;
+  }
+  .plate {
+    font-family: var(--label); text-transform: var(--label-case); font-weight: var(--label-weight);
+    font-size: 11.5px; letter-spacing: 1.6px; color: #2a1f0e;
+    background: linear-gradient(160deg, var(--gv-brass-hi), var(--gv-brass-mid) 60%, var(--gv-brass-deep));
+    border: 1px solid var(--gv-brass-edge); border-radius: 2px; padding: 3px 10px;
+    box-shadow: inset 0 1px 0 #ffffff55, 0 1px 2px #000000aa;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .plate b { font-size: 13px; letter-spacing: 0.5px; }
+
+  .sheet {
+    position: relative; background: var(--gv-tex-grain), linear-gradient(170deg, #f2e7cb, var(--gv-vellum) 60%, #e4d6b2);
+    background-blend-mode: multiply, normal; border: 1px solid var(--gv-vellum-edge);
+    border-radius: 2px 3px 2px 3px; box-shadow: var(--gv-shadow-sheet); padding: 18px 20px 16px;
+    font-family: var(--serif); transform: rotate(-0.4deg);
+  }
+  .pin {
+    position: absolute; top: -7px; left: 50%; width: 15px; height: 15px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--gv-brass-hi), var(--gv-brass-mid) 55%, var(--gv-brass-lo));
+    border: 1px solid var(--gv-brass-edge); box-shadow: var(--gv-shadow-hardware);
+  }
+  .sheet h3 { font-family: var(--serif); font-weight: 600; font-size: 17px; letter-spacing: 0.4px; margin: 0 0 2px; }
+  .sub {
+    font-family: var(--label); text-transform: var(--label-case); font-weight: var(--label-weight);
+    font-size: 10.5px; letter-spacing: 1.8px; color: var(--gv-ink-muted); margin: 0 0 10px;
+  }
+  .sheet .body { font-size: 14px; line-height: 1.5; margin: 0 0 10px; max-width: 58ch; }
+  .stamp {
+    position: absolute; top: 30px; right: -6px; transform: rotate(8deg);
+    font-family: var(--label); text-transform: var(--label-case); font-size: 12.5px; font-weight: 800; letter-spacing: 2.5px;
+    color: var(--gv-red-ink); border: 2.5px solid var(--gv-red-ink); padding: 3px 9px; border-radius: 3px;
+    opacity: 0.72; mix-blend-mode: multiply;
+  }
+  .marginalia {
+    font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--gv-red-ink);
+    border-left: 2px solid #9c342866; padding-left: 8px; margin: 6px 0 10px; max-width: 46ch;
+  }
+  .btn-row { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    font-family: var(--serif); font-size: 13.5px; padding: 6px 14px; cursor: pointer; border-radius: 3px;
+    color: var(--gv-ink); background: linear-gradient(180deg, #efe4c6, #e0d0a6); border: 1px solid var(--gv-vellum-edge);
+    box-shadow: 0 1px 2px #00000040;
+  }
+  .btn.seal {
+    color: #f6e3c8; background: radial-gradient(circle at 35% 28%, var(--gv-wax-hi), var(--gv-wax) 60%, var(--gv-wax-lo));
+    border-color: var(--gv-wax-lo); text-shadow: 0 1px 1px #00000088;
+  }
+
+  .rail { display: flex; flex-direction: column; gap: 14px; }
+  .ledger {
+    background: var(--gv-tex-grain), linear-gradient(170deg, #ead9b4, var(--gv-vellum-aged) 70%);
+    background-blend-mode: multiply, normal; border: 1px solid var(--gv-vellum-edge); border-radius: 2px;
+    box-shadow: var(--gv-shadow-sheet); padding: 12px 14px; font-family: var(--serif); transform: rotate(0.3deg);
+    background-image: repeating-linear-gradient(#00000000 0 27px, #8c6a3a22 27px 28px);
+  }
+  .ledger table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 28px; }
+  .ledger th {
+    text-align: left; font-family: var(--label); text-transform: var(--label-case); font-weight: var(--label-weight);
+    font-size: 10px; letter-spacing: 1.6px; color: var(--gv-ink-muted); padding: 0 8px 0 0;
+  }
+  .ledger td { padding: 0 8px 0 0; border-top: 1px solid #8c6a3a22; }
+  .ledger td.num { text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+
+  .chartlab {
+    background: var(--gv-tex-grain), linear-gradient(170deg, #f0e5c8, var(--gv-vellum) 65%);
+    background-blend-mode: multiply, normal; border: 1px solid var(--gv-vellum-edge); border-radius: 2px;
+    box-shadow: var(--gv-shadow-sheet); padding: 14px 16px; font-family: var(--serif); transform: rotate(-0.2deg);
+  }
+  .region { font-family: var(--label); text-transform: var(--label-case); font-weight: var(--label-weight); font-size: 11px; letter-spacing: 3.5px; color: var(--gv-ink-soft); }
+  .sea { font-style: italic; font-size: 15px; color: #5c6a76; letter-spacing: 2px; }
+  .annot { font-style: italic; font-size: 12px; color: var(--gv-red-ink); }
+  .wash { display: inline-block; padding: 1px 7px; border-radius: 2px; background: #ec835a2e; }
+  .cartouche { text-align: center; margin-top: 10px; padding: 8px 10px; border: 1.5px solid var(--gv-ink-soft); outline: 1px solid var(--gv-ink-faint); outline-offset: 3px; }
+  .cartouche-face { font-size: 16px; letter-spacing: 2px; color: var(--gv-ink); font-family: var(--serif); }
+  .cartouche .small { font-size: 10.5px; font-style: italic; color: var(--gv-ink-muted); }
+
+  .figures {
+    grid-column: 1 / -1; font-family: var(--serif); color: #c9b184; font-size: 13px;
+    display: flex; gap: 26px; flex-wrap: wrap; padding: 2px 4px;
+  }
+  .figures b { color: #d8bd85; font-weight: 400; }
+  .figures .set { font-variant-numeric: tabular-nums lining-nums; letter-spacing: 1px; }
+  .figures .os  { font-variant-numeric: oldstyle-nums; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Guild Vigil — Font Programs · Round 01</h1>
+  <p>Three licensed programs to replace the Georgia/Segoe stand-ins in <b>tokens.css</b>. Every block below renders identical desk content — same tokens, same materials — so only the type changes. All faces are SIL Open Font License (Google Fonts): free to embed in the single-file artifact and a future Tauri build, no fees, no seat limits.</p>
+  <p class="warn">Proposals only — nothing lands in tokens.css until you choose. Fonts load live from Google Fonts; if a block looks like Georgia, the CDN hasn't loaded.</p>
+</div>
+
+<!-- ============ BASELINE ============ -->
+<section class="program p-baseline">
+  <div class="program-head"><h2>BASELINE</h2><span class="faces">Georgia + Segoe UI — the current stand-ins, for reference</span></div>
+  <div class="board">
+    <div class="deskbar"><span class="plaque">GUILD VIGIL</span><span class="plate">Week <b>23</b></span><span class="plate">Gold <b>1,284</b></span><span class="plate">Renown <b>17</b></span><span class="plate">Ashenmere <b>watched</b></span></div>
+    <div class="sheet"><span class="pin"></span><span class="stamp">Urgent</span>
+      <h3>Clear the Goblin Camp</h3><div class="sub">Notice · Combat · Level 1</div>
+      <p class="body">A band of goblins has been raiding caravans on the western road. Put an end to their mischief before the week's caravans are due. The guild offers coin and standing to any team that returns with proof.</p>
+      <div class="marginalia">survivors speak of a larger camp upriver — the third raid this season</div>
+      <div class="btn-row"><button class="btn seal">Accept ▸ seal the charter</button><button class="btn">Set aside</button></div>
+    </div>
+    <div class="rail">
+      <div class="ledger"><table><tr><th>Adventurer</th><th>Lv</th><th>HP</th></tr>
+        <tr><td>Maera Duskveil</td><td class="num">4</td><td class="num">31/38</td></tr>
+        <tr><td>Torbek Irontide</td><td class="num">5</td><td class="num">52/52</td></tr>
+        <tr><td>Quillon Ashvale</td><td class="num">3</td><td class="num">9/24</td></tr></table></div>
+      <div class="chartlab"><span class="region">THE ASHENMERE REACHES</span><br><span class="sea">Sea of Fallen Stars</span><br>
+        <span class="annot wash">raids reported ×3</span>
+        <div class="cartouche"><div class="cartouche-face">A CHART of the WESTERN FRONTIER</div><div class="small">surveyed for the Guild, in the 23rd week</div></div></div>
+    </div>
+    <div class="figures"><span><b>Lining tabular:</b> <span class="set">0123456789 · 31/38 · 1,284</span></span><span><b>Oldstyle:</b> <span class="os">0123456789 · week 23</span></span></div>
+  </div>
+</section>
+
+<!-- ============ PROGRAM A ============ -->
+<section class="program p-a">
+  <div class="program-head"><h2>A · THE CHANCERY</h2><span class="faces">EB Garamond (text) + Alegreya Sans SC (labels/plates) + IM Fell English SC (cartouche accent)</span></div>
+  <div class="board">
+    <div class="deskbar"><span class="plaque">GUILD VIGIL</span><span class="plate">Week <b>23</b></span><span class="plate">Gold <b>1,284</b></span><span class="plate">Renown <b>17</b></span><span class="plate">Ashenmere <b>watched</b></span></div>
+    <div class="sheet"><span class="pin"></span><span class="stamp">Urgent</span>
+      <h3>Clear the Goblin Camp</h3><div class="sub">Notice · Combat · Level 1</div>
+      <p class="body">A band of goblins has been raiding caravans on the western road. Put an end to their mischief before the week's caravans are due. The guild offers coin and standing to any team that returns with proof.</p>
+      <div class="marginalia">survivors speak of a larger camp upriver — the third raid this season</div>
+      <div class="btn-row"><button class="btn seal">Accept ▸ seal the charter</button><button class="btn">Set aside</button></div>
+    </div>
+    <div class="rail">
+      <div class="ledger"><table><tr><th>Adventurer</th><th>Lv</th><th>HP</th></tr>
+        <tr><td>Maera Duskveil</td><td class="num">4</td><td class="num">31/38</td></tr>
+        <tr><td>Torbek Irontide</td><td class="num">5</td><td class="num">52/52</td></tr>
+        <tr><td>Quillon Ashvale</td><td class="num">3</td><td class="num">9/24</td></tr></table></div>
+      <div class="chartlab"><span class="region">THE ASHENMERE REACHES</span><br><span class="sea">Sea of Fallen Stars</span><br>
+        <span class="annot wash">raids reported ×3</span>
+        <div class="cartouche"><div class="cartouche-face">A Chart of the Western Frontier</div><div class="small">surveyed for the Guild, in the 23rd week</div></div></div>
+    </div>
+    <div class="figures"><span><b>Lining tabular:</b> <span class="set">0123456789 · 31/38 · 1,284</span></span><span><b>Oldstyle:</b> <span class="os">0123456789 · week 23</span></span></div>
+  </div>
+</section>
+
+<!-- ============ PROGRAM B ============ -->
+<section class="program p-b">
+  <div class="program-head"><h2>B · THE SCRIPTORIUM</h2><span class="faces">Alegreya (text) + Alegreya Sans SC (labels/plates) — one superfamily, maximum cohesion</span></div>
+  <div class="board">
+    <div class="deskbar"><span class="plaque">GUILD VIGIL</span><span class="plate">Week <b>23</b></span><span class="plate">Gold <b>1,284</b></span><span class="plate">Renown <b>17</b></span><span class="plate">Ashenmere <b>watched</b></span></div>
+    <div class="sheet"><span class="pin"></span><span class="stamp">Urgent</span>
+      <h3>Clear the Goblin Camp</h3><div class="sub">Notice · Combat · Level 1</div>
+      <p class="body">A band of goblins has been raiding caravans on the western road. Put an end to their mischief before the week's caravans are due. The guild offers coin and standing to any team that returns with proof.</p>
+      <div class="marginalia">survivors speak of a larger camp upriver — the third raid this season</div>
+      <div class="btn-row"><button class="btn seal">Accept ▸ seal the charter</button><button class="btn">Set aside</button></div>
+    </div>
+    <div class="rail">
+      <div class="ledger"><table><tr><th>Adventurer</th><th>Lv</th><th>HP</th></tr>
+        <tr><td>Maera Duskveil</td><td class="num">4</td><td class="num">31/38</td></tr>
+        <tr><td>Torbek Irontide</td><td class="num">5</td><td class="num">52/52</td></tr>
+        <tr><td>Quillon Ashvale</td><td class="num">3</td><td class="num">9/24</td></tr></table></div>
+      <div class="chartlab"><span class="region">THE ASHENMERE REACHES</span><br><span class="sea">Sea of Fallen Stars</span><br>
+        <span class="annot wash">raids reported ×3</span>
+        <div class="cartouche"><div class="cartouche-face">A Chart of the Western Frontier</div><div class="small">surveyed for the Guild, in the 23rd week</div></div></div>
+    </div>
+    <div class="figures"><span><b>Lining tabular:</b> <span class="set">0123456789 · 31/38 · 1,284</span></span><span><b>Oldstyle:</b> <span class="os">0123456789 · week 23</span></span></div>
+  </div>
+</section>
+
+<!-- ============ PROGRAM C ============ -->
+<section class="program p-c">
+  <div class="program-head"><h2>C · THE ENGRAVER</h2><span class="faces">Vollkorn (text) + Vollkorn SC (labels/plates) — all-serif, darkest and sturdiest on texture</span></div>
+  <div class="board">
+    <div class="deskbar"><span class="plaque">GUILD VIGIL</span><span class="plate">Week <b>23</b></span><span class="plate">Gold <b>1,284</b></span><span class="plate">Renown <b>17</b></span><span class="plate">Ashenmere <b>watched</b></span></div>
+    <div class="sheet"><span class="pin"></span><span class="stamp">Urgent</span>
+      <h3>Clear the Goblin Camp</h3><div class="sub">Notice · Combat · Level 1</div>
+      <p class="body">A band of goblins has been raiding caravans on the western road. Put an end to their mischief before the week's caravans are due. The guild offers coin and standing to any team that returns with proof.</p>
+      <div class="marginalia">survivors speak of a larger camp upriver — the third raid this season</div>
+      <div class="btn-row"><button class="btn seal">Accept ▸ seal the charter</button><button class="btn">Set aside</button></div>
+    </div>
+    <div class="rail">
+      <div class="ledger"><table><tr><th>Adventurer</th><th>Lv</th><th>HP</th></tr>
+        <tr><td>Maera Duskveil</td><td class="num">4</td><td class="num">31/38</td></tr>
+        <tr><td>Torbek Irontide</td><td class="num">5</td><td class="num">52/52</td></tr>
+        <tr><td>Quillon Ashvale</td><td class="num">3</td><td class="num">9/24</td></tr></table></div>
+      <div class="chartlab"><span class="region">THE ASHENMERE REACHES</span><br><span class="sea">Sea of Fallen Stars</span><br>
+        <span class="annot wash">raids reported ×3</span>
+        <div class="cartouche"><div class="cartouche-face">A Chart of the Western Frontier</div><div class="small">surveyed for the Guild, in the 23rd week</div></div></div>
+    </div>
+    <div class="figures"><span><b>Lining tabular:</b> <span class="set">0123456789 · 31/38 · 1,284</span></span><span><b>Oldstyle:</b> <span class="os">0123456789 · week 23</span></span></div>
+  </div>
+</section>
+
+</body>
+</html>

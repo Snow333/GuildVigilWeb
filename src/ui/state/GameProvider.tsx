@@ -52,6 +52,9 @@ export interface GameContextValue {
   /** Player-wide flat mode (brief #8 accessibility contract) — persisted via SaveStore. */
   flatMode: boolean;
   setFlatMode: (on: boolean) => void;
+  /** Player-wide readable type (brief #9) — independent of flat mode, same record. */
+  readableType: boolean;
+  setReadableType: (on: boolean) => void;
   nav: (screen: Screen) => void;
   /** Run a session command synchronously; null return = the command refused (see lastError). */
   exec: <T>(fn: (s: CampaignSession) => T) => T | null;
@@ -91,6 +94,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     document.body.classList.toggle('gv-flat', settings.flatMode);
   }, [settings.flatMode]);
 
+  // body.gv-readable is the single readable-type switch (brief #9) — the token
+  // swap + spacing relaxations key off it; orthogonal to gv-flat by design.
+  useEffect(() => {
+    document.body.classList.toggle('gv-readable', settings.readableType);
+  }, [settings.readableType]);
+
   const updateSettings = useCallback(
     (patch: Partial<UserSettings>): void => {
       setSettings((prev) => {
@@ -103,6 +112,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const setFlatMode = useCallback((on: boolean) => updateSettings({ flatMode: on }), [updateSettings]);
+  const setReadableType = useCallback((on: boolean) => updateSettings({ readableType: on }), [updateSettings]);
   const setDefaultSpeed = useCallback((s: ReplaySpeed) => updateSettings({ defaultSpeed: s }), [updateSettings]);
 
   const nav = useCallback((next: Screen): void => {
@@ -181,6 +191,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     defaultSpeed: asReplaySpeed(settings.defaultSpeed),
     flatMode: settings.flatMode,
     setFlatMode,
+    readableType: settings.readableType,
+    setReadableType,
     nav, exec, setLastLaunch, setDefaultSpeed, startNew, loadGame, saveGame, quitToTitle,
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

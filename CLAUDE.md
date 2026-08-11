@@ -2,15 +2,15 @@
 
 Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored,
 continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
-**Stack:** TS strict · React 19 · Vite (single-file artifact) · Tauri 2 · Vitest · Playwright.
-**Phase:** 3 (art direction — "The Cartographer's Table", brief #8 APPROVED). Phases 1–2 complete: 267 tests + 4 e2e green; beat-feed contract pinned; content slice shipped.
+**Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright. (Tauri 2 planned — brief #7 parked.)
+**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Suite: **278 tests + 6 e2e** green. Next: font selection → art style bible → Phase 4 planning.
 
 ## Authoritative documents — read before designing anything
 
 - `output/core-loop.md` — the settled game loop and all structural decisions. Conflicts resolve toward this file.
 - `output/decision-ledger.md` — per-feature Keep/Change/Remove verdicts, all confirmed.
 - `output/guild-vigil-migration-plan.md` — phases, scaffolding, risks (Part IV = this repo's layout).
-- `output/briefs/*.md` — APPROVED design briefs (event vocabulary, escalation, loot grammar, profile AI). New systems get a brief BEFORE code (implementation-brief process).
+- `output/briefs/*.md` — APPROVED design briefs (8: event vocabulary, escalation, loot grammar, profile AI, content slice, phase-2 UI, art direction, Tauri wrap [parked]). New systems get a brief BEFORE code (implementation-brief process). **Brief #8 (art direction) is the normative contract for ALL UI work** — see the desk grammar section below.
 
 ## The Eight Constraints (law, not guidance)
 
@@ -19,7 +19,7 @@ continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 3. **The sim runs headless and cheaply.** One resolution path serves live play, forecasting, and harnesses. Budget: a full dispatch ≤ ~50ms.
 4. **Sim emits events; presentation interprets.** No player-facing text in resolvers, ever. Events are facts.
 5. **Randomness is string-seeded and namespaced** (`Rng`, `Seeds` in `src/sim/core/`). Derived content recomputes from facts; never store what you can derive.
-6. **Persistence goes through `SaveStore`** (`src/sim/save/`). Never touch localStorage/fs directly.
+6. **Persistence goes through `SaveStore`** (`src/sim/save/`). Never touch localStorage/fs directly. This includes the player-wide `UserSettings` record (`loadSettings`/`saveSettings`; web key `gv_settings`, outside the slot prefix; absent/corrupt → defaults, never fatal).
 7. **World state is derived where possible.** The escalation ledger is the one sanctioned history-dependent exception.
 8. **Save migration is the idempotent backfill chain** — stages early-return unchanged; backfilled values seed on entity ID.
 
@@ -28,16 +28,28 @@ continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 ```
 src/sim/        pure sim (core/ heroes/ combat/ dungeon/ world/ campaign/ save/ registry/)
 src/content/    typed registries; generated/ is machine-written (converter) — NEVER hand-edit
-src/ui/         React app (may import sim; sim may NEVER import it)
-src/ui/styles/  brief #8 style layer: tokens → materials → grammar components.
-                Status set is FROZEN + label-paired; zero image assets — both
-                guarded by tests/ui/style-tokens.test.ts. Reference: #style-drawer.
-src/platform/   SaveStore impls, Tauri glue (same rule)
-tools/          converter, layout tool, harnesses (Node scripts)
+src/ui/         React app (may import sim; sim may NEVER import it). ALL screens
+                speak the desk grammar. accessories.tsx = ambience layer;
+                screens/worldChart.ts = procedural chart (DENSITY = round-03 lock).
+src/ui/styles/  brief #8 style layer: tokens → materials → grammar components →
+                screen conversions. Status set is FROZEN + label-paired; zero image
+                assets — both guarded by tests/ui/style-tokens.test.ts. Reference: #style-drawer.
+src/platform/   SaveStore impls (localStorage today; Tauri glue when brief #7 unparks)
+tools/          content converter + seed applier (Node scripts); distribution
+                harnesses live in tests/harness/
 tests/          Vitest (unit, fixtures, property); e2e/ Playwright (Phase 2+)
 ```
 
-Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm convert` · `pnpm dev` · `pnpm build`.
+Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to a preinstalled Chromium where needed, e.g. the cloud workspace) · `pnpm convert` · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
+
+## The desk grammar (UI law — brief #8)
+
+- **One meaning per affordance, no exceptions:** brass pin = actionable now · tape = standing record/reference · wax seal = irreversible commitment · red ink = the world talking back (marginalia in margins only; max one stamp per sheet; thread from the spool) · vellum age = information age.
+- **Status colors:** FROZEN set `#0ca30c/#fab219/#ec835a/#d03b3b`, ALWAYS label-paired, never the sole carrier of a state. Flourish never replaces the number.
+- **Accessories** (quill, letter knife, thread spool, pounce pot — `accessories.tsx`) are pure presentation: aria-hidden, pointer-events none, driven by queries the screen already renders. Never add a sim query for ambience. Every accessory state has a labeled twin on screen.
+- **Flat mode** (Settings; player-wide via `UserSettings`) strips ALL ambience/tilt/texture but keeps the full grid, data, labels, and actions. Every new surface honors it from its first build.
+- Chart density is LOCKED at round-03 (executable as `worldChart.ts` DENSITY) — no new chart features without a deliberate revisit.
+- Every new surface gets a grammar audit line in the test-validation checklist — grammar erosion is brief #8's #1 named risk.
 
 ## Determinism discipline
 
@@ -50,7 +62,7 @@ Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) ·
 ## Data discipline
 
 - Content IDs are **append-only forever** — saves reference them. Never renumber; leave gaps.
-- `src/content/generated/**` is rebuilt by `pnpm convert` from the Godot repo's `game_data.db` (`C:\GuildVigil` — read-only source material). Count gates in the converter AND `tests/content/count-gates.test.ts` must both be updated when content legitimately grows, in the same commit.
+- `src/content/generated/**` is rebuilt by `pnpm convert` from `data/game_data.db` — the db lives IN this repo (moved with brief #6); the old Godot repo `C:\GuildVigil` is frozen and no tool reads it. Count gates in the converter AND `tests/content/count-gates.test.ts` must both be updated when content legitimately grows, in the same commit.
 - Item instances are tuples `(baseId, tier, propertyIds[], seed)` — stats/name/price always derive (`heroes/equipment.ts`). Never denormalize.
 - Every feat effect must parse and classify at load (`heroes/featEffects.ts`) — an unknown `effect_type` is a build error by design.
 
@@ -75,6 +87,7 @@ Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) ·
 - Masterwork's +1 is craftsmanship, not enhancement — no `+1` name suffix (`equipment.ts` composeName).
 - The INT-boost/skill-points bug from Godot is FIXED here (`skillPointsForLevel` takes the pending boost). Don't reintroduce the old ordering.
 - XP is cumulative and never spent; level 20 uses a `-1` sentinel, not an error.
+- `UserSettings` lives beside the slots (web key `gv_settings`), NOT inside campaign saves — don't route preferences through the envelope/backfill chain.
 - Use **pnpm**, not npm. Native deps build via `pnpm.onlyBuiltDependencies`.
 - Planning docs live in BOTH `output/` (repo) and project knowledge (`migration/*` on claude.ai) — update both or say which is stale.
 

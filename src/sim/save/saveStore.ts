@@ -31,9 +31,13 @@ export interface UserSettings {
   v: 1;
   flatMode: boolean;
   defaultSpeed: number;
+  /** Readable type (brief #9): swap the desk's period faces for a high-legibility
+   *  face with relaxed spacing. Standalone — NOT tied to flat mode. Absent in
+   *  old records; the merge-with-defaults load path backfills false. */
+  readableType: boolean;
 }
 
-export const DEFAULT_SETTINGS: UserSettings = { v: 1, flatMode: false, defaultSpeed: 4 };
+export const DEFAULT_SETTINGS: UserSettings = { v: 1, flatMode: false, defaultSpeed: 4, readableType: false };
 
 export interface SaveStore {
   list(): Promise<SaveSlotMeta[]>;

@@ -75,15 +75,15 @@ describe('LocalStorageSaveStore — the web persistence backend', () => {
   });
 });
 
-describe('player-wide settings — brief #8 flat-mode persistence (step 7)', () => {
+describe('player-wide settings — brief #8 flat mode + brief #9 readable type (one record)', () => {
   it('round-trips settings; absent, corrupt, and partial records resolve to defaults', async () => {
     const storage = stubStorage();
     const store = new LocalStorageSaveStore(storage);
 
     expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS); // absent → defaults
 
-    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 16 });
-    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16 });
+    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 16, readableType: true });
+    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16, readableType: true });
     expect(await store.list()).toHaveLength(0); // settings never list as a campaign slot
 
     storage.setItem('gv_settings', '{not json');
@@ -91,12 +91,17 @@ describe('player-wide settings — brief #8 flat-mode persistence (step 7)', () 
 
     storage.setItem('gv_settings', JSON.stringify({ v: 1, flatMode: true }));
     expect(await store.loadSettings()).toEqual({ ...DEFAULT_SETTINGS, flatMode: true }); // partial backfills
+
+    // The real-world migration case (brief #9): a step-7-era record with no
+    // readableType field loads with readableType backfilled false — no bump of v.
+    storage.setItem('gv_settings', JSON.stringify({ v: 1, flatMode: true, defaultSpeed: 16 }));
+    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16, readableType: false });
   });
 
   it('the in-memory store honors the same settings surface (tests and harnesses)', async () => {
     const store = new MemorySaveStore();
     expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS);
-    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 1 });
-    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 1 });
+    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 1, readableType: true });
+    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 1, readableType: true });
   });
 });

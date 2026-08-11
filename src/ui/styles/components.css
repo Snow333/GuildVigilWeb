@@ -50,7 +50,7 @@
   font-family: var(--gv-sans);
   font-size: 10.5px;
   letter-spacing: 1.8px;
-  text-transform: uppercase;
+  /* no uppercase transform — the SC face renders true mixed small caps (brief #9) */
   color: var(--gv-ink-muted);
 }
 
@@ -311,3 +311,31 @@ body.gv-flat .gv-portrait { transform: none; }
 body.gv-flat .gv-acc,
 body.gv-flat .gv-thread,
 body.gv-flat .gv-thread-overlay { display: none; }
+
+/* ============ readable type (brief #9 — typographic flat mode) ============
+   Token swap happens in tokens.css (body.gv-readable). Here: the spacing and
+   letterform relaxations the dyslexia guidance actually supports — italics
+   off, tracking to zero, taller body lines. Data, labels, and layout intact.
+   KEEP IN SYNC: the selector list below is every tracked/italic text site. */
+/* decorative italics carry a class, never an inline style, so readable mode
+   can reach them (inline styles would win the cascade) */
+.gv-italic { font-style: italic; }
+body.gv-readable .gv-desk { line-height: 1.55; }
+body.gv-readable .gv-italic,
+body.gv-readable .gv-marg,
+body.gv-readable .gv-input::placeholder,
+body.gv-readable .gv-chart-redtext,
+body.gv-readable svg text,
+body.gv-readable .gv-feed .gv-beat[data-tone='loot'] { font-style: normal; }
+body.gv-readable .gv-head,
+body.gv-readable .gv-head .gv-sub,
+body.gv-readable .gv-stamp,
+body.gv-readable .gv-plaque,
+body.gv-readable .gv-plate,
+body.gv-readable .gv-plate b,
+body.gv-readable .gv-ledger th,
+body.gv-readable .gv-reward,
+body.gv-readable .gv-slot-empty,
+body.gv-readable .gv-abilities .gv-ab b,
+body.gv-readable .gv-choice .gv-choice-label,
+body.gv-readable .gv-title h1 { letter-spacing: 0; }

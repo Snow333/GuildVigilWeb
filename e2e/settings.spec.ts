@@ -43,3 +43,48 @@ test('flat mode toggles in Settings, strips ambience, and persists across reload
   await page.locator('[data-flat-off]').click();
   await expect(body).not.toHaveClass(/gv-flat/);
 });
+
+/**
+ * Brief #9 — readable type: the typographic accessibility contract. Standalone
+ * toggle (NOT tied to flat mode): swaps both faces to Atkinson Hyperlegible,
+ * persists player-wide, and composes with flat mode.
+ */
+test('readable type swaps the faces, persists across reload, and composes with flat mode', async ({ page }) => {
+  const deskFont = () =>
+    page.locator('.gv-desk').first().evaluate((el) => getComputedStyle(el).fontFamily);
+
+  await page.goto('/');
+  await page.fill('input', 'E2E Type');
+  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+
+  const body = page.locator('body');
+  await expect(body).not.toHaveClass(/gv-readable/);
+  expect(await deskFont()).toContain('Alegreya'); // brief #9 program is the default voice
+
+  await page.locator('button:has-text("Settings")').click();
+  await page.locator('h1:has-text("Settings")').waitFor();
+  await page.locator('[data-readable-on]').click();
+  await expect(body).toHaveClass(/gv-readable/);
+  expect(await deskFont()).toContain('Atkinson Hyperlegible');
+
+  // Persists player-wide: the title honors it before any campaign loads.
+  await page.reload();
+  await page.locator('h1:has-text("GUILD VIGIL")').waitFor();
+  await expect(body).toHaveClass(/gv-readable/);
+  await page.locator('button:has-text("Load")').click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await expect(body).toHaveClass(/gv-readable/);
+
+  // Composes with flat mode — orthogonal switches, both records in gv_settings.
+  await page.locator('button:has-text("Settings")').click();
+  await page.locator('[data-flat-on]').click();
+  await expect(body).toHaveClass(/gv-flat/);
+  await expect(body).toHaveClass(/gv-readable/);
+
+  // Off again: the desk voice returns without touching flat mode.
+  await page.locator('[data-readable-off]').click();
+  await expect(body).not.toHaveClass(/gv-readable/);
+  await expect(body).toHaveClass(/gv-flat/);
+  expect(await deskFont()).toContain('Alegreya');
+});

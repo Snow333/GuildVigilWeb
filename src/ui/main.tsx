@@ -1,8 +1,9 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-// Brief #8 (Cartographer's Table) style layer — tokens first, then materials,
-// then grammar components. Bundled by vite-plugin-singlefile; no screen uses
-// the classes until its rollout step converts it.
+// Brief #8 (Cartographer's Table) style layer — fonts (brief #9, generated
+// data-URI @font-face) first, then tokens, materials, grammar components.
+// Bundled by vite-plugin-singlefile into the one artifact.
+import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/materials.css';
 import './styles/components.css';

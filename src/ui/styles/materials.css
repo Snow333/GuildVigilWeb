@@ -139,7 +139,7 @@
   font-family: var(--gv-sans);
   font-size: 10px;
   letter-spacing: 1.6px;
-  text-transform: uppercase;
+  /* no uppercase transform — SC face renders true mixed small caps (brief #9) */
   color: var(--gv-ink-muted);
   font-weight: 600;
   padding: 0 8px 0 0;

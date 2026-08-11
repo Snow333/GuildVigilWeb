@@ -84,7 +84,7 @@ export function TownHub() {
                   <div key={d.id} style={{ position: 'relative', maxWidth: 640 }}>
                     <blockquote style={{ fontSize: 13.5, lineHeight: 1.65, margin: '0 0 6px' }}>
                       &ldquo;{d.text}&rdquo;
-                      <div style={{ fontStyle: 'italic', marginTop: 6, color: 'var(--gv-ink-soft)' }}>
+                      <div className="gv-italic" style={{ marginTop: 6, color: 'var(--gv-ink-soft)' }}>
                         — {d.speaker}
                       </div>
                     </blockquote>

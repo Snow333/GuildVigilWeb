@@ -11,7 +11,7 @@
 import { useGame, type ReplaySpeed } from '../state/GameProvider';
 
 export function SettingsScreen() {
-  const { nav, defaultSpeed, setDefaultSpeed, flatMode, setFlatMode, saveGame, quitToTitle, slotId } = useGame();
+  const { nav, defaultSpeed, setDefaultSpeed, flatMode, setFlatMode, readableType, setReadableType, saveGame, quitToTitle, slotId } = useGame();
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-settings">
@@ -34,6 +34,19 @@ export function SettingsScreen() {
             </button>
             <span style={{ fontSize: 12, color: 'var(--gv-ink-muted)' }}>
               ornament off — every number, label, and action stays
+            </span>
+          </div>
+
+          <div className="gv-choice">
+            <span className="gv-choice-label">Readable type</span>
+            <button className="gv-btn" data-readable-on="" disabled={readableType} onClick={() => setReadableType(true)}>
+              On
+            </button>
+            <button className="gv-btn" data-readable-off="" disabled={!readableType} onClick={() => setReadableType(false)}>
+              Off
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--gv-ink-muted)' }}>
+              high-legibility face, spacing relaxed — the desk stays
             </span>
           </div>
 
