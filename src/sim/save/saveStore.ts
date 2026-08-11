@@ -21,6 +21,20 @@ export interface SaveEnvelope {
   sig: string;
 }
 
+/**
+ * Player-wide preferences — NOT campaign state (brief #8: "flat mode is a
+ * persisted user setting"). One record beside the slots; accessibility follows
+ * the player, so the title screen honors it before any campaign loads.
+ * defaultSpeed stays a plain number here — presentation narrows it.
+ */
+export interface UserSettings {
+  v: 1;
+  flatMode: boolean;
+  defaultSpeed: number;
+}
+
+export const DEFAULT_SETTINGS: UserSettings = { v: 1, flatMode: false, defaultSpeed: 4 };
+
 export interface SaveStore {
   list(): Promise<SaveSlotMeta[]>;
   load(slotId: string): Promise<SaveEnvelope | null>;
@@ -28,11 +42,15 @@ export interface SaveStore {
   delete(slotId: string): Promise<void>;
   /** Web builds cap slots (itch demo mechanism); desktop returns Infinity. */
   maxSlots(): number;
+  /** Player-wide settings; absent or corrupt records resolve to defaults, never fatal. */
+  loadSettings(): Promise<UserSettings>;
+  saveSettings(settings: UserSettings): Promise<void>;
 }
 
 /** In-memory impl for tests and headless harnesses. */
 export class MemorySaveStore implements SaveStore {
   private slots = new Map<string, SaveEnvelope>();
+  private settings: UserSettings = { ...DEFAULT_SETTINGS };
 
   async list(): Promise<SaveSlotMeta[]> {
     return [...this.slots.values()].map((e) => e.meta);
@@ -48,6 +66,12 @@ export class MemorySaveStore implements SaveStore {
   }
   maxSlots(): number {
     return Number.POSITIVE_INFINITY;
+  }
+  async loadSettings(): Promise<UserSettings> {
+    return { ...this.settings };
+  }
+  async saveSettings(settings: UserSettings): Promise<void> {
+    this.settings = { ...settings };
   }
 }
 

@@ -6,10 +6,10 @@
  * Routing is a `screen` discriminated union in React state, not a router dep.
  */
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { CampaignSession, type QuestRecord, type SessionSaveState } from '@sim/campaign/session';
 import { starterParty } from '@sim/campaign/starterParty';
-import type { SaveStore } from '@sim/save/saveStore';
+import { DEFAULT_SETTINGS, type SaveStore, type UserSettings } from '@sim/save/saveStore';
 import { makeEnvelope } from '@platform/envelope';
 import { LocalStorageSaveStore } from '@platform/localSaveStore';
 
@@ -35,6 +35,9 @@ export interface LaunchContext {
 
 export type ReplaySpeed = 1 | 4 | 16;
 
+/** Settings store speeds as plain numbers; presentation narrows to the legal set. */
+const asReplaySpeed = (n: number): ReplaySpeed => (n === 1 || n === 16 ? n : 4);
+
 export interface GameContextValue {
   session: CampaignSession | null;
   /** Bumped by exec after every command — the re-render/re-query signal. */
@@ -46,6 +49,9 @@ export interface GameContextValue {
   lastLaunch: LaunchContext | null;
   lastError: string | null;
   defaultSpeed: ReplaySpeed;
+  /** Player-wide flat mode (brief #8 accessibility contract) — persisted via SaveStore. */
+  flatMode: boolean;
+  setFlatMode: (on: boolean) => void;
   nav: (screen: Screen) => void;
   /** Run a session command synchronously; null return = the command refused (see lastError). */
   exec: <T>(fn: (s: CampaignSession) => T) => T | null;
@@ -72,7 +78,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [version, setVersion] = useState(0);
   const [lastLaunch, setLastLaunch] = useState<LaunchContext | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const [defaultSpeed, setDefaultSpeed] = useState<ReplaySpeed>(4);
+  const [settings, setSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS });
+
+  // Player-wide settings load once per app boot and apply from the title screen
+  // on (brief #8: flat mode is a persisted USER setting, not campaign state).
+  useEffect(() => {
+    void store.loadSettings().then(setSettings);
+  }, [store]);
+
+  // body.gv-flat is the single flat-mode switch every converted screen honors.
+  useEffect(() => {
+    document.body.classList.toggle('gv-flat', settings.flatMode);
+  }, [settings.flatMode]);
+
+  const updateSettings = useCallback(
+    (patch: Partial<UserSettings>): void => {
+      setSettings((prev) => {
+        const next = { ...prev, ...patch };
+        void store.saveSettings(next);
+        return next;
+      });
+    },
+    [store],
+  );
+
+  const setFlatMode = useCallback((on: boolean) => updateSettings({ flatMode: on }), [updateSettings]);
+  const setDefaultSpeed = useCallback((s: ReplaySpeed) => updateSettings({ defaultSpeed: s }), [updateSettings]);
 
   const nav = useCallback((next: Screen): void => {
     setLastError(null);
@@ -146,7 +177,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [nav]);
 
   const value: GameContextValue = {
-    session, version, screen, store, slotId, campaignName, lastLaunch, lastError, defaultSpeed,
+    session, version, screen, store, slotId, campaignName, lastLaunch, lastError,
+    defaultSpeed: asReplaySpeed(settings.defaultSpeed),
+    flatMode: settings.flatMode,
+    setFlatMode,
     nav, exec, setLastLaunch, setDefaultSpeed, startNew, loadGame, saveGame, quitToTitle,
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

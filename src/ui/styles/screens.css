@@ -7,6 +7,7 @@
 
 /* ============ rollout step 2: Town Hub ============ */
 .gv-town {
+  position: relative; /* the accessory layer anchors here (step 7) */
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 0 22px;
@@ -289,3 +290,12 @@
 }
 .gv-counters .gv-sheet:nth-child(2n) { --gv-tilt: 0.3deg; }
 .gv-counters .gv-sheet:nth-child(2n + 1) { --gv-tilt: -0.35deg; }
+
+/* ============ rollout step 7: settings ============ */
+.gv-settings {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.gv-settings .gv-sheet {
+  margin-bottom: 22px;
+}

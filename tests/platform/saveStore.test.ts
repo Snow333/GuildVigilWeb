@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { autopilotWeek } from '@sim/campaign/campaign';
 import { CampaignSession, type SessionSaveState } from '@sim/campaign/session';
+import { DEFAULT_SETTINGS, MemorySaveStore } from '@sim/save/saveStore';
 import { makeEnvelope, signState, SAVE_SCHEMA_VERSION } from '@platform/envelope';
 import { LocalStorageSaveStore, WEB_MAX_SLOTS, type StorageLike } from '@platform/localSaveStore';
 import { starterParty } from '../fixtures/party-fixture';
@@ -71,5 +72,31 @@ describe('LocalStorageSaveStore — the web persistence backend', () => {
     const store = new LocalStorageSaveStore(storage);
     expect(await store.list()).toHaveLength(0);
     expect(store.maxSlots()).toBe(WEB_MAX_SLOTS);
+  });
+});
+
+describe('player-wide settings — brief #8 flat-mode persistence (step 7)', () => {
+  it('round-trips settings; absent, corrupt, and partial records resolve to defaults', async () => {
+    const storage = stubStorage();
+    const store = new LocalStorageSaveStore(storage);
+
+    expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS); // absent → defaults
+
+    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 16 });
+    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16 });
+    expect(await store.list()).toHaveLength(0); // settings never list as a campaign slot
+
+    storage.setItem('gv_settings', '{not json');
+    expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS); // corrupt → defaults, never fatal
+
+    storage.setItem('gv_settings', JSON.stringify({ v: 1, flatMode: true }));
+    expect(await store.loadSettings()).toEqual({ ...DEFAULT_SETTINGS, flatMode: true }); // partial backfills
+  });
+
+  it('the in-memory store honors the same settings surface (tests and harnesses)', async () => {
+    const store = new MemorySaveStore();
+    expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS);
+    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 1 });
+    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 1 });
   });
 });

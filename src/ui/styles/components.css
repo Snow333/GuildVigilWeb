@@ -286,8 +286,28 @@
   z-index: 3;
 }
 
+/* pounce-pot resolution shimmer — fires when the sand re-keys on week advance */
+.gv-acc-sand {
+  animation: gv-sand 0.9s ease-out 1;
+}
+@keyframes gv-sand {
+  0% { opacity: 0; transform: translateY(-6px); }
+  60% { opacity: 1; }
+  100% { transform: none; }
+}
+
+/* the red thread (spool → chart X) — drawn in the chart SVG */
+.gv-thread path {
+  stroke: var(--gv-red-ink);
+  fill: none;
+}
+.gv-thread circle {
+  fill: var(--gv-brass-deep);
+}
+
 /* ============ flat mode (components + ambience) ============ */
 body.gv-flat .gv-stamp { transform: none; }
 body.gv-flat .gv-portrait { transform: none; }
 body.gv-flat .gv-acc,
+body.gv-flat .gv-thread,
 body.gv-flat .gv-thread-overlay { display: none; }

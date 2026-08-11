@@ -11,6 +11,7 @@
 
 import { WORLD } from '@content/world';
 import { REGION_IDS, regionAnchors } from '@sim/campaign/session';
+import { ThreadSpool } from '../accessories';
 import { useGame } from '../state/GameProvider';
 import { chartFeatures } from './worldChart';
 
@@ -108,6 +109,15 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
     : null;
   const routeMid = plan ? plan.path[Math.floor(plan.path.length / 2)]! : null;
 
+  // The red thread (brief #8, adapted from the composite comp per the pinned
+  // decision): the spool sits at the sheet's corner, and a selected posting
+  // draws its thread spool → X. Ambience-tied — gone in flat mode.
+  const threadEnd = plan
+    ? plan.path[plan.path.length - 1]!
+    : selected !== null
+      ? board.find((b) => b.questId === selected)?.pos ?? null
+      : null;
+
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-chartwrap">
@@ -123,6 +133,11 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
         <div className="gv-sheet gv-chart" style={{ ['--gv-tilt' as never]: '-0.25deg' }}>
           <span className="gv-pin gv-pin--left" />
           <span className="gv-pin gv-pin--right" />
+          {/* ambience: the spool — the red thread's origin (twin: the selected
+              notice on the board and the route's explicit ETA) */}
+          <span className="gv-acc" aria-hidden="true" style={{ left: -30, bottom: 34 }}>
+            <ThreadSpool />
+          </span>
           <h3 className="gv-head">The frontier <span className="gv-sub">the working chart</span></h3>
 
           <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Hand-drawn survey chart of the frontier">
@@ -278,6 +293,18 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                 </text>
               </g>
             ))}
+
+            {/* the red thread: spool corner → the selected X */}
+            {threadEnd && (
+              <g className="gv-thread">
+                <path
+                  d={`M 22 ${H - 20} C ${22 + (cx(threadEnd.x) - 22) * 0.25} ${H - 90}, ${cx(threadEnd.x) - 70} ${cy(threadEnd.y) + 50}, ${cx(threadEnd.x)} ${cy(threadEnd.y)}`}
+                  strokeWidth={1.4}
+                />
+                <circle cx={22} cy={H - 20} r={3.5} />
+                <circle cx={cx(threadEnd.x)} cy={cy(threadEnd.y)} r={3} />
+              </g>
+            )}
 
             {/* active route in red dashed ink (real A* path) */}
             {routeD && routeMid && plan && (

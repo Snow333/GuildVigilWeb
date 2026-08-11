@@ -12,6 +12,7 @@
 
 import { REGION_IDS } from '@sim/campaign/session';
 import type { HeroStatus } from '@sim/heroes/types';
+import { InkwellQuill, LetterKnife, PouncePot } from '../accessories';
 import { useGame } from '../state/GameProvider';
 
 /** Status → frozen chip class; the chip's own text is the pairing label. */
@@ -38,6 +39,13 @@ export function TownHub() {
 
   const dialogue = session.pendingDialogue();
 
+  // Accessory state (brief #8): the quill lies out, inked, when anything awaits
+  // the player's hand. A pure OR of queries this screen already shows — the
+  // letter, the "level up!" buttons, and the dispatch button are the labeled
+  // twins; the accessory never carries a fact alone.
+  const inputPending =
+    dialogue.length > 0 || active !== null || roster.some((h) => session.heroSheet(h.id).canLevelUp);
+
   const advance = (): void => {
     exec((s) => s.advanceWeek());
     void saveGame(); // autosave point (brief §2)
@@ -46,6 +54,11 @@ export function TownHub() {
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-town">
+        {/* ambience: the player's pen — out + inked = input pending (twin: the
+            letter / level-up / dispatch controls below) */}
+        <span className="gv-acc" aria-hidden="true" style={{ right: -18, top: 52 }}>
+          <InkwellQuill pending={inputPending} />
+        </span>
         <div className="gv-town-full">
           <h1>{campaignName ?? session.campaignId} — Town Hub</h1>
           <div className="gv-deskbar" data-town-status="" style={{ marginBottom: 22 }}>
@@ -60,6 +73,11 @@ export function TownHub() {
         <div>
           {dialogue.length > 0 && (
             <div className="gv-pad" style={{ marginBottom: 22 }}>
+              {/* ambience: the knife lies across correspondence awaiting the
+                  player (twin: the letter itself) */}
+              <span className="gv-acc" aria-hidden="true" style={{ right: -22, top: -18, transform: 'rotate(-8deg)' }}>
+                <LetterKnife />
+              </span>
               <div className="gv-sheet" style={{ marginBottom: 0, ['--gv-tilt' as never]: '0.35deg' }}>
                 <h3 className="gv-head">The Marshal&apos;s Table <span className="gv-sub">correspondence</span></h3>
                 {dialogue.map((d) => (
@@ -117,6 +135,11 @@ export function TownHub() {
         <div>
           <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '-0.35deg' }}>
             <span className="gv-pin" />
+            {/* ambience: the pounce pot anchors "resolve week" — its sand
+                shimmers once per advance (twin: the WEEK plate above) */}
+            <span className="gv-acc" aria-hidden="true" style={{ right: 10, bottom: -26 }}>
+              <PouncePot shimmerKey={week} />
+            </span>
             <h3 className="gv-head">Orders <span className="gv-sub">the week&apos;s desk</span></h3>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <button className="gv-btn gv-btn--seal" onClick={advance}>Advance Week ▸</button>

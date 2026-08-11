@@ -6,9 +6,11 @@
  * IndexedDB is the designated fallback behind this same interface if it ever does.
  */
 
-import type { SaveEnvelope, SaveSlotMeta, SaveStore } from '@sim/save/saveStore';
+import { DEFAULT_SETTINGS, type SaveEnvelope, type SaveSlotMeta, type SaveStore, type UserSettings } from '@sim/save/saveStore';
 
 const PREFIX = 'gv_save_';
+/** Outside the slot prefix on purpose — settings never list as a campaign. */
+const SETTINGS_KEY = 'gv_settings';
 
 /** Web builds cap slots (the itch demo mechanism). */
 export const WEB_MAX_SLOTS = 3;
@@ -68,5 +70,21 @@ export class LocalStorageSaveStore implements SaveStore {
 
   maxSlots(): number {
     return WEB_MAX_SLOTS;
+  }
+
+  async loadSettings(): Promise<UserSettings> {
+    const raw = this.storage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    try {
+      const parsed = JSON.parse(raw) as Partial<UserSettings>;
+      // Absent fields backfill from defaults — old records stay loadable forever.
+      return { ...DEFAULT_SETTINGS, ...parsed, v: 1 };
+    } catch {
+      return { ...DEFAULT_SETTINGS }; // corrupt settings degrade, never fatal
+    }
+  }
+
+  async saveSettings(settings: UserSettings): Promise<void> {
+    this.storage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }
 }
