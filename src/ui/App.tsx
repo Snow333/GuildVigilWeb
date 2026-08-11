@@ -9,6 +9,7 @@ import { interpretStream } from './beats/interpret';
 import { StyleDrawer } from './styles/StyleDrawer';
 import { GameProvider, useGame } from './state/GameProvider';
 import { TitleScreen } from './screens/TitleScreen';
+import { FoundingMuster } from './screens/FoundingMuster';
 import { TownHub } from './screens/TownHub';
 import { HeroPanel } from './screens/HeroPanel';
 import { QuestBoard } from './screens/QuestBoard';
@@ -24,6 +25,8 @@ function Router() {
   switch (screen.kind) {
     case 'title':
       return <TitleScreen />;
+    case 'muster':
+      return <FoundingMuster slotId={screen.slotId} campaignName={screen.campaignName} />;
     case 'town':
       return <TownHub />;
     case 'hero':

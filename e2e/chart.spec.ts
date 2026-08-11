@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { newCampaign } from './newCampaign';
 
 /**
  * Brief #8 rollout step 5 — the chart's acceptance criteria on the built
@@ -13,9 +14,7 @@ test('the chart: "?" secrecy, wash label-pairing, board→map selection', async 
   test.setTimeout(120_000);
 
   await page.goto('/');
-  await page.fill('input', 'E2E Test');
-  await page.locator('button:has-text("New campaign here")').first().click();
-  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await newCampaign(page, 'E2E Test');
 
   // Fresh campaign: the guild has surveyed nothing — every marker is "?" and
   // leaks no name through text content or a <title> tooltip.

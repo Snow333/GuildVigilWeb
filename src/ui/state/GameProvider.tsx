@@ -8,13 +8,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { CampaignSession, type QuestRecord, type SessionSaveState } from '@sim/campaign/session';
-import { starterParty } from '@sim/campaign/starterParty';
+import { musterParty, type MusterChoice } from '@sim/campaign/muster';
 import { DEFAULT_SETTINGS, type SaveStore, type UserSettings } from '@sim/save/saveStore';
 import { makeEnvelope } from '@platform/envelope';
 import { LocalStorageSaveStore } from '@platform/localSaveStore';
 
 export type Screen =
   | { kind: 'title' }
+  /** The founding muster stands between "New campaign here" and week 1 (brief #10). */
+  | { kind: 'muster'; slotId: string; campaignName: string }
   | { kind: 'town' }
   | { kind: 'hero'; heroId: string }
   | { kind: 'board' }
@@ -60,7 +62,8 @@ export interface GameContextValue {
   exec: <T>(fn: (s: CampaignSession) => T) => T | null;
   setLastLaunch: (ctx: LaunchContext | null) => void;
   setDefaultSpeed: (speed: ReplaySpeed) => void;
-  startNew: (slotId: string, name: string) => Promise<void>;
+  /** The founding party is REQUIRED — a campaign cannot start without a muster (brief #10). */
+  startNew: (slotId: string, name: string, founding: readonly MusterChoice[]) => Promise<void>;
   loadGame: (slotId: string) => Promise<boolean>;
   saveGame: () => Promise<void>;
   quitToTitle: () => void;
@@ -143,12 +146,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [store, session, slotId, campaignName]);
 
   const startNew = useCallback(
-    async (slot: string, name: string): Promise<void> => {
+    async (slot: string, name: string, founding: readonly MusterChoice[]): Promise<void> => {
       const slug = slugify(name);
+      // Determinism (brief #10 acceptance): campaignId/seed come from the name
+      // and the party from the muster choices — identical choices + identical
+      // name reproduce the campaign exactly.
       const fresh = CampaignSession.create({
         campaignId: slug,
         seed: `world_${slug}`,
-        party: starterParty(),
+        party: musterParty(founding),
       });
       fresh.advanceWeek(); // land in week 1 with a live board
       setSession(fresh);

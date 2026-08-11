@@ -4,78 +4,19 @@
  * Phase 1 career-harness fixture so live play and the harness share one wedge;
  * tests/fixtures/party-fixture re-exports from here. Every consumer calls
  * starterParty() fresh: HeroState is mutable and campaigns level it up.
- * (Authored starting rosters arrive with the content vertical slice.)
+ *
+ * Brief #10: the templates and the builder moved to ./muster, because the
+ * FOUNDING MUSTER now creates this party from player choices. starterParty()
+ * is the same four heroes it always was — the muster's default choices run
+ * through the same code path, so harnesses and live play cannot drift.
  */
 
-import type { ItemInstance } from '@sim/core/events/types';
-import { freshHeroMaxHp } from '@sim/heroes/levelUp';
-import type { Abilities, HeroState } from '@sim/heroes/types';
-import { spellsByName } from '@sim/registry';
+export { mkHero } from './muster';
+
 import type { HeroKit } from './assembly';
+import { DEFAULT_MUSTER, musterParty } from './muster';
 
-const inst = (baseId: number): ItemInstance => ({
-  baseId: String(baseId), tier: 'mundane', propertyIds: [], seed: `fix_${baseId}`,
-});
-
-export function mkHero(
-  id: string,
-  name: string,
-  classId: number,
-  abilities: Abilities,
-  maxHp: number,
-  skills: Record<string, number>,
-  feats: { featId: number; choices?: { skill?: string } }[] = [],
-): HeroState {
-  return {
-    id, name, status: 'active', xp: 0, maxHp, abilities,
-    classLevels: [{ classId, level: 1, orderTaken: 1 }],
-    skills, feats, wounded: 0,
-  };
-}
-
-/**
- * Fighter / Rogue / Cleric / Wizard — the classic wedge, level 1.
- * Re-statted 2026-08-10 for the SKILL RANK CAP (finding #4): ranks ≤ character
- * level, so level-1 heroes hold at most 1 rank anywhere. This moved the career
- * harness baseline — the diff is the cap's cost, justified in the same commit.
- */
+/** Fighter / Rogue / Cleric / Wizard — the classic wedge, level 1. */
 export function starterParty(): HeroKit[] {
-  const heal = spellsByName.get('Heal')!.id;
-  const magicMissile = spellsByName.get('Magic Missile')!.id;
-
-  return [
-    {
-      // Longsword + Chain Mail; AoO arrives via the fighter class feature.
-      hero: mkHero('hero_1', 'Torvald', 1,
-        { str: 16, dex: 12, con: 14, int: 10, wis: 12, cha: 8 }, freshHeroMaxHp(10, 2),
-        { athletics: 1, perception: 1 }),
-      equipped: [inst(3), inst(25)],
-      loadout: [],
-    },
-    {
-      // Rapier (finesse) + Leather; Sneak Attack #68, Nimble Dodge #69, Trap Finder #70.
-      hero: mkHero('hero_2', 'Shade', 4,
-        { str: 12, dex: 16, con: 12, int: 12, wis: 12, cha: 10 }, freshHeroMaxHp(8, 1),
-        { thievery: 1, perception: 1, athletics: 1 },
-        [{ featId: 68 }, { featId: 69 }, { featId: 70 }]),
-      equipped: [inst(9), inst(22)],
-      loadout: [],
-    },
-    {
-      // Mace + Scale Mail; heals the wedge when someone drops low.
-      hero: mkHero('hero_3', 'Mira', 3,
-        { str: 12, dex: 10, con: 14, int: 10, wis: 16, cha: 12 }, freshHeroMaxHp(8, 2),
-        { perception: 1, athletics: 1 }),
-      equipped: [inst(7), inst(26)],
-      loadout: [{ action: 'cast', spellId: heal, condition: { kind: 'allyHpBelow', pct: 0.4 }, target: 'lowestAlly' }],
-    },
-    {
-      // Staff; Magic Missile until the slots run dry, then pokes with the stick.
-      hero: mkHero('hero_4', 'Elandra', 2,
-        { str: 8, dex: 14, con: 12, int: 16, wis: 12, cha: 10 }, freshHeroMaxHp(6, 1),
-        { perception: 1 }),
-      equipped: [inst(16)],
-      loadout: [{ action: 'cast', spellId: magicMissile, condition: { kind: 'always' }, target: 'scoredEnemy' }],
-    },
-  ];
+  return musterParty(DEFAULT_MUSTER);
 }

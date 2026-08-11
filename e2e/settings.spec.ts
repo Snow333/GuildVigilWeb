@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { newCampaign } from './newCampaign';
 
 /**
  * Brief #8 rollout step 7 — the flat-mode acceptance criterion on the built
@@ -9,9 +10,7 @@ import { test, expect } from '@playwright/test';
 
 test('flat mode toggles in Settings, strips ambience, and persists across reload', async ({ page }) => {
   await page.goto('/');
-  await page.fill('input', 'E2E Test');
-  await page.locator('button:has-text("New campaign here")').first().click();
-  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await newCampaign(page, 'E2E Test');
 
   const body = page.locator('body');
   await expect(body).not.toHaveClass(/gv-flat/);
@@ -54,9 +53,7 @@ test('readable type swaps the faces, persists across reload, and composes with f
     page.locator('.gv-desk').first().evaluate((el) => getComputedStyle(el).fontFamily);
 
   await page.goto('/');
-  await page.fill('input', 'E2E Type');
-  await page.locator('button:has-text("New campaign here")').first().click();
-  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await newCampaign(page, 'E2E Type');
 
   const body = page.locator('body');
   await expect(body).not.toHaveClass(/gv-readable/);

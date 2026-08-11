@@ -4,19 +4,20 @@
  */
 
 import type { CampaignSession } from '@sim/campaign/session';
+import { fnv1aHex } from '@sim/core/hash';
 import type { SaveEnvelope } from '@sim/save/saveStore';
 
 /** Version of the envelope/state layout, independent of the event schema. */
 export const SAVE_SCHEMA_VERSION = 1;
 
-/** FNV-1a over the serialized state — integrity signature (mismatch flags, never rejects). */
+/**
+ * FNV-1a over the serialized state — integrity signature (mismatch flags,
+ * never rejects). The algorithm moved to @sim/core/hash when brief #10 needed
+ * the same hash for deterministic identity backfill; output is byte-identical,
+ * so signatures on existing saves still verify (pinned by ancestry.test.ts).
+ */
 export function signState(stateJson: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < stateJson.length; i++) {
-    h ^= stateJson.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
+  return fnv1aHex(stateJson);
 }
 
 export function makeEnvelope(session: CampaignSession, slotId: string, name: string): SaveEnvelope {

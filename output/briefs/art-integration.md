@@ -1,6 +1,6 @@
 # Implementation Brief #10: Art Integration — Pastes, Portraits & the Founding Muster
 **Date**: 2026-08-11
-**Status**: APPROVED 2026-08-11 (Steven: "This brief is good") — ready for implementation (workspace rebuild required before code)
+**Status**: **IMPLEMENTED 2026-08-11** — shipped green (305 unit + 9 e2e). As-built deviations, the grammar audit, and the one scope flip are recorded in `migration/status.md`; the short version is at the bottom of this file. Approved 2026-08-11 (Steven: "This brief is good").
 **Process**: Wireframe phase complete — exploration round 01 approved 2026-08-11 (`output/exploration/art-integration-r01.html`, desktop artifact `guild-vigil-art-integration`). The comp's treatment CSS is the draft implementation spec. Edge-case interview decisions recorded below.
 **Authorities**: Art Style Bible v1 (`migration/art-style-bible.md`) for everything about the images themselves; brief #8 for the desk grammar; brief #9 for the settings/persistence pattern this brief reuses.
 
@@ -60,14 +60,14 @@ Wire generated art into the desk. The bible's §5 treatment layer becomes generi
 - **Muster + flat mode**: the founding muster and recruit choice must be fully usable flat (it's a required flow, not ornament).
 
 ## Acceptance criteria
-- [ ] `pnpm check` green; suite grows only by the justified additions above.
-- [ ] Zero-image-asset guard on `src/ui/styles` still passes — `treatment.css` uses `data:` URIs only; the portraits module lives in `src/content/generated/` (art is CONTENT), outside the guard's scope and inside the never-hand-edit discipline.
-- [ ] Backfill determinism proven by test: same save → same ancestry/gender, twice, cold.
-- [ ] New campaign cannot start without a founding party; given identical choices + seed, the campaign start is deterministic.
-- [ ] Every hero surface shows the correct paste + grade from data; wounded/lost desat always accompanied by its numeric/label twin.
-- [ ] Flat mode on every new/touched surface matches the §5 decision from first build.
-- [ ] Grammar audit line per new surface (founding muster, recruit muster additions, NPC slots): pin/tape/wax/red-ink usage per brief #8; status colors from the frozen set, label-paired.
-- [ ] Performance gate on Steven's machine: full textures + fonts + portraits, no perceptible jank (size is not a gate; paint cost is).
+- [x] `pnpm check` green; suite grows only by the justified additions above (+27 unit, +2 e2e, justified in the commit message).
+- [x] Zero-image-asset guard on `src/ui/styles` still passes — `treatment.css` contains no `url()` at all (it reuses `--gv-tex-grain`); the portraits module lives in `src/content/generated/`, outside the guard's scope.
+- [x] Backfill determinism proven by test: same save → same ancestry/gender, twice, cold (`tests/save/backfill.test.ts`), plus the exact backfill values pinned in `tests/heroes/ancestry.test.ts`.
+- [x] New campaign cannot start without a founding party (e2e asserts the gate); identical choices + name reproduce the campaign exactly (unit).
+- [x] Every hero surface shows the correct paste + grade from data; wounded/lost desat always accompanied by its numeric/label twin.
+- [x] Flat mode on every new/touched surface matches the §5 decision from first build — verified on the BUILT artifact, not just in dev.
+- [x] Grammar audit done (founding muster, pastes, NPC slot) — two red-ink misuses caught in screenshot review and fixed. Recruit-muster additions N/A: see the scope flip. No status hexes in `treatment.css`.
+- [ ] Performance gate on Steven's machine: full textures + fonts + portraits, no perceptible jank. **STILL OPEN — needs Steven's hardware.** Bundle 1,197 KB (was 1,137 KB); +60 KB for four inlined busts.
 
 ## Known risks / watch points
 - **Event-schema pressure** is the one stop-the-line risk — resolved by the pre-code verification step above.
@@ -75,3 +75,21 @@ Wire generated art into the desk. The bible's §5 treatment layer becomes generi
 - **Crop quality varies per sheet** — the contact-sheet output exists precisely so crop tuning is a fast visual loop, not a guessing game.
 - **First new screens since the rollout** (founding muster) — grammar-erosion risk; the audit line is mandatory, not ceremonial.
 - **Bundle growth** — ~30–60 KB per bust is fine now; if the full matrix + NPCs ever pushes paint cost (not size), revisit compression before cutting scope.
+
+---
+
+## As built (2026-08-11) — read `migration/status.md` for the full record
+
+**Stop-the-line: GREEN.** Hero creation does not ride an event payload; `world.hero_recruited` is `{ heroId }` and every `hero.*` payload is id-only. `EVENT_TYPE_MANIFEST` untouched.
+
+**Scope flip on §9 (pre-authorized by the brief).** There is no recruit flow to insert a choice into — nothing emits `world.hero_recruited`, and there is no recruit surface or economy. The ancestry/gender chooser ships as a component the founding muster consumes, ready for the future recruit brief. The recruit-flow line item is not shipped, by design.
+
+**Deviations, each deliberate:**
+1. No `art/crops.json` — dedicated 1:1 bust generations plus a deterministic top-biased square crop (`TOP_BIAS = 0.25`, validated visually against all four accepted busts) replaced the hand-tunable crop table. The contact sheet is the verification loop.
+2. Treatment classes ship `gv-`-prefixed (`gv-t-base`, `gv-c-wounded`, `gv-f-elite`) — same contract, house spelling.
+3. Founding class list = the four archetypes the registry can outfit at level 1. No starting-gear-by-class table exists; widening it is content work, which this brief excludes.
+4. The default founding party is authored, and **Elandra is an Elf on purpose** — no elf art exists, so the silhouette fallback is on screen in every default campaign and every e2e run.
+5. Title screen's "New campaign here" demoted from wax seal to plain button; the seal moved to "Sign the charter", where the commitment now happens.
+6. `#style-drawer` gained a treatment row (every grade, one subject, desk and flat) — not in the brief, added because an unseen grade drifts.
+
+**Bug found by a test written for this brief:** ancestry and gender produced only 6 of 12 possible pairs. FNV-1a's odd prime preserves parity, so bit 0 of the digest is the input's XOR-parity and two namespaced hashes of the same id correlate. Fixed with a murmur3 `fmix32` avalanche before the modulus; `fnv1a32` itself untouched because `signState` is a persisted save signature (a test pins them together).

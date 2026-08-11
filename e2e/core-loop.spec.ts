@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { newCampaign } from './newCampaign';
 
 /**
  * The core flow (brief #5 §5): new campaign → advance week → accept quest →
@@ -67,9 +68,7 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
   test.setTimeout(300_000); // ~20 deterministic weeks of real UI play
 
   await page.goto('/');
-  await page.fill('input', 'E2E Test');
-  await page.locator('button:has-text("New campaign here")').first().click();
-  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await newCampaign(page, 'E2E Test');
 
   // Forecast panel renders before the first launch (constraint 3 on screen).
   expect(await acceptEasiest(page)).toBe(true); // week 1 always posts

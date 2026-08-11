@@ -3,6 +3,7 @@ import {
   EFFECT_DOMAIN, effectsByDomain, featEffectsById, partyDungeonBonus,
   resolveSkillMods, resolveStatMods, type FeatEffectType,
 } from '@sim/heroes/featEffects';
+import { deriveHeroIdentity } from '@sim/heroes/ancestry';
 import type { HeroState } from '@sim/heroes/types';
 import { feats } from '@content/generated';
 
@@ -12,6 +13,7 @@ function hero(classLevels: [number, number][] = [[1, 1]]): HeroState {
     abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
     classLevels: classLevels.map(([classId, level], i) => ({ classId, level, orderTaken: i + 1 })),
     skills: {}, feats: [],
+    ...deriveHeroIdentity('hero_1'),
   };
 }
 

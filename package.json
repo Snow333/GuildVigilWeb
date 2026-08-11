@@ -10,7 +10,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3",
-      "esbuild"
+      "esbuild",
+      "sharp"
     ]
   },
   "scripts": {
@@ -23,6 +24,7 @@
     "test:watch": "vitest",
     "e2e": "pnpm build && playwright test",
     "convert": "node tools/convert-content.mjs",
+    "portraits": "node tools/build-portraits.mjs",
     "db:apply": "node tools/apply-seed.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
@@ -43,6 +45,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "better-sqlite3": "^12.0.0",
     "eslint": "^9.30.0",
+    "sharp": "0.34.5",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.35.0",
     "vite": "^7.0.0",

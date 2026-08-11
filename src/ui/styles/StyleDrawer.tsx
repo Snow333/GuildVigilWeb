@@ -6,7 +6,30 @@
  *
  * Flat mode here toggles the body class only; the persisted setting arrives with
  * the SettingsScreen conversion (rollout step 7) via SaveStore.
+ *
+ * Brief #10 added the treatment layer here too: the grades only stay honest if
+ * a human can see all of them on one subject at once.
  */
+
+import { Portrait, type PortraitProps } from '../portrait';
+
+/** One accepted batch-1 subject, shown under every grade so drift is visible. */
+const DRAWER_SUBJECT = 'hero-halforc-m';
+
+const TREATMENTS: {
+  label: string;
+  note: string;
+  key?: string;
+  props: Partial<PortraitProps>;
+}[] = [
+  { label: 'base', note: 'daguerreotype — every paste', props: {} },
+  { label: 'haven', note: 'warm parchment bias', props: { faction: 'haven' } },
+  { label: 'krath', note: 'cold iron bias', props: { faction: 'krath' } },
+  { label: 'wounded', note: 'paired with the HP number', props: { condition: 'wounded' } },
+  { label: 'lost', note: 'paired with the dead label', props: { condition: 'lost' } },
+  { label: 'elite', note: 'rank lives in the frame', props: { elite: true } },
+  { label: 'sketch-pending', note: 'no art — never a wrong face', key: 'hero-gnome-f', props: {} },
+];
 
 const TALLY_DEFS = (
   <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
@@ -108,6 +131,29 @@ export function StyleDrawer() {
             <div className="gv-xp" style={{ width: 120 }}><i style={{ width: '62%' }} /></div>
             <span style={{ color: 'var(--gv-ink-muted)', fontSize: 11.5 }}>624/1000</span>
           </div>
+        </div>
+
+        {/* Brief #10: the treatment layer joins the drawer, because a grade
+            you cannot see side by side is a grade that drifts. Every paste
+            below shows the SAME subject — only the grade changes. */}
+        <div className="gv-sheet gv-sheet--aged" style={{ marginBottom: 26, ['--gv-tilt' as never]: '-0.4deg' }}>
+          <span className="gv-tape" />
+          <h3 className="gv-head">The treatment layer <span className="gv-sub">one image · every grade · bible §5</span></h3>
+          <div className="gv-gradegrid" data-treatment-grid="">
+            {TREATMENTS.map((t) => (
+              <figure className="gv-gradecell" key={t.label}>
+                <Portrait portraitKey={t.key ?? DRAWER_SUBJECT} alt="" {...t.props} />
+                <figcaption>
+                  <b>{t.label}</b>
+                  <span>{t.note}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="gv-filenote gv-italic" style={{ marginBottom: 0 }}>
+            wounded/lost desaturation is the TWIN of a number on screen, never its replacement —
+            flat mode keeps it for exactly that reason, and drops everything else.
+          </p>
         </div>
 
         <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '-0.25deg' }}>

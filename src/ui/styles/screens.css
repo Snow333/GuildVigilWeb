@@ -291,6 +291,189 @@
 .gv-counters .gv-sheet:nth-child(2n) { --gv-tilt: 0.3deg; }
 .gv-counters .gv-sheet:nth-child(2n + 1) { --gv-tilt: -0.35deg; }
 
+/* ============ brief #10: portrait surfaces + the founding muster ============
+   Arrangement only — every grade lives in treatment.css. */
+
+/* the name cell wherever a paste rides beside a name (roster, after-action) */
+.gv-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gv-whosub {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  color: var(--gv-ink-muted);
+}
+
+/* hero dossier: the photograph and the identity line share the head */
+.gv-herohead {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.gv-heroident { min-width: 0; }
+
+/* the marshal's letter: correspondent's likeness beside their words */
+.gv-letter {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.gv-letter > span { min-width: 0; }
+
+/* dispatch marching strip */
+.gv-dteam {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.gv-dmember {
+  width: 58px;
+  text-align: center;
+}
+.gv-dmember .gv-paste--chip { margin: 0 auto; }
+.gv-dname,
+.gv-dstat {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  margin-top: 3px;
+}
+/* names may ellipsize; the numbers beside them never do */
+.gv-dname {
+  color: var(--gv-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gv-dstat { color: var(--gv-ink-muted); }
+
+/* ---- the founding muster ---- */
+.gv-muster {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 0 22px;
+  align-items: start;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+.gv-muster-full { grid-column: 1 / -1; }
+@media (max-width: 980px) {
+  .gv-muster { grid-template-columns: 1fr; }
+}
+.gv-muster .gv-sheet { margin-bottom: 22px; }
+
+.gv-roll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gv-rollmember {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  font-family: var(--gv-serif);
+  color: var(--gv-ink);
+  background: #e2d4b244;
+  border: 1px solid #a8905e88;
+  border-radius: 2px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.gv-rollmember[aria-pressed='true'] {
+  border-color: var(--gv-wax);
+  box-shadow: inset 0 0 0 2px #8c2f2880;
+}
+.gv-rollmember .gv-paste { grid-row: span 2; }
+.gv-rollname {
+  font-weight: 700;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gv-rollcls {
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.1px;
+  color: var(--gv-ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gv-mustergrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.gv-mtile {
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--gv-serif);
+  color: var(--gv-ink);
+  border: 1px solid #a8905e88;
+  border-radius: 2px;
+  padding: 9px 6px 7px;
+  background: #e2d4b244;
+}
+.gv-mtile[aria-pressed='true'] {
+  border-color: var(--gv-wax);
+  box-shadow: inset 0 0 0 2px #8c2f2880;
+}
+.gv-mtile .gv-paste {
+  width: 62px;
+  margin: 0 auto;
+  display: block;
+  transform: none;
+}
+.gv-mname {
+  display: block;
+  font-family: var(--gv-sans);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.9px;
+  margin-top: 6px;
+}
+.gv-mavail {
+  display: block;
+  font-size: 10.5px;
+  color: var(--gv-ink-muted);
+}
+
+/* the component drawer's grade row (brief #10 — all grades, one subject) */
+.gv-gradegrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.gv-gradecell {
+  margin: 0;
+  text-align: center;
+}
+.gv-gradecell .gv-paste { width: 92px; }
+.gv-gradecell figcaption {
+  margin-top: 7px;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.1px;
+  color: var(--gv-ink-muted);
+}
+.gv-gradecell figcaption b {
+  display: block;
+  color: var(--gv-ink);
+  font-size: 11.5px;
+}
+
 /* ============ rollout step 7: settings ============ */
 .gv-settings {
   max-width: 860px;

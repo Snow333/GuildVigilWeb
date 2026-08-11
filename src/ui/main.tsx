@@ -7,6 +7,7 @@ import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/materials.css';
 import './styles/components.css';
+import './styles/treatment.css';
 import './styles/screens.css';
 
 const el = document.getElementById('root');

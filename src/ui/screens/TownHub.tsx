@@ -13,6 +13,7 @@
 import { REGION_IDS } from '@sim/campaign/session';
 import type { HeroStatus } from '@sim/heroes/types';
 import { InkwellQuill, LetterKnife, PouncePot } from '../accessories';
+import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
 /** Status → frozen chip class; the chip's own text is the pairing label. */
@@ -82,11 +83,15 @@ export function TownHub() {
                 <h3 className="gv-head">The Marshal&apos;s Table <span className="gv-sub">correspondence</span></h3>
                 {dialogue.map((d) => (
                   <div key={d.id} style={{ position: 'relative', maxWidth: 640 }}>
-                    <blockquote style={{ fontSize: 13.5, lineHeight: 1.65, margin: '0 0 6px' }}>
-                      &ldquo;{d.text}&rdquo;
-                      <div className="gv-italic" style={{ marginTop: 6, color: 'var(--gv-ink-soft)' }}>
-                        — {d.speaker}
-                      </div>
+                    <blockquote className="gv-letter" style={{ fontSize: 13.5, lineHeight: 1.65, margin: '0 0 6px' }}>
+                      {/* named-NPC slot: silhouette until the NPC art batch lands */}
+                      <Portrait portraitKey={d.portraitKey} alt={d.speaker} size="chip" faction="haven" taped />
+                      <span>
+                        &ldquo;{d.text}&rdquo;
+                        <span className="gv-italic" style={{ display: 'block', marginTop: 6, color: 'var(--gv-ink-soft)' }}>
+                          — {d.speaker}
+                        </span>
+                      </span>
                     </blockquote>
                     {d.choices.length > 0 && (
                       <p style={{ margin: '8px 0 10px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -114,7 +119,22 @@ export function TownHub() {
               <tbody>
                 {roster.map((h) => (
                   <tr key={h.id}>
-                    <td><b>{h.name}</b></td>
+                    <td className="gv-who">
+                      {/* the paste rides beside the name; ancestry is the label
+                          twin of the likeness, and the condition grade below is
+                          the twin of the Wounded / Status columns */}
+                      <Portrait
+                        portraitKey={h.portraitKey}
+                        alt={h.name}
+                        size="chip"
+                        faction="haven"
+                        condition={conditionFor(h)}
+                      />
+                      <span>
+                        <b>{h.name}</b>
+                        <span className="gv-whosub">{h.ancestryName}</span>
+                      </span>
+                    </td>
                     <td>{h.level}</td>
                     <td>{h.xp.atCap ? 'CAP' : `${h.xp.progress}/${h.xp.threshold}`}</td>
                     <td>{h.maxHp}</td>

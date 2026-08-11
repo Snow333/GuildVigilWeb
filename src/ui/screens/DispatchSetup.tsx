@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import type { ForecastResult } from '@sim/campaign/session';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
+import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
 const PROFILES: MissionProfile[] = ['fullExplore', 'bossRush', 'mysteryHunt', 'lootRun'];
@@ -117,10 +118,29 @@ export function DispatchSetup() {
           <span className="gv-pin" />
           <h3 className="gv-head">Marching orders <span className="gv-sub">team · profile · caution</span></h3>
 
-          <p className="gv-statline" style={{ marginBottom: 12 }}>
+          <p className="gv-statline" style={{ marginBottom: 6 }}>
             <b>Team</b> (party_1 — multi-team arrives later):{' '}
             {roster.map((r) => `${r.name} L${r.level}`).join(' · ')}
           </p>
+          {/* the marching strip: every face going out, with the level and
+              wounded numbers the grade is paired to */}
+          <div className="gv-dteam">
+            {roster.map((r) => (
+              <span className="gv-dmember" key={r.id}>
+                <Portrait
+                  portraitKey={r.portraitKey}
+                  alt={r.name}
+                  size="chip"
+                  faction="haven"
+                  condition={conditionFor(r)}
+                />
+                <span className="gv-dname">{r.name}</span>
+                <span className="gv-dstat">
+                  L{r.level}{r.wounded > 0 ? <span className="gv-marg"> · w{r.wounded}</span> : ''}
+                </span>
+              </span>
+            ))}
+          </div>
 
           <div className="gv-choice">
             <span className="gv-choice-label">Profile</span>

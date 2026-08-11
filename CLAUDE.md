@@ -3,7 +3,7 @@
 Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored,
 continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 **Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright. (Tauri 2 planned — brief #7 parked.)
-**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Suite: **278 tests + 6 e2e** green. Next: font selection → art style bible → Phase 4 planning.
+**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Brief #9 (type program) and **brief #10 (art integration — pastes, portraits, the founding muster)** shipped since. Suite: **305 tests + 9 e2e** green. Next: (contract-an-artist decision) → remaining hero art batches → Phase 4 planning.
 
 ## Authoritative documents — read before designing anything
 
@@ -27,20 +27,30 @@ continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 
 ```
 src/sim/        pure sim (core/ heroes/ combat/ dungeon/ world/ campaign/ save/ registry/)
-src/content/    typed registries; generated/ is machine-written (converter) — NEVER hand-edit
+art/            ACCEPTED generated-art originals (heroes/ npcs/ enemies/), bible §4
+                naming, append-only. The repo is the reference of record; only
+                256px webp busts ever ship (tools/build-portraits.mjs).
+src/content/    typed registries; generated/ is machine-written (converter, and
+                portraits.ts by build-portraits) — NEVER hand-edit
 src/ui/         React app (may import sim; sim may NEVER import it). ALL screens
                 speak the desk grammar. accessories.tsx = ambience layer;
                 screens/worldChart.ts = procedural chart (DENSITY = round-03 lock).
 src/ui/styles/  brief #8 style layer: tokens → materials → grammar components →
-                screen conversions. Status set is FROZEN + label-paired; zero image
-                assets — both guarded by tests/ui/style-tokens.test.ts. Reference: #style-drawer.
+                treatment (brief #10 paste grades) → screen conversions. Status set
+                is FROZEN + label-paired; zero image assets — both guarded by
+                tests/ui/style-tokens.test.ts. Reference: #style-drawer (which now
+                shows every paste grade on one subject).
+src/ui/portrait.tsx  the ONE component that puts generated art on the desk.
+                Grades arrive as props from DATA; missing key OR a broken data URI
+                both fall to the sketch-pending silhouette. 8 of 12 hero subjects
+                have no art — the fallback is a normal play path, not an error.
 src/platform/   SaveStore impls (localStorage today; Tauri glue when brief #7 unparks)
 tools/          content converter + seed applier (Node scripts); distribution
                 harnesses live in tests/harness/
 tests/          Vitest (unit, fixtures, property); e2e/ Playwright (Phase 2+)
 ```
 
-Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to a preinstalled Chromium where needed, e.g. the cloud workspace) · `pnpm convert` · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
+Aliases: `@sim/*`, `@content/*`, `@platform/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to a preinstalled Chromium where needed, e.g. the cloud workspace) · `pnpm convert` · `pnpm portraits` (rebuild the bust module from `art/`) · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
 
 ## The desk grammar (UI law — brief #8)
 
@@ -54,6 +64,13 @@ Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) ·
 ## Determinism discipline
 
 - No `Math.random`, `Date.now`, or argless `new Date` in sim — lint enforces; use `Rng` and the sim clock.
+- **String hashing goes through `@sim/core/hash`** — ONE FNV-1a, shared by the save
+  signature and identity backfill. Anything taking `hash % n` MUST go through
+  `hashIndex`/`mix32` first: raw FNV's low bits are just the input's XOR-parity, so
+  two namespaced hashes of the same id correlate (this bit us — ancestry and gender
+  produced only 6 of 12 possible pairs until the avalanche step landed).
+- Backfilled values seed on the ENTITY ID, never the campaign `Rng` — drawing from
+  the Rng would move its stream position by however many entities needed repair.
 - Seed strings come from `Seeds`/`Ids` builders — never ad-hoc string concat.
 - No `async` in sim resolvers. Emission order = resolution order.
 - **The event schema is FROZEN (2026-08-10).** Adding types is legal; renaming/removing is forbidden — the manifest snapshot test will fail, and it is right. Consumers must skip-and-log unknown types.
@@ -88,6 +105,13 @@ Aliases: `@sim/*`, `@content/*`. Commands: `pnpm check` (typecheck+lint+test) ·
 - The INT-boost/skill-points bug from Godot is FIXED here (`skillPointsForLevel` takes the pending boost). Don't reintroduce the old ordering.
 - XP is cumulative and never spent; level 20 uses a `-1` sentinel, not an error.
 - `UserSettings` lives beside the slots (web key `gv_settings`), NOT inside campaign saves — don't route preferences through the envelope/backfill chain.
+- `HeroState.ancestry`/`gender` are **cosmetic** — identity + portrait only, ZERO stat
+  effect. `tests/campaign/muster.test.ts` enforces it; hiring PF2E ancestry mechanics
+  is a deliberate systems brief, not a drive-by.
+- The founding muster's class list is the four archetypes the registry can outfit at
+  level 1. There is no starting-gear-by-class table — widening it is CONTENT work.
+- `CampaignSession.deserialize` runs the backfill chain (`@sim/save/backfills`) over a
+  clone before anything reads state. Add stages there, append-only.
 - Use **pnpm**, not npm. Native deps build via `pnpm.onlyBuiltDependencies`.
 - Planning docs live in BOTH `output/` (repo) and project knowledge (`migration/*` on claude.ai) — update both or say which is stale.
 

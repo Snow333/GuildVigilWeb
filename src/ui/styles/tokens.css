@@ -44,6 +44,10 @@
      else on the chart draws with the ink/red tokens above */
   --gv-chart-forest: #4a5230;
 
+  /* the art plate (bible §2): every generated image is painted on this flat
+     slate, so pastes and the sketch-pending silhouette share one ground */
+  --gv-slate: #2e3138;
+
   /* FROZEN validated status set — label-paired ALWAYS, never themed, never alone */
   --gv-s0: #0ca30c; /* quiet / ready / success        */
   --gv-s1: #fab219; /* caution / resting / attention  */

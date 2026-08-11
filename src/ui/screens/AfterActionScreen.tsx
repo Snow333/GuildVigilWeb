@@ -12,6 +12,7 @@
  */
 
 import { deriveItem } from '@sim/heroes/equipment';
+import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
 const OUTCOME_WORD: Record<string, string> = {
@@ -47,14 +48,21 @@ export function AfterActionScreen() {
 
   const { record, worldStart } = lastLaunch;
   const slice = session.world.all().slice(worldStart);
-  const names = new Map(session.roster().map((r) => [r.id, r.name]));
+  const roster = session.roster();
+  const names = new Map(roster.map((r) => [r.id, r.name]));
+  const byId = new Map(roster.map((r) => [r.id, r]));
 
-  const xpRows: { hero: string; amount: number; source: string }[] = [];
+  const xpRows: { heroId: string; hero: string; amount: number; source: string }[] = [];
   const escalations: string[] = [];
   let questGold = 0;
   for (const ev of slice) {
     if (ev.type === 'hero.xp_awarded') {
-      xpRows.push({ hero: names.get(ev.data.heroId) ?? ev.data.heroId, amount: ev.data.amount, source: ev.data.source });
+      xpRows.push({
+        heroId: ev.data.heroId,
+        hero: names.get(ev.data.heroId) ?? ev.data.heroId,
+        amount: ev.data.amount,
+        source: ev.data.source,
+      });
     } else if (ev.type === 'world.escalation_changed') {
       escalations.push(`${session.regionName(ev.data.regionId)}: tier ${ev.data.oldTier} → ${ev.data.newTier}`);
     } else if (ev.type === 'world.quest_completed') {
@@ -109,9 +117,29 @@ export function AfterActionScreen() {
             <div className="gv-ledger" style={{ marginBottom: 10 }}>
               <table>
                 <tbody>
-                  {xpRows.map((r, i) => (
-                    <tr key={i}><td><b>{r.hero}</b></td><td>+{r.amount} xp</td><td style={{ color: 'var(--gv-ink-muted)' }}>{r.source}</td></tr>
-                  ))}
+                  {xpRows.map((r, i) => {
+                    const entry = byId.get(r.heroId);
+                    return (
+                      <tr key={i}>
+                        <td className="gv-who">
+                          {/* who came back, and in what shape — the desat is the
+                              twin of the roster's wounded/dead status column */}
+                          {entry && (
+                            <Portrait
+                              portraitKey={entry.portraitKey}
+                              alt=""
+                              size="chip"
+                              faction="haven"
+                              condition={conditionFor(entry)}
+                            />
+                          )}
+                          <span><b>{r.hero}</b></span>
+                        </td>
+                        <td>+{r.amount} xp</td>
+                        <td style={{ color: 'var(--gv-ink-muted)' }}>{r.source}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -155,6 +155,14 @@
   font-size: 12px;
 }
 
+/* the clerk's own note on a file — same margin voice, NOT red ink. Red ink is
+   reserved for the world talking back; "awaiting field sketch" is the archive
+   admitting a gap, and an instruction is never the world's voice at all. */
+.gv-filenote {
+  color: var(--gv-ink-muted);
+  font-size: 12px;
+}
+
 /* ============ wax seal medallion ============ */
 .gv-seal {
   width: 46px;
@@ -334,6 +342,11 @@ body.gv-readable .gv-plaque,
 body.gv-readable .gv-plate,
 body.gv-readable .gv-plate b,
 body.gv-readable .gv-ledger th,
+body.gv-readable .gv-whosub,
+body.gv-readable .gv-dname,
+body.gv-readable .gv-dstat,
+body.gv-readable .gv-rollcls,
+body.gv-readable .gv-mname,
 body.gv-readable .gv-reward,
 body.gv-readable .gv-slot-empty,
 body.gv-readable .gv-abilities .gv-ab b,

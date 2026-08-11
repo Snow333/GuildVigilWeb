@@ -3,6 +3,7 @@ import {
   applyLevelUp, checkClassEligibility, hpGainForLevel, isBoostLevel, maxSkillRanks,
   skillPointsForLevel,
 } from '@sim/heroes/levelUp';
+import { deriveHeroIdentity } from '@sim/heroes/ancestry';
 import { characterLevel, type HeroState } from '@sim/heroes/types';
 
 /** Class IDs: 1=Fighter (STR, 3 sp/lvl, hp 10), 2=Wizard (INT), 9=Sorcerer (CHA per registry). */
@@ -12,6 +13,7 @@ function hero(over: Partial<HeroState> = {}): HeroState {
     abilities: { str: 16, dex: 12, con: 12, int: 13, wis: 10, cha: 12 },
     classLevels: [{ classId: 1, level: 4, orderTaken: 1 }],
     skills: { athletics: 4 }, feats: [],
+    ...deriveHeroIdentity('hero_1'),
     ...over,
   };
 }

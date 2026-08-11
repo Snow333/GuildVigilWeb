@@ -4,10 +4,14 @@
  *
  * Brief #8 rollout: the guildhall charter — the slot ledger sits on a pinned
  * sheet (actionable), the campaign name is written in ink. Load is a plain
- * button; Delete and "New campaign here" are wax seals — both are irreversible
- * commitments (a delete can't be taken back; a new campaign binds the name to
- * its world). The boot e2e's contracts hold: exactly one h1 reading GUILD
- * VIGIL, one slot table with three tbody rows, <em>empty</em> per bare slot.
+ * button; Delete is a wax seal (a delete can't be taken back). The boot e2e's
+ * contracts hold: exactly one h1 reading GUILD VIGIL, one slot table with
+ * three tbody rows, <em>empty</em> per bare slot.
+ *
+ * Brief #10 grammar shift: "New campaign here" was a wax seal when it started
+ * the campaign outright. It now opens the FOUNDING MUSTER, so it is a plain
+ * button — the seal moved to "Sign the charter", where the commitment actually
+ * happens. One meaning per affordance: navigation is not commitment.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -15,7 +19,7 @@ import type { SaveSlotMeta } from '@sim/save/saveStore';
 import { useGame } from '../state/GameProvider';
 
 export function TitleScreen() {
-  const { store, startNew, loadGame } = useGame();
+  const { store, nav, loadGame } = useGame();
   const [metas, setMetas] = useState<Map<string, SaveSlotMeta>>(new Map());
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -71,12 +75,9 @@ export function TitleScreen() {
                         </>
                       ) : (
                         <button
-                          className="gv-btn gv-btn--seal"
+                          className="gv-btn"
                           disabled={busy || name.trim() === ''}
-                          onClick={() => {
-                            setBusy(true);
-                            void startNew(slot, name.trim()).finally(() => setBusy(false));
-                          }}
+                          onClick={() => nav({ kind: 'muster', slotId: slot, campaignName: name.trim() })}
                         >
                           New campaign here
                         </button>

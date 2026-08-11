@@ -15,6 +15,24 @@ export const Ids = {
   combat: (dispatchId: string, n: number) => `${dispatchId}:f${n}`,
 } as const;
 
+/**
+ * Generated-art keys — art-style-bible §4 filename discipline, executable.
+ * `{class}-{subject}`, matching what tools/build-portraits.mjs derives from the
+ * accepted originals. TWO slug rules, because the bible uses two: inside a hero
+ * subject `-` separates FIELDS (ancestry-gender), so the ancestry squashes
+ * ("Half-Orc" → `hero-halforc-f`); an NPC's subject is just their name, so its
+ * words hyphenate ("Edrin Vale" → `npc-edrin-vale`).
+ */
+export const ArtKeys = {
+  hero: (ancestryName: string, gender: 'f' | 'm') =>
+    `hero-${ancestryName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${gender}`,
+  npc: (name: string) => `npc-${ArtKeys.words(name)}`,
+  enemy: (name: string) => `enemy-${ArtKeys.words(name)}`,
+  /** lowercase, words joined by `-`, everything else dropped. */
+  words: (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+} as const;
+
 /** Seed namespace builders — the canonical spellings, so grep finds every stream. */
 export const Seeds = {
   dispatch: (dispatchId: string) => `dispatch_${dispatchId}`,

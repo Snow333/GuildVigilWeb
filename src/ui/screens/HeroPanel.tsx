@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import type { AbilityKey } from '@sim/heroes/types';
 import type { LoadoutEntry } from '@sim/combat/loadout';
+import { Portrait, conditionFor, hasPortrait } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
 const ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -64,6 +65,28 @@ function SheetTab({ heroId }: { heroId: string }) {
       <div className="gv-sheet gv-sheet--aged" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
         <span className="gv-tape" />
         <h3 className="gv-head">The measure of them <span className="gv-sub">derived — the desk computes nothing</span></h3>
+        <div className="gv-herohead">
+          {/* the dossier photograph. Its condition grade is the twin of the
+              Wounded number in the statline directly beside it. */}
+          <Portrait
+            portraitKey={s.portraitKey}
+            alt={s.name}
+            size="lg"
+            faction="haven"
+            condition={conditionFor(s)}
+            taped
+          />
+          <div className="gv-heroident">
+            <p className="gv-statline" style={{ margin: 0 }}>
+              <b>{s.ancestryName}</b> · {s.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}
+            </p>
+            {/* a clerk's note on the file, NOT red ink — the world isn't
+                talking back, the archive just hasn't been drawn yet */}
+            <p className="gv-filenote gv-italic" style={{ margin: '2px 0 0' }}>
+              {hasPortrait(s.portraitKey) ? 'likeness on file' : 'awaiting field sketch'}
+            </p>
+          </div>
+        </div>
         <div className="gv-abilities">
           {ABILITIES.map((a) => (
             <span className="gv-ab" key={a}>

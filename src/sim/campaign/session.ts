@@ -15,7 +15,7 @@ import { CLOCK, ESCALATION, SCHEDULER, WORLD } from '@content/world';
 import type { DungeonTier } from '@content/dungeon';
 import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
-import { Ids, Seeds } from '@sim/core/ids';
+import { ArtKeys, Ids, Seeds } from '@sim/core/ids';
 import { Rng } from '@sim/core/rng';
 import { buildEnemy } from '@sim/combat/build';
 import { hasCondition } from '@sim/combat/conditions';
@@ -33,10 +33,13 @@ import {
   applyLevelUp, checkClassEligibility, isBoostLevel, maxSkillRanks, skillPointsForLevel,
   type LevelUpApplied, type LevelUpPlan,
 } from '@sim/heroes/levelUp';
+import { portraitKey, type AncestryId, type Gender } from '@sim/heroes/ancestry';
+import { runBackfillChain } from '@sim/save/saveStore';
+import { SAVE_BACKFILLS } from '@sim/save/backfills';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
 import { awardXp, canLevelUp, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
 import {
-  buildingsById, classesById, contentXpResolver, npcsById, progressionFor, questsById,
+  ancestryNameById, buildingsById, classesById, contentXpResolver, npcsById, progressionFor, questsById,
   shopStockRows, skillNames, spellsById, storyDialogueRows, storylineByQuestId, storylinesById,
   worldRegionsById,
 } from '@sim/registry';
@@ -108,7 +111,17 @@ export interface StashView {
 }
 
 /** The full derived character sheet — the UI never computes a modifier (brief §1). */
-export interface HeroSheet {
+/** Identity fields every hero-bearing view carries — portrait wiring reads these, computes nothing. */
+export interface HeroIdentityView {
+  ancestry: AncestryId;
+  /** Registry display name ("Half-Orc") — the label the portrait's desat is paired with. */
+  ancestryName: string;
+  gender: Gender;
+  /** `hero-{slug}-{gender}` — the generated portraits module's key. */
+  portraitKey: string;
+}
+
+export interface HeroSheet extends HeroIdentityView {
   id: string;
   name: string;
   status: HeroState['status'];
@@ -183,7 +196,17 @@ export interface ForecastResult {
   travelEtaMinutes: number | null;
 }
 
-export interface RosterEntry {
+/** A fired story beat, ready to render — speaker, their portrait slot, text, choices. */
+export interface DialogueBeat {
+  id: number;
+  speaker: string;
+  /** `npc-{name}` — silhouette until that NPC's bust is generated. */
+  portraitKey: string;
+  text: string;
+  choices: { label: string }[];
+}
+
+export interface RosterEntry extends HeroIdentityView {
   id: string;
   name: string;
   level: number;
@@ -702,6 +725,10 @@ export class CampaignSession {
       xp: xpForNextLevel(h),
       maxHp: h.maxHp,
       wounded: h.wounded,
+      ancestry: h.ancestry,
+      ancestryName: ancestryNameById.get(h.ancestry) ?? `ancestry_${h.ancestry}`,
+      gender: h.gender,
+      portraitKey: portraitKey(h.ancestry, h.gender),
     }));
   }
 
@@ -736,6 +763,10 @@ export class CampaignSession {
       id: hero.id,
       name: hero.name,
       status: hero.status,
+      ancestry: hero.ancestry,
+      ancestryName: ancestryNameById.get(hero.ancestry) ?? `ancestry_${hero.ancestry}`,
+      gender: hero.gender,
+      portraitKey: portraitKey(hero.ancestry, hero.gender),
       level: characterLevel(hero),
       xp: xpForNextLevel(hero),
       classes: hero.classLevels.map((cl) => ({
@@ -959,8 +990,8 @@ export class CampaignSession {
    * derivation from the completed map: trigger_value '' fires at arc start;
    * a quest id fires once that quest is completed. The UI renders the log.
    */
-  pendingDialogue(): { id: number; speaker: string; text: string; choices: { label: string }[] }[] {
-    const out: { id: number; speaker: string; text: string; choices: { label: string }[] }[] = [];
+  pendingDialogue(): DialogueBeat[] {
+    const out: DialogueBeat[] = [];
     for (const row of storyDialogueRows) {
       if (row.trigger_type !== 'quest') continue;
       const value = row.trigger_value as string;
@@ -976,9 +1007,14 @@ export class CampaignSession {
         // malformed choices JSON renders as no choices — never fatal
       }
       const npc = npcsById.get(row.npc_id);
+      const speaker = (row.speaker as string) || npc?.name || `npc_${row.npc_id}`;
       out.push({
         id: row.id,
-        speaker: (row.speaker as string) || npc?.name || `npc_${row.npc_id}`,
+        speaker,
+        // Named-NPC portrait slot (brief #10 §5). No NPC art exists yet, so
+        // this resolves to the silhouette today — the slot is wired so the
+        // batch is a file drop, not a UI change.
+        portraitKey: ArtKeys.npc(npc?.name ?? speaker),
         text: row.text as string,
         choices,
       });
@@ -1031,7 +1067,11 @@ export class CampaignSession {
    */
   static deserialize(state: SessionSaveState): CampaignSession {
     if (state.v !== 1) throw new Error(`CampaignSession.deserialize: unknown save version ${String(state.v)}`);
-    const data = jsonClone(state);
+    // Constraint 8: the backfill chain runs over the CLONE, before anything
+    // reads the state — so stages may mutate freely and the caller's object is
+    // never touched. Stages are idempotent; running this on a current save is
+    // a no-op walk.
+    const data = runBackfillChain(jsonClone(state), SAVE_BACKFILLS) as SessionSaveState;
     const session = new CampaignSession(
       { campaignId: data.campaignId, seed: data.seed, party: data.party },
       Rng.fromSnapshot(data.rngState),

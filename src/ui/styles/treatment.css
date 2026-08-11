@@ -1,0 +1,166 @@
+/**
+ * The treatment layer — art-style-bible §5, implemented from the approved
+ * exploration comp (output/exploration/art-integration-r01.html).
+ *
+ * A paste is a photograph glued into a ledger, not a screenshot. Every grade
+ * here composes over the RAW image so residual generation drift flattens into
+ * the desk's world — which is what lets placeholder art and a contracted
+ * artist's replacement sit on the same page without a redesign.
+ *
+ * SUBJECT-AGNOSTIC BY DESIGN: nothing below knows what a hero is. Enemy and
+ * NPC pastes take the same classes the day their art lands (brief #10 §5).
+ *
+ * Markup contract:
+ *   <figure class="gv-paste gv-t-base [gv-t-haven|gv-t-krath]
+ *                  [gv-c-wounded|gv-c-lost] [gv-f-elite]">
+ *     <span class="gv-frame">            (elite only — brass rank frame)
+ *       <span class="gv-paste-mat">
+ *         <img class="gv-art"> | <span class="gv-sil">
+ *         <span class="gv-tint"></span><span class="gv-grain"></span><span class="gv-vig"></span>
+ *       </span>
+ *     </span>
+ *   </figure>
+ *
+ * NAMING: the brief drafted these as `t-base` / `c-wounded` / `f-elite`; they
+ * ship `gv-`-prefixed like every other class in this layer. Same contract,
+ * house spelling.
+ *
+ * GRADES ARE DATA-DRIVEN — faction from allegiance, condition from HP/status.
+ * Never hand-pick a grade per image; that is how a style forks.
+ */
+
+/* ============ the paste: mat, art, grade planes ============ */
+.gv-paste {
+  margin: 0;
+  position: relative;
+  display: inline-block;
+  transform: rotate(-0.6deg);
+}
+.gv-paste:nth-child(even) { transform: rotate(0.45deg); }
+
+.gv-paste-mat {
+  position: relative;
+  display: block;
+  background: #fff;
+  padding: 5px 5px 7px;
+  box-shadow: 0 2px 6px #00000059, 0 1px 2px #0000004d;
+}
+.gv-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: var(--gv-slate);
+}
+.gv-tint,
+.gv-grain,
+.gv-vig {
+  position: absolute;
+  inset: 5px 5px 7px;
+  pointer-events: none;
+}
+
+/* ---- base daguerreotype grade: every paste, always ---- */
+.gv-t-base .gv-art { filter: sepia(0.22) contrast(1.07) saturate(0.9) brightness(1.02); }
+.gv-t-base .gv-vig { box-shadow: inset 0 0 26px #2b1c0e8c; }
+.gv-t-base .gv-grain {
+  background-image: var(--gv-tex-grain);
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+}
+
+/* ---- faction grades: applied from allegiance data, never hand-picked ---- */
+.gv-t-haven .gv-tint { background: #e0a64a29; mix-blend-mode: soft-light; }
+.gv-t-krath .gv-art { filter: sepia(0.1) contrast(1.13) saturate(0.78) brightness(0.94); }
+.gv-t-krath .gv-tint { background: #607c9833; mix-blend-mode: multiply; }
+
+/* ---- condition overlays: the flourish TWIN of the label, never its replacement ---- */
+.gv-c-wounded .gv-art { filter: sepia(0.12) contrast(1.05) saturate(0.42) brightness(0.85); }
+.gv-c-lost .gv-art { filter: grayscale(1) contrast(1.02) brightness(0.76); }
+.gv-c-lost .gv-vig { box-shadow: inset 0 0 40px #120b05cc; }
+
+/* ---- elite brass frame: rank lives in the frame, not the artwork ---- */
+.gv-f-elite .gv-paste-mat { padding: 0; background: none; box-shadow: none; }
+.gv-f-elite .gv-frame {
+  display: block;
+  padding: 7px;
+  background: linear-gradient(
+    135deg,
+    var(--gv-brass-hi),
+    var(--gv-brass-lo) 38%,
+    #e6c87c 55%,
+    var(--gv-brass-lo) 78%,
+    var(--gv-brass-hi)
+  );
+  box-shadow: 0 3px 8px #00000080, inset 0 0 0 1px #3c2a0cb3;
+}
+.gv-f-elite .gv-tint,
+.gv-f-elite .gv-grain,
+.gv-f-elite .gv-vig { inset: 7px; }
+
+/* ---- paste tape: physicality only. Semantic tape (standing record) stays on
+       SHEETS — a paste's tape says "glued down", never "reference material". ---- */
+.gv-paste .gv-ptape {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 46px;
+  height: 15px;
+  background: #ebe0c48c;
+  box-shadow: 0 1px 2px #00000033;
+  z-index: 2;
+}
+
+/* ============ the sketch-pending silhouette ============
+   The universal fallback wherever art doesn't exist yet — 8 of 12 hero
+   subjects after batch 1, plus every enemy and NPC. NEVER a wrong portrait,
+   never an empty hole. The dashed inner rule reads as the clerk's empty frame;
+   the paired caption ("awaiting field sketch") lives on the hosting surface. */
+.gv-sil {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--gv-slate);
+  position: relative;
+}
+.gv-sil::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 34%, #4a505c 26%, transparent 27%),
+    radial-gradient(120% 90% at 50% 108%, #4a505c 38%, transparent 39%);
+}
+.gv-sil::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  outline: 1.5px dashed #e6d6ae66;
+}
+
+/* ============ size variants ============ */
+.gv-paste--chip { width: 52px; transform: rotate(-1deg); }
+.gv-paste--chip .gv-paste-mat { padding: 3px; }
+.gv-paste--chip .gv-tint,
+.gv-paste--chip .gv-grain,
+.gv-paste--chip .gv-vig { inset: 3px; }
+.gv-paste--chip .gv-vig { box-shadow: inset 0 0 12px #2b1c0e80; }
+.gv-paste--lg { width: 150px; }
+
+/* ============ flat mode (bible §5 decision, non-negotiable) ============
+   The portrait and its frame STAY — a portrait is data, it says who this is.
+   Ornament goes: tilt, tape, grain, tint, vignette, the daguerreotype grade.
+   Condition desat STAYS because it is label-paired everywhere it appears. */
+body.gv-flat .gv-paste { transform: none; }
+body.gv-flat .gv-paste .gv-ptape { display: none; }
+body.gv-flat .gv-grain,
+body.gv-flat .gv-tint,
+body.gv-flat .gv-vig { display: none; }
+body.gv-flat .gv-art { filter: none; }
+body.gv-flat .gv-c-wounded .gv-art { filter: saturate(0.42) brightness(0.85); }
+body.gv-flat .gv-c-lost .gv-art { filter: grayscale(1) brightness(0.76); }
+/* rank is data — the frame stays, ungraded */
+body.gv-flat .gv-f-elite .gv-frame { background: var(--gv-brass-mid); padding: 5px; }
+body.gv-flat .gv-paste-mat { box-shadow: none; border: 1px solid var(--gv-vellum-edge); }
+body.gv-flat .gv-sil::after { outline-color: var(--gv-ink-faint); }

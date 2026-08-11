@@ -3,6 +3,7 @@ import {
   awardXp, canLevelUp, L_CAP_SENTINEL, perHeroShare, XP_PER_LEVEL, xpForNextLevel,
   type XpSourceResolver,
 } from '@sim/heroes/xp';
+import { deriveHeroIdentity } from '@sim/heroes/ancestry';
 import type { HeroState } from '@sim/heroes/types';
 import { contentXpResolver } from '@sim/registry';
 
@@ -17,6 +18,7 @@ function hero(id: number, status: HeroState['status'] = 'active', classLevel = 1
     abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
     classLevels: [{ classId: 1, level: classLevel, orderTaken: 1 }],
     skills: {}, feats: [],
+    ...deriveHeroIdentity(`hero_${id}`),
   };
 }
 

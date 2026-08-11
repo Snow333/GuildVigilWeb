@@ -5,7 +5,7 @@
  */
 
 import {
-  buildings, class_progression, classes, enemies, npcs, quests, shop_stock, skills, spells,
+  ancestries, buildings, class_progression, classes, enemies, npcs, quests, shop_stock, skills, spells,
   story_dialogue, storyline_quests, storylines, warlock_spell_costs, world_regions,
 } from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
@@ -21,6 +21,11 @@ export const spellsByName = new Map<string, (typeof spells)[number]>(spells.map(
 export const warlockCostByLevel = new Map<number, number>(
   warlock_spell_costs.map((w) => [w.spell_level as number, w.energy_cost as number]),
 );
+
+export const ancestriesById = new Map<number, (typeof ancestries)[number]>(ancestries.map((a) => [a.id, a]));
+/** Ancestry ids in registry order — the muster's choice list AND the backfill's pick space. */
+export const ancestryIds: readonly number[] = ancestries.map((a) => a.id);
+export const ancestryNameById = new Map<number, string>(ancestries.map((a) => [a.id, a.name]));
 
 /** Per-class-level progression row (hp/level, feat slots, spell slots). */
 export const progressionByClassLevel = new Map<string, (typeof class_progression)[number]>(

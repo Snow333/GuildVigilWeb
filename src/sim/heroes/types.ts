@@ -1,5 +1,7 @@
 /** Hero sim-state model — the in-memory shape resolvers operate on. */
 
+import type { AncestryId, Gender } from './ancestry';
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export type Abilities = Record<AbilityKey, number>;
@@ -32,6 +34,14 @@ export interface HeroState {
   feats: HeroFeat[];
   /** PF2E wounded ratchet value (persists between fights until treated). */
   wounded: number;
+  /**
+   * Player-chosen at the founding muster; deterministically backfilled on old
+   * saves (heroes/ancestry). COSMETIC — identity + portrait only, zero stat
+   * effect, until a systems brief says otherwise. Nothing in assembly.ts,
+   * levelUp.ts, or any resolver may read these.
+   */
+  ancestry: AncestryId;
+  gender: Gender;
 }
 
 /** Character level = sum of all class levels (no hardcoded cap in data; cap enforced in logic). */
