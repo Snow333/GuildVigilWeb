@@ -44,6 +44,19 @@ describe('chartFeatures — the surveyor reads the real map', () => {
     }
   });
 
+  it('glyph clusters never overlap: every pair keeps the minimum spacing', () => {
+    for (const seed of SEEDS) {
+      const f = chartFeatures(generateWorld(seed));
+      const all = [...f.mountains, ...f.forests, ...f.snowfields];
+      for (let i = 0; i < all.length; i++) {
+        for (let j = i + 1; j < all.length; j++) {
+          const d = Math.hypot(all[i]!.x - all[j]!.x, all[i]!.y - all[j]!.y);
+          expect(d, `seed ${seed}: anchors ${i}/${j}`).toBeGreaterThanOrEqual(DENSITY.minSpacing);
+        }
+      }
+    }
+  });
+
   it('a named sea always has a coast; the road cross always draws', () => {
     for (const seed of SEEDS) {
       const map = generateWorld(seed);

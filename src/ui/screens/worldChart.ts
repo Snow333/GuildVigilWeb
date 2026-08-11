@@ -45,8 +45,10 @@ export const DENSITY = {
   maxGlyphs: 20,
   /** 1-in-N interior water cells get a stipple dot (deterministic hash). */
   stippleModulo: 29,
+  /** Minimum cell distance between any two glyph clusters — icons never overlap. */
+  minSpacing: 4,
   /** Road runs shorter than this stay undrawn (jitter, not a road). */
-  minRoadRun: 3,
+  minRoadRun: 5,
   /** Water masses below this get no coastline — a surveyed pond is not a sea. */
   coastMinCells: 20,
   /** Water masses below this stay nameless. */
@@ -57,36 +59,55 @@ const at = (map: WorldMap, x: number, y: number): Terrain | null =>
   x < 0 || y < 0 || x >= map.terrain[0]!.length || y >= map.terrain.length ? null : map.terrain[y]![x]!;
 
 /**
- * One anchor per dense block: the matching cell nearest the block's centroid.
- * Cells hugging the map border are not anchor candidates — glyphs drawn there
- * would spill over the neatline (the mass still anchors from its interior).
+ * Glyph anchors, one glyph per block AT MOST: each block speaks its dominant
+ * terrain kind only (mountain beats forest beats snow on ties), and a placed
+ * anchor claims minSpacing cells around it so icons can never overlap across
+ * block edges. Cells hugging the map border are not anchor candidates —
+ * glyphs drawn there would spill over the neatline (the mass still anchors
+ * from its interior).
  */
-function clusterAnchors(map: WorldMap, kind: Terrain): CellPoint[] {
+function glyphAnchors(map: WorldMap): Pick<ChartFeatures, 'mountains' | 'forests' | 'snowfields'> {
   const h = map.terrain.length;
   const w = map.terrain[0]!.length;
   const margin = 2;
-  const anchors: CellPoint[] = [];
+  const kinds = [
+    { kind: 'mountain' as Terrain, list: 'mountains' as const },
+    { kind: 'forest' as Terrain, list: 'forests' as const },
+    { kind: 'snow' as Terrain, list: 'snowfields' as const },
+  ];
+  const out = { mountains: [] as CellPoint[], forests: [] as CellPoint[], snowfields: [] as CellPoint[] };
+  const placed: CellPoint[] = [];
   for (let by = 0; by < h; by += DENSITY.block) {
     for (let bx = 0; bx < w; bx += DENSITY.block) {
-      const cells: CellPoint[] = [];
-      const candidates: CellPoint[] = [];
-      for (let y = by; y < Math.min(by + DENSITY.block, h); y++) {
-        for (let x = bx; x < Math.min(bx + DENSITY.block, w); x++) {
-          if (map.terrain[y]![x] !== kind) continue;
-          cells.push({ x, y });
-          if (x >= margin && x < w - margin && y >= margin && y < h - margin) candidates.push({ x, y });
+      let best: { list: (typeof kinds)[number]['list']; anchor: CellPoint; count: number } | null = null;
+      for (const { kind, list } of kinds) {
+        const cells: CellPoint[] = [];
+        const candidates: CellPoint[] = [];
+        for (let y = by; y < Math.min(by + DENSITY.block, h); y++) {
+          for (let x = bx; x < Math.min(bx + DENSITY.block, w); x++) {
+            if (map.terrain[y]![x] !== kind) continue;
+            cells.push({ x, y });
+            if (x >= margin && x < w - margin && y >= margin && y < h - margin) candidates.push({ x, y });
+          }
         }
+        if (cells.length < DENSITY.minCells || candidates.length === 0) continue;
+        if (best && cells.length <= best.count) continue; // dominant kind wins; ties keep kinds order
+        const mx = cells.reduce((s, c) => s + c.x, 0) / cells.length;
+        const my = cells.reduce((s, c) => s + c.y, 0) / cells.length;
+        const anchor = candidates.reduce((b, c) =>
+          Math.hypot(c.x - mx, c.y - my) < Math.hypot(b.x - mx, b.y - my) ? c : b,
+        );
+        best = { list, anchor, count: cells.length };
       }
-      if (cells.length < DENSITY.minCells || candidates.length === 0) continue;
-      const mx = cells.reduce((s, c) => s + c.x, 0) / cells.length;
-      const my = cells.reduce((s, c) => s + c.y, 0) / cells.length;
-      const anchor = candidates.reduce((best, c) =>
-        Math.hypot(c.x - mx, c.y - my) < Math.hypot(best.x - mx, best.y - my) ? c : best,
-      );
-      anchors.push(anchor);
+      if (!best) continue;
+      const { anchor } = best;
+      if (placed.some((p) => Math.hypot(p.x - anchor.x, p.y - anchor.y) < DENSITY.minSpacing)) continue;
+      if (out[best.list].length >= DENSITY.maxGlyphs) continue;
+      out[best.list].push(anchor);
+      placed.push(anchor);
     }
   }
-  return anchors.slice(0, DENSITY.maxGlyphs);
+  return out;
 }
 
 /** 4-connected water masses, largest first (flood fill, computed once). */
@@ -218,9 +239,7 @@ export function chartFeatures(map: WorldMap): ChartFeatures {
     for (const c of cells) mask.add(c.y * w + c.x);
   }
   return {
-    mountains: clusterAnchors(map, 'mountain'),
-    forests: clusterAnchors(map, 'forest'),
-    snowfields: clusterAnchors(map, 'snow'),
+    ...glyphAnchors(map),
     coast: coastContour(mask, w, map.terrain.length),
     stipple: stippleDots(map, mask),
     roads: roadRuns(map),

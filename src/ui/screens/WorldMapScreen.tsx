@@ -26,9 +26,13 @@ const cy = (y: number): number => (y + 0.5) * SY;
 /** Long names truncate on the chart; the number never does (brief edge case). */
 const shorten = (name: string): string => (name.length > 24 ? `${name.slice(0, 23)}…` : name);
 
+/** Approximate half-width of centered chart text (shared by clamp + footprints). */
+const halfWidth = (text: string, fontSize: number, letterSpacing = 0): number =>
+  (text.length * (fontSize * 0.62 + letterSpacing)) / 2;
+
 /** Keep centered chart text inside the neatline (approximate glyph metrics). */
 const clampX = (x: number, text: string, fontSize: number, letterSpacing = 0): number => {
-  const half = (text.length * (fontSize * 0.62 + letterSpacing)) / 2;
+  const half = halfWidth(text, fontSize, letterSpacing);
   return Math.min(Math.max(x, 20 + half), W - 20 - half);
 };
 
@@ -80,11 +84,23 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
     return { ...p, anchor, labelAt, annotation: `${p.tierName.toLowerCase()} — pressure ${p.score}` };
   }).filter((r) => r.tier >= 1 && r.annotation.length > 0);
 
-  // The furniture owns its corners: glyph clusters under it stay undrawn.
+  // Furniture, region-name lockups, and Haven's keep all own their footprints:
+  // glyph clusters underneath stay undrawn, so type never sits on an icon.
+  const labelBoxes: [number, number, number, number][] = [
+    ...regionLabels.map((l): [number, number, number, number] => {
+      const half = halfWidth(l.label, l.fontSize, 4);
+      return [l.x - half - 8, l.y - l.fontSize - 6, l.x + half + 8, l.y + 22];
+    }),
+    [cx(WORLD.haven.x) - 34, cy(WORLD.haven.y) - 22, cx(WORLD.haven.x) + 34, cy(WORLD.haven.y) + 34],
+  ];
+  const clearOfText = (px: number, py: number): boolean =>
+    labelBoxes.every(([x0, y0, x1, y1]) => px < x0 || px > x1 || py < y0 || py > y1);
+  const clear = (p: { x: number; y: number }): boolean =>
+    clearOfFurniture(cx(p.x), cy(p.y)) && clearOfText(cx(p.x), cy(p.y));
   const glyphs = {
-    mountains: features.mountains.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
-    forests: features.forests.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
-    snowfields: features.snowfields.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
+    mountains: features.mountains.filter(clear),
+    forests: features.forests.filter(clear),
+    snowfields: features.snowfields.filter(clear),
   };
 
   const routeD = plan
@@ -190,7 +206,8 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                 </g>
               ))}
 
-              {/* roads (surveyed, faint) */}
+              {/* roads (surveyed, faint) — one dash rhythm, rounded, so split
+                  runs (a road broken by mountain or water) still read as one */}
               {features.roads.map(([a, b], i) => (
                 <line
                   key={i}
@@ -199,9 +216,10 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                   x2={cx(b.x)}
                   y2={cy(b.y)}
                   className="gv-chart-soft"
-                  strokeWidth={1}
-                  strokeDasharray="2 4"
-                  opacity={0.7}
+                  strokeWidth={1.1}
+                  strokeDasharray="4 5"
+                  strokeLinecap="round"
+                  opacity={0.65}
                 />
               ))}
             </g>
