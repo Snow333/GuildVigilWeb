@@ -3,17 +3,20 @@
  * per explore.* events; the beat feed advances as 100 ms sim-ticks map to wall
  * time by the speed multiplier (1×/4×/16×); skip renders everything instantly.
  * The stream is a finished FACT — playback is pure presentation over it.
+ *
+ * Brief #8 rollout step 6: the run is written live at the desk — the dungeon
+ * sketch is ink on fresh vellum in the chart's hand (unentered rooms dashed
+ * "?", cleared rooms slashed through, boss ringed twice), and the feed is the
+ * scribe's ruled running record. Tone stays in the ink, not in color: bad
+ * beats press harder (bold), loot slants (italic), system fades to muted —
+ * the words themselves carry the state. Speed choices read as pressed buttons.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATE_POOL } from '@sim/dungeon/pool';
 import { bfsDepths, type DungeonTemplate } from '@sim/dungeon/graph';
-import { interpretStream, type BeatLine, type BeatTone } from '../beats/interpret';
+import { interpretStream, type BeatLine } from '../beats/interpret';
 import { useGame, type ReplaySpeed } from '../state/GameProvider';
-
-const TONE_COLOR: Record<BeatTone, string> = {
-  good: '#0a7a2f', bad: '#b02020', loot: '#8a6d1a', travel: '#3a6ea5', system: '#666', neutral: '#222',
-};
 
 /** Column-by-BFS-depth layout — geometry is presentation's problem, so here it is. */
 function layoutTemplate(t: DungeonTemplate): Map<number, { x: number; y: number }> {
@@ -58,6 +61,15 @@ export function PlaybackScreen() {
 
   const layout = useMemo(() => (template ? layoutTemplate(template) : null), [template]);
 
+  // The sketch sheet fits its dungeon — a linear delve gets a short strip of
+  // vellum, a branching one grows taller; no empty parchment either way.
+  const sketchSize = useMemo(() => {
+    if (!layout) return { w: 700, h: 320 };
+    const xs = [...layout.values()].map((p) => p.x);
+    const ys = [...layout.values()].map((p) => p.y);
+    return { w: Math.max(...xs) + 70, h: Math.max(...ys) + 50 };
+  }, [layout]);
+
   // 100 ms sim-ticks → wall time by multiplier: advance `speed` ticks every 100 ms.
   useEffect(() => {
     if (!playing || simTick >= endTick) return;
@@ -70,16 +82,32 @@ export function PlaybackScreen() {
   }, [simTick]);
 
   if (!session || !lastLaunch) {
-    return <div><h1>Playback</h1><p><em>No dispatch to replay.</em> <button onClick={() => nav({ kind: 'town' })}>◂ Town</button></p></div>;
+    return (
+      <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
+        <div className="gv-run">
+          <h1>Playback</h1>
+          <p>
+            <em style={{ color: '#d8bd85' }}>No dispatch to replay.</em>{' '}
+            <button className="gv-btn" onClick={() => nav({ kind: 'town' })}>◂ Town</button>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!dispatch || !feed) {
     // Camp fights and road deaths have no dungeon stream — straight to the reckoning.
     return (
-      <div>
-        <h1>Dispatch — quest {lastLaunch.questName}</h1>
-        <p>The mission resolved on the surface (no dungeon record).</p>
-        <p><button onClick={() => nav({ kind: 'afterAction' })}>After-action report ▸</button></p>
+      <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
+        <div className="gv-run">
+          <h1>Dispatch — quest {lastLaunch.questName}</h1>
+          <div className="gv-sheet" style={{ maxWidth: 520 }}>
+            <p style={{ margin: '0 0 10px' }}>The mission resolved on the surface (no dungeon record).</p>
+            <p style={{ margin: 0 }}>
+              <button className="gv-btn" onClick={() => nav({ kind: 'afterAction' })}>After-action report ▸</button>
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -96,52 +124,112 @@ export function PlaybackScreen() {
   const done = simTick >= endTick;
 
   return (
-    <div>
-      <h1>Dispatch playback — quest {lastLaunch.questName}</h1>
-      <p>
-        tick {simTick}/{endTick} ·{' '}
-        {([1, 4, 16] as ReplaySpeed[]).map((s) => (
-          <button key={s} disabled={speed === s && playing} onClick={() => { setSpeed(s); setPlaying(true); }}>{s}×</button>
-        ))}{' '}
-        <button onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Resume'}</button>{' '}
-        <button onClick={() => { setSimTick(endTick); setPlaying(false); }}>Skip ▸▸</button>{' '}
-        <button disabled={!done} onClick={() => nav({ kind: 'afterAction' })}>
-          After-action ▸{done ? '' : ' (finish or skip first)'}
-        </button>
-      </p>
+    <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
+      <div className="gv-run">
+        <h1>Dispatch playback — quest {lastLaunch.questName}</h1>
+        <div className="gv-choice" style={{ marginBottom: 16 }}>
+          <span className="gv-choice-label">tick {simTick}/{endTick}</span>
+          {([1, 4, 16] as ReplaySpeed[]).map((s) => (
+            <button
+              key={s}
+              className="gv-btn"
+              disabled={speed === s && playing}
+              onClick={() => { setSpeed(s); setPlaying(true); }}
+            >
+              {s}×
+            </button>
+          ))}
+          <button className="gv-btn" onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Resume'}</button>
+          <button className="gv-btn" onClick={() => { setSimTick(endTick); setPlaying(false); }}>Skip ▸▸</button>
+          <button className="gv-btn" disabled={!done} onClick={() => nav({ kind: 'afterAction' })}>
+            After-action ▸{done ? '' : ' (finish or skip first)'}
+          </button>
+        </div>
 
-      {template && layout && (
-        <svg width={700} height={320} style={{ border: '1px solid #444' }}>
-          {template.edges.map(([a, b], i) => {
-            const pa = layout.get(a)!;
-            const pb = layout.get(b)!;
-            const seen = revealed.has(`${template.templateId}:r${a}`) && revealed.has(`${template.templateId}:r${b}`);
-            return <line key={i} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke={seen ? '#555' : '#ddd'} strokeWidth={2} />;
-          })}
-          {template.nodes.map((node) => {
-            const p = layout.get(node.n)!;
-            const roomId = `${template.templateId}:r${node.n}`;
-            const seen = revealed.has(roomId);
-            const fill = !seen ? '#f4f4f4' : cleared.has(roomId) ? '#9fd39f' : node.preset === 'boss' ? '#d38f8f' : '#cfd8ea';
-            return (
-              <g key={node.n}>
-                <circle cx={p.x} cy={p.y} r={16} fill={fill} stroke={seen ? '#222' : '#ccc'} />
-                <text x={p.x} y={p.y + 4} fontSize={10} textAnchor="middle" fill={seen ? '#000' : '#bbb'}>
-                  {seen ? (node.preset === 'open' ? `r${node.n}` : node.preset) : '?'}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      )}
-
-      <div ref={feedRef} style={{ height: 260, overflowY: 'scroll', border: '1px solid #444', padding: 8 }}>
-        {visibleLines.map((l: BeatLine, i) => (
-          <div key={i} style={{ color: TONE_COLOR[l.tone] }}>
-            <small>{String(l.tick).padStart(5, ' ')}</small> {l.text}
+        {template && layout && (
+          <div className="gv-sheet gv-sketch" style={{ ['--gv-tilt' as never]: '-0.25deg' }}>
+            <span className="gv-pin gv-pin--left" />
+            <span className="gv-pin gv-pin--right" />
+            <h3 className="gv-head">The delve <span className="gv-sub">sketched as the party moves</span></h3>
+            <svg
+              viewBox={`0 0 ${sketchSize.w} ${sketchSize.h}`}
+              style={{ maxWidth: sketchSize.w }}
+              role="img"
+              aria-label="Dungeon sketch, revealed room by room"
+            >
+              {template.edges.map(([a, b], i) => {
+                const pa = layout.get(a)!;
+                const pb = layout.get(b)!;
+                const seen = revealed.has(`${template.templateId}:r${a}`) && revealed.has(`${template.templateId}:r${b}`);
+                return (
+                  <line
+                    key={i}
+                    x1={pa.x}
+                    y1={pa.y}
+                    x2={pb.x}
+                    y2={pb.y}
+                    className="gv-chart-soft"
+                    strokeWidth={seen ? 1.4 : 1}
+                    strokeDasharray={seen ? undefined : '3 5'}
+                    opacity={seen ? 0.9 : 0.35}
+                  />
+                );
+              })}
+              {template.nodes.map((node) => {
+                const p = layout.get(node.n)!;
+                const roomId = `${template.templateId}:r${node.n}`;
+                const seen = revealed.has(roomId);
+                const isCleared = cleared.has(roomId);
+                return (
+                  <g key={node.n}>
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+                      r={16}
+                      className={seen ? 'gv-chart-ink' : 'gv-chart-soft'}
+                      strokeWidth={seen ? 1.6 : 1}
+                      strokeDasharray={seen ? undefined : '3 4'}
+                      opacity={seen ? 1 : 0.5}
+                    />
+                    {seen && node.preset === 'boss' && (
+                      <circle cx={p.x} cy={p.y} r={20} className="gv-chart-ink" strokeWidth={0.8} />
+                    )}
+                    {isCleared && (
+                      <line x1={p.x - 11} y1={p.y + 11} x2={p.x + 11} y2={p.y - 11} className="gv-chart-ink" strokeWidth={1.2} />
+                    )}
+                    <text
+                      x={p.x}
+                      y={p.y + 4}
+                      fontSize={10}
+                      textAnchor="middle"
+                      className={seen ? 'gv-chart-fill-ink gv-chart-halo' : 'gv-chart-fill-soft'}
+                      opacity={seen ? 1 : 0.6}
+                    >
+                      {seen ? (node.preset === 'open' ? `r${node.n}` : node.preset) : '?'}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
           </div>
-        ))}
-        {done && <div><b>— end of record ({feed.lines.length} beats{feed.skipped > 0 ? `, ${feed.skipped} unknown events skipped` : ''}) —</b></div>}
+        )}
+
+        <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
+          <span className="gv-pin" />
+          <h3 className="gv-head">The record <span className="gv-sub">the scribe keeps pace</span></h3>
+          <div ref={feedRef} className="gv-feed">
+            {visibleLines.map((l: BeatLine, i) => (
+              <div key={i} className="gv-beat" data-tone={l.tone}>
+                <small>{String(l.tick).padStart(5, ' ')}</small> {l.text}
+              </div>
+            ))}
+            {done && (
+              <div>
+                <b>— end of record ({feed.lines.length} beats{feed.skipped > 0 ? `, ${feed.skipped} unknown events skipped` : ''}) —</b>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

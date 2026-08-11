@@ -200,3 +200,58 @@
 .gv-chart-wash--s1 { fill: var(--gv-s1); }
 .gv-chart-wash--s2 { fill: var(--gv-s2); }
 .gv-chart-wash--s3 { fill: var(--gv-s3); }
+
+/* ============ rollout step 6: dispatch / playback / after-action ============ */
+.gv-dispatch,
+.gv-aar {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.gv-run {
+  max-width: 940px;
+  margin: 0 auto;
+}
+.gv-dispatch .gv-sheet,
+.gv-run .gv-sheet,
+.gv-aar .gv-sheet {
+  margin-bottom: 22px;
+}
+/* choice rows (profile / caution / speed): pressed = chosen (.gv-btn:disabled) */
+.gv-choice {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0 0 10px;
+}
+.gv-choice .gv-choice-label {
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--gv-ink-muted);
+  min-width: 74px;
+}
+/* the scribe's running record: ruled feed on fresh vellum */
+.gv-feed {
+  height: 280px;
+  overflow-y: auto;
+  background-image: repeating-linear-gradient(#00000000 0 27px, #8c6a3a22 27px 28px);
+  line-height: 28px;
+  font-size: 13px;
+}
+.gv-feed .gv-beat small {
+  color: var(--gv-ink-muted);
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  margin-right: 8px;
+}
+.gv-feed .gv-beat[data-tone='bad'] { font-weight: 600; }
+.gv-feed .gv-beat[data-tone='loot'] { font-style: italic; }
+.gv-feed .gv-beat[data-tone='system'] { color: var(--gv-ink-muted); }
+/* the dungeon sketch: ink on vellum, same hand as the chart */
+.gv-sketch svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}

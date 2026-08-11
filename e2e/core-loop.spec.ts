@@ -74,7 +74,9 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
   // Forecast panel renders before the first launch (constraint 3 on screen).
   expect(await acceptEasiest(page)).toBe(true); // week 1 always posts
   await page.locator('button:has-text("Run forecast")').click();
-  await expect(page.locator('pre')).toContainText('median haul');
+  // Step-6 conversion: the forecast is the scribe's tally carrying the same
+  // explicit numbers the old <pre> did — the contract reads [data-forecast].
+  await expect(page.locator('[data-forecast]')).toContainText('median haul');
   await launchAndReturn(page);
 
   // Grind the deterministic trace until someone can level (wk 21 on this seed,
