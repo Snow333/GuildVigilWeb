@@ -39,16 +39,16 @@ export interface ChartFeatures {
 export const DENSITY = {
   /** Cells per glyph-cluster block (8×8 → at most one cluster per block). */
   block: 8,
-  /** Block cells of one kind needed to earn a glyph cluster. */
-  minCells: 14,
+  /** Block cells of one kind needed to earn a glyph cluster (block-dominant). */
+  minCells: 20,
   /** Hard ceiling on clusters per terrain kind. */
-  maxGlyphs: 32,
+  maxGlyphs: 20,
   /** 1-in-N interior water cells get a stipple dot (deterministic hash). */
   stippleModulo: 29,
   /** Road runs shorter than this stay undrawn (jitter, not a road). */
   minRoadRun: 3,
   /** Water masses below this get no coastline — a surveyed pond is not a sea. */
-  coastMinCells: 10,
+  coastMinCells: 20,
   /** Water masses below this stay nameless. */
   seaMinCells: 60,
 } as const;

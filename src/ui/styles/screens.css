@@ -182,6 +182,14 @@
   fill: var(--gv-vellum);
   stroke: var(--gv-ink);
 }
+/* cartographic label halo: a vellum stroke painted UNDER the letterforms lifts
+   every chart label off the linework it crosses (paint-order keeps ink on top) */
+.gv-chart-halo {
+  paint-order: stroke;
+  stroke: var(--gv-vellum);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
 
 /* pressure wash: frozen status fill at low opacity — the paired red-ink
    annotation renders in the same group, never separately */

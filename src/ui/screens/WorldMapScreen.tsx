@@ -32,6 +32,16 @@ const clampX = (x: number, text: string, fontSize: number, letterSpacing = 0): n
   return Math.min(Math.max(x, 20 + half), W - 20 - half);
 };
 
+/** Chart-furniture footprints (px): cartouche, compass, scale bar. Terrain
+ *  glyphs never draw beneath them — the furniture owns its corner. */
+const FURNITURE: readonly [number, number, number, number][] = [
+  [18, 16, 186, 74],
+  [W - 84, 28, W - 28, 92],
+  [14, H - 44, 132, H - 2],
+];
+const clearOfFurniture = (px: number, py: number): boolean =>
+  FURNITURE.every(([x0, y0, x1, y1]) => px < x0 || px > x1 || py < y0 || py > y1);
+
 export function WorldMapScreen({ questId }: { questId: number | null }) {
   const { session, nav } = useGame();
   if (!session) return null;
@@ -44,14 +54,38 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
   const plan = selected !== null ? session.travelPreview(selected) : null;
   const features = chartFeatures(map);
 
+  const anchors = regionAnchors();
+
+  // Region-name lockups: the pressure note writes directly beneath its region's
+  // name, so the two red-vs-ink lines can never collide anywhere on the chart.
+  const regionLabels = anchors.map((a) => {
+    const label = session.regionName(a.regionId).toUpperCase();
+    const fontSize = a.regionId === 'region_haven' ? 11 : 13;
+    return {
+      regionId: a.regionId,
+      label,
+      fontSize,
+      x: clampX(a.cx * SX, label, fontSize, 4),
+      y: a.regionId === 'region_haven' ? (a.cy + a.ry * 0.9) * SY : (a.cy + a.ry * 0.55) * SY,
+    };
+  });
+
   // Washes render ONLY tier ≥ 1 and ONLY with their red-ink annotation — if the
   // label ever came up empty the wash is dropped, never shown label-less
   // (brief edge case: color never stands alone; the watch report is the twin).
   const washes = REGION_IDS.map((id) => {
     const p = session.pressure(id);
-    const anchor = regionAnchors().find((a) => a.regionId === id)!;
-    return { ...p, anchor, annotation: `${p.tierName.toLowerCase()} — pressure ${p.score}` };
+    const anchor = anchors.find((a) => a.regionId === id)!;
+    const labelAt = regionLabels.find((l) => l.regionId === id)!;
+    return { ...p, anchor, labelAt, annotation: `${p.tierName.toLowerCase()} — pressure ${p.score}` };
   }).filter((r) => r.tier >= 1 && r.annotation.length > 0);
+
+  // The furniture owns its corners: glyph clusters under it stay undrawn.
+  const glyphs = {
+    mountains: features.mountains.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
+    forests: features.forests.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
+    snowfields: features.snowfields.filter((p) => clearOfFurniture(cx(p.x), cy(p.y))),
+  };
 
   const routeD = plan
     ? plan.path.map((p, i) => `${i === 0 ? 'M' : 'L'}${cx(p.x)} ${cy(p.y)}`).join(' ')
@@ -80,6 +114,10 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
               <marker id="gv-xm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7">
                 <path d="M2 2 L8 8 M8 2 L2 8" className="gv-chart-red" strokeWidth={1.8} />
               </marker>
+              {/* the survey stops at the neatline — border lakes stay framed */}
+              <clipPath id="gv-frame">
+                <rect x={9} y={9} width={W - 18} height={H - 18} />
+              </clipPath>
             </defs>
 
             {/* neatline + graticule ticks */}
@@ -95,87 +133,78 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
               ))}
             </g>
 
-            {/* cartouche */}
-            <g transform="translate(26,24)">
-              <rect width={150} height={40} className="gv-chart-cartouche" strokeWidth={1.4} />
-              <rect x={3} y={3} width={144} height={34} className="gv-chart-ink" strokeWidth={0.5} />
-              <text x={75} y={18} textAnchor="middle" fontSize={11} letterSpacing={2} className="gv-chart-text">
-                THE FRONTIER
-              </text>
-              <text x={75} y={31} textAnchor="middle" fontSize={7.5} fontStyle="italic" className="gv-chart-fill-soft">
-                as surveyed by the guild · week {week}
-              </text>
-            </g>
+            {/* the terrain layer — clipped to the neatline */}
+            <g clipPath="url(#gv-frame)">
+              {/* coast + sea stipple + sea name (real water cells) */}
+              <path
+                d={features.coast.map((s) => `M${s.x1 * SX} ${s.y1 * SY} L${s.x2 * SX} ${s.y2 * SY}`).join(' ')}
+                className="gv-chart-ink"
+                strokeWidth={1.4}
+                strokeLinecap="round"
+                opacity={0.85}
+              />
+              <g className="gv-chart-fill-soft" opacity={0.5}>
+                {features.stipple.map((p, i) => (
+                  <circle key={i} cx={cx(p.x)} cy={cy(p.y)} r={0.9} />
+                ))}
+              </g>
+              {features.sea && (
+                <text
+                  x={cx(features.sea.x)}
+                  y={cy(features.sea.y)}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fontStyle="italic"
+                  className="gv-chart-fill-soft gv-chart-halo"
+                  opacity={0.8}
+                  transform={features.sea.vertical ? `rotate(90 ${cx(features.sea.x)} ${cy(features.sea.y)})` : undefined}
+                >
+                  the grey water
+                </text>
+              )}
 
-            {/* coast + sea stipple + sea name (real water cells) */}
-            <path
-              d={features.coast.map((s) => `M${s.x1 * SX} ${s.y1 * SY} L${s.x2 * SX} ${s.y2 * SY}`).join(' ')}
-              className="gv-chart-ink"
-              strokeWidth={1.4}
-              strokeLinecap="round"
-              opacity={0.85}
-            />
-            <g className="gv-chart-fill-soft" opacity={0.5}>
-              {features.stipple.map((p, i) => (
-                <circle key={i} cx={cx(p.x)} cy={cy(p.y)} r={0.9} />
+              {/* hachured mountains */}
+              {glyphs.mountains.map((p, i) => (
+                <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`}>
+                  <g className="gv-chart-ink" strokeWidth={1.3}>
+                    <path d="M-10 6 L-2 -8 L6 6" />
+                    <path d="M2 7 L8 -2 L14 7" />
+                  </g>
+                  <path d="M-4 -4 l5 8 M7 0 l4 6" className="gv-chart-ink" strokeWidth={0.5} opacity={0.5} />
+                </g>
+              ))}
+
+              {/* forest masses */}
+              {glyphs.forests.map((p, i) => (
+                <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`} className="gv-chart-forest" strokeWidth={1.1}>
+                  <circle cx={-6} cy={0} r={6} />
+                  <circle cx={5} cy={-4} r={5} />
+                  <circle cx={4} cy={6} r={5} />
+                </g>
+              ))}
+
+              {/* snowfields */}
+              {glyphs.snowfields.map((p, i) => (
+                <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`} className="gv-chart-soft" strokeWidth={1} opacity={0.7}>
+                  <path d="M-9 2 l4 -5 l4 5 M2 4 l3 -4 l3 4" />
+                </g>
+              ))}
+
+              {/* roads (surveyed, faint) */}
+              {features.roads.map(([a, b], i) => (
+                <line
+                  key={i}
+                  x1={cx(a.x)}
+                  y1={cy(a.y)}
+                  x2={cx(b.x)}
+                  y2={cy(b.y)}
+                  className="gv-chart-soft"
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                  opacity={0.7}
+                />
               ))}
             </g>
-            {features.sea && (
-              <text
-                x={cx(features.sea.x)}
-                y={cy(features.sea.y)}
-                textAnchor="middle"
-                fontSize={10}
-                fontStyle="italic"
-                className="gv-chart-fill-soft"
-                opacity={0.8}
-                transform={features.sea.vertical ? `rotate(90 ${cx(features.sea.x)} ${cy(features.sea.y)})` : undefined}
-              >
-                the grey water
-              </text>
-            )}
-
-            {/* hachured mountains */}
-            {features.mountains.map((p, i) => (
-              <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`}>
-                <g className="gv-chart-ink" strokeWidth={1.3}>
-                  <path d="M-10 6 L-2 -8 L6 6" />
-                  <path d="M2 7 L8 -2 L14 7" />
-                </g>
-                <path d="M-4 -4 l5 8 M7 0 l4 6" className="gv-chart-ink" strokeWidth={0.5} opacity={0.5} />
-              </g>
-            ))}
-
-            {/* forest masses */}
-            {features.forests.map((p, i) => (
-              <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`} className="gv-chart-forest" strokeWidth={1.1}>
-                <circle cx={-6} cy={0} r={6} />
-                <circle cx={5} cy={-4} r={5} />
-                <circle cx={4} cy={6} r={5} />
-              </g>
-            ))}
-
-            {/* snowfields */}
-            {features.snowfields.map((p, i) => (
-              <g key={i} transform={`translate(${cx(p.x)},${cy(p.y)})`} className="gv-chart-soft" strokeWidth={1} opacity={0.7}>
-                <path d="M-9 2 l4 -5 l4 5 M2 4 l3 -4 l3 4" />
-              </g>
-            ))}
-
-            {/* roads (surveyed, faint) */}
-            {features.roads.map(([a, b], i) => (
-              <line
-                key={i}
-                x1={cx(a.x)}
-                y1={cy(a.y)}
-                x2={cx(b.x)}
-                y2={cy(b.y)}
-                className="gv-chart-soft"
-                strokeWidth={1}
-                strokeDasharray="2 4"
-                opacity={0.7}
-              />
-            ))}
 
             {/* Haven keep */}
             <g transform={`translate(${cx(WORLD.haven.x)},${cy(WORLD.haven.y)})`}>
@@ -185,30 +214,26 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                 className="gv-chart-ink"
                 strokeWidth={1.4}
               />
-              <text x={0} y={26} textAnchor="middle" fontSize={12} fontStyle="italic" className="gv-chart-fill-ink">
+              <text x={0} y={26} textAnchor="middle" fontSize={12} fontStyle="italic" className="gv-chart-fill-ink gv-chart-halo">
                 HAVEN
               </text>
             </g>
 
             {/* region names (authored, from the session) */}
-            {regionAnchors().map((a) => {
-              const label = session.regionName(a.regionId).toUpperCase();
-              const fs = a.regionId === 'region_haven' ? 11 : 13;
-              return (
-                <text
-                  key={a.regionId}
-                  x={clampX(a.cx * SX, label, fs, 4)}
-                  y={a.regionId === 'region_haven' ? (a.cy + a.ry * 0.9) * SY : (a.cy + a.ry * 0.55) * SY}
-                  textAnchor="middle"
-                  fontSize={fs}
-                  letterSpacing={4}
-                  className="gv-chart-fill-soft"
-                  opacity={0.85}
-                >
-                  {label}
-                </text>
-              );
-            })}
+            {regionLabels.map((l) => (
+              <text
+                key={l.regionId}
+                x={l.x}
+                y={l.y}
+                textAnchor="middle"
+                fontSize={l.fontSize}
+                letterSpacing={4}
+                className="gv-chart-fill-soft gv-chart-halo"
+                opacity={0.85}
+              >
+                {l.label}
+              </text>
+            ))}
 
             {/* pressure washes — frozen status color at low opacity, ALWAYS
                 paired with its red-ink annotation (the watch report is the
@@ -224,16 +249,12 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                 />
                 <text
                   data-wash-label=""
-                  x={clampX(r.anchor.cx * SX, r.annotation, 9.5)}
-                  y={
-                    r.regionId === 'region_haven'
-                      ? (r.anchor.cy + r.anchor.ry * 0.6) * SY
-                      : (r.anchor.cy - r.anchor.ry * 0.35) * SY
-                  }
+                  x={clampX(r.labelAt.x, r.annotation, 9.5)}
+                  y={r.labelAt.y + 15}
                   textAnchor="middle"
                   fontSize={9.5}
-                  className="gv-chart-redtext"
-                  opacity={0.85}
+                  className="gv-chart-redtext gv-chart-halo"
+                  opacity={0.9}
                 >
                   {r.annotation}
                 </text>
@@ -249,7 +270,7 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                   y={cy(routeMid.y) - 10}
                   textAnchor="middle"
                   fontSize={10.5}
-                  className="gv-chart-redtext"
+                  className="gv-chart-redtext gv-chart-halo"
                 >
                   {plan.etaMinutes} min each way
                 </text>
@@ -287,12 +308,24 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                     className="gv-chart-red"
                     strokeWidth={sel ? 2.6 : 1.8}
                   />
-                  <text x={px + 7} y={py + 4} fontSize={10.5} className="gv-chart-redtext">
+                  <text x={px + 7} y={py + 4} fontSize={10.5} className="gv-chart-redtext gv-chart-halo">
                     {b.discovered ? `#${b.questId} ${shorten(b.name)}` : '?'}
                   </text>
                 </g>
               );
             })}
+
+            {/* furniture sits on top of the survey: cartouche, compass, scale */}
+            <g transform="translate(26,24)">
+              <rect width={150} height={40} className="gv-chart-cartouche" strokeWidth={1.4} />
+              <rect x={3} y={3} width={144} height={34} className="gv-chart-ink" strokeWidth={0.5} />
+              <text x={75} y={18} textAnchor="middle" fontSize={11} letterSpacing={2} className="gv-chart-text">
+                THE FRONTIER
+              </text>
+              <text x={75} y={31} textAnchor="middle" fontSize={7.5} fontStyle="italic" className="gv-chart-fill-soft">
+                as surveyed by the guild · week {week}
+              </text>
+            </g>
 
             {/* compass rose */}
             <g transform={`translate(${W - 56},60)`} className="gv-chart-fill-ink">
