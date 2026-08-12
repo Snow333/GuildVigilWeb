@@ -3,14 +3,14 @@
 Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored,
 continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 **Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright. (Tauri 2 planned — brief #7 parked.)
-**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Brief #9 (type program) and **brief #10 (art integration — pastes, portraits, the founding muster)** and **brief #11 (the readability pass — quest-board hierarchy, difficulty bands, display labels, the charter)** shipped since. Suite: **323 tests + 9 e2e** green. Next: **combat playback (brief #12)** → audio (Phase 3's unfinished business) → content pipeline (R4) → Phase 4 packaging. ART IS PARKED by decision 2026-08-12 — the silhouette fallback IS the placeholder for every un-drawn subject.
+**Phase:** 3 substantially complete but **NOT to its exit criteria** — audio (no audio code in `src/` at all) and Playwright visual baselines are both unmet, so **Phase 4 is not next.** Phases 1–2 complete. Briefs #8–#13 shipped: art direction, type program, art integration, the readability pass, **combat playback (the field, its two mountings, watch/skim transport)**, and **brief #13 (dungeon balance — flat boss band, `pickEnemies` re-draw, sealed-route reporting, `partyScaledBudget`)**. Suite: **420 unit + 10 e2e** green, bundle **1,232.52 kB**. Next: **brief #14 — the dungeon_level 5+ wall (FOR DECISION, `output/briefs/dungeon-level-wall.md`)** → dungeon regression harness (now a prerequisite, see Gotchas) → audio → content pipeline (R4, HELD) → visual baselines → Phase 4. ART IS PARKED by decision 2026-08-12 — the silhouette fallback IS the placeholder for every un-drawn subject.
 
 ## Authoritative documents — read before designing anything
 
 - `output/core-loop.md` — the settled game loop and all structural decisions. Conflicts resolve toward this file.
 - `output/decision-ledger.md` — per-feature Keep/Change/Remove verdicts, all confirmed.
 - `output/guild-vigil-migration-plan.md` — phases, scaffolding, risks (Part IV = this repo's layout).
-- `output/briefs/*.md` — APPROVED design briefs (8: event vocabulary, escalation, loot grammar, profile AI, content slice, phase-2 UI, art direction, Tauri wrap [parked]). New systems get a brief BEFORE code (implementation-brief process). **Brief #8 (art direction) is the normative contract for ALL UI work** — see the desk grammar section below.
+- `output/briefs/*.md` — design briefs. APPROVED: event vocabulary, escalation, loot grammar, profile AI, content slice, phase-2 UI, art direction, type program, art integration, ux-pass, combat-playback, dungeon-balance. PARKED: Tauri wrap. **FOR DECISION: `dungeon-level-wall.md` (brief #14) — do not implement any of its options until Steven picks.** New systems get a brief BEFORE code (implementation-brief process); design calls go to Steven as numbers and options, never as a finished opinion. **Brief #8 (art direction) is the normative contract for ALL UI work** — see the desk grammar section below.
 
 ## The Eight Constraints (law, not guidance)
 
@@ -112,7 +112,13 @@ Aliases: `@sim/*`, `@content/*`, `@platform/*`. Commands: `pnpm check` (typechec
   level 1. There is no starting-gear-by-class table — widening it is CONTENT work.
 - `CampaignSession.deserialize` runs the backfill chain (`@sim/save/backfills`) over a
   clone before anything reads state. Add stages there, append-only.
-- Use **pnpm**, not npm. Native deps build via `pnpm.onlyBuiltDependencies`.
+- **No two modules under `src/` may differ only by case.** `tests/ui/module-casing.test.ts` enforces it. Vite resolves `.ts` before `.tsx`, so `CombatField.tsx` beside `combatField.ts` made Windows import the wrong module and render a blank page while every Linux test stayed green. A helper beside a screen gets its OWN stem (`worldChart.ts`, `afterActionXp.ts`, `fieldReading.ts`) — never a case variant.
+- **Sessions verify on Linux; Steven develops on Windows. Green tests are not proof the app runs.** After any change that adds files or moves module wiring, ask Steven to run `pnpm dev` and confirm.
+- **NOTHING GUARDS DUNGEON GENERATION.** `career-distribution` never dispatches a dungeon (480 records, 0 dungeon runs — the autopilot only ever accepts quests 1/6/100); `encounter-distribution` runs hand-authored rosters and never calls `populate()` or `pickEnemies`. So `population.ts`, `dispatch.ts`, `graph.ts` and `pool.ts` can change with every baseline byte-identical green. **Measure directly** with a throwaway probe (a scratch vitest config OUTSIDE `tests/`, deleted before shipping); to cost an option that needs logic changes, patch a COPY under `probe/` and leave `src/` byte-identical.
+- **Every regression test gets a negative control.** Revert the fix, watch the test fail, restore, and report the observed failures. A test that passes both ways is decoration.
+- Prefer a **return-value field to a new event** where it will do — brief #13's `sealedRoutes`/`bossRoomSealed` on `DungeonDispatchResult` are the precedent. The event schema is additive-only and the manifest snapshot must always grow.
+- `QuestRecord.outcome` is `'completed' | 'failed' | 'wiped' | 'ambushKilled'` — a dungeon **retreat** surfaces as `'failed'`. Reading it as `'retreated'` silently miscounts retreats as wipes.
+- Use **pnpm**, not npm. Native deps build via `pnpm.onlyBuiltDependencies`. In the cloud container `better-sqlite3`'s native build fails (node headers 403); install with `--config.onlyBuiltDependencies[]=esbuild --config.onlyBuiltDependencies[]=sharp`. Only `pnpm convert`/`pnpm db:apply` need it; `src` and tests never do.
 - Planning docs live in BOTH `output/` (repo) and project knowledge (`migration/*` on claude.ai) — update both or say which is stale.
 
 ## Process

@@ -114,6 +114,24 @@ export function AfterActionScreen() {
             </ul>
           )}
 
+          {/* brief #13 (Q2): a third of clearances left a door shut and never
+              said so. The count is a plain statline; the boss chamber is the
+              world talking back, so it goes in the margin in red ink. */}
+          {(record.dispatch?.sealedRoutes ?? 0) > 0 && (
+            <>
+              <p className="gv-statline" style={{ marginBottom: 4 }}><b>The doors.</b>{' '}
+                {record.dispatch!.sealedRoutes === 1
+                  ? 'One door stayed shut — nothing the party carried would open it.'
+                  : `${record.dispatch!.sealedRoutes} doors stayed shut — nothing the party carried would open them.`}
+              </p>
+              {record.dispatch!.bossRoomSealed && (
+                <p className="gv-marg" style={{ margin: '0 0 10px' }}>
+                  The boss chamber was one of them. Whatever waits there is still waiting.
+                </p>
+              )}
+            </>
+          )}
+
           <p className="gv-statline" style={{ marginBottom: 4 }}><b>Experience.</b>{' '}
             {xpRows.length === 0 && <em>None earned.</em>}
           </p>

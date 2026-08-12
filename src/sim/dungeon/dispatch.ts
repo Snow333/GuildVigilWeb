@@ -57,6 +57,10 @@ export interface DungeonDispatchResult {
   ticks: number;
   roomsVisited: number;
   bossDefeated: boolean;
+  /** Doors no hero could ever beat — the after-action reports these (brief #13 Q2). */
+  sealedRoutes: number;
+  /** The boss chamber was one of them: whatever waits there is still waiting. */
+  bossRoomSealed: boolean;
   clueSecured: boolean;
   /** Content IDs of enemies that DIED (not fled) — the campaign's monster-XP manifest. */
   killedEnemyIds: number[];
@@ -70,7 +74,9 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
         return t.templateId === opts.templateId ? t : t; // explicit ids resolve via pool in 1.5 glue
       })()
     : pickTemplate(opts.tier, opts.seed);
-  const pop = populate(template, opts.seed, opts.difficulty, opts.partyLevel, opts.bossRoster);
+  const pop = populate(
+    template, opts.seed, opts.difficulty, opts.partyLevel, opts.bossRoster, opts.party.length,
+  );
   const stream = new EventStream('dispatch', opts.dispatchId);
   const regionId = opts.regionId ?? 'region_unknown';
 
@@ -145,13 +151,25 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
   const lootValueTarget = PROFILES.lootRunValueTarget(opts.difficulty);
   const valueCollected = () => gold + items.length * 40; // coarse value proxy; derives fully in 1.5 pricing
 
+  /** A boss chamber nobody could open. Counts sealed AND defensively-blocked. */
+  const bossRoomSealed = (): boolean => {
+    for (const n of blocked) if (pop.rooms.get(n)?.type === 'boss') return true;
+    return false;
+  };
+
   const objectiveComplete = (): boolean => {
     switch (opts.profile) {
       case 'bossRush': return bossDead;
       case 'mysteryHunt': return clueSecured;
       case 'lootRun': return valueCollected() >= lootValueTarget;
       case 'fullExplore':
-        return [...pop.rooms.keys()].every((n) => visited.has(n) || blocked.has(n));
+        // Brief #13 (Q2, APPROVED): an unopened boss chamber is not a cleared
+        // dungeon. Rooms BEHIND a sealed door already failed honestly — they are
+        // neither visited nor blocked, so the every() below is false and the run
+        // ends `objectiveFailed`. The dishonest case was the sealed room BEING
+        // the boss room, which satisfied the objective as "blocked" and reported
+        // cleared with the boss untouched (4.4% of fullExplore runs, measured).
+        return !bossRoomSealed() && [...pop.rooms.keys()].every((n) => visited.has(n) || blocked.has(n));
     }
   };
 
@@ -399,6 +417,8 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
     ticks: tick,
     roomsVisited: visited.size,
     bossDefeated: bossDead,
+    sealedRoutes: stream.byType('explore.route_blocked').length,
+    bossRoomSealed: bossRoomSealed(),
     clueSecured,
     killedEnemyIds,
   };

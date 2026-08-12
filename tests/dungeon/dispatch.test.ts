@@ -109,6 +109,46 @@ describe('runDungeonDispatch — the profile engine (brief #4 acceptance)', () =
     });
   });
 
+  /**
+   * BRIEF #13 (Q2). `fullExplore`'s objective is every room visited OR BLOCKED,
+   * so a boss chamber whose own door beat every hero satisfied it — the run
+   * reported CLEARED with the boss untouched, 4.4% of fullExplore runs measured.
+   * Rooms BEHIND a sealed door always failed honestly; only the boss room being
+   * the sealed room was a lie. Fails against pre-fix source, where the scan
+   * below finds sealed-boss runs that completed.
+   */
+  describe('a sealed boss chamber is not a cleared dungeon', () => {
+    const four = () => [...party(), member('hero_4')];
+    const scan = Array.from({ length: 200 }, (_, i) =>
+      runDungeonDispatch({
+        dispatchId: `sealed_${i}`, partyId: 'party_1', party: four(),
+        tier: 'tiny', seed: `sealed_${i}`, profile: 'fullExplore', caution: 'standard',
+        difficulty: 2, partyLevel: 4,
+      }));
+
+    it('the scan is not vacuous: some runs really do lose the boss behind a door', () => {
+      expect(scan.filter((r) => r.bossRoomSealed).length).toBeGreaterThan(0);
+    });
+
+    it('no run with a sealed boss chamber reports completed', () => {
+      const lies = scan.filter((r) => r.bossRoomSealed && r.outcome === 'completed');
+      expect({ lies: lies.length }).toEqual({ lies: 0 });
+    });
+
+    it('and none of them claims a defeated boss either', () => {
+      for (const r of scan.filter((x) => x.bossRoomSealed)) {
+        expect({ sealed: true, bossDefeated: r.bossDefeated }).toEqual({ sealed: true, bossDefeated: false });
+        expect(r.retreatReason).toBe('objectiveFailed');
+      }
+    });
+
+    it('sealedRoutes reports exactly what the stream recorded', () => {
+      for (const r of scan) {
+        expect(r.sealedRoutes).toBe(r.stream.byType('explore.route_blocked').length);
+      }
+    });
+  });
+
   it('CAUTION ORDERS: cautious never explores more than bold on the same seed', () => {
     for (const seed of ['c1', 'c2', 'c3']) {
       const cautious = run('fullExplore', seed, 'cautious');

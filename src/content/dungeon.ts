@@ -45,10 +45,36 @@ export const ENCOUNTERS = {
   bossRoomEnemies: { min: 1, max: 2 },
   corridorEnemyChanceBase: 0.05,
   corridorEnemyChancePerDifficulty: 0.03,
-  /** Enemy base_level within [difficulty − 1, difficulty + 1]; boss +1..+2. */
+  /** Enemy base_level within [difficulty − 1, difficulty + 1]; boss exactly +1. */
   levelBand: 1,
-  bossLevelBonus: 2,
+  /**
+   * Brief #13 (Q1, APPROVED): 2 → 1. The boss band is now FLAT at difficulty+1,
+   * which does two things. It halves the single-creature boss room (measured
+   * 82.7% → 51%) at almost no danger cost (boss-fight loss rate 1.7% → 2.3%,
+   * run wipe rate 2.4% → 2.6%). And — the reason it was chosen over simply
+   * raising the budget — it makes `bossRoomEnemies` mean what it says: with one
+   * level in the band every pick costs exactly one slot, so the budget IS the
+   * creature count, and it scales by multiplication when the party grows.
+   */
+  bossLevelBonus: 1,
 } as const;
+
+/** The party size every budget above is authored against. */
+export const PARTY_BUDGET_BASE = 4;
+
+/**
+ * Encounter budgets scale UP with the roster and never down (brief #13 §5).
+ * Measured: two extra heroes halve every fight (76 → 43 ticks) and take the run
+ * wipe rate to zero, so a budget written as a constant stops being the budget
+ * that was tuned the moment the party grows. Scaling linearly preserves the
+ * texture exactly — boss:room length ratio 1.54 at four heroes vs 1.55 at six.
+ *
+ * At four or fewer heroes this is the identity: today's 4v4 dungeons are
+ * untouched, which is the point — the space is left, not spent.
+ */
+export function partyScaledBudget(n: number, partySize: number): number {
+  return Math.max(n, Math.round((n * partySize) / PARTY_BUDGET_BASE));
+}
 
 /** Loot grammar (brief #3, APPROVED): tier weights by source × difficulty + floors. */
 export const LOOT_GRAMMAR = {

@@ -4,7 +4,7 @@
  * clue placement, rest charges. All seeded on the dispatch (constraint 5).
  */
 
-import { DUNGEON_TIERS, ENCOUNTERS, HAZARDS, ROOM_TYPE_WEIGHTS } from '@content/dungeon';
+import { DUNGEON_TIERS, ENCOUNTERS, HAZARDS, ROOM_TYPE_WEIGHTS, partyScaledBudget } from '@content/dungeon';
 import { enemies } from '@content/generated';
 import { Rng } from '@sim/core/rng';
 import { bfsDepths, type DungeonTemplate } from './graph';
@@ -38,22 +38,34 @@ function hazardDc(difficulty: number, tier: keyof typeof DUNGEON_TIERS, partyLev
   return base + mod + rng.int(-HAZARDS.dcJitter, HAZARDS.dcJitter);
 }
 
+/** Hard cap on draws per room: termination is a bound, not an argument. */
+const MAX_ENEMY_DRAWS = 12;
+
 /**
  * Threat-budgeted picks (career-harness finding, 1.5): `count` is a budget in
  * AT-DIFFICULTY enemy equivalents, and a pick above difficulty costs 2^Δ slots.
  * Without this, a difficulty-2 room could roll four level-3 enemies — an
  * extreme+ encounter sold as a routine room. Below-difficulty picks still cost
  * a full slot (chaff floods no one).
+ *
+ * Brief #13 (Q3, APPROVED): an over-budget draw RE-DRAWS instead of ending the
+ * room. This used to `break`, so a room could report full while holding half
+ * its budget — one unlucky expensive draw was the single largest cause of the
+ * lone-enemy room, not the budget. Re-drawing halved it (19.1% → 9.0% of combat
+ * rooms) for +5 ticks of fight length and +0.2 points of run wipe rate, and it
+ * lifts boss rooms for free. `MAX_ENEMY_DRAWS` keeps termination trivial.
  */
 function pickEnemies(budget: number, minLevel: number, maxLevel: number, difficulty: number, rng: Rng): number[] {
   const band = enemies.filter((e) => e.base_level >= minLevel && e.base_level <= maxLevel);
   const pool = band.length > 0 ? band : enemies.filter((e) => e.base_level <= Math.max(maxLevel, 1));
   const out: number[] = [];
   let spent = 0;
-  while (spent < budget) {
+  let draws = 0;
+  while (spent < budget && draws < MAX_ENEMY_DRAWS) {
     const e = rng.pick(pool);
+    draws++;
     const cost = Math.max(1, Math.pow(2, e.base_level - difficulty));
-    if (spent + cost > budget && out.length > 0) break; // over budget — the room is full
+    if (spent + cost > budget && out.length > 0) continue; // too rich for what's left — draw again
     out.push(e.id);
     spent += cost;
   }
@@ -67,6 +79,8 @@ export function populate(
   partyLevel: number,
   /** Authored boss-room roster (brief #6): quest-pinned climaxes skip the band roll. */
   bossRoster?: readonly number[],
+  /** Roster the budgets scale against (brief #13 §5). Four or fewer = today's numbers. */
+  partySize: number = 4,
 ): PopulatedDungeon {
   const rng = new Rng(`pop_${seed}_${template.templateId}`);
   const rooms = new Map<number, PopulatedRoom>();
@@ -111,14 +125,25 @@ export function populate(
 
     let enemyIds: number[] = [];
     if (type === 'combat') {
-      enemyIds = pickEnemies(rng.int(ENCOUNTERS.combatRoomEnemies.min, ENCOUNTERS.combatRoomEnemies.max), minL, maxL, difficulty, rng);
+      enemyIds = pickEnemies(
+        rng.int(
+          partyScaledBudget(ENCOUNTERS.combatRoomEnemies.min, partySize),
+          partyScaledBudget(ENCOUNTERS.combatRoomEnemies.max, partySize),
+        ),
+        minL, maxL, difficulty, rng,
+      );
     } else if (type === 'boss') {
       if (bossRoster && bossRoster.length > 0) {
         enemyIds = [...bossRoster]; // the quest authored this fight
       } else {
-        // Boss rooms budget at their own elevated level — the spike is the point.
+        // Boss rooms budget at their own elevated level. The band is FLAT at
+        // difficulty+1 (brief #13 Q1), so every pick costs exactly one slot and
+        // the budget is literally how many creatures wait in the chamber.
         enemyIds = pickEnemies(
-          rng.int(ENCOUNTERS.bossRoomEnemies.min, ENCOUNTERS.bossRoomEnemies.max),
+          rng.int(
+            partyScaledBudget(ENCOUNTERS.bossRoomEnemies.min, partySize),
+            partyScaledBudget(ENCOUNTERS.bossRoomEnemies.max, partySize),
+          ),
           difficulty + 1,
           difficulty + ENCOUNTERS.bossLevelBonus,
           difficulty + 1,
