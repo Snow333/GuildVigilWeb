@@ -1,7 +1,7 @@
 /**
  * The field — brief #12 §4. A plan view of one fight, drawn in the chart's hand
  * on the same vellum as the delve sketch. Geometry only: every value it inks
- * comes from `combatField.ts` or from `ARENA`.
+ * comes from `fieldReading.ts` or from `ARENA`.
  *
  * The grammar it must keep (brief #8 is normative for all UI):
  *  - SIDE IS CARRIED BY FORM, never colour. Guild units are solid ink discs;
@@ -14,14 +14,14 @@
  *    data, so flat mode has only the sheet furniture around them to strip.
  *
  * Positions between waypoints are DRAWN, NOT RECORDED (decision D1) — see
- * `combatField.ts`. No distance or judgement is ever derived from them.
+ * `fieldReading.ts`. No distance or judgement is ever derived from them.
  */
 
 import { ARENA, ENGAGEMENT_RANGE } from '@content/combat';
 import type { SimEvent } from '@sim/core/events/types';
 import {
   buildTracks, fieldStateAt, hpStep, labelLanes, positionAt, FEET_PER_UNIT, type SpawnFact,
-} from './combatField';
+} from './fieldReading';
 
 /** Sheet geometry — the arena keeps its 14:10 aspect; the margins carry the rules. */
 const VIEW = { w: 700, h: 520, padL: 44, padR: 44, padT: 30, padB: 80 } as const;

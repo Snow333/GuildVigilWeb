@@ -1,8 +1,18 @@
 /**
- * The field — brief #12 §4/§5, the pure half. Geometry, interpolation and the
- * derived read of a combat stream at a tick. `CombatField.tsx` scales and inks
- * it; nothing here touches the DOM, and no rule lives here — every value is a
- * fact of the stream or a fact of `ARENA`.
+ * The field's reading — brief #12 §4/§5, the pure half. Geometry, interpolation
+ * and the derived read of a combat stream at a tick. `CombatField.tsx` scales
+ * and inks it; nothing here touches the DOM, and no rule lives here — every
+ * value is a fact of the stream or a fact of `ARENA`.
+ *
+ * NAMED `fieldReading`, NOT `combatField`. Module specifiers drop the extension,
+ * so `./combatField` and `./CombatField` are the SAME path on a case-insensitive
+ * filesystem — which is what Windows gives us, and this repo is developed on
+ * Windows. That collision resolved `./CombatField` to this module, so the screen
+ * imported a component that did not exist and the app rendered a blank page,
+ * while Linux CI stayed green throughout. `tests/ui/module-casing.test.ts` now
+ * makes the whole tree prove it cannot happen again. (House pattern agrees:
+ * `worldChart.ts`/`WorldMapScreen.tsx`, `afterActionXp.ts`/`AfterActionScreen.tsx`
+ * — the helper always gets its own stem.)
  *
  * MOTION IS DRAWN, NOT RECORDED (decision D1). `combat.unit_moved` fires only
  * when a unit first enters attack range of its target — roughly six times in a

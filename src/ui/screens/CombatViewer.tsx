@@ -21,7 +21,7 @@ import { EventStream } from '@sim/core/events/stream';
 import { CombatField } from './CombatField';
 import {
   fieldGauges, fieldMarginalia, fieldStateAt, hpStep, isThrashing, spawnsFromEvents,
-} from './combatField';
+} from './fieldReading';
 
 /** The combat ladder. Anything at or above SKIM_FROM holds the field. */
 export type CombatSpeed = 0.25 | 0.5 | 1 | 4 | 16;

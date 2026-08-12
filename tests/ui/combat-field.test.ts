@@ -8,7 +8,7 @@ import { combatant } from '../combat/conditions.test';
 import {
   buildTracks, fieldGauges, fieldMarginalia, fieldStateAt, formationFits, hpStep, isThrashing,
   labelLanes, positionAt, spawnsFromStream, MAX_UNITS_PER_SIDE, type SpawnFact,
-} from '../../src/ui/screens/combatField';
+} from '../../src/ui/screens/fieldReading';
 
 /**
  * Brief #12 milestone 12.2 — the field's pure half.
