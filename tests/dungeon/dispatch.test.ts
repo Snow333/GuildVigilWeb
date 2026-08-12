@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { deriveDispatchSummary } from '@sim/core/events/summary';
 import { runDungeonDispatch, type Caution, type MissionProfile } from '@sim/dungeon/dispatch';
 import type { DispatchHero } from '@sim/dungeon/checks';
+import { templatesForTier } from '@sim/dungeon/pool';
+import { populate } from '@sim/dungeon/population';
 import { combatant } from '../combat/conditions.test';
 
 function member(id: string, over: Parameters<typeof combatant>[0] = {}): DispatchHero {
@@ -54,6 +56,57 @@ describe('runDungeonDispatch — the profile engine (brief #4 acceptance)', () =
       expect(r.clueSecured).toBe(true);
       expect(r.stream.byType('explore.clue_found')).toHaveLength(1);
     }
+  });
+
+  /**
+   * THE CLUE REGRESSION. `mysteryHunt` was unwinnable on `small` (0 of 120) and
+   * failed 61% of the time on `tiny`, because the clue's pickup used to be the
+   * LAST `else if` of the room-type chain: a clue in a combat, treasure, vault
+   * or shrine room short-circuited earlier and `clueSecured` never flipped.
+   * Tiers that own a lore room never hit it, which is how it survived to here.
+   * The first two below fail hard against the pre-fix code.
+   */
+  describe('THE CLUE is carried by the room, not by its type', () => {
+    it('every tier can actually finish a mysteryHunt', () => {
+      for (const tier of ['tiny', 'small', 'medium', 'large'] as const) {
+        let completed = 0;
+        for (let i = 0; i < 40; i++) {
+          const r = runDungeonDispatch({
+            dispatchId: `clue_${tier}_${i}`, partyId: 'party_1', party: party(),
+            tier, seed: `clue_${i}`, profile: 'mysteryHunt', caution: 'standard',
+            difficulty: 2, partyLevel: 3,
+          });
+          if (r.outcome === 'completed') completed++;
+        }
+        // Post-fix every tier sits in the mid-30s of 40. Pre-fix: small 0, tiny 13.
+        expect({ tier, clears: completed >= 28 }).toEqual({ tier, clears: true });
+      }
+    });
+
+    it('a clue outside a lore room is still picked up, exactly once', () => {
+      // `small` owns no lore room, so its clue always lands on an ordinary one.
+      const r = runDungeonDispatch({
+        dispatchId: 'clue_nonlore', partyId: 'party_1', party: party(),
+        tier: 'small', seed: 'clue_0', profile: 'mysteryHunt', caution: 'standard',
+        difficulty: 2, partyLevel: 3,
+      });
+      expect(r.clueSecured).toBe(true);
+      const found = r.stream.byType('explore.clue_found');
+      expect(found).toHaveLength(1);
+      const entered = r.stream.byType('explore.room_entered').find((e) => e.data.roomId === found[0]!.data.roomId)!;
+      expect(entered.data.roomType).not.toBe('lore');
+    });
+
+    it('the clue never sits in a vault — always locked, roomDcMod 4', () => {
+      for (const tier of ['tiny', 'small', 'medium', 'large'] as const) {
+        for (const t of templatesForTier(tier)) {
+          for (const seed of ['s1', 's2', 's3']) {
+            const clue = [...populate(t, seed, 2, 3).rooms.values()].find((room) => room.hasClue)!;
+            expect({ id: t.templateId, type: clue.type }).not.toEqual({ id: t.templateId, type: 'vault' });
+          }
+        }
+      }
+    });
   });
 
   it('CAUTION ORDERS: cautious never explores more than bold on the same seed', () => {

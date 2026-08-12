@@ -280,15 +280,18 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
           stream.emit(tick, 'loot.item_generated', { item }, lootEv.seq);
         }
       }
-    } else if (room.type === 'lore') {
-      if (room.hasClue) {
-        clueSecured = true;
-        stream.emit(tick, 'explore.clue_found', { roomId: roomId(n), clueId: `clue_${opts.dispatchId}`, arcId: 'arc_unassigned' });
-      }
     } else if (room.type === 'shrine') {
       restAvailable.add(n);
       stream.emit(tick, 'explore.shrine_activated', { roomId: roomId(n) });
-    } else if (room.hasClue) {
+    }
+
+    // The clue is carried by the ROOM, not by its type, so this check sits
+    // OUTSIDE the chain above. It used to be the chain's last `else if`, which
+    // meant a clue in a combat, treasure, vault or shrine room short-circuited
+    // and `clueSecured` never flipped — `mysteryHunt` could not complete at all
+    // on `small` (clue always in the vault) and failed 61% of the time on
+    // `tiny`. Tiers WITH a lore room were unaffected, which is why it hid.
+    if (room.hasClue) {
       clueSecured = true;
       stream.emit(tick, 'explore.clue_found', { roomId: roomId(n), clueId: `clue_${opts.dispatchId}`, arcId: 'arc_unassigned' });
     }

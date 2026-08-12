@@ -73,13 +73,19 @@ export function populate(
   const minL = Math.max(difficulty - ENCOUNTERS.levelBand, 1);
   const maxL = difficulty + ENCOUNTERS.levelBand;
 
-  // Clue goes in the first lore room; tiers without one use the deepest non-boss room.
+  // Clue goes in the first lore room; tiers without one (tiny, small) use the
+  // deepest room that is neither the entrance, the boss, nor a VAULT. Vaults
+  // are excluded because they are always locked and carry roomDcMod 4 — on
+  // `small` the single vault IS the deepest non-boss node, so the clue sat
+  // behind an impossible DC and `mysteryHunt` still failed ~40% of runs even
+  // once the pickup itself was fixed. Draws no RNG: room types, template ids
+  // and stream hashes are unaffected by this choice.
   const depths = bfsDepths(template.nodes);
   const loreNodes = template.nodes.filter((n) => n.preset === 'lore').map((n) => n.n);
   const clueNode = loreNodes.length > 0
     ? loreNodes[0]!
     : template.nodes
-        .filter((n) => n.preset !== 'boss' && n.n !== 0)
+        .filter((n) => n.preset !== 'boss' && n.preset !== 'vault' && n.n !== 0)
         .sort((a, b) => depths[b.n]! - depths[a.n]! || a.n - b.n)[0]!.n;
 
   for (const node of template.nodes) {
