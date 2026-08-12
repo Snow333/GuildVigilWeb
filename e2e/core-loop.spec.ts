@@ -50,7 +50,9 @@ async function acceptEasiest(page: Page): Promise<boolean> {
 async function launchAndReturn(page: Page): Promise<void> {
   await page.locator('button:has-text("Launch dispatch")').click();
   const playback = page.locator('h1:has-text("Dispatch playback")');
-  const surface = page.locator('text=resolved on the surface');
+  // Brief #12: a surface mission now mounts the field where the delve sketch
+  // would go — the old "resolved on the surface" dead end is gone.
+  const surface = page.locator('h1:has-text("Dispatch — quest")');
   await expect(playback.or(surface)).toBeVisible();
   if (await playback.isVisible()) {
     await page.locator('button:has-text("Skip ▸▸")').click();

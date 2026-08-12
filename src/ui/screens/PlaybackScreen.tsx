@@ -17,7 +17,32 @@ import { TEMPLATE_POOL } from '@sim/dungeon/pool';
 import { bfsDepths, type DungeonTemplate } from '@sim/dungeon/graph';
 import { interpretStream, type BeatLine } from '../beats/interpret';
 import { nameResolver, namesFromStream } from '../beats/names';
+import { combatSegments, type CombatSegment } from '@sim/core/events/segments';
+import { CombatViewer } from './CombatViewer';
 import { useGame, type ReplaySpeed } from '../state/GameProvider';
+
+/**
+ * Brief #12: a fight the player can open, wherever it happened. Dungeon fights
+ * segment out of the dispatch stream they were already absorbed into; surface
+ * fights arrive on `QuestRecord.fights`. One shape, so the mounting below does
+ * not care which carrier a fight came from.
+ */
+interface Fight {
+  key: string;
+  segment: CombatSegment;
+  siteLabel: string;
+  /** Position of the fight along the dispatch's ticks, for the strip. */
+  strip: { start: number; end: number } | null;
+}
+
+/**
+ * `t_small_knoll:r7` is an id, not a place. The sheet says the place; the strip's
+ * tooltip and the graph still carry the id for anyone matching them up.
+ */
+const roomName = (roomId: string): string => {
+  const room = roomId.includes(':') ? roomId.slice(roomId.indexOf(':') + 1) : roomId;
+  return /^r\d+$/.test(room) ? `room ${room}` : `the ${room}`;
+};
 
 /** Column-by-BFS-depth layout — geometry is presentation's problem, so here it is. */
 function layoutTemplate(t: DungeonTemplate): Map<number, { x: number; y: number }> {
@@ -41,7 +66,37 @@ export function PlaybackScreen() {
   const [simTick, setSimTick] = useState(0);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
+  const [openFight, setOpenFight] = useState(0);
+
   const dispatch = lastLaunch?.record.dispatch ?? null;
+  const surface = lastLaunch?.record.fights ?? null;
+
+  // Names resolve from every stream in the record, so a surface fight labels
+  // its units even when there is no dungeon stream at all.
+  const names = useMemo(() => {
+    const roster = session ? new Map(session.roster().map((r) => [r.id, r.name])) : new Map<string, string>();
+    const merged = new Map<string, string>();
+    for (const stream of [...(surface ?? []).map((f) => f.stream), ...(dispatch ? [dispatch.stream] : [])]) {
+      for (const [id, name] of namesFromStream(stream)) merged.set(id, name);
+    }
+    for (const [id, name] of roster) merged.set(id, name);
+    return merged;
+  }, [dispatch, surface, session]);
+
+  const fights = useMemo<Fight[]>(() => {
+    const out: Fight[] = [];
+    for (const f of surface ?? []) {
+      const seg = combatSegments(f.stream)[0];
+      if (seg) out.push({ key: f.combatId, segment: seg, siteLabel: f.label, strip: null });
+    }
+    if (dispatch) {
+      for (const seg of combatSegments(dispatch.stream)) {
+        out.push({ key: seg.combatId, segment: seg, siteLabel: seg.roomId, strip: { start: seg.startTick, end: seg.endTick } });
+        // (siteLabel keeps the room id — `roomName` below is what the sheet shows.)
+      }
+    }
+    return out;
+  }, [dispatch, surface]);
 
   const feed = useMemo(() => {
     if (!dispatch || !session) return null;
@@ -99,17 +154,34 @@ export function PlaybackScreen() {
   }
 
   if (!dispatch || !feed) {
-    // Camp fights and road deaths have no dungeon stream — straight to the reckoning.
+    // Brief #12: a surface mission has no dungeon sketch, so the field takes its
+    // place. Only a mission with no fight at all still goes straight to the
+    // reckoning — the "no dungeon record" dead end is gone.
+    const only = fights[openFight] ?? fights[0];
     return (
       <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
         <div className="gv-run">
           <h1>Dispatch — quest {lastLaunch.questName}</h1>
-          <div className="gv-sheet" style={{ maxWidth: 520 }}>
-            <p style={{ margin: '0 0 10px' }}>The mission resolved on the surface (no dungeon record).</p>
-            <p style={{ margin: 0 }}>
-              <button className="gv-btn" onClick={() => nav({ kind: 'afterAction' })}>After-action report ▸</button>
-            </p>
-          </div>
+          {fights.length > 1 && (
+            <div className="gv-choice" style={{ marginBottom: 14 }}>
+              <span className="gv-choice-label">the fights</span>
+              {fights.map((f, i) => (
+                <button key={f.key} className="gv-btn" disabled={i === openFight} onClick={() => setOpenFight(i)}>
+                  {f.siteLabel}
+                </button>
+              ))}
+            </div>
+          )}
+          {only ? (
+            <CombatViewer segment={only.segment} siteLabel={only.siteLabel} names={names} />
+          ) : (
+            <div className="gv-sheet" style={{ maxWidth: 520 }}>
+              <p style={{ margin: '0 0 10px' }}>The mission resolved without a fight.</p>
+            </div>
+          )}
+          <p style={{ margin: '14px 0 0' }}>
+            <button className="gv-btn" onClick={() => nav({ kind: 'afterAction' })}>After-action report ▸</button>
+          </p>
         </div>
       </div>
     );
@@ -197,6 +269,9 @@ export function PlaybackScreen() {
                     {seen && node.preset === 'boss' && (
                       <circle cx={p.x} cy={p.y} r={20} className="gv-chart-ink" strokeWidth={0.8} />
                     )}
+                    {seen && roomId === fights[openFight]?.siteLabel && (
+                      <circle cx={p.x} cy={p.y} r={23} className="gv-chart-red" strokeWidth={1.8} />
+                    )}
                     {isCleared && (
                       <line x1={p.x - 11} y1={p.y + 11} x2={p.x + 11} y2={p.y - 11} className="gv-chart-ink" strokeWidth={1.2} />
                     )}
@@ -215,6 +290,50 @@ export function PlaybackScreen() {
               })}
             </svg>
           </div>
+        )}
+
+        {fights.length > 0 && (
+          <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '0.15deg' }}>
+            <span className="gv-pin" />
+            <h3 className="gv-head">
+              The day&apos;s record <span className="gv-sub">filled blocks are fights — open one to watch it</span>
+            </h3>
+            <div className="gv-strip">
+              {fights.map((f, i) => {
+                const at = f.strip ?? { start: 0, end: f.segment.ticks };
+                const span = Math.max(1, endTick);
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    className={`gv-strip-seg${i === openFight ? ' gv-strip-seg--open' : ''}`}
+                    style={{ left: `${(at.start / span) * 100}%`, width: `${Math.max(2, ((at.end - at.start) / span) * 100)}%` }}
+                    onClick={() => {
+                      setOpenFight(i);
+                      // Move the run to the fight: the sketch reveals up to it, the
+                      // scribe's record catches up, and the red ring never lands on
+                      // a room the party has not entered yet.
+                      setSimTick(Math.min(endTick, at.end));
+                      setPlaying(false);
+                    }}
+                    title={`${f.siteLabel} — ${f.segment.ticks} ticks`}
+                  >
+                    <b>FIGHT {i + 1}</b>
+                  </button>
+                );
+              })}
+              <span className="gv-strip-play" style={{ left: `${(simTick / Math.max(1, endTick)) * 100}%` }} />
+            </div>
+          </div>
+        )}
+
+        {/* The graph answers WHERE; the field answers what happened there. */}
+        {fights[openFight] && (
+          <CombatViewer
+            segment={fights[openFight]!.segment}
+            siteLabel={roomName(fights[openFight]!.siteLabel)}
+            names={names}
+          />
         )}
 
         <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '0.3deg' }}>

@@ -733,3 +733,231 @@
 .gv-settings .gv-sheet {
   margin-bottom: 22px;
 }
+
+/* ============ brief #12: the field ============
+   Geometry lives in CombatField.tsx; colour lives here, tokens only.
+   SIDE IS CARRIED BY FORM (solid guild disc vs hollow enemy ring), never by
+   colour — the frozen status set only ever tints an HP bar, and the bar is
+   always paired with the number beside it. Nothing below is ambience, so flat
+   mode has nothing here to strip. */
+.gv-fieldwrap {
+  position: relative;
+}
+.gv-field {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.gv-field text {
+  font-family: var(--gv-sans);
+}
+
+.gv-field-ground { fill: #00000006; }
+.gv-field-border { fill: none; stroke: var(--gv-ink); stroke-width: 1.4; }
+.gv-field-rule { stroke: var(--gv-ink); stroke-width: 0.7; opacity: 0.24; }
+.gv-field-rule--fine { stroke-width: 0.4; opacity: 0.14; }
+.gv-field-tick { stroke: var(--gv-ink); stroke-width: 1; }
+.gv-field-muster { stroke: var(--gv-ink-muted); stroke-width: 0.9; stroke-dasharray: 2 6; opacity: 0.65; }
+.gv-field-scale { stroke: var(--gv-ink); stroke-width: 1.4; }
+
+.gv-field-axis {
+  font-size: 9px;
+  letter-spacing: 1.1px;
+  fill: var(--gv-ink-soft);
+}
+.gv-field-axis--faint { fill: var(--gv-ink-muted); }
+
+/* unit glyphs — form, not colour */
+.gv-field-hero { fill: var(--gv-ink); stroke: var(--gv-ink); stroke-width: 1.8; }
+.gv-field-hero--down { fill: var(--gv-vellum); }
+.gv-field-foe { fill: var(--gv-vellum); stroke: var(--gv-ink); stroke-width: 2.2; }
+.gv-field-foe-pip { fill: var(--gv-ink); }
+.gv-field-glyph-stroke { stroke: var(--gv-ink); stroke-width: 2.2; }
+.gv-field-slain { opacity: 0.4; }
+/* Selection is circled in PENCIL, not red: red ink is the world talking back
+   and lives in the margin (brief #8). A thin ink ring is unused elsewhere on
+   this sheet, so it carries one meaning and only one. */
+.gv-field-selected { fill: none; stroke: var(--gv-ink); stroke-width: 1.2; opacity: 0.7; }
+.gv-field-hit { fill: transparent; }
+.gv-field-unit { cursor: pointer; }
+
+.gv-field-name {
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  fill: var(--gv-ink);
+  paint-order: stroke;
+  stroke: var(--gv-vellum);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.gv-field-name--gone { opacity: 0.45; }
+.gv-field-hp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  fill: var(--gv-ink-soft);
+  paint-order: stroke;
+  stroke: var(--gv-vellum);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.gv-field-leader { fill: none; stroke: var(--gv-ink-muted); stroke-width: 0.7; opacity: 0.55; }
+
+/* HP bar: frozen status set, NEVER the sole carrier — the number is always beside it */
+.gv-field-bar { fill: #00000012; stroke: var(--gv-vellum-edge); stroke-width: 0.5; }
+.gv-field-bar-fill--s0 { fill: var(--gv-s0); }
+.gv-field-bar-fill--s1 { fill: var(--gv-s1); }
+.gv-field-bar-fill--s2 { fill: var(--gv-s2); }
+.gv-field-bar-fill--s3 { fill: var(--gv-s3); }
+
+.gv-field-ring { fill: #3a2d1c08; stroke: var(--gv-ink); stroke-width: 0.9; stroke-dasharray: 3 3; opacity: 0.75; }
+.gv-field-target { stroke: var(--gv-ink); stroke-width: 0.9; stroke-dasharray: 3 4; opacity: 0.28; fill: none; }
+
+.gv-field-strike { stroke: var(--gv-ink); stroke-width: 1.5; opacity: 0.85; }
+.gv-field-strike--crit { stroke-width: 2.6; }
+.gv-field-strike--miss { opacity: 0.25; stroke-dasharray: 2 3; }
+.gv-field-strike--reaction { stroke-width: 2.2; stroke-dasharray: 6 3; opacity: 0.9; }
+.gv-field-critring { fill: none; stroke: var(--gv-ink); stroke-width: 1.4; }
+.gv-field-damage {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--gv-ink);
+}
+
+/* held (skim): the field stops pretending and says so */
+.gv-field-veil { fill: var(--gv-vellum); opacity: 0.55; }
+.gv-field-heldlabel { font-size: 13px; letter-spacing: 3px; fill: var(--gv-ink-soft); }
+.gv-field-heldnote {
+  font-family: var(--gv-serif);
+  font-style: italic;
+  font-size: 12.5px;
+  fill: var(--gv-ink-muted);
+}
+
+/* the roster rail beside the field */
+.gv-fieldgrid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .gv-fieldgrid { grid-template-columns: 1fr; }
+}
+.gv-roster { list-style: none; margin: 0; padding: 0; }
+.gv-roster li {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--gv-vellum-edge);
+  cursor: pointer;
+}
+.gv-roster li:last-child { border-bottom: 0; }
+.gv-roster li[aria-selected='true'] { background: #0000000d; }
+.gv-roster li.gv-roster--gone { opacity: 0.45; }
+.gv-roster-name { font-size: 13.5px; line-height: 1.15; }
+.gv-roster-name small {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 9.5px;
+  letter-spacing: 0.9px;
+  color: var(--gv-ink-muted);
+}
+.gv-roster-hp { text-align: right; min-width: 74px; }
+.gv-roster-hp b {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+/* the two gauges: silence against the stalemate window, and target churn */
+.gv-gauge { margin-top: 10px; }
+.gv-gauge-label {
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--gv-ink-muted);
+  display: block;
+  margin-bottom: 3px;
+}
+.gv-gauge-label em {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--gv-serif);
+}
+.gv-gauge-bar {
+  display: block;
+  position: relative;
+  height: 8px;
+  background: #00000012;
+  border: 1px solid var(--gv-vellum-edge);
+}
+.gv-gauge-bar i { display: block; height: 100%; background: var(--gv-ink-soft); }
+.gv-gauge-bar i.gv-gauge--warn { background: var(--gv-s1); }
+.gv-gauge-bar i.gv-gauge--hot { background: var(--gv-s3); }
+
+/* roster glyph + compact HP bar: the number leads, the frozen set seconds it */
+.gv-roster-glyph { display: block; }
+.gv-roster-bar {
+  display: block;
+  height: 5px;
+  margin-top: 2px;
+  background: #00000018;
+  border: 1px solid var(--gv-vellum-edge);
+}
+.gv-roster-bar i { display: block; height: 100%; }
+.gv-roster-bar i.gv-roster-bar--s0 { background: var(--gv-s0); }
+.gv-roster-bar i.gv-roster-bar--s1 { background: var(--gv-s1); }
+.gv-roster-bar i.gv-roster-bar--s2 { background: var(--gv-s2); }
+.gv-roster-bar i.gv-roster-bar--s3 { background: var(--gv-s3); }
+
+/* the fight scrubber */
+.gv-scrub {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  accent-color: var(--gv-ink-soft);
+}
+
+/* the day's record: where the fights sit along the run */
+.gv-strip {
+  position: relative;
+  height: 30px;
+  background: #00000010;
+  border: 1px solid var(--gv-vellum-edge);
+  margin: 4px 0 2px;
+}
+.gv-strip-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 0;
+  background: #3a2d1c22;
+  border: 0;
+  border-left: 1px solid var(--gv-ink-soft);
+  border-right: 1px solid var(--gv-ink-soft);
+  cursor: pointer;
+}
+.gv-strip-seg--open { background: #3a2d1c44; }
+.gv-strip-seg b {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-family: var(--gv-sans);
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  color: var(--gv-ink-soft);
+  white-space: nowrap;
+}
+.gv-strip-play {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--gv-red-ink);
+}
