@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guild Vigil — Brief #12 wireframe: the combat view (comp r01)</title>
+<style>
+:root{
+  --gv-desk:#2a211c; --gv-desk-warm:#322822; --gv-desk-edge:#191210; --gv-desk-bar:#241c16;
+  --gv-vellum:#ece0c2; --gv-vellum-aged:#e2d2a8; --gv-vellum-old:#d8c494; --gv-vellum-edge:#b3a075;
+  --gv-ink:#3a2d1c; --gv-ink-soft:#5c4a30; --gv-ink-muted:#7d6a4c; --gv-ink-faint:#a89370;
+  --gv-red-ink:#9c3428; --gv-wax:#8c2f28; --gv-wax-hi:#a63d2f; --gv-wax-lo:#6e1f18;
+  --gv-brass-hi:#c9a86a; --gv-brass-mid:#a4854c; --gv-brass-deep:#8a6c38; --gv-brass-lo:#6e5426; --gv-brass-edge:#55401c;
+  --gv-slate:#2e3138;
+  --gv-s0:#0ca30c; --gv-s1:#fab219; --gv-s2:#ec835a; --gv-s3:#d03b3b;
+  --gv-tex-leather:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.10'/></svg>");
+  --gv-tex-grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
+  --gv-tex-fiber:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23f)' opacity='0.05'/></svg>");
+  --gv-serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+  --gv-sans:'Segoe UI',system-ui,sans-serif;
+  --gv-shadow-sheet:0 4px 12px #00000059,0 1px 3px #00000040;
+  --gv-shadow-hardware:0 2px 3px #00000088,inset 0 -1px 2px #00000055;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--gv-desk);background-image:var(--gv-tex-leather);color:var(--gv-vellum);font-family:var(--gv-serif);line-height:1.5}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 30%,#0000 40%,#0000006e 100%);z-index:0}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 18px 80px}
+h1,h2,h3{font-family:var(--gv-sans);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin:0}
+h1{font-size:20px;color:var(--gv-brass-hi)}
+.sub{font-family:var(--gv-serif);text-transform:none;letter-spacing:0;color:var(--gv-ink-faint);font-size:13.5px;font-style:italic}
+.deskbar{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;
+  background:var(--gv-desk-bar);border:1px solid var(--gv-desk-edge);border-bottom:2px solid var(--gv-brass-edge);
+  padding:12px 16px;box-shadow:var(--gv-shadow-sheet);margin-bottom:18px}
+.plaque{font-family:var(--gv-sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#2b210f;background:linear-gradient(180deg,var(--gv-brass-hi),var(--gv-brass-deep));
+  border:1px solid var(--gv-brass-edge);padding:3px 9px;box-shadow:var(--gv-shadow-hardware)}
+
+.sheet{position:relative;background:var(--gv-vellum);background-image:var(--gv-tex-fiber);color:var(--gv-ink);
+  border:1px solid var(--gv-vellum-edge);border-radius:2px 3px 2px 3px;box-shadow:var(--gv-shadow-sheet);
+  padding:16px 18px;margin:0 0 16px;transform:rotate(var(--tilt,0deg))}
+.sheet::before{content:'';position:absolute;inset:0;background-image:var(--gv-tex-grain);opacity:.05;pointer-events:none;mix-blend-mode:multiply}
+.sheet.aged{background:var(--gv-vellum-aged)}
+.pin{position:absolute;top:-7px;left:20px;width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--gv-brass-hi),var(--gv-brass-deep) 65%,var(--gv-brass-lo));
+  border:1px solid var(--gv-brass-edge);box-shadow:var(--gv-shadow-hardware)}
+.pin.r{left:auto;right:20px}
+.head{font-family:var(--gv-sans);font-size:13px;letter-spacing:.11em;text-transform:uppercase;color:var(--gv-ink);
+  border-bottom:1px solid var(--gv-vellum-edge);padding-bottom:6px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.head .hsub{font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-style:italic;color:var(--gv-ink-muted);font-size:12.5px}
+
+.btn{font-family:var(--gv-sans);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  background:var(--gv-vellum-old);color:var(--gv-ink);border:1px solid var(--gv-vellum-edge);
+  border-bottom-width:2px;padding:5px 10px;border-radius:2px}
+.btn:hover{background:#d9c9a2}
+.btn[aria-pressed="true"],.btn.on{background:var(--gv-ink);color:var(--gv-vellum);border-color:var(--gv-ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.skim{border-style:dashed}
+.row{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.lab{font-family:var(--gv-sans);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gv-ink-muted)}
+
+.marg{color:var(--gv-red-ink);font-style:italic;font-size:12.5px;line-height:1.35}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+
+.grid2{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+.field-wrap{position:relative}
+svg.field{display:block;width:100%;height:auto;background:transparent}
+.roster{list-style:none;margin:0;padding:0}
+.roster li{display:grid;grid-template-columns:14px 1fr auto;gap:7px;align-items:center;padding:5px 0;border-bottom:1px dotted var(--gv-vellum-edge);cursor:pointer}
+.roster li:last-child{border-bottom:0}
+.roster li.sel{background:#0000000d}
+.roster li.gone{opacity:.45}
+.glyph{width:14px;height:14px}
+.nm{font-size:13.5px;line-height:1.15}
+.nm small{display:block;font-family:var(--gv-sans);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gv-ink-muted)}
+.hpwrap{text-align:right;min-width:74px}
+.hpnum{font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+.meter{display:block;height:5px;background:#00000018;border:1px solid var(--gv-vellum-edge);margin-top:2px}
+.meter i{display:block;height:100%}
+.m0 i{background:var(--gv-s0)}.m1 i{background:var(--gv-s1)}.m2 i{background:var(--gv-s2)}.m3 i{background:var(--gv-s3)}
+
+.feed{max-height:190px;overflow:auto;font-size:13px;padding-right:6px}
+.beat{padding:1px 0;border-bottom:1px dotted #0000001a}
+.beat small{font-family:ui-monospace,Menlo,monospace;color:var(--gv-ink-faint);font-size:10.5px}
+.beat[data-tone="bad"]{font-weight:700}
+.beat[data-tone="good"]{color:#2f5a22}
+.beat[data-tone="system"]{color:var(--gv-ink-muted)}
+.beat[data-tone="loot"]{font-style:italic}
+
+.strip{position:relative;height:30px;background:#00000010;border:1px solid var(--gv-vellum-edge);margin:6px 0 2px;cursor:pointer}
+.strip .seg{position:absolute;top:0;bottom:0;background:#3a2d1c22;border-left:1px solid var(--gv-ink-soft);border-right:1px solid var(--gv-ink-soft)}
+.strip .seg.cur{background:#3a2d1c44}
+.strip .seg b{position:absolute;top:2px;left:3px;font-family:var(--gv-sans);font-size:9px;letter-spacing:.06em;font-weight:600;color:var(--gv-ink-soft)}
+.strip .play{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gv-red-ink)}
+
+.gauge{margin-top:8px}
+.gaugebar{height:8px;background:#00000012;border:1px solid var(--gv-vellum-edge);position:relative}
+.gaugebar i{display:block;height:100%;background:var(--gv-ink-soft)}
+.gaugebar .mark{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--gv-red-ink)}
+
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{font-family:var(--gv-sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gv-ink-muted);text-align:left;border-bottom:1px solid var(--gv-vellum-edge);padding:4px 8px 4px 0;vertical-align:bottom}
+table.t td{padding:5px 8px 5px 0;border-bottom:1px dotted var(--gv-vellum-edge);vertical-align:top}
+table.t td.num{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:nowrap}
+.ok{color:#2f5a22;font-weight:700}
+.no{color:var(--gv-red-ink);font-weight:700}
+
+.q{margin:0 0 14px;padding-left:14px;border-left:2px solid var(--gv-vellum-edge)}
+.q b{display:block;font-family:var(--gv-sans);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.dec{background:var(--gv-vellum-old);border:1px solid var(--gv-vellum-edge);padding:10px 12px;margin:0 0 10px}
+.dec b{font-family:var(--gv-sans);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px}
+ul.tight{margin:6px 0 0;padding-left:18px}
+ul.tight li{margin:3px 0}
+.foot{color:var(--gv-ink-muted);font-size:12px;font-style:italic;margin-top:10px}
+
+/* ── flat mode: strips ambience, keeps every datum ── */
+body.gv-flat{background-image:none}
+body.gv-flat::before{display:none}
+body.gv-flat .sheet{transform:none;box-shadow:none;border-radius:0;background-image:none}
+body.gv-flat .sheet::before{display:none}
+body.gv-flat .pin{display:none}
+body.gv-flat .wobble{filter:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="deskbar">
+  <div>
+    <h1>Brief #12 — the combat view</h1>
+    <div class="sub">wireframe comp r01 · for approval · no production code written</div>
+  </div>
+  <div class="row">
+    <span class="plaque">scope: full combat view — TAKEN</span>
+    <span class="plaque">combat.unit_spawned — TAKEN</span>
+    <button class="btn" id="flatBtn" aria-pressed="false">Flat mode</button>
+  </div>
+</div>
+
+<div class="sheet aged">
+  <span class="pin"></span><span class="pin r"></span>
+  <h3 class="head">Before the comp — what the stream actually contains
+    <span class="hsub">measured today against the real sim, not inferred</span></h3>
+  <p style="margin:0 0 10px">Three things in the handoff turned out not to match the code. None of them touch the two decisions you already took — they change <em>what the view can be built out of</em>, so the comp below is drawn to the measured facts.</p>
+  <table class="t">
+    <thead><tr><th style="width:31%">The handoff says</th><th style="width:38%">The sim actually does</th><th>Consequence for the view</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>“The sim emits continuous 2D positions.”</td>
+        <td><span class="no">No.</span> <span class="mono">unit_moved</span> has exactly one call site (<span class="mono">encounter.ts:365</span>) and fires only on the <span class="mono">!arrivedBefore &amp;&amp; arrivedAfter</span> edge — the moment a unit enters attack range of its current target. A 50-tick 4v4 emits <b>9</b> of them; a whole 4-fight dungeon dispatch emits <b>23</b>.</td>
+        <td>The field cannot replay recorded motion. It must <b>interpolate between waypoints</b> and say so. See decision D1.</td>
+      </tr>
+      <tr>
+        <td><span class="mono">purpose</span> is <span class="mono">engage | standoff | flee | reposition</span> — “exactly R3’s failure vocabulary”.</td>
+        <td>Only <span class="mono">engage</span> and <span class="mono">standoff</span> are ever emitted. <span class="mono">flee</span> and <span class="mono">reposition</span> appear nowhere in <span class="mono">src/</span>. <span class="mono">combat.unit_fled</span> is <b>never emitted at all</b> — <span class="mono">interpret.ts</span> has a case for a line that cannot occur.</td>
+        <td>“Flee-oscillation” is not unrendered — it is <b>unsimulated</b>. The view can’t show it. Kiting shows up instead as ranged standoff churn, which <em>is</em> visible.</td>
+      </tr>
+      <tr>
+        <td>Show “a stalemate forming” before <span class="mono">stalemate_forced</span> fires.</td>
+        <td>Stalemate needs <b>300 ticks (30 s)</b> of damage silence. Measured fight lengths: median <b>32–91 ticks</b>, P90 <b>143</b>. All four committed harness scenarios report <span class="mono">stalemateRate: 0</span>.</td>
+        <td>A bespoke stalemate visual would be art for an event that has never fired. The comp uses a <b>silence gauge</b> instead — one derived number that would catch it, and catches kiting today.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="marg" style="margin:12px 0 0">Also confirmed, and unchanged: the stream carries instance ids only — no name, no <span class="mono">maxHp</span>, no side metadata. <b>Nothing in it can label a dot or size an HP bar.</b> That is exactly the hole <span class="mono">combat.unit_spawned</span> fills, and every unit in the comp below is labelled from a simulated spawn payload.</p>
+</div>
+
+<div class="sheet">
+  <span class="pin"></span>
+  <h3 class="head">Two more measurements that shaped the layout
+    <span class="hsub">both cut against the existing 1× / 4× / 16× transport</span></h3>
+  <div class="grid2" style="grid-template-columns:1fr 1fr">
+    <div>
+      <p style="margin:0 0 6px"><b>Combat is most of the record, and none of the picture.</b> In three real dispatches, <span class="mono">combat.*</span> events were <b>43%, 57% and 82%</b> of the whole stream, and combat occupied <b>27%, 46% and 79%</b> of the ticks. The current playback screen renders a room graph for the other side of that split and drops all of it into unlabelled beat lines.</p>
+    </div>
+    <div>
+      <p style="margin:0 0 6px"><b>16× is not a viewing speed.</b> A whole dispatch at 16× is <b>1–3 seconds</b>. A median fight at 16× is <b>0.2 s</b>; at 4×, under a second. The three speeds were sized for travel-and-explore, not for a fight.</p>
+      <p style="margin:0" class="marg">So the comp gives combat its own transport — ¼× and ½× at the slow end, and 4×/16× redefined as <em>skim</em>, where the field freezes and the feed carries the fight.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" style="--tilt:-0.15deg">
+  <span class="pin"></span><span class="pin r"></span>
+  <h3 class="head">The comp — “the field”
+    <span class="hsub">playing real recorded streams, not mock data</span></h3>
+
+  <div class="row" style="margin-bottom:10px">
+    <span class="lab">fight</span>
+    <button class="btn" data-fight="camp">Camp — 4 v 4</button>
+    <button class="btn" data-fight="ambush">Road ambush — 3 v 5</button>
+    <button class="btn" data-fight="boss">Dungeon room — the long one</button>
+    <span style="width:14px"></span>
+    <span class="lab">mounting</span>
+    <button class="btn" data-mount="surface">Surface</button>
+    <button class="btn" data-mount="dungeon">Beside the room graph</button>
+  </div>
+
+  <div id="dungeonMount" style="display:none;margin-bottom:12px">
+    <div class="lab" style="margin-bottom:4px">the delve <span style="text-transform:none;letter-spacing:0;font-style:italic">— the graph is <em>where</em>; the field is <em>what happened there</em>. The room in play is ringed.</span></div>
+    <svg viewBox="0 0 620 96" style="width:100%;height:auto;max-width:620px" role="img" aria-label="Dungeon sketch with the room in play ringed">
+      <g stroke="#5c4a30" fill="none" stroke-width="1.2">
+        <line x1="46" y1="48" x2="136" y2="30"/><line x1="46" y1="48" x2="136" y2="70"/>
+        <line x1="136" y1="30" x2="226" y2="30"/><line x1="136" y1="70" x2="226" y2="70"/>
+        <line x1="226" y1="30" x2="316" y2="48"/><line x1="226" y1="70" x2="316" y2="48"/>
+        <line x1="316" y1="48" x2="406" y2="48"/><line x1="406" y1="48" x2="496" y2="48"/>
+      </g>
+      <g font-family="Georgia,serif" font-size="10" text-anchor="middle">
+        <circle cx="46" cy="48" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="46" y="52" fill="#3a2d1c">entry</text>
+        <circle cx="136" cy="30" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="136" y="34" fill="#3a2d1c">r2</text>
+        <line x1="126" y1="40" x2="146" y2="20" stroke="#3a2d1c" stroke-width="1.2"/>
+        <circle cx="136" cy="70" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="136" y="74" fill="#3a2d1c">trap</text>
+        <circle cx="226" cy="30" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="226" y="34" fill="#3a2d1c">r7</text>
+        <line x1="216" y1="40" x2="236" y2="20" stroke="#3a2d1c" stroke-width="1.2"/>
+        <circle cx="226" cy="70" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="226" y="74" fill="#3a2d1c">cache</text>
+        <circle cx="316" cy="48" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/><text x="316" y="52" fill="#3a2d1c">r4</text>
+        <line x1="306" y1="58" x2="326" y2="38" stroke="#3a2d1c" stroke-width="1.2"/>
+        <circle cx="406" cy="48" r="15" fill="none" stroke="#3a2d1c" stroke-width="1.6"/>
+        <circle cx="406" cy="48" r="20" fill="none" stroke="#9c3428" stroke-width="1.8"/>
+        <text x="406" y="52" fill="#3a2d1c">r9</text>
+        <text x="406" y="84" fill="#9c3428" font-style="italic" font-size="10.5">in play</text>
+        <circle cx="496" cy="48" r="15" fill="none" stroke="#a89370" stroke-width="1" stroke-dasharray="3 4"/><text x="496" y="52" fill="#a89370">?</text>
+      </g>
+    </svg>
+    <div class="lab" style="margin:8px 0 3px">the day’s record <span style="text-transform:none;letter-spacing:0;font-style:italic">— filled blocks are fights. Click one to open its field.</span></div>
+    <div class="strip" id="strip"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="field-wrap">
+      <svg id="field" class="field" viewBox="0 0 700 520" role="img" aria-label="Combat field, plan view"></svg>
+      <div id="marginalia" class="marg" style="margin-top:2px;min-height:34px"></div>
+    </div>
+
+    <div>
+      <div class="lab">the roster</div>
+      <ul class="roster" id="roster"></ul>
+
+      <div class="gauge">
+        <div class="lab" id="silenceLab">silence</div>
+        <div class="gaugebar"><i id="silenceBar" style="width:0%"></i><span class="mark" style="left:100%"></span></div>
+        <div class="lab" style="margin-top:6px" id="churnLab">target changes</div>
+        <div class="gaugebar"><i id="churnBar" style="width:0%"></i></div>
+      </div>
+
+      <div id="detail" style="margin-top:10px;font-size:13px;min-height:78px"></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:12px;border-top:1px solid var(--gv-vellum-edge);padding-top:10px">
+    <button class="btn" id="playBtn">Pause</button>
+    <span class="lab">watch</span>
+    <button class="btn" data-speed="0.25">¼×</button>
+    <button class="btn" data-speed="0.5">½×</button>
+    <button class="btn" data-speed="1">1×</button>
+    <span class="lab">skim</span>
+    <button class="btn skim" data-speed="4">4×</button>
+    <button class="btn skim" data-speed="16">16×</button>
+    <span style="width:10px"></span>
+    <button class="btn" id="stepBack">◂ beat</button>
+    <button class="btn" id="stepFwd">beat ▸</button>
+    <button class="btn" id="restart">↺ Restart</button>
+    <span class="mono" id="clock" style="margin-left:auto"></span>
+  </div>
+  <input type="range" id="scrub" min="0" max="100" value="0" step="1" style="width:100%;margin-top:8px;accent-color:#5c4a30">
+
+  <div style="margin-top:14px">
+    <div class="head" style="margin-bottom:8px">The record <span class="hsub">the same beat feed, now with names</span></div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div>
+<script>
+const GV_DATA = {"arena":{"width":14,"height":10,"sideAx":2,"sideBx":12,"engagementRange":1.5,"stalemateWindowTicks":300},"fights":[{"key":"camp","label":"Camp — the bandit hollow","site":"surface","siteName":"the camp","result":"victory","ticks":50,"spawns":[{"unitId":"h1","side":"heroes","baseId":"torvald","name":"Torvald","maxHp":28,"x":2,"y":3.5,"speed":5,"weaponRange":1},{"unitId":"h2","side":"heroes","baseId":"sella","name":"Sella","maxHp":22,"x":2,"y":4.5,"speed":5,"weaponRange":1},{"unitId":"h3","side":"heroes","baseId":"bryn","name":"Bryn","maxHp":20,"x":2,"y":5.5,"speed":5,"weaponRange":6},{"unitId":"h4","side":"heroes","baseId":"maeve","name":"Maeve","maxHp":24,"x":2,"y":6.5,"speed":5,"weaponRange":1},{"unitId":"disp_3:camp_e0","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":3.5,"speed":5,"weaponRange":1},{"unitId":"disp_3:camp_e1","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":4.5,"speed":5,"weaponRange":1},{"unitId":"disp_3:camp_e2","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":5.5,"speed":5,"weaponRange":1},{"unitId":"disp_3:camp_e3","side":"enemies","baseId":"11","name":"Orc Warrior","maxHp":30,"x":12,"y":6.5,"speed":5,"weaponRange":1}],"events":[{"seq":0,"tick":0,"type":"combat.started","data":{"combatId":"disp_3:camp","roomId":"camp","sideA":["h1","h2","h3","h4"],"sideB":["disp_3:camp_e0","disp_3:camp_e1","disp_3:camp_e2","disp_3:camp_e3"]}},{"seq":1,"tick":1,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:camp_e0"}},{"seq":2,"tick":6,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h3","targetId":"disp_3:camp_e2"}},{"seq":3,"tick":6,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:camp_e2","targetId":"h1"}},{"seq":4,"tick":7,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:camp_e2"}},{"seq":5,"tick":10,"type":"combat.unit_moved","data":{"unitId":"h3","toX":4.5,"toY":5.41,"purpose":"standoff"}},{"seq":6,"tick":10,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_3:camp_e2","roll":{"d20":15,"modifier":6,"total":21,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":7,"tick":10,"type":"combat.damage_applied","cause":6,"data":{"targetId":"disp_3:camp_e2","amount":10,"kind":"weapon","hpAfter":0}},{"seq":8,"tick":10,"type":"combat.unit_died","cause":7,"data":{"unitId":"disp_3:camp_e2"}},{"seq":9,"tick":11,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:camp_e1"}},{"seq":10,"tick":12,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:camp_e3","targetId":"h1"}},{"seq":11,"tick":13,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:camp_e3"}},{"seq":12,"tick":14,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:camp_e3"}},{"seq":13,"tick":15,"type":"combat.unit_moved","data":{"unitId":"disp_3:camp_e3","toX":10.38,"toY":5.47,"purpose":"engage"}},{"seq":14,"tick":15,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e3","targetId":"h1","roll":{"d20":7,"modifier":7,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":15,"tick":15,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e3","targetId":"h1","roll":{"d20":7,"modifier":2,"total":9,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":16,"tick":15,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:camp_e1","targetId":"h1"}},{"seq":17,"tick":16,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:camp_e3","roll":{"d20":18,"modifier":9,"total":27,"dc":16,"degree":"critSuccess","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":18,"tick":16,"type":"combat.damage_applied","cause":17,"data":{"targetId":"disp_3:camp_e3","amount":12,"kind":"weapon","hpAfter":18}},{"seq":19,"tick":16,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:camp_e3","roll":{"d20":17,"modifier":4,"total":21,"dc":16,"degree":"success","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":20,"tick":16,"type":"combat.damage_applied","cause":19,"data":{"targetId":"disp_3:camp_e3","amount":4,"kind":"weapon","hpAfter":14}},{"seq":21,"tick":16,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h2","targetId":"disp_3:camp_e3"}},{"seq":22,"tick":17,"type":"combat.unit_moved","data":{"unitId":"disp_3:camp_e1","toX":10.6,"toY":4.62,"purpose":"engage"}},{"seq":23,"tick":17,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e1","targetId":"h1","roll":{"d20":15,"modifier":2,"total":17,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":24,"tick":17,"type":"combat.damage_applied","cause":23,"data":{"targetId":"h1","amount":4,"kind":"weapon","hpAfter":24}},{"seq":25,"tick":17,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e1","targetId":"h1","roll":{"d20":20,"modifier":-3,"total":17,"dc":17,"degree":"critSuccess","natStep":1},"flurryPenalty":-5,"flanked":false}},{"seq":26,"tick":17,"type":"combat.damage_applied","cause":25,"data":{"targetId":"h1","amount":8,"kind":"weapon","hpAfter":16}},{"seq":27,"tick":20,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:camp_e0","targetId":"h1"}},{"seq":28,"tick":23,"type":"combat.unit_moved","data":{"unitId":"disp_3:camp_e0","toX":10.49,"toY":4.18,"purpose":"engage"}},{"seq":29,"tick":23,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e0","targetId":"h1","roll":{"d20":8,"modifier":2,"total":10,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":30,"tick":23,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e0","targetId":"h1","roll":{"d20":15,"modifier":-3,"total":12,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":31,"tick":26,"type":"combat.unit_moved","data":{"unitId":"h4","toX":8.95,"toY":5.66,"purpose":"engage"}},{"seq":32,"tick":26,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:camp_e3","roll":{"d20":8,"modifier":7,"total":15,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":33,"tick":26,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:camp_e3","roll":{"d20":3,"modifier":2,"total":5,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":34,"tick":29,"type":"combat.unit_moved","data":{"unitId":"h2","toX":8.95,"toY":5.31,"purpose":"engage"}},{"seq":35,"tick":29,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:camp_e3","roll":{"d20":9,"modifier":9,"total":18,"dc":16,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":36,"tick":29,"type":"combat.damage_applied","cause":35,"data":{"targetId":"disp_3:camp_e3","amount":7,"kind":"weapon","hpAfter":7}},{"seq":37,"tick":29,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:camp_e3","roll":{"d20":5,"modifier":5,"total":10,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-4,"flanked":false}},{"seq":38,"tick":30,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h3","targetId":"disp_3:camp_e3"}},{"seq":39,"tick":30,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_3:camp_e3","roll":{"d20":7,"modifier":6,"total":13,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":40,"tick":30,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_3:camp_e3","roll":{"d20":11,"modifier":1,"total":12,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":41,"tick":35,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e3","targetId":"h1","roll":{"d20":9,"modifier":7,"total":16,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":42,"tick":35,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e3","targetId":"h1","roll":{"d20":19,"modifier":2,"total":21,"dc":17,"degree":"success","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":43,"tick":35,"type":"combat.damage_applied","cause":42,"data":{"targetId":"h1","amount":10,"kind":"weapon","hpAfter":6}},{"seq":44,"tick":36,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:camp_e3","roll":{"d20":7,"modifier":9,"total":16,"dc":16,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":45,"tick":36,"type":"combat.damage_applied","cause":44,"data":{"targetId":"disp_3:camp_e3","amount":6,"kind":"weapon","hpAfter":1}},{"seq":46,"tick":36,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:camp_e3","roll":{"d20":15,"modifier":4,"total":19,"dc":16,"degree":"success","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":47,"tick":36,"type":"combat.damage_applied","cause":46,"data":{"targetId":"disp_3:camp_e3","amount":4,"kind":"weapon","hpAfter":0}},{"seq":48,"tick":36,"type":"combat.unit_died","cause":47,"data":{"unitId":"disp_3:camp_e3"}},{"seq":49,"tick":37,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e1","targetId":"h1","roll":{"d20":16,"modifier":2,"total":18,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":50,"tick":37,"type":"combat.damage_applied","cause":49,"data":{"targetId":"h1","amount":4,"kind":"weapon","hpAfter":2}},{"seq":51,"tick":37,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e1","targetId":"h1","roll":{"d20":13,"modifier":-3,"total":10,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":52,"tick":43,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e0","targetId":"h1","roll":{"d20":6,"modifier":2,"total":8,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":53,"tick":43,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:camp_e0","targetId":"h1","roll":{"d20":18,"modifier":-3,"total":15,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":54,"tick":46,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:camp_e1"}},{"seq":55,"tick":46,"type":"combat.unit_moved","data":{"unitId":"h4","toX":9.46,"toY":5.37,"purpose":"engage"}},{"seq":56,"tick":46,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:camp_e1","roll":{"d20":7,"modifier":7,"total":14,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":57,"tick":46,"type":"combat.damage_applied","cause":56,"data":{"targetId":"disp_3:camp_e1","amount":5,"kind":"weapon","hpAfter":3}},{"seq":58,"tick":46,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:camp_e1","roll":{"d20":9,"modifier":2,"total":11,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":59,"tick":49,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h2","targetId":"disp_3:camp_e1"}},{"seq":60,"tick":49,"type":"combat.unit_moved","data":{"unitId":"h2","toX":9.37,"toY":5.17,"purpose":"engage"}},{"seq":61,"tick":49,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:camp_e1","roll":{"d20":8,"modifier":9,"total":17,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":62,"tick":49,"type":"combat.damage_applied","cause":61,"data":{"targetId":"disp_3:camp_e1","amount":8,"kind":"weapon","hpAfter":0}},{"seq":63,"tick":49,"type":"combat.unit_died","cause":62,"data":{"unitId":"disp_3:camp_e1"}},{"seq":64,"tick":50,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h3","targetId":"disp_3:camp_e0"}},{"seq":65,"tick":50,"type":"combat.unit_moved","data":{"unitId":"h3","toX":4.99,"toY":5.31,"purpose":"standoff"}},{"seq":66,"tick":50,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_3:camp_e0","roll":{"d20":11,"modifier":6,"total":17,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":67,"tick":50,"type":"combat.damage_applied","cause":66,"data":{"targetId":"disp_3:camp_e0","amount":7,"kind":"weapon","hpAfter":1}},{"seq":68,"tick":50,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_3:camp_e0","roll":{"d20":14,"modifier":1,"total":15,"dc":13,"degree":"success","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":69,"tick":50,"type":"combat.damage_applied","cause":68,"data":{"targetId":"disp_3:camp_e0","amount":10,"kind":"weapon","hpAfter":0}},{"seq":70,"tick":50,"type":"combat.unit_died","cause":69,"data":{"unitId":"disp_3:camp_e0"}},{"seq":71,"tick":50,"type":"combat.ended","data":{"combatId":"disp_3:camp","result":"victory","ticks":50}}]},{"key":"ambush","label":"Road ambush — outnumbered","site":"surface","siteName":"the road","result":"victory","ticks":58,"spawns":[{"unitId":"h1","side":"heroes","baseId":"torvald","name":"Torvald","maxHp":28,"x":2,"y":4,"speed":5,"weaponRange":1},{"unitId":"h2","side":"heroes","baseId":"sella","name":"Sella","maxHp":22,"x":2,"y":5,"speed":5,"weaponRange":1},{"unitId":"h4","side":"heroes","baseId":"maeve","name":"Maeve","maxHp":24,"x":2,"y":6,"speed":5,"weaponRange":1},{"unitId":"disp_3:ambush:e0","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":3,"speed":5,"weaponRange":1},{"unitId":"disp_3:ambush:e1","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":4,"speed":5,"weaponRange":1},{"unitId":"disp_3:ambush:e2","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":5,"speed":5,"weaponRange":1},{"unitId":"disp_3:ambush:e3","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":6,"speed":5,"weaponRange":1},{"unitId":"disp_3:ambush:e4","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":7,"speed":5,"weaponRange":1}],"events":[{"seq":0,"tick":0,"type":"combat.started","data":{"combatId":"disp_3:ambush","roomId":"road","sideA":["h1","h2","h4"],"sideB":["disp_3:ambush:e0","disp_3:ambush:e1","disp_3:ambush:e2","disp_3:ambush:e3","disp_3:ambush:e4"]}},{"seq":1,"tick":3,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e4","targetId":"h4"}},{"seq":2,"tick":5,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e0","targetId":"h1"}},{"seq":3,"tick":8,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h2","targetId":"disp_3:ambush:e4"}},{"seq":4,"tick":8,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e3","targetId":"h2"}},{"seq":5,"tick":9,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e4","targetId":"h2"}},{"seq":6,"tick":9,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e0","targetId":"h2"}},{"seq":7,"tick":11,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:ambush:e4"}},{"seq":8,"tick":13,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:ambush:e4"}},{"seq":9,"tick":14,"type":"combat.unit_moved","data":{"unitId":"disp_3:ambush:e4","toX":6.23,"toY":6.03,"purpose":"engage"}},{"seq":10,"tick":14,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e4","targetId":"h2","roll":{"d20":2,"modifier":2,"total":4,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":11,"tick":14,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e4","targetId":"h2","roll":{"d20":1,"modifier":-3,"total":-2,"dc":16,"degree":"critFailure","natStep":-1},"flurryPenalty":-5,"flanked":false}},{"seq":12,"tick":14,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:ambush:e4","roll":{"d20":3,"modifier":9,"total":12,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":13,"tick":14,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:ambush:e4","roll":{"d20":17,"modifier":5,"total":22,"dc":13,"degree":"success","natStep":0},"flurryPenalty":-4,"flanked":false}},{"seq":14,"tick":14,"type":"combat.damage_applied","cause":13,"data":{"targetId":"disp_3:ambush:e4","amount":3,"kind":"weapon","hpAfter":5}},{"seq":15,"tick":14,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e2","targetId":"h2"}},{"seq":16,"tick":17,"type":"combat.unit_moved","data":{"unitId":"disp_3:ambush:e0","toX":6.07,"toY":5,"purpose":"engage"}},{"seq":17,"tick":17,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e0","targetId":"h2","roll":{"d20":6,"modifier":2,"total":8,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":18,"tick":17,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e0","targetId":"h2","roll":{"d20":12,"modifier":-3,"total":9,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":19,"tick":17,"type":"combat.unit_moved","data":{"unitId":"h1","toX":5.02,"toY":5.43,"purpose":"engage"}},{"seq":20,"tick":17,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:ambush:e4","roll":{"d20":20,"modifier":9,"total":29,"dc":13,"degree":"critSuccess","natStep":1},"flurryPenalty":0,"flanked":false}},{"seq":21,"tick":17,"type":"combat.damage_applied","cause":20,"data":{"targetId":"disp_3:ambush:e4","amount":8,"kind":"weapon","hpAfter":0}},{"seq":22,"tick":17,"type":"combat.unit_died","cause":21,"data":{"unitId":"disp_3:ambush:e4"}},{"seq":23,"tick":17,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:ambush:e0"}},{"seq":24,"tick":17,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e2","targetId":"h1"}},{"seq":25,"tick":18,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e3","targetId":"h1"}},{"seq":26,"tick":18,"type":"combat.unit_moved","data":{"unitId":"h4","toX":4.85,"toY":5.6,"purpose":"engage"}},{"seq":27,"tick":18,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:ambush:e0","roll":{"d20":14,"modifier":7,"total":21,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":28,"tick":18,"type":"combat.damage_applied","cause":27,"data":{"targetId":"disp_3:ambush:e0","amount":6,"kind":"weapon","hpAfter":2}},{"seq":29,"tick":18,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:ambush:e0","roll":{"d20":3,"modifier":2,"total":5,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":30,"tick":19,"type":"combat.unit_moved","data":{"unitId":"disp_3:ambush:e3","toX":6.35,"toY":5.65,"purpose":"engage"}},{"seq":31,"tick":19,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e3","targetId":"h1","roll":{"d20":20,"modifier":2,"total":22,"dc":17,"degree":"critSuccess","natStep":1},"flurryPenalty":0,"flanked":false}},{"seq":32,"tick":19,"type":"combat.damage_applied","cause":31,"data":{"targetId":"h1","amount":6,"kind":"weapon","hpAfter":22}},{"seq":33,"tick":19,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e3","targetId":"h1","roll":{"d20":5,"modifier":-3,"total":2,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":34,"tick":21,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"disp_3:ambush:e1","targetId":"h1"}},{"seq":35,"tick":25,"type":"combat.unit_moved","data":{"unitId":"disp_3:ambush:e2","toX":6.37,"toY":5.36,"purpose":"engage"}},{"seq":36,"tick":25,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e2","targetId":"h1","roll":{"d20":20,"modifier":2,"total":22,"dc":17,"degree":"critSuccess","natStep":1},"flurryPenalty":0,"flanked":false}},{"seq":37,"tick":25,"type":"combat.damage_applied","cause":36,"data":{"targetId":"h1","amount":4,"kind":"weapon","hpAfter":18}},{"seq":38,"tick":25,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e2","targetId":"h1","roll":{"d20":5,"modifier":-3,"total":2,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":39,"tick":32,"type":"combat.unit_moved","data":{"unitId":"disp_3:ambush:e1","toX":6.34,"toY":5.16,"purpose":"engage"}},{"seq":40,"tick":32,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e1","targetId":"h1","roll":{"d20":7,"modifier":2,"total":9,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":41,"tick":32,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e1","targetId":"h1","roll":{"d20":9,"modifier":-3,"total":6,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":42,"tick":34,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h2","targetId":"disp_3:ambush:e0"}},{"seq":43,"tick":34,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:ambush:e0","roll":{"d20":10,"modifier":9,"total":19,"dc":13,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":44,"tick":34,"type":"combat.damage_applied","cause":43,"data":{"targetId":"disp_3:ambush:e0","amount":8,"kind":"weapon","hpAfter":0}},{"seq":45,"tick":34,"type":"combat.unit_died","cause":44,"data":{"unitId":"disp_3:ambush:e0"}},{"seq":46,"tick":37,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:ambush:e1"}},{"seq":47,"tick":37,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:ambush:e1","roll":{"d20":3,"modifier":9,"total":12,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":48,"tick":37,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:ambush:e1","roll":{"d20":4,"modifier":4,"total":8,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":49,"tick":38,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:ambush:e3"}},{"seq":50,"tick":38,"type":"combat.unit_moved","data":{"unitId":"h4","toX":5,"toY":5.6,"purpose":"engage"}},{"seq":51,"tick":38,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:ambush:e3","roll":{"d20":19,"modifier":7,"total":26,"dc":13,"degree":"critSuccess","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":52,"tick":38,"type":"combat.damage_applied","cause":51,"data":{"targetId":"disp_3:ambush:e3","amount":10,"kind":"weapon","hpAfter":0}},{"seq":53,"tick":38,"type":"combat.unit_died","cause":52,"data":{"unitId":"disp_3:ambush:e3"}},{"seq":54,"tick":45,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e2","targetId":"h1","roll":{"d20":13,"modifier":2,"total":15,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":55,"tick":45,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e2","targetId":"h1","roll":{"d20":3,"modifier":-3,"total":0,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":56,"tick":52,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e1","targetId":"h1","roll":{"d20":11,"modifier":2,"total":13,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":57,"tick":52,"type":"combat.attack_resolved","data":{"attackerId":"disp_3:ambush:e1","targetId":"h1","roll":{"d20":20,"modifier":-3,"total":17,"dc":17,"degree":"critSuccess","natStep":1},"flurryPenalty":-5,"flanked":false}},{"seq":58,"tick":52,"type":"combat.damage_applied","cause":57,"data":{"targetId":"h1","amount":8,"kind":"weapon","hpAfter":10}},{"seq":59,"tick":54,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h2","targetId":"disp_3:ambush:e2"}},{"seq":60,"tick":54,"type":"combat.unit_moved","data":{"unitId":"h2","toX":5.05,"toY":5.67,"purpose":"engage"}},{"seq":61,"tick":54,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:ambush:e2","roll":{"d20":2,"modifier":9,"total":11,"dc":13,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":62,"tick":54,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_3:ambush:e2","roll":{"d20":9,"modifier":5,"total":14,"dc":13,"degree":"success","natStep":0},"flurryPenalty":-4,"flanked":false}},{"seq":63,"tick":54,"type":"combat.damage_applied","cause":62,"data":{"targetId":"disp_3:ambush:e2","amount":4,"kind":"weapon","hpAfter":4}},{"seq":64,"tick":57,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h1","targetId":"disp_3:ambush:e2"}},{"seq":65,"tick":57,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_3:ambush:e2","roll":{"d20":16,"modifier":9,"total":25,"dc":13,"degree":"critSuccess","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":66,"tick":57,"type":"combat.damage_applied","cause":65,"data":{"targetId":"disp_3:ambush:e2","amount":22,"kind":"weapon","hpAfter":0}},{"seq":67,"tick":57,"type":"combat.unit_died","cause":66,"data":{"unitId":"disp_3:ambush:e2"}},{"seq":68,"tick":58,"type":"combat.unit_engaged","cause":0,"data":{"unitId":"h4","targetId":"disp_3:ambush:e1"}},{"seq":69,"tick":58,"type":"combat.attack_resolved","data":{"attackerId":"h4","targetId":"disp_3:ambush:e1","roll":{"d20":20,"modifier":7,"total":27,"dc":13,"degree":"critSuccess","natStep":1},"flurryPenalty":0,"flanked":false}},{"seq":70,"tick":58,"type":"combat.damage_applied","cause":69,"data":{"targetId":"disp_3:ambush:e1","amount":14,"kind":"weapon","hpAfter":0}},{"seq":71,"tick":58,"type":"combat.unit_died","cause":70,"data":{"unitId":"disp_3:ambush:e1"}},{"seq":72,"tick":58,"type":"combat.ended","data":{"combatId":"disp_3:ambush","result":"victory","ticks":58}}]},{"key":"boss","label":"Dungeon — the deep room","site":"dungeon","siteName":"t_small_04:r9","result":"victory","ticks":134,"spawns":[{"unitId":"h1","side":"heroes","baseId":"h1","name":"Torvald","maxHp":30,"x":2,"y":4,"speed":5,"weaponRange":1},{"unitId":"h2","side":"heroes","baseId":"h2","name":"Sella","maxHp":24,"x":2,"y":5,"speed":5,"weaponRange":1},{"unitId":"h3","side":"heroes","baseId":"h3","name":"Bryn","maxHp":22,"x":2,"y":6,"speed":5,"weaponRange":6},{"unitId":"disp_d1:r9e0","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":4,"speed":5,"weaponRange":1},{"unitId":"disp_d1:r9e1","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":5,"speed":5,"weaponRange":1},{"unitId":"disp_d1:r9e2","side":"enemies","baseId":"1","name":"Goblin","maxHp":8,"x":12,"y":6,"speed":5,"weaponRange":1}],"events":[{"seq":216,"tick":0,"type":"combat.started","data":{"combatId":"disp_d1:f9","roomId":"t_small_gorse:r9","sideA":["h1","h2","h3"],"sideB":["disp_d1:r9e0","disp_d1:r9e1","disp_d1:r9e2"]}},{"seq":217,"tick":1,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"h3","targetId":"disp_d1:r9e2"}},{"seq":218,"tick":4,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e2","targetId":"h1"}},{"seq":219,"tick":7,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":11,"modifier":-3,"total":8,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":220,"tick":7,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":11,"modifier":-3,"total":8,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":221,"tick":9,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e0","targetId":"h1"}},{"seq":222,"tick":10,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"h1","targetId":"disp_d1:r9e0"}},{"seq":223,"tick":14,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"h2","targetId":"disp_d1:r9e2"}},{"seq":224,"tick":15,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e1","targetId":"h1"}},{"seq":225,"tick":16,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h1","roll":{"d20":8,"modifier":6,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":226,"tick":16,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h1","roll":{"d20":5,"modifier":1,"total":6,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":227,"tick":18,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":7.35,"toY":4,"purpose":"engage"}},{"seq":228,"tick":18,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h1","roll":{"d20":14,"modifier":3,"total":17,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":229,"tick":18,"type":"combat.damage_applied","cause":228,"data":{"targetId":"h1","amount":3,"kind":"weapon","hpAfter":0}},{"seq":230,"tick":18,"type":"combat.unit_downed","cause":229,"data":{"unitId":"h1","dyingValue":1}},{"seq":231,"tick":18,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e1","targetId":"h2"}},{"seq":232,"tick":19,"type":"combat.unit_moved","data":{"unitId":"h2","toX":4.82,"toY":4.76,"purpose":"engage"}},{"seq":233,"tick":19,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":2,"modifier":1,"total":3,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":234,"tick":19,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":18,"modifier":1,"total":19,"dc":16,"degree":"success","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":235,"tick":19,"type":"combat.damage_applied","cause":234,"data":{"targetId":"disp_d1:r9e2","amount":5,"kind":"weapon","hpAfter":17}},{"seq":236,"tick":26,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e1","toX":6.17,"toY":4.76,"purpose":"engage"}},{"seq":237,"tick":26,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e1","targetId":"h2","roll":{"d20":4,"modifier":3,"total":7,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":238,"tick":26,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e1","targetId":"h2","roll":{"d20":11,"modifier":-2,"total":9,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":239,"tick":27,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":6,"modifier":-3,"total":3,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":240,"tick":27,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":10,"modifier":-3,"total":7,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":241,"tick":30,"type":"combat.dying_check_resolved","data":{"unitId":"h1","roll":{"d20":19,"modifier":0,"total":19,"dc":11,"degree":"success","natStep":0},"dyingAfter":0}},{"seq":242,"tick":31,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"h1","targetId":"disp_d1:r9e1"}},{"seq":243,"tick":31,"type":"combat.attack_resolved","data":{"attackerId":"h1","targetId":"disp_d1:r9e1","roll":{"d20":17,"modifier":-1,"total":16,"dc":14,"degree":"success","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":244,"tick":31,"type":"combat.damage_applied","cause":243,"data":{"targetId":"disp_d1:r9e1","amount":10,"kind":"weapon","hpAfter":0}},{"seq":245,"tick":31,"type":"combat.unit_died","cause":244,"data":{"unitId":"disp_d1:r9e1"}},{"seq":246,"tick":36,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h1","roll":{"d20":17,"modifier":6,"total":23,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":247,"tick":36,"type":"combat.damage_applied","cause":246,"data":{"targetId":"h1","amount":3,"kind":"weapon","hpAfter":0}},{"seq":248,"tick":36,"type":"combat.unit_downed","cause":247,"data":{"unitId":"h1","dyingValue":2}},{"seq":249,"tick":38,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e0","targetId":"h2"}},{"seq":250,"tick":39,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":3,"modifier":1,"total":4,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":251,"tick":39,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":6,"modifier":1,"total":7,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":252,"tick":40,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":6.11,"toY":4.37,"purpose":"engage"}},{"seq":253,"tick":40,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":4,"modifier":3,"total":7,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":254,"tick":40,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":6,"modifier":-2,"total":4,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":255,"tick":47,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":14,"modifier":-3,"total":11,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":256,"tick":47,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":1,"modifier":-3,"total":-2,"dc":16,"degree":"critFailure","natStep":-1},"flurryPenalty":-10,"flanked":false}},{"seq":257,"tick":56,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e2","targetId":"h2"}},{"seq":258,"tick":56,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h2","roll":{"d20":9,"modifier":6,"total":15,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":259,"tick":56,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h2","roll":{"d20":13,"modifier":1,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":260,"tick":59,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":15,"modifier":1,"total":16,"dc":16,"degree":"success","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":261,"tick":59,"type":"combat.damage_applied","cause":260,"data":{"targetId":"disp_d1:r9e2","amount":7,"kind":"weapon","hpAfter":10}},{"seq":262,"tick":59,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":19,"modifier":1,"total":20,"dc":16,"degree":"success","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":263,"tick":59,"type":"combat.damage_applied","cause":262,"data":{"targetId":"disp_d1:r9e2","amount":4,"kind":"weapon","hpAfter":6}},{"seq":264,"tick":60,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":3,"modifier":3,"total":6,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":265,"tick":60,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":16,"modifier":-2,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":266,"tick":60,"type":"combat.dying_check_resolved","data":{"unitId":"h1","roll":{"d20":4,"modifier":0,"total":4,"dc":12,"degree":"failure","natStep":0},"dyingAfter":3}},{"seq":267,"tick":67,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":4,"modifier":-3,"total":1,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":268,"tick":67,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":18,"modifier":-3,"total":15,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":269,"tick":76,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h2","roll":{"d20":1,"modifier":6,"total":7,"dc":17,"degree":"critFailure","natStep":-1},"flurryPenalty":0,"flanked":false}},{"seq":270,"tick":76,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h2","roll":{"d20":4,"modifier":1,"total":5,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":271,"tick":79,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":3,"modifier":1,"total":4,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":272,"tick":79,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e2","roll":{"d20":10,"modifier":1,"total":11,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":false}},{"seq":273,"tick":80,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":7,"modifier":3,"total":10,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":274,"tick":80,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h2","roll":{"d20":16,"modifier":-2,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":275,"tick":87,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":3,"modifier":-3,"total":0,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":276,"tick":87,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":6,"modifier":-3,"total":3,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":277,"tick":90,"type":"combat.dying_check_resolved","data":{"unitId":"h1","roll":{"d20":12,"modifier":0,"total":12,"dc":13,"degree":"failure","natStep":0},"dyingAfter":4}},{"seq":278,"tick":90,"type":"combat.unit_died","data":{"unitId":"h1"}},{"seq":279,"tick":96,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e2","targetId":"h2","roll":{"d20":14,"modifier":6,"total":20,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":280,"tick":96,"type":"combat.damage_applied","cause":279,"data":{"targetId":"h2","amount":3,"kind":"weapon","hpAfter":0}},{"seq":281,"tick":96,"type":"combat.unit_downed","cause":280,"data":{"unitId":"h2","dyingValue":2}},{"seq":282,"tick":96,"type":"combat.dying_check_resolved","data":{"unitId":"h2","roll":{"d20":14,"modifier":0,"total":14,"dc":12,"degree":"success","natStep":0},"dyingAfter":1}},{"seq":283,"tick":100,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e0","targetId":"h3"}},{"seq":284,"tick":101,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":5.53,"toY":5.18,"purpose":"engage"}},{"seq":285,"tick":101,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h3","roll":{"d20":5,"modifier":3,"total":8,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":286,"tick":101,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h3","roll":{"d20":16,"modifier":-2,"total":14,"dc":17,"degree":"failure","natStep":0},"flurryPenalty":-5,"flanked":false}},{"seq":287,"tick":107,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":11,"modifier":-3,"total":8,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":288,"tick":107,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":9,"modifier":-3,"total":6,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":289,"tick":116,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"disp_d1:r9e2","targetId":"h3"}},{"seq":290,"tick":117,"type":"combat.reaction_triggered","data":{"unitId":"disp_d1:r9e0","reactionId":"attackOfOpportunity","againstId":"h3"}},{"seq":291,"tick":117,"type":"combat.attack_resolved","cause":290,"data":{"attackerId":"disp_d1:r9e0","targetId":"h3","roll":{"d20":17,"modifier":3,"total":20,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":292,"tick":117,"type":"combat.damage_applied","cause":291,"data":{"targetId":"h3","amount":1,"kind":"weapon","hpAfter":23}},{"seq":293,"tick":117,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":5.16,"toY":5.66,"purpose":"engage"}},{"seq":294,"tick":118,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":4.85,"toY":6.05,"purpose":"engage"}},{"seq":295,"tick":119,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":4.54,"toY":6.44,"purpose":"engage"}},{"seq":296,"tick":120,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":4.22,"toY":6.83,"purpose":"engage"}},{"seq":297,"tick":120,"type":"combat.dying_check_resolved","data":{"unitId":"h1","roll":{"d20":3,"modifier":0,"total":3,"dc":14,"degree":"critFailure","natStep":0},"dyingAfter":6}},{"seq":298,"tick":120,"type":"combat.unit_died","data":{"unitId":"h1"}},{"seq":299,"tick":121,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":3.9,"toY":7.21,"purpose":"engage"}},{"seq":300,"tick":121,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h3","roll":{"d20":15,"modifier":3,"total":18,"dc":17,"degree":"success","natStep":0},"flurryPenalty":0,"flanked":false}},{"seq":301,"tick":121,"type":"combat.damage_applied","cause":300,"data":{"targetId":"h3","amount":2,"kind":"weapon","hpAfter":21}},{"seq":302,"tick":121,"type":"combat.attack_resolved","data":{"attackerId":"disp_d1:r9e0","targetId":"h3","roll":{"d20":1,"modifier":-2,"total":-1,"dc":17,"degree":"critFailure","natStep":-1},"flurryPenalty":-5,"flanked":false}},{"seq":303,"tick":122,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":3.58,"toY":7.59,"purpose":"engage"}},{"seq":304,"tick":123,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":3.25,"toY":7.97,"purpose":"engage"}},{"seq":305,"tick":124,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":2.93,"toY":8.35,"purpose":"engage"}},{"seq":306,"tick":125,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":2.6,"toY":8.73,"purpose":"engage"}},{"seq":307,"tick":126,"type":"combat.unit_moved","data":{"unitId":"disp_d1:r9e0","toX":2.28,"toY":9.11,"purpose":"engage"}},{"seq":308,"tick":126,"type":"combat.dying_check_resolved","data":{"unitId":"h2","roll":{"d20":16,"modifier":0,"total":16,"dc":11,"degree":"success","natStep":0},"dyingAfter":0}},{"seq":309,"tick":127,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":2,"modifier":-3,"total":-1,"dc":16,"degree":"failure","natStep":0},"flurryPenalty":-10,"flanked":false}},{"seq":310,"tick":127,"type":"combat.attack_resolved","data":{"attackerId":"h3","targetId":"disp_d1:r9e2","roll":{"d20":20,"modifier":-3,"total":17,"dc":16,"degree":"critSuccess","natStep":1},"flurryPenalty":-10,"flanked":false}},{"seq":311,"tick":127,"type":"combat.damage_applied","cause":310,"data":{"targetId":"disp_d1:r9e2","amount":6,"kind":"weapon","hpAfter":0}},{"seq":312,"tick":127,"type":"combat.unit_died","cause":311,"data":{"unitId":"disp_d1:r9e2"}},{"seq":313,"tick":127,"type":"combat.unit_engaged","cause":216,"data":{"unitId":"h2","targetId":"disp_d1:r9e0"}},{"seq":314,"tick":134,"type":"combat.unit_moved","data":{"unitId":"h2","toX":2.96,"toY":7.94,"purpose":"engage"}},{"seq":315,"tick":134,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e0","roll":{"d20":12,"modifier":1,"total":13,"dc":14,"degree":"failure","natStep":0},"flurryPenalty":-8,"flanked":true}},{"seq":316,"tick":134,"type":"combat.attack_resolved","data":{"attackerId":"h2","targetId":"disp_d1:r9e0","roll":{"d20":19,"modifier":1,"total":20,"dc":14,"degree":"success","natStep":0},"flurryPenalty":-8,"flanked":true,"sneakDice":6}},{"seq":317,"tick":134,"type":"combat.damage_applied","cause":316,"data":{"targetId":"disp_d1:r9e0","amount":13,"kind":"weapon","hpAfter":0}},{"seq":318,"tick":134,"type":"combat.unit_died","cause":317,"data":{"unitId":"disp_d1:r9e0"}},{"seq":319,"tick":134,"type":"combat.ended","data":{"combatId":"disp_d1:f9","result":"victory","ticks":134}}]}],"dispatchTimeline":{"totalTicks":499,"outcome":"retreated","segments":[{"id":"disp_d1:f2","start":30,"end":66},{"id":"disp_d1:f7","start":86,"end":163},{"id":"disp_d1:f4","start":189,"end":326},{"id":"disp_d1:f9","start":355,"end":489}]}};</script>
+
+<div class="sheet aged" style="--tilt:0.2deg">
+  <span class="pin"></span>
+  <h3 class="head">The five design questions, answered by the comp</h3>
+
+  <div class="q"><b>1 · What replaces the dungeon sketch for a surface fight — and do dungeon fights get the field instead of, or beside, the room graph?</b>
+  <b style="font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:400">Beside — one component, two mountings.</b>
+  The graph answers <em>where</em>; the field answers <em>what happened there</em>. On a dungeon run the graph stays exactly as it is, the room in play is ringed in red ink, and the field sits under it (toggle “Beside the room graph” above). A surface fight has no graph, so the field takes its place and the sheet header names the site — <em>the road</em>, <em>the camp</em>. Nothing about the field changes between the two; only its mounting does.</div>
+
+  <div class="q"><b>2 · How does a fight read at 16×?</b>
+  <b style="font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:400">It doesn’t, and pretending otherwise is the lie.</b>
+  Measured: a median fight at 16× is 0.2 s; a whole dispatch is 1–3 s. So the comp splits the transport in two. <b>Watch</b> (¼×, ½×, 1×) animates the field. <b>Skim</b> (4×, 16×) freezes the field to its current state, marks it, and lets the record carry the fight — 16× is the skip control it always really was. Try 16× above: the field stops pretending. Fights are 5–14 s at 1×, so ½× is the honest default for watching, and the comp opens there.</div>
+
+  <div class="q"><b>3 · How do you show a stalemate forming?</b>
+  <b style="font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:400">With the silence gauge, not a bespoke visual.</b>
+  <span class="mono">stalemate_forced</span> fires after 300 ticks without damage. Fights end in 32–143. Every committed harness scenario reports <span class="mono">stalemateRate: 0</span>. So the gauge simply draws ticks-since-last-wound against that 300-tick window — it is one derived number, it costs nothing, it would catch a stalemate forming if one ever did, and in the meantime it is the <em>kiting</em> read: silence plus motion is exactly the R3 failure. The churn gauge under it counts <span class="mono">unit_engaged</span> in the last 5 s, which is the target-thrash tell (it is the second-most-common event in a fight and the feed currently drops it entirely).</div>
+
+  <div class="q"><b>4 · Flat mode — the view is DATA, not ornament. What survives?</b>
+  <b style="font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:400">Everything that is a fact.</b>
+  Flat strips vellum, grain, tilt, pins, and the drawn-by-hand stroke. It keeps the full arena grid, the rule and its tick marks, the scale bar, every unit glyph, every name, every HP number <em>and</em> bar, engagement lines, the silence and churn gauges, the marginalia text, and the whole feed. Side is carried by glyph <em>form</em> (heroes solid, enemies hollow) and by the label, never by colour — so the frozen status set stays label-paired and never load-bearing alone. Toggle it top-right; nothing disappears but the furniture.</div>
+
+  <div class="q"><b>5 · Does the arena need scale and a legend?</b>
+  <b style="font-family:var(--gv-serif);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:400">Yes — and it needs the engagement radius most of all.</b>
+  1 unit = 5 ft, so the 14×10 arena is 70 × 50 ft. The grid rules every unit and heavies every other; the bottom margin carries a 5-unit scale bar reading “25 ft”. <span class="mono">ENGAGEMENT_RANGE</span> = 1.5 u = 7.5 ft is what decides whether a reaction strike can happen at all, so it is drawn as a ring — but only around the <b>selected</b> unit, because eight of them at once is noise. Click any glyph or roster row. Ranged units also get their weapon-range ring, which is what makes a standoff legible as a deliberate distance rather than a unit failing to close.</div>
+</div>
+
+<div class="sheet">
+  <span class="pin"></span><span class="pin r"></span>
+  <h3 class="head">What I need you to rule on <span class="hsub">these are new; the two taken decisions stand untouched</span></h3>
+
+  <div class="dec"><b>D1 · Motion: interpolate and admit it, or emit more?</b>
+    <span><b>My recommendation: interpolate, and put a filenote on the sheet.</b> The field draws each unit from its spawn position, eases toward the next recorded waypoint, and holds. Motion between waypoints is <em>drawn, not recorded</em> — presentation interpreting facts, which is exactly constraint 4. Cost: zero sim change, zero stream growth, no harness diff.</span>
+    <ul class="tight">
+      <li><b>The alternative</b> — emit <span class="mono">unit_moved</span> on purpose-changes and populate <span class="mono">flee</span>/<span class="mono">reposition</span> — is a <em>behaviour</em> change, moves every harness snapshot, and roughly doubles fight-stream size (a 4v4 is ~72 events, 9 of them moves). That is R1 territory for a benefit we cannot yet judge, <em>because we have never watched a fight.</em> I'd rather ship the view, watch, and then decide.</li>
+      <li><b>One small ask if you take the recommendation:</b> add <span class="mono">speed</span> to the <span class="mono">unit_spawned</span> payload alongside the approved fields. It makes the interpolation <em>derivable</em> rather than guessed, and it is the same additive event you already approved — not a second schema decision.</li>
+    </ul>
+  </div>
+
+  <div class="dec"><b>D2 · Is “skim mode” right, or should 4×/16× still animate?</b>
+    <span>The comp freezes the field at 4× and 16× and hands the fight to the feed. The alternative is to keep animating and accept that it is illegible. I think freezing is honest and makes 16× useful as the skip it is — but it is a real product call about what watching means, and it is yours.</span>
+  </div>
+
+  <div class="dec"><b>D3 · Does the live beat-feed bug get fixed by <span class="mono">unit_spawned</span> alone, or do we also cut the noise?</b>
+    <span><span class="mono">unit_spawned</span> carrying <span class="mono">name</span> fixes <span class="mono">disp_1:camp_e0</span> → <span class="mono">Goblin</span> at the source, for every consumer — that part is settled. The open question: enemies are currently indistinguishable from each other (“Goblin” ×4). The comp disambiguates them as <b>Goblin ɪ, ɪɪ, ɪɪɪ</b> from spawn order, in presentation only, no sim change. Say yes and I'll write it into the brief.</span>
+  </div>
+
+  <div class="dec"><b>D4 · Scope check — three things I found that are <em>not</em> brief #12, so I have not designed them in:</b>
+    <ul class="tight">
+      <li><span class="mono">combat.unit_fled</span> is in the frozen vocabulary and in <span class="mono">interpret.ts</span>, but nothing emits it. Dead branch, or unbuilt feature?</li>
+      <li><span class="mono">stalemate_forced.resolution</span> can only ever be <span class="mono">'byState'</span>; <span class="mono">'attackersWithdraw'</span> is unreachable.</li>
+      <li>Reaction strikes are nearly extinct — <b>1</b> <span class="mono">reaction_triggered</span> across 40 4v4 fights. Units close and swing in the same tick, so almost nothing ever provokes. If the view is meant to make reactions visible, there may be nothing to see.</li>
+    </ul>
+    <span>All three are combat-model questions, not view questions. I'd log them and keep #12 to the view — confirm and I'll record them in the ledger rather than chase them.</span>
+  </div>
+
+  <p class="foot">On approval: brief #12 goes to <span class="mono">output/briefs/</span> and <span class="mono">migration/briefs/</span> together, with the schema-addition rationale in its decision record and the <span class="mono">EVENT_TYPE_MANIFEST</span> snapshot confirmed to <em>grow</em>. Then code.</p>
+</div>
+
+<div class="sheet aged">
+  <h3 class="head">Provenance <span class="hsub">so none of the above has to be taken on faith</span></h3>
+  <p style="margin:0;font-size:13px">Repo <span class="mono">C:\GuildVigilWeb</span> at <span class="mono">0d3fca1d</span>. Baseline re-run before anything was touched: <b class="ok">323 unit + 9 e2e green</b>, <span class="mono">tsc --noEmit</span> clean, bundle 1,206.22 kB. Every number on this page came from running the real sim: the three fights in the comp are genuine <span class="mono">runEncounter</span> / <span class="mono">runDungeonDispatch</span> output at production <span class="mono">BASE_SPEED</span>, replayed event-for-event. Duration and stalemate figures are from the committed harness snapshots. The scratch probes were deleted; the working tree is unchanged.</p>
+</div>
+
+</div>
+<script>
+(function(){
+  const D = GV_DATA, A = D.arena;
+  const byKey = {}; D.fights.forEach(f => byKey[f.key] = f);
+  let cur = byKey.camp, speed = 0.5, playing = true, tick = 0, sel = null, mount = 'surface', acc = 0;
+
+  // ── Roman-ish disambiguation of same-named units (presentation only) ──
+  const ROM = ['ɪ','ɪɪ','ɪɪɪ','ɪᴠ','ᴠ','ᴠɪ'];
+  function nameMap(f){
+    const counts = {}, seen = {}, out = {};
+    f.spawns.forEach(s => counts[s.name] = (counts[s.name]||0)+1);
+    f.spawns.forEach(s => {
+      if (counts[s.name] > 1){ seen[s.name] = (seen[s.name]||0); out[s.unitId] = s.name+' '+ROM[seen[s.name]++]; }
+      else out[s.unitId] = s.name;
+    });
+    return out;
+  }
+
+  // ── Position tracks: spawn + every recorded waypoint. Everything between is drawn, not recorded. ──
+  function tracks(f){
+    const t = {};
+    f.spawns.forEach(s => t[s.unitId] = [{tick:0, x:s.x, y:s.y}]);
+    f.events.forEach(e => { if (e.type === 'combat.unit_moved' && t[e.data.unitId])
+      t[e.data.unitId].push({tick:e.tick, x:e.data.toX, y:e.data.toY}); });
+    return t;
+  }
+  function posAt(track, tk){
+    if (!track || !track.length) return {x:0,y:0};
+    if (tk <= track[0].tick) return track[0];
+    for (let i=0;i<track.length-1;i++){
+      const a = track[i], b = track[i+1];
+      if (tk >= a.tick && tk <= b.tick){
+        const span = b.tick - a.tick || 1, u = (tk - a.tick)/span, e = u<.5 ? 2*u*u : 1-Math.pow(-2*u+2,2)/2;
+        return {x:a.x+(b.x-a.x)*e, y:a.y+(b.y-a.y)*e};
+      }
+    }
+    return track[track.length-1];
+  }
+
+  // ── Derived state at a tick ──
+  function stateAt(f, tk){
+    const nm = f._nm, st = {};
+    f.spawns.forEach(s => st[s.unitId] = {...s, hp:s.maxHp, target:null, status:'up', conds:[], label:nm[s.unitId]});
+    const recent = [], engagedIn = [];
+    for (const e of f.events){
+      if (e.tick > tk) break;
+      const d = e.data;
+      switch(e.type){
+        case 'combat.damage_applied': if (st[d.targetId]) st[d.targetId].hp = d.hpAfter; break;
+        case 'combat.healing_applied': if (st[d.targetId]) st[d.targetId].hp = d.hpAfter; break;
+        case 'combat.unit_engaged': if (st[d.unitId]) st[d.unitId].target = d.targetId; engagedIn.push(e.tick); break;
+        case 'combat.unit_downed': if (st[d.unitId]) st[d.unitId].status = 'down'; break;
+        case 'combat.unit_died': if (st[d.unitId]) st[d.unitId].status = 'dead'; break;
+        case 'combat.unit_fled': if (st[d.unitId]) st[d.unitId].status = 'fled'; break;
+        case 'combat.condition_applied': if (st[d.targetId]) st[d.targetId].conds.push(d.conditionId); break;
+        case 'combat.condition_expired': if (st[d.targetId]) st[d.targetId].conds = st[d.targetId].conds.filter(c=>c!==d.conditionId); break;
+      }
+      if (e.tick >= tk - 2 && (e.type==='combat.attack_resolved' || e.type==='combat.reaction_triggered' || e.type==='combat.damage_applied')) recent.push(e);
+    }
+    // silence window: ticks since the last wound or heal
+    let lastProgress = 0;
+    for (const e of f.events){ if (e.tick > tk) break;
+      if (e.type==='combat.damage_applied'||e.type==='combat.healing_applied') lastProgress = e.tick; }
+    st.__silence = tk - lastProgress;
+    st.__churn = engagedIn.filter(t => t > tk - 50).length;
+    st.__recent = recent;
+    return st;
+  }
+
+  // ── Field rendering ──
+  const PAD = {l:44, r:44, t:30, b:80}, W = 700, H = 520;
+  const SX = (W - PAD.l - PAD.r) / A.width, SY = (H - PAD.t - PAD.b) / A.height;
+  const px = x => PAD.l + x*SX, py = y => PAD.t + y*SY;
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function hpClass(r){ return r > .6 ? 'm0' : r > .3 ? 'm1' : r > 0 ? 'm2' : 'm3'; }
+
+  function drawField(f, st, tk, skim){
+    const trk = f._trk, o = [];
+    o.push(`<defs><clipPath id="arena"><rect x="${px(0)}" y="${py(0)}" width="${A.width*SX}" height="${A.height*SY}"/></clipPath></defs>`);
+    // vellum ground + rule
+    o.push(`<rect x="${px(0)}" y="${py(0)}" width="${A.width*SX}" height="${A.height*SY}" fill="#00000006" stroke="#3a2d1c" stroke-width="1.4"/>`);
+    // grid every unit (5 ft), heavier every 2
+    for (let x=1;x<A.width;x++) o.push(`<line x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(A.height)}" stroke="#3a2d1c" stroke-width="${x%2?0.4:0.7}" opacity="${x%2?0.14:0.24}"/>`);
+    for (let y=1;y<A.height;y++) o.push(`<line x1="${px(0)}" y1="${py(y)}" x2="${px(A.width)}" y2="${py(y)}" stroke="#3a2d1c" stroke-width="${y%2?0.4:0.7}" opacity="${y%2?0.14:0.24}"/>`);
+    // rule tick marks
+    for (let x=0;x<=A.width;x++) o.push(`<line x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(0)-(x%2?3:6)}" stroke="#3a2d1c" stroke-width="1"/>`);
+    for (let y=0;y<=A.height;y++) o.push(`<line x1="${px(0)}" y1="${py(y)}" x2="${px(0)-(y%2?3:6)}" y2="${py(y)}" stroke="#3a2d1c" stroke-width="1"/>`);
+    // muster lines
+    [[A.sideAx,'muster a'],[A.sideBx,'muster b']].forEach(([x,lab])=>{
+      o.push(`<line x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(A.height)}" stroke="#7d6a4c" stroke-width="0.9" stroke-dasharray="2 6" opacity="0.65"/>`);
+      o.push(`<text x="${px(x)}" y="${py(0)-11}" font-family="'Segoe UI',system-ui,sans-serif" font-size="8.5" letter-spacing="1.4" text-anchor="middle" fill="#7d6a4c">${lab.toUpperCase()}</text>`);
+    });
+
+    const units = f.spawns.map(s => ({...s, ...st[s.unitId], p: posAt(trk[s.unitId], tk)}));
+    const P = {}; units.forEach(u => P[u.unitId] = u.p);
+
+    // selection rings — engagement first so it sits under everything
+    if (sel && P[sel] && st[sel] && st[sel].status !== 'dead'){
+      const u = units.find(x=>x.unitId===sel);
+      o.push(`<circle cx="${px(u.p.x)}" cy="${py(u.p.y)}" r="${A.engagementRange*SX}" fill="#3a2d1c08" stroke="#3a2d1c" stroke-width="0.9" stroke-dasharray="3 3" opacity="0.75"/>`);
+      o.push(`<text x="${px(u.p.x)}" y="${py(u.p.y)+A.engagementRange*SY+11}" font-size="8.5" font-family="'Segoe UI',system-ui,sans-serif" letter-spacing="1.1" text-anchor="middle" fill="#5c4a30">ENGAGE 7.5 FT</text>`);
+      if (u.weaponRange > A.engagementRange)
+        o.push(`<circle cx="${px(u.p.x)}" cy="${py(u.p.y)}" r="${u.weaponRange*SX}" fill="none" stroke="#5c4a30" stroke-width="0.8" stroke-dasharray="1 5" opacity="0.6" clip-path="url(#arena)"/>`);
+    }
+
+    // engagement lines (who is looking at whom) — the target-thrash tell
+    units.forEach(u => {
+      if (!u.target || !P[u.target] || u.status==='dead' || u.status==='down') return;
+      const t = P[u.target];
+      o.push(`<line x1="${px(u.p.x)}" y1="${py(u.p.y)}" x2="${px(t.x)}" y2="${py(t.y)}" stroke="#3a2d1c" stroke-width="0.9" stroke-dasharray="3 4" opacity="0.28"/>`);
+    });
+
+    // strikes landing right now
+    if (!skim) st.__recent.forEach(e => {
+      const d = e.data;
+      if (e.type === 'combat.attack_resolved'){
+        const a = P[d.attackerId], t = P[d.targetId]; if (!a||!t) return;
+        const crit = d.roll.degree === 'critSuccess', miss = d.roll.degree === 'failure' || d.roll.degree === 'critFailure';
+        o.push(`<line x1="${px(a.x)}" y1="${py(a.y)}" x2="${px(t.x)}" y2="${py(t.y)}" stroke="#3a2d1c" stroke-width="${crit?2.6:1.5}" opacity="${miss?0.25:0.85}" ${miss?'stroke-dasharray="2 3"':''}/>`);
+        if (crit) o.push(`<circle cx="${px(t.x)}" cy="${py(t.y)}" r="13" fill="none" stroke="#3a2d1c" stroke-width="1.4"/>`);
+      }
+      if (e.type === 'combat.reaction_triggered'){
+        const a = P[d.unitId], t = P[d.againstId]; if (!a||!t) return;
+        o.push(`<line x1="${px(a.x)}" y1="${py(a.y)}" x2="${px(t.x)}" y2="${py(t.y)}" stroke="#3a2d1c" stroke-width="2.2" opacity="0.9" stroke-dasharray="6 3"/>`);
+      }
+      if (e.type === 'combat.damage_applied'){
+        const t = P[d.targetId]; if (!t) return;
+        o.push(`<text x="${px(t.x)+12}" y="${py(t.y)-13}" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="700" fill="#3a2d1c">−${d.amount}</text>`);
+      }
+    });
+
+    // Label displacement: units pile up in the melee scrum, so labels are pushed
+    // apart within their own side and joined to their glyph by a leader.
+    const lanes = {heroes:[], enemies:[]};
+    units.forEach(u => lanes[u.side].push(u));
+    const labelY = {};
+    ['heroes','enemies'].forEach(side => {
+      const list = lanes[side].map(u => ({id:u.unitId, y:py(u.p.y)})).sort((a,b)=>a.y-b.y);
+      let prev = -1e9;
+      list.forEach(e => { const y = Math.max(e.y, prev + 34); labelY[e.id] = y; prev = y; });
+      const overflow = prev - (py(A.height) - 6);
+      if (overflow > 0) list.forEach(e => labelY[e.id] -= overflow);
+    });
+
+    // units
+    units.forEach(u => {
+      const cx = px(u.p.x), cy = py(u.p.y), hero = u.side === 'heroes';
+      const dead = u.status === 'dead', down = u.status === 'down';
+      const g = [];
+      if (dead){
+        g.push(`<g opacity="0.4"><line x1="${cx-7}" y1="${cy-7}" x2="${cx+7}" y2="${cy+7}" stroke="#3a2d1c" stroke-width="2"/><line x1="${cx+7}" y1="${cy-7}" x2="${cx-7}" y2="${cy+7}" stroke="#3a2d1c" stroke-width="2"/></g>`);
+      } else if (hero){
+        g.push(`<circle cx="${cx}" cy="${cy}" r="8.5" fill="${down?'#ece0c2':'#3a2d1c'}" stroke="#3a2d1c" stroke-width="1.8"/>`);
+        if (down) g.push(`<line x1="${cx-8}" y1="${cy}" x2="${cx+8}" y2="${cy}" stroke="#3a2d1c" stroke-width="2.4"/>`);
+      } else {
+        g.push(`<circle cx="${cx}" cy="${cy}" r="8" fill="#ece0c2" stroke="#3a2d1c" stroke-width="2.2"/>`);
+        g.push(`<circle cx="${cx}" cy="${cy}" r="3" fill="#3a2d1c"/>`);
+      }
+      if (sel === u.unitId) g.push(`<circle cx="${cx}" cy="${cy}" r="13.5" fill="none" stroke="#9c3428" stroke-width="1.6"/>`);
+      o.push(`<g class="unit" data-id="${esc(u.unitId)}" style="cursor:pointer">${g.join('')}<circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/></g>`);
+
+      // labels: heroes read left, enemies read right — keeps the melee scrum in the middle clear
+      const anch = hero ? 'end' : 'start', lx = hero ? cx - 16 : cx + 16, ly = labelY[u.unitId];
+      const ratio = Math.max(0, u.hp) / u.maxHp;
+      const shade = ratio > .6 ? '#0ca30c' : ratio > .3 ? '#fab219' : ratio > 0 ? '#ec835a' : '#d03b3b';
+      if (Math.abs(ly - cy) > 7)
+        o.push(`<path d="M ${cx + (hero?-10:10)} ${cy} L ${lx} ${ly-4}" fill="none" stroke="#7d6a4c" stroke-width="0.7" opacity="0.55"/>`);
+      o.push(`<text x="${lx}" y="${ly-2}" text-anchor="${anch}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9.5" letter-spacing="1" fill="#3a2d1c" opacity="${dead?0.45:1}">${esc((u.label||'').toUpperCase())}</text>`);
+      if (!dead){
+        o.push(`<text x="${lx}" y="${ly+9}" text-anchor="${anch}" font-family="ui-monospace,Menlo,monospace" font-size="9.5" fill="#5c4a30">${Math.max(0,u.hp)}/${u.maxHp}${down?' DOWN':''}</text>`);
+        const bw = 30, bx = hero ? lx - bw : lx;
+        o.push(`<rect x="${bx}" y="${ly+12}" width="${bw}" height="3.4" fill="#00000012" stroke="#b3a075" stroke-width="0.5"/>`);
+        o.push(`<rect x="${bx}" y="${ly+12}" width="${bw*ratio}" height="3.4" fill="${shade}"/>`);
+      }
+    });
+
+    // bottom margin: scale bar + legend
+    const by = py(A.height) + 26;
+    o.push(`<line x1="${px(0)}" y1="${by}" x2="${px(5)}" y2="${by}" stroke="#3a2d1c" stroke-width="1.4"/>`);
+    o.push(`<line x1="${px(0)}" y1="${by-4}" x2="${px(0)}" y2="${by+4}" stroke="#3a2d1c" stroke-width="1.4"/>`);
+    o.push(`<line x1="${px(5)}" y1="${by-4}" x2="${px(5)}" y2="${by+4}" stroke="#3a2d1c" stroke-width="1.4"/>`);
+    o.push(`<text x="${px(2.5)}" y="${by+15}" text-anchor="middle" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1.2" fill="#5c4a30">25 FT</text>`);
+    const lgx = px(6.4);
+    o.push(`<circle cx="${lgx}" cy="${by-1}" r="6" fill="#3a2d1c"/><text x="${lgx+11}" y="${by+2.5}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#5c4a30">GUILD</text>`);
+    o.push(`<circle cx="${lgx+62}" cy="${by-1}" r="5.6" fill="#ece0c2" stroke="#3a2d1c" stroke-width="2"/><circle cx="${lgx+62}" cy="${by-1}" r="2.2" fill="#3a2d1c"/><text x="${lgx+73}" y="${by+2.5}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#5c4a30">ENEMY</text>`);
+    o.push(`<line x1="${lgx+128}" y1="${by-1}" x2="${lgx+152}" y2="${by-1}" stroke="#3a2d1c" stroke-width="0.9" stroke-dasharray="3 4" opacity="0.5"/><text x="${lgx+158}" y="${by+2.5}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#5c4a30">TARGETING</text>`);
+    o.push(`<text x="${px(A.width)}" y="${by+2.5}" text-anchor="end" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#7d6a4c">1 SQUARE = 5 FT</text>`);
+    o.push(`<text x="${px(A.width)}" y="${by+15}" text-anchor="end" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#7d6a4c">ARENA 70 × 50 FT</text>`);
+    o.push(`<circle cx="${lgx+4}" cy="${by+13}" r="5" fill="none" stroke="#3a2d1c" stroke-width="0.9" stroke-dasharray="3 3"/><text x="${lgx+15}" y="${by+16.5}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#5c4a30">ENGAGEMENT</text>`);
+    o.push(`<circle cx="${lgx+100}" cy="${by+13}" r="5" fill="none" stroke="#5c4a30" stroke-width="0.8" stroke-dasharray="1 4"/><text x="${lgx+111}" y="${by+16.5}" font-family="'Segoe UI',system-ui,sans-serif" font-size="9" letter-spacing="1" fill="#5c4a30">WEAPON REACH</text>`);
+
+    if (skim){
+      o.push(`<rect x="${px(0)}" y="${py(0)}" width="${A.width*SX}" height="${A.height*SY}" fill="#ece0c2" opacity="0.55"/>`);
+      o.push(`<text x="${px(A.width/2)}" y="${py(1.5)}" text-anchor="middle" font-family="'Segoe UI',system-ui,sans-serif" font-size="13" letter-spacing="3" fill="#5c4a30">SKIM — FIELD HELD</text>`);
+      o.push(`<text x="${px(A.width/2)}" y="${py(1.5)+20}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12.5" fill="#7d6a4c">at ${speed}× a fight is ${(cur.ticks/10/speed).toFixed(1)} s — the record carries it</text>`);
+    }
+    return o.join('');
+  }
+
+  // ── The beat feed, with names resolved from spawn facts ──
+  const DEG = {critFailure:'CRIT MISS', failure:'miss', success:'hit', critSuccess:'CRIT'};
+  function beat(e, nm){
+    const n = id => nm[id] || id, d = e.data, r = x => `${x.d20}+${x.modifier}=${x.total} vs DC ${x.dc}`;
+    switch(e.type){
+      case 'combat.started': return [`Combat: ${d.sideA.map(n).join(', ')} vs ${d.sideB.map(n).join(', ')}.`,'system'];
+      case 'combat.attack_resolved': { const x=[]; if(d.flanked)x.push('flanked'); if(d.sneakDice)x.push(`sneak ${d.sneakDice}d`);
+        return [`${n(d.attackerId)} → ${n(d.targetId)}: ${DEG[d.roll.degree]} (${r(d.roll)})${x.length?' ['+x.join(', ')+']':''}`,'neutral']; }
+      case 'combat.damage_applied': return [`${n(d.targetId)} takes ${d.amount} ${d.kind} (${d.hpAfter} hp left).`, d.hpAfter<=0?'bad':'neutral'];
+      case 'combat.healing_applied': return [`${n(d.targetId)} is healed ${d.amount} (${d.hpAfter} hp).`,'good'];
+      case 'combat.unit_downed': return [`${n(d.unitId)} goes DOWN (dying ${d.dyingValue}).`,'bad'];
+      case 'combat.unit_died': return [`${n(d.unitId)} is slain.`,'bad'];
+      case 'combat.dying_check_resolved': return [`${n(d.unitId)} rolls a death save (dying ${d.dyingAfter}).`, d.dyingAfter===0?'good':'bad'];
+      case 'combat.reaction_triggered': return [`${n(d.unitId)} reacts (${d.reactionId}) against ${n(d.againstId)}.`,'neutral'];
+      case 'combat.condition_applied': return [`${n(d.targetId)} is ${d.conditionId}.`,'bad'];
+      case 'combat.condition_expired': return [`${n(d.targetId)} shakes off ${d.conditionId}.`,'good'];
+      case 'combat.stalemate_forced': return [`Stalemate — resolved by the numbers.`,'system'];
+      case 'combat.ended': return [`Combat ends: ${d.result} (${d.ticks} ticks).`, d.result==='victory'?'good':'bad'];
+      case 'combat.spell_cast': return [`${n(d.casterId)} casts spell ${d.spellId}.`,'system'];
+      case 'combat.aoe_resolved': return [`The ${d.shape} catches ${d.targets.length} target(s).`,'system'];
+      default: return null;
+    }
+  }
+
+  // ── DOM ──
+  const $ = id => document.getElementById(id);
+  function render(){
+    const skim = speed >= 4;
+    const st = stateAt(cur, tick);
+    $('field').innerHTML = drawField(cur, st, tick, skim);
+    $('field').querySelectorAll('.unit').forEach(g => g.onclick = () => { sel = (sel === g.dataset.id ? null : g.dataset.id); render(); });
+
+    // roster
+    const nm = cur._nm;
+    $('roster').innerHTML = cur.spawns.map(s => {
+      const u = st[s.unitId], ratio = Math.max(0,u.hp)/u.maxHp, hero = s.side==='heroes';
+      const glyph = u.status==='dead'
+        ? `<svg class="glyph" viewBox="0 0 14 14"><line x1="2" y1="2" x2="12" y2="12" stroke="#3a2d1c" stroke-width="2"/><line x1="12" y1="2" x2="2" y2="12" stroke="#3a2d1c" stroke-width="2"/></svg>`
+        : hero ? `<svg class="glyph" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="${u.status==='down'?'#ece0c2':'#3a2d1c'}" stroke="#3a2d1c" stroke-width="1.6"/>${u.status==='down'?'<line x1="1.5" y1="7" x2="12.5" y2="7" stroke="#3a2d1c" stroke-width="2"/>':''}</svg>`
+        : `<svg class="glyph" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.2" fill="none" stroke="#3a2d1c" stroke-width="2"/><circle cx="7" cy="7" r="2" fill="#3a2d1c"/></svg>`;
+      const tgt = u.target ? (nm[u.target]||u.target) : '—';
+      return `<li data-id="${esc(s.unitId)}" class="${sel===s.unitId?'sel':''} ${u.status==='dead'?'gone':''}">
+        ${glyph}
+        <span class="nm">${esc(u.label)}<small>${u.status==='dead'?'slain':u.status==='down'?'DOWN':'→ '+esc(tgt)}</small></span>
+        <span class="hpwrap"><span class="hpnum">${Math.max(0,u.hp)}/${u.maxHp}</span>
+          <span class="meter ${hpClass(ratio)}"><i style="width:${ratio*100}%"></i></span></span></li>`;
+    }).join('');
+    $('roster').querySelectorAll('li').forEach(li => li.onclick = () => { sel = (sel===li.dataset.id?null:li.dataset.id); render(); });
+
+    // gauges
+    const sil = st.__silence, pct = Math.min(100, sil/A.stalemateWindowTicks*100);
+    $('silenceLab').innerHTML = `silence — ${sil} / ${A.stalemateWindowTicks} ticks <span style="text-transform:none;letter-spacing:0;font-style:italic">(${(sil/10).toFixed(1)} s without a wound)</span>`;
+    $('silenceBar').style.width = pct+'%';
+    $('silenceBar').style.background = pct > 60 ? '#d03b3b' : pct > 30 ? '#fab219' : '#5c4a30';
+    $('churnLab').innerHTML = `target changes — ${st.__churn} in the last 5 s`;
+    $('churnBar').style.width = Math.min(100, st.__churn*10)+'%';
+    $('churnBar').style.background = st.__churn > 8 ? '#ec835a' : '#5c4a30';
+
+    // marginalia — red ink, in the margin, one voice at a time
+    let m = '';
+    if (tick >= cur.ticks) m = `The field as it ended — ${cur.result}, ${cur.ticks} ticks (${(cur.ticks/10).toFixed(1)} s).`;
+    else if (sil > 60) m = `The fight has gone quiet — ${(sil/10).toFixed(1)} s without a wound. Watch the gauge.`;
+    else if (st.__churn > 8) m = `Targets are thrashing — ${st.__churn} changes in five seconds. This is what kiting looks like from the desk.`;
+    else if (tick < 12) m = `Both lines still closing. Motion between waypoints is drawn, not recorded.`;
+    else m = `${cur.siteName} · ${cur.spawns.filter(s=>st[s.unitId].status==='up'&&s.side==='heroes').length} of ${cur.spawns.filter(s=>s.side==='heroes').length} standing.`;
+    $('marginalia').textContent = m;
+
+    // detail
+    if (sel && st[sel]){
+      const u = st[sel];
+      $('detail').innerHTML = `<div class="lab">selected</div>
+        <b>${esc(u.label)}</b> — ${u.side==='heroes'?'guild':'enemy'}<br>
+        <span class="mono">${Math.max(0,u.hp)}/${u.maxHp} hp · reach ${u.weaponRange*5} ft · speed ${u.speed*5} ft/s</span><br>
+        <span class="mono">target: ${esc(u.target?(nm[u.target]||u.target):'none')}</span><br>
+        <span class="mono">id: ${esc(u.unitId)}</span>
+        <div class="marg" style="margin-top:5px">every field above comes from <span class="mono">unit_spawned</span> — none of it exists in the stream today.</div>`;
+    } else {
+      $('detail').innerHTML = `<div class="lab">selected</div><span style="color:var(--gv-ink-muted);font-style:italic">Click a glyph or a roster row to ring its engagement radius.</span>`;
+    }
+
+    // feed
+    const lines = [];
+    for (const e of cur.events){ if (e.tick > tick) break; const b = beat(e, nm); if (b) lines.push(
+      `<div class="beat" data-tone="${b[1]}"><small>${String(e.tick).padStart(4,' ')}</small> ${esc(b[0])}</div>`); }
+    $('feed').innerHTML = lines.join('') || '<div class="beat" data-tone="system">—</div>';
+    $('feed').scrollTop = $('feed').scrollHeight;
+
+    $('clock').textContent = `tick ${tick}/${cur.ticks}  ·  ${(tick/10).toFixed(1)}s of ${(cur.ticks/10).toFixed(1)}s sim  ·  ${speed}×`;
+    $('scrub').max = cur.ticks; $('scrub').value = tick;
+    $('playBtn').textContent = playing ? 'Pause' : 'Play';
+    document.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === speed)));
+    document.querySelectorAll('[data-fight]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fight === cur.key)));
+    document.querySelectorAll('[data-mount]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mount === mount)));
+
+    // dispatch strip
+    if (mount === 'dungeon'){
+      const T = D.dispatchTimeline;
+      $('strip').innerHTML = T.segments.map((s,i) => {
+        const l = s.start/T.totalTicks*100, w = (s.end-s.start)/T.totalTicks*100;
+        return `<div class="seg ${i===T.segments.length-1?'cur':''}" style="left:${l}%;width:${w}%"><b>FIGHT ${i+1}</b></div>`;
+      }).join('') + `<div class="play" style="left:${(T.segments[T.segments.length-1].start + tick)/T.totalTicks*100}%"></div>`;
+    }
+  }
+
+  function load(key){
+    cur = byKey[key];
+    if (!cur._nm){ cur._nm = nameMap(cur); cur._trk = tracks(cur); }
+    tick = 0; sel = null; playing = true; acc = 0; render();
+  }
+
+  document.querySelectorAll('[data-fight]').forEach(b => b.onclick = () => { load(b.dataset.fight); });
+  document.querySelectorAll('[data-mount]').forEach(b => b.onclick = () => {
+    mount = b.dataset.mount; $('dungeonMount').style.display = mount==='dungeon' ? 'block' : 'none';
+    if (mount==='dungeon' && cur.key!=='boss') load('boss'); else render(); });
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; playing = true; render(); });
+  $('playBtn').onclick = () => { playing = !playing; if (playing && tick >= cur.ticks) tick = 0; render(); };
+  $('restart').onclick = () => { tick = 0; playing = true; acc = 0; render(); };
+  $('scrub').oninput = e => { tick = +e.target.value; playing = false; render(); };
+  $('stepFwd').onclick = () => { playing = false; const n = cur.events.find(e => e.tick > tick); tick = n ? n.tick : cur.ticks; render(); };
+  $('stepBack').onclick = () => { playing = false; const p = [...cur.events].reverse().find(e => e.tick < tick); tick = p ? p.tick : 0; render(); };
+  $('strip').onclick = e => { const r = e.currentTarget.getBoundingClientRect(); const f = (e.clientX-r.left)/r.width;
+    const T = D.dispatchTimeline, tk = f*T.totalTicks, seg = T.segments[T.segments.length-1];
+    tick = Math.max(0, Math.min(cur.ticks, Math.round(tk - seg.start))); playing = false; render(); };
+  $('flatBtn').onclick = () => { const on = document.body.classList.toggle('gv-flat');
+    $('flatBtn').setAttribute('aria-pressed', String(on)); };
+
+  setInterval(() => {
+    if (!playing || tick >= cur.ticks) return;
+    acc += speed; const step = Math.floor(acc); acc -= step;
+    if (step > 0){ tick = Math.min(cur.ticks, tick + step); render(); }
+  }, 100);
+
+  load('camp');
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored,
 continuous-time auto-battler combat) being rebuilt from Godot in TypeScript.
 **Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright. (Tauri 2 planned — brief #7 parked.)
-**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Brief #9 (type program) and **brief #10 (art integration — pastes, portraits, the founding muster)** shipped since. Suite: **305 tests + 9 e2e** green. Next: (contract-an-artist decision) → remaining hero art batches → Phase 4 planning.
+**Phase:** 3 COMPLETE (art direction — "The Cartographer's Table", brief #8: rollout steps 1–7 all shipped; every screen speaks the desk grammar). Phases 1–2 complete earlier: beat-feed contract pinned; content slice shipped. Brief #9 (type program) and **brief #10 (art integration — pastes, portraits, the founding muster)** and **brief #11 (the readability pass — quest-board hierarchy, difficulty bands, display labels, the charter)** shipped since. Suite: **323 tests + 9 e2e** green. Next: **combat playback (brief #12)** → audio (Phase 3's unfinished business) → content pipeline (R4) → Phase 4 packaging. ART IS PARKED by decision 2026-08-12 — the silhouette fallback IS the placeholder for every un-drawn subject.
 
 ## Authoritative documents — read before designing anything
 

@@ -118,6 +118,8 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
     // ── combat.* ──
     case 'combat.started':
       return t(`Combat: ${ev.data.sideA.map(nameFor).join(', ')} vs ${ev.data.sideB.map(nameFor).join(', ')}.`, 'system');
+    case 'combat.unit_spawned':
+      return null; // setup fact — the combat.started line already names both sides
     case 'combat.unit_engaged':
       return null; // movement intent — the attack line carries the story
     case 'combat.attack_resolved': {

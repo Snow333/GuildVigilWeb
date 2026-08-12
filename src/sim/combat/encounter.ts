@@ -70,6 +70,17 @@ export function runEncounter(
     combatId, roomId, sideA: heroes.map((u) => u.id), sideB: enemies.map((u) => u.id),
   });
 
+  // Brief #12: spawn facts, sideA then sideB so emission order stays
+  // deterministic and `combat.started` remains events[0]. This is what makes a
+  // combat stream self-describing — identity, and the HP denominator that
+  // `damage_applied.hpAfter` otherwise lacks.
+  for (const u of [...heroes, ...enemies]) {
+    stream.emit(0, 'combat.unit_spawned', {
+      unitId: u.id, side: u.side, baseId: u.baseId, name: u.name,
+      maxHp: u.maxHp, x: round2(u.pos.x), y: round2(u.pos.y),
+    }, startEv.seq);
+  }
+
   // Initiative → engagement speed: total = d20 + bonus; delay = base − total; heroes shave the tie-break tick.
   for (const u of all) {
     u.nextActionTick = initiativeDelay(rng.die(20) + u.initiativeBonus, u.isHero);

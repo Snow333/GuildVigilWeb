@@ -16,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATE_POOL } from '@sim/dungeon/pool';
 import { bfsDepths, type DungeonTemplate } from '@sim/dungeon/graph';
 import { interpretStream, type BeatLine } from '../beats/interpret';
+import { nameResolver, namesFromStream } from '../beats/names';
 import { useGame, type ReplaySpeed } from '../state/GameProvider';
 
 /** Column-by-BFS-depth layout — geometry is presentation's problem, so here it is. */
@@ -44,8 +45,10 @@ export function PlaybackScreen() {
 
   const feed = useMemo(() => {
     if (!dispatch || !session) return null;
-    const names = new Map(session.roster().map((r) => [r.id, r.name]));
-    return interpretStream(dispatch.stream, (id) => names.get(id) ?? id);
+    // Brief #12: names come from the stream's own spawn facts, with the roster
+    // layered over them. Before this, every enemy printed its raw instance id.
+    const roster = new Map(session.roster().map((r) => [r.id, r.name]));
+    return interpretStream(dispatch.stream, nameResolver(namesFromStream(dispatch.stream, roster)));
   }, [dispatch, session]);
 
   const endTick = useMemo(

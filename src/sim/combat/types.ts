@@ -21,6 +21,13 @@ export type Side = 'heroes' | 'enemies';
 export interface Combatant {
   id: string;
   name: string;
+  /**
+   * The content row this instance was made from — the enemy registry id for
+   * enemies, the hero's own id for heroes (a hero record IS its own base).
+   * Carried so `combat.unit_spawned` can say what a unit is without any
+   * consumer parsing instance-id string shape (brief #12).
+   */
+  baseId: string;
   side: Side;
   isHero: boolean;
   pos: Vec2;

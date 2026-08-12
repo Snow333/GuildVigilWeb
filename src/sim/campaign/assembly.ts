@@ -221,6 +221,7 @@ export function assembleHero(kit: HeroKit): DispatchHero {
   const c: Combatant = {
     id: hero.id,
     name: hero.name,
+    baseId: hero.id,
     side: 'heroes',
     isHero: true,
     pos: { x: 0, y: 0 },

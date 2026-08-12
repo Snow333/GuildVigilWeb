@@ -36,6 +36,12 @@ export function buildFixtureDispatch(): EventStream {
   // Room 1: a fight
   const r1 = s.emit(370, 'explore.room_entered', { roomId: 't_small_04:r1', roomType: 'combat' });
   const c0 = s.emit(375, 'combat.started', { combatId: 'disp_1:f0', roomId: 't_small_04:r1', sideA: ['hero_1', 'hero_2'], sideB: ['disp_1:e0', 'disp_1:e1'] }, r1.seq);
+  // Brief #12: spawn facts make the stream self-describing. Two identically
+  // named goblins are deliberate — this fixture pins the ɪ/ɪɪ disambiguation too.
+  s.emit(375, 'combat.unit_spawned', { unitId: 'hero_1', side: 'heroes', baseId: 'hero_1', name: 'Torvald', maxHp: 30, x: 2, y: 4.5 }, c0.seq);
+  s.emit(375, 'combat.unit_spawned', { unitId: 'hero_2', side: 'heroes', baseId: 'hero_2', name: 'Sella', maxHp: 24, x: 2, y: 5.5 }, c0.seq);
+  s.emit(375, 'combat.unit_spawned', { unitId: 'disp_1:e0', side: 'enemies', baseId: '1', name: 'Goblin', maxHp: 8, x: 12, y: 4.5 }, c0.seq);
+  s.emit(375, 'combat.unit_spawned', { unitId: 'disp_1:e1', side: 'enemies', baseId: '1', name: 'Goblin', maxHp: 8, x: 12, y: 5.5 }, c0.seq);
   const a1 = s.emit(380, 'combat.attack_resolved', { attackerId: 'hero_1', targetId: 'disp_1:e0', weaponBaseId: 'longsword', roll: roll(17, 8, 15, 'critSuccess'), flurryPenalty: 0, flanked: true, sneakDice: 0 }, c0.seq);
   const d1 = s.emit(380, 'combat.damage_applied', { targetId: 'disp_1:e0', amount: 18, kind: 'slashing', hpAfter: 0 }, a1.seq);
   s.emit(380, 'combat.unit_died', { unitId: 'disp_1:e0' }, d1.seq);
@@ -60,6 +66,9 @@ export function buildFixtureDispatch(): EventStream {
   // Boss
   const rb = s.emit(420, 'explore.room_entered', { roomId: 't_small_04:r5', roomType: 'boss' });
   const c1 = s.emit(425, 'combat.started', { combatId: 'disp_1:f1', roomId: 't_small_04:r5', sideA: ['hero_1', 'hero_2'], sideB: ['disp_1:e2'] }, rb.seq);
+  s.emit(425, 'combat.unit_spawned', { unitId: 'hero_1', side: 'heroes', baseId: 'hero_1', name: 'Torvald', maxHp: 30, x: 2, y: 4.5 }, c1.seq);
+  s.emit(425, 'combat.unit_spawned', { unitId: 'hero_2', side: 'heroes', baseId: 'hero_2', name: 'Sella', maxHp: 24, x: 2, y: 5.5 }, c1.seq);
+  s.emit(425, 'combat.unit_spawned', { unitId: 'disp_1:e2', side: 'enemies', baseId: '11', name: 'Orc Warrior', maxHp: 30, x: 12, y: 5 }, c1.seq);
   const a4 = s.emit(430, 'combat.attack_resolved', { attackerId: 'hero_2', targetId: 'disp_1:e2', weaponBaseId: 'dagger', roll: roll(18, 9, 18, 'success'), flurryPenalty: 0, flanked: true, sneakDice: 2 }, c1.seq);
   const d4 = s.emit(430, 'combat.damage_applied', { targetId: 'disp_1:e2', amount: 21, kind: 'piercing', hpAfter: 0 }, a4.seq);
   s.emit(430, 'combat.unit_died', { unitId: 'disp_1:e2' }, d4.seq);

@@ -21,6 +21,7 @@ exports[`EventStream (constraint #4) > FREEZE GUARD: the type manifest only ever
   "combat.unit_engaged",
   "combat.unit_fled",
   "combat.unit_moved",
+  "combat.unit_spawned",
   "dispatch.completed",
   "dispatch.dungeon_entered",
   "dispatch.dungeon_exited",

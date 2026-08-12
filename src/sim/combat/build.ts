@@ -14,6 +14,7 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
   return {
     id: instanceId,
     name: row.name,
+    baseId: String(enemyId),
     side: 'enemies',
     isHero: false,
     pos: { x: 0, y: 0 },

@@ -67,11 +67,31 @@ export interface DispatchConfig {
 /** The level-up command's plan: hpPerLevel is a registry fact the session derives itself. */
 export type SessionLevelUpPlan = Omit<LevelUpPlan, 'hpPerLevel'>;
 
+/**
+ * Brief #12: a fight that happened on the SURFACE, carried so it can be watched.
+ * Dungeon fights need no carrier — `runDungeonDispatch` already absorbs them into
+ * the dispatch stream, and `combatSegments()` splits them back out.
+ */
+export interface SurfaceFight {
+  combatId: string;
+  site: 'road' | 'camp';
+  /** What the sheet header calls the place — presentation reads it, never derives it. */
+  label: string;
+  stream: EventStream;
+}
+
 export interface QuestRecord {
   week: number;
   questId: number;
   outcome: 'completed' | 'failed' | 'wiped' | 'ambushKilled';
   dispatch?: DungeonDispatchResult;
+  /**
+   * Surface fights, in the order they happened. Present even on the ambush
+   * early-return: a road death is the case that most needs watching.
+   * NOT persisted — `QuestRecord` lives in `lastLaunch`, never in
+   * `SessionSaveState`, so widening it is not a save-format change.
+   */
+  fights?: SurfaceFight[];
 }
 
 export interface BoardEntry {
@@ -519,6 +539,11 @@ export class CampaignSession {
       minute += plan.etaMinutes;
     }
 
+    // Brief #12: surface fights are carried, not discarded. Both sites below
+    // used `fight.stream` for killsFrom() XP and then dropped it, which is why
+    // PlaybackScreen had nothing to show for a camp quest or a road death.
+    const fights: SurfaceFight[] = [];
+
     // Ambush: base chance × the region's escalation multiplier.
     const effects = this.ledger.effectsFor(q.regionId);
     if (this.rng.chance(ESCALATION.baseAmbushChance * effects.ambushMult)) {
@@ -530,6 +555,7 @@ export class CampaignSession {
       const count = eid === 11 ? Math.min(1 + Math.floor(difficulty / 2), 3) : Math.min(2 + Math.ceil(difficulty / 2), 5);
       const ambushers = Array.from({ length: count }, (_, i) => buildEnemy(eid, `${encounterId}:e${i}`));
       const fight = runEncounter(encounterId, 'road', party.map((h) => h.c), ambushers, Seeds.ambush(this.campaignId, week));
+      fights.push({ combatId: encounterId, site: 'road', label: 'the road', stream: fight.stream });
       minute += Math.ceil(fight.ticks / 600);
       this.awardMonsterXp(minute, killsFrom(fight.stream, ambushers.map((a) => a.id), ambushers.map(() => eid)));
       // Post-fight aid on the roadside, win or lose (wounded still ratchets).
@@ -540,7 +566,7 @@ export class CampaignSession {
         this.recordFact(week, q.regionId, 'quest_failed', String(q.questId), minute);
         this.active = null;
         this.minute = minute;
-        return { week, questId: q.questId, outcome: 'ambushKilled' };
+        return { week, questId: q.questId, outcome: 'ambushKilled', fights };
       }
     }
     this.world.emit(minute, 'dispatch.travel_arrived', {
@@ -558,6 +584,7 @@ export class CampaignSession {
       for (const g of group) for (let i = 0; i < g.count; i++) roster.push(g.enemy_id);
       const enemies = roster.map((id, i) => buildEnemy(id, `${dispatchId}:camp_e${i}`));
       const fight = runEncounter(`${dispatchId}:camp`, 'camp', party.map((h) => h.c), enemies, Seeds.combat(`${dispatchId}_camp`));
+      fights.push({ combatId: `${dispatchId}:camp`, site: 'camp', label: 'the camp', stream: fight.stream });
       this.awardMonsterXp(minute, killsFrom(fight.stream, enemies.map((e) => e.id), roster));
       minute += Math.ceil(fight.ticks / 600); // 100ms ticks → game-minutes
       if (fight.result === 'victory') outcome = 'completed';
@@ -623,7 +650,7 @@ export class CampaignSession {
 
     this.active = null;
     this.minute = minute;
-    return { week, questId: q.questId, outcome, ...(dispatch ? { dispatch } : {}) };
+    return { week, questId: q.questId, outcome, ...(dispatch ? { dispatch } : {}), ...(fights.length > 0 ? { fights } : {}) };
   }
 
   /** The existing atomic applyLevelUp with a player-chosen plan; hpPerLevel derives here. */

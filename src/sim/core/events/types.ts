@@ -71,6 +71,15 @@ export interface EventPayloads {
 
   // combat.*
   'combat.started': { combatId: string; roomId: string; sideA: string[]; sideB: string[]; ambushTier?: string };
+  /**
+   * Brief #12 — the first sanctioned addition since the 2026-08-10 freeze.
+   * Without it a stream carries instance ids and nothing else: a consumer can
+   * place a dot but cannot label it, and `damage_applied.hpAfter` has no
+   * denominator. Spawn facts make combat streams SELF-DESCRIBING for every
+   * consumer (view, harness, replay) instead of making each one re-derive
+   * identity from instance-id string shape.
+   */
+  'combat.unit_spawned': { unitId: string; side: 'heroes' | 'enemies'; baseId: string; name: string; maxHp: number; x: number; y: number };
   'combat.unit_engaged': { unitId: string; targetId: string };
   'combat.attack_resolved': { attackerId: string; targetId: string; weaponBaseId?: string; roll: RollBreakdown; flurryPenalty: number; flanked: boolean; sneakDice?: number };
   'combat.spell_cast': { casterId: string; spellId: string; resource: 'slot' | 'pact' | 'atWill'; cost: number; tier: number };
@@ -157,7 +166,7 @@ export const EVENT_TYPE_MANIFEST = Object.freeze([
   'explore.trap_disarm_attempted', 'explore.trap_triggered', 'explore.lock_attempted', 'explore.lock_opened',
   'explore.door_forced', 'explore.enemy_presence_detected', 'explore.ambush_resolved', 'explore.clue_found',
   'explore.shrine_activated', 'explore.cache_looted', 'explore.room_cleared', 'explore.rested', 'explore.route_blocked',
-  'combat.started', 'combat.unit_engaged', 'combat.attack_resolved', 'combat.spell_cast', 'combat.aoe_resolved',
+  'combat.started', 'combat.unit_spawned', 'combat.unit_engaged', 'combat.attack_resolved', 'combat.spell_cast', 'combat.aoe_resolved',
   'combat.damage_applied', 'combat.healing_applied', 'combat.condition_applied', 'combat.condition_save_resolved',
   'combat.condition_expired', 'combat.reaction_triggered', 'combat.unit_moved', 'combat.unit_downed',
   'combat.dying_check_resolved', 'combat.unit_died', 'combat.unit_fled', 'combat.stance_changed',
