@@ -55,8 +55,18 @@
   --gv-s3: #d03b3b; /* overrun / critical / failure   */
 
   /* textures — feTurbulence data-URIs (zero image assets, per brief) */
-  --gv-tex-leather: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.16'/></svg>");
-  --gv-tex-leather-coarse: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.012' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='700' height='700' filter='url(%23g)' opacity='0.10'/></svg>");
+  /* Brief #11: was baseFrequency 0.055 / opacity 0.16. Over a 300px tile that
+     is a ~18px feature size, which at full-viewport scale reads as smeared
+     cloud rather than leather — the "artifacts" on the title screen. 0.5 puts
+     the grain at ~2px where it belongs; the lower opacity keeps it from
+     dirtying the deep areas the vignette already darkens. */
+  --gv-tex-leather: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.10'/></svg>");
+  /* Brief #11: was baseFrequency 0.012 / opacity 0.10 — an ~83px feature size,
+     which is the LARGE blotching on the desk (the fine layer above was only
+     half the story). Broad tonal variation is wanted here, so the fix is scale
+     and weight, not removal: smaller features, and light enough to read as
+     hide rather than as staining. */
+  --gv-tex-leather-coarse: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='700' height='700' filter='url(%23g)' opacity='0.06'/></svg>");
   --gv-tex-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
   --gv-tex-fiber: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23f)' opacity='0.05'/></svg>");
   --gv-tex-felt: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='f2'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23f2)' opacity='0.2'/></svg>");

@@ -9,6 +9,14 @@
  * week (one stamp per sheet, arc wins). Empty slots read as bare leather
  * (SCHEDULER.maxOpenQuests is content data, not a UI-computed rule). The e2e
  * accept policy reads data-quest-id / data-challenge off each notice.
+ *
+ * Brief #11 hierarchy: name loudest, then the guild's DIFFICULTY judgement as
+ * the headline, then level/travel/reward as equal blocks in priority order,
+ * then a muted footer for what you only check occasionally. The regional
+ * pressure chip left this card deliberately — it describes the REGION, not the
+ * job, it was the loudest thing here, and it already lives on the town hub's
+ * watch report and the chart. The difficulty band is a session query
+ * (BoardEntry.difficulty); this screen computes nothing.
  */
 
 import { SCHEDULER } from '@content/world';
@@ -53,39 +61,59 @@ export function QuestBoard() {
           <div className="gv-notices">
             {board.map((b) => {
               const travel = session.travelPreview(b.questId);
-              const pressure = session.pressure(b.regionId);
               const isArc = storylineByQuestId.has(b.questId);
               const lastWeek = b.expiresWeek <= week + 1;
+              const stamp = isArc ? 'GUILD WORK' : lastWeek ? 'EXPIRES' : null;
               return (
                 <div
                   key={b.questId}
-                  className="gv-sheet gv-sheet--notice"
+                  className={`gv-sheet gv-sheet--notice${stamp ? ' gv-notice--stamped' : ''}`}
                   data-posting=""
                   data-quest-id={b.questId}
                   data-challenge={b.challenge}
                 >
                   <span className="gv-pin" />
-                  {isArc ? (
-                    <span className="gv-stamp">GUILD WORK</span>
-                  ) : lastWeek ? (
-                    <span className="gv-stamp">EXPIRES</span>
-                  ) : null}
-                  <div className="gv-notice-name">#{b.questId} {b.name}</div>
-                  <div className="gv-notice-meta">
-                    Lv {b.minLevel} · challenge {b.challenge} · {session.regionName(b.regionId)}
-                    <br />
-                    posted wk {b.postedWeek} · expires wk {b.expiresWeek}
-                    <br />
-                    {travel ? `${travel.etaMinutes} min by road` : <span className="gv-marg">unreachable</span>}
+                  {/* a stamped notice reserves the stamp's column (see screens.css)
+                      so red ink never lands across the posting's name */}
+                  {stamp && <span className="gv-stamp">{stamp}</span>}
+
+                  <div className="gv-notice-id">posting {b.questId}</div>
+                  <h3 className="gv-notice-name">{b.name}</h3>
+
+                  {/* the headline judgement: colour and word are inseparable */}
+                  <p className={`gv-difficulty gv-difficulty--s${b.difficulty.tier}`} data-difficulty={b.difficulty.id}>
+                    <i />{b.difficulty.label}
+                    <span className="gv-italic">— {b.difficulty.reason}</span>
+                  </p>
+
+                  {/* level · travel · reward, equal weight, in priority order */}
+                  <div className="gv-notice-stats">
+                    <span className="gv-nstat">
+                      <b>level</b>
+                      <span>{b.minLevel}</span>
+                    </span>
+                    <span className="gv-nstat">
+                      <b>travel</b>
+                      <span>{travel ? <>{travel.etaMinutes}<small> min</small></> : '—'}</span>
+                    </span>
+                    <span className="gv-nstat">
+                      <b>reward</b>
+                      <span>{b.rewardGold}<small>g</small></span>
+                    </span>
                   </div>
-                  <span className="gv-reward">{b.rewardGold} gold · {b.rewardXp} xp</span>
-                  <div style={{ margin: '4px 0 8px' }}>
-                    <span className={`gv-chip gv-chip--s${pressure.tier}`}><i />T{pressure.tier} {pressure.tierName}</span>
-                  </div>
-                  <button className="gv-btn gv-btn--seal" disabled={active !== null} onClick={() => accept(b.questId)}>
-                    Accept
-                  </button>{' '}
-                  <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: b.questId })}>Map</button>
+
+                  {!travel && <p className="gv-marg" style={{ margin: '8px 0 0' }}>no road reaches it</p>}
+
+                  <p className="gv-notice-foot">
+                    {session.regionName(b.regionId)} · {b.rewardXp} xp · expires wk {b.expiresWeek}
+                  </p>
+
+                  <p className="gv-notice-acts">
+                    <button className="gv-btn gv-btn--seal" disabled={active !== null} onClick={() => accept(b.questId)}>
+                      Accept
+                    </button>{' '}
+                    <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: b.questId })}>Map</button>
+                  </p>
                 </div>
               );
             })}

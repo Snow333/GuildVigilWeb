@@ -14,6 +14,7 @@
 import { deriveItem } from '@sim/heroes/equipment';
 import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
+import { groupXpByHero, type XpAward } from './afterActionXp';
 
 const OUTCOME_WORD: Record<string, string> = {
   completed: 'MISSION COMPLETE',
@@ -52,14 +53,14 @@ export function AfterActionScreen() {
   const names = new Map(roster.map((r) => [r.id, r.name]));
   const byId = new Map(roster.map((r) => [r.id, r]));
 
-  const xpRows: { heroId: string; hero: string; amount: number; source: string }[] = [];
+  const xpRows: XpAward[] = [];
   const escalations: string[] = [];
   let questGold = 0;
   for (const ev of slice) {
     if (ev.type === 'hero.xp_awarded') {
       xpRows.push({
         heroId: ev.data.heroId,
-        hero: names.get(ev.data.heroId) ?? ev.data.heroId,
+        heroName: names.get(ev.data.heroId) ?? ev.data.heroId,
         amount: ev.data.amount,
         source: ev.data.source,
       });
@@ -69,6 +70,9 @@ export function AfterActionScreen() {
       questGold = ev.data.gold;
     }
   }
+  // One row per hero, source as columns (brief #11) — the stream awards per
+  // source, so a four-hero party used to print eight rows and eight faces.
+  const xp = groupXpByHero(xpRows);
   const haulGold = record.dispatch?.gold ?? 0;
   const items = record.outcome === 'wiped' ? [] : (record.dispatch?.items ?? []);
   const pendingLevelUps = session.roster().filter((r) => session.heroSheet(r.id).canLevelUp);
@@ -114,13 +118,22 @@ export function AfterActionScreen() {
             {xpRows.length === 0 && <em>None earned.</em>}
           </p>
           {xpRows.length > 0 && (
-            <div className="gv-ledger" style={{ marginBottom: 10 }}>
+            <div className="gv-xptable" data-xp-summary="">
               <table>
+                <thead>
+                  <tr>
+                    <th>hero</th>
+                    {xp.sources.map((s) => <th className="gv-n" key={s}>{s}</th>)}
+                    <th className="gv-n">total</th>
+                    <th className="gv-prog">toward next</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {xpRows.map((r, i) => {
+                  {xp.rows.map((r) => {
                     const entry = byId.get(r.heroId);
+                    const progress = entry ? session.heroSheet(r.heroId).xp : null;
                     return (
-                      <tr key={i}>
+                      <tr key={r.heroId}>
                         <td className="gv-who">
                           {/* who came back, and in what shape — the desat is the
                               twin of the roster's wounded/dead status column */}
@@ -133,14 +146,27 @@ export function AfterActionScreen() {
                               condition={conditionFor(entry)}
                             />
                           )}
-                          <span><b>{r.hero}</b></span>
+                          <span><b>{r.heroName}</b></span>
                         </td>
-                        <td>+{r.amount} xp</td>
-                        <td style={{ color: 'var(--gv-ink-muted)' }}>{r.source}</td>
+                        {xp.sources.map((s) => (
+                          <td className="gv-n" key={s}>{r.bySource[s] ?? '—'}</td>
+                        ))}
+                        <td className="gv-n gv-tot">{r.total}</td>
+                        <td className="gv-prog" style={{ color: 'var(--gv-ink-muted)' }}>
+                          {progress ? (progress.atCap ? 'at the cap' : `${progress.progress}/${progress.threshold}`) : '—'}
+                        </td>
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr>
+                    <td>The party</td>
+                    {xp.sources.map((s) => <td className="gv-n" key={s}>{xp.partyBySource[s] ?? 0}</td>)}
+                    <td className="gv-n">{xp.partyTotal}</td>
+                    <td className="gv-prog"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}

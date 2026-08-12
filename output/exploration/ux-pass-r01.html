@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guild Vigil — UX Pass · Exploration Round 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans+SC:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   GUILD VIGIL · UX PASS r01
+   Wireframe for the readability/hierarchy pass on four surfaces.
+   Tokens are lifted VERBATIM from src/ui/styles/tokens.css so the
+   comp and the app cannot disagree about a colour or a face.
+   ============================================================ */
+:root{
+  --gv-desk:#2a211c; --gv-desk-warm:#322822; --gv-desk-edge:#191210; --gv-desk-bar:#241c16;
+  --gv-vellum:#ece0c2; --gv-vellum-aged:#e2d2a8; --gv-vellum-old:#d8c494; --gv-vellum-edge:#b3a075;
+  --gv-ink:#3a2d1c; --gv-ink-soft:#5c4a30; --gv-ink-muted:#7d6a4c; --gv-ink-faint:#a89370;
+  --gv-red-ink:#9c3428; --gv-wax:#8c2f28; --gv-wax-hi:#a63d2f; --gv-wax-lo:#6e1f18;
+  --gv-brass-hi:#c9a86a; --gv-brass-mid:#a4854c; --gv-brass-deep:#8a6c38; --gv-brass-lo:#6e5426; --gv-brass-edge:#55401c;
+  --gv-s0:#0ca30c; --gv-s1:#fab219; --gv-s2:#ec835a; --gv-s3:#d03b3b;
+  --gv-serif:'Alegreya',Georgia,serif;
+  --gv-sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --gv-radius-sheet:2px 3px 2px 3px;
+  --gv-shadow-sheet:0 4px 12px #00000059,0 1px 3px #00000040;
+  /* NOTE the two grain frequencies: 0.055 is what ships as the desk fill and is
+     the source of the blotching at full-viewport scale; 0.5 is the proposed fix. */
+  --tex-leather-shipped:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.055' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l)' opacity='0.16'/></svg>");
+  --tex-leather-fixed:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='l2'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23l2)' opacity='0.10'/></svg>");
+  --tex-grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23p)' opacity='0.5'/></svg>");
+  --tex-fiber:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23f)' opacity='0.05'/></svg>");
+}
+*{box-sizing:border-box}
+body{margin:0;padding:30px 34px 90px;font-family:var(--gv-serif);color:#e8dcc0;
+  background:linear-gradient(160deg,#241c16,#15100c);}
+h1.doc{font-family:var(--gv-sans);font-weight:800;font-size:21px;letter-spacing:.1em;margin:0 0 4px;color:#e6d6ae}
+p.docsub{color:#b7a37c;font-style:italic;margin:0 0 22px;font-size:14px}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 30px;
+  padding:12px 16px;background:#00000044;border:1px solid #55401c66;border-radius:5px}
+.controls .lbl{font-family:var(--gv-sans);font-size:11px;letter-spacing:.14em;color:#b7a37c}
+.tbtn{font-family:var(--gv-sans);font-weight:700;font-size:12px;letter-spacing:.06em;cursor:pointer;
+  background:#e7dcc2;border:1px solid #8a7a58;border-radius:3px;padding:6px 13px;color:#2c2318}
+.tbtn[aria-pressed="true"]{background:#5a4a2e;color:#f2e8d0;box-shadow:inset 0 2px 4px #00000080}
+
+section{margin:0 0 46px}
+section > h2{font-family:var(--gv-sans);font-weight:700;font-size:14px;letter-spacing:.15em;color:#e6d6ae;
+  border-bottom:1px solid #e6d6ae40;padding-bottom:7px;margin:0 0 6px}
+section > .lede{color:#b7a37c;font-size:13.5px;line-height:1.6;margin:0 0 18px;max-width:78ch}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+@media(max-width:1180px){.pair{grid-template-columns:1fr}}
+.panel{min-width:0}
+.panel > h3{font-family:var(--gv-sans);font-size:11.5px;letter-spacing:.16em;margin:0 0 10px;font-weight:700}
+.panel.before > h3{color:#e0947e}
+.panel.after > h3{color:#9fd08a}
+.stage{background:
+    radial-gradient(120% 90% at 50% 0%,#00000000 55%,#00000066 100%),
+    var(--tex-leather-shipped),
+    linear-gradient(160deg,var(--gv-desk-warm),var(--gv-desk) 40%,#211a15);
+  border:1px solid #000000aa;border-radius:6px;padding:22px 20px;position:relative;overflow:hidden}
+.stage.fixedtex{background:
+    radial-gradient(120% 90% at 50% 0%,#00000000 55%,#00000066 100%),
+    var(--tex-leather-fixed),
+    linear-gradient(160deg,var(--gv-desk-warm),var(--gv-desk) 40%,#211a15);}
+.notes{margin:12px 0 0;padding:0 0 0 18px;font-size:12.5px;line-height:1.65;color:#b7a37c}
+.notes li{margin:0 0 5px}
+.notes b{color:#e6d6ae;font-weight:700}
+.notes.good li::marker{color:#9fd08a}
+.notes.bad li::marker{color:#e0947e}
+
+/* ---------- desk vocabulary (verbatim from the shipped style layer) ---------- */
+.gv-sheet{position:relative;background:
+    radial-gradient(140% 110% at 30% 20%,#ffffff26 0%,#00000000 55%),
+    radial-gradient(120% 120% at 50% 50%,#00000000 62%,#6e50281f 100%),
+    var(--tex-fiber),var(--gv-pv,var(--gv-vellum));
+  color:var(--gv-ink);padding:18px 22px;border:1px solid var(--gv-vellum-edge);
+  border-radius:var(--gv-radius-sheet);box-shadow:var(--gv-shadow-sheet);transform:rotate(var(--gv-tilt,0deg))}
+.gv-sheet::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:var(--tex-grain);opacity:.14;mix-blend-mode:multiply}
+.gv-sheet--aged{--gv-pv:var(--gv-vellum-aged)}
+.gv-sheet--old{--gv-pv:var(--gv-vellum-old)}
+.gv-sheet--notice{clip-path:polygon(0 0,100% 0,100% 94%,96% 97%,88% 95%,78% 99%,66% 96%,55% 99%,42% 96%,30% 99%,18% 96%,8% 99%,0 95%)}
+.gv-pin{position:absolute;top:-6px;left:50%;width:13px;height:13px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,var(--gv-brass-hi),var(--gv-brass-deep) 55%,var(--gv-brass-lo));
+  box-shadow:0 2px 3px #00000088,inset 0 -1px 2px #00000055;z-index:2}
+.gv-pin--inset{top:9px;left:14px}
+.gv-head{font-size:16.5px;letter-spacing:.4px;margin:0 0 10px;padding-bottom:6px;
+  border-bottom:1px solid #b3a07588;display:flex;align-items:baseline;gap:10px}
+.gv-head .gv-sub{font-family:var(--gv-sans);font-size:10.5px;letter-spacing:1.8px;color:var(--gv-ink-muted)}
+.gv-btn{font-family:var(--gv-serif);font-size:13.5px;padding:6px 14px;cursor:pointer;background:#e2d4b2;
+  color:var(--gv-ink);border:1px solid #a8905e;border-radius:2px;box-shadow:0 1px 0 #00000022}
+.gv-btn--seal{background:linear-gradient(160deg,var(--gv-wax-hi),var(--gv-wax));color:#f4ecd8;
+  border-color:var(--gv-wax-lo);text-shadow:0 1px 1px #00000055}
+.gv-btn--ghost{background:transparent;border-style:dashed;color:var(--gv-ink-muted)}
+.gv-btn:disabled{background:#cbb98d;box-shadow:inset 0 1px 3px #00000033;color:var(--gv-ink-soft);cursor:default}
+.gv-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap}
+.gv-chip i{width:10px;height:10px;border-radius:50%;border:1px solid #00000038;box-shadow:inset 0 1px 1px #ffffff44}
+.gv-chip--s0 i{background:var(--gv-s0)}.gv-chip--s1 i{background:var(--gv-s1)}
+.gv-chip--s2 i{background:var(--gv-s2)}.gv-chip--s3 i{background:var(--gv-s3)}
+.gv-input{font-family:var(--gv-serif);font-size:13.5px;color:var(--gv-ink);background:#f4ecd8aa;
+  border:1px solid #a8905e;border-radius:2px;padding:6px 10px}
+.gv-input::placeholder{color:var(--gv-ink-muted);font-style:italic}
+.gv-marg{color:var(--gv-red-ink);font-style:italic;font-size:12px}
+.gv-filenote{color:var(--gv-ink-muted);font-style:italic;font-size:12px}
+.gv-stamp{position:absolute;top:34px;right:-8px;transform:rotate(8deg);font-family:var(--gv-sans);
+  font-size:12px;font-weight:800;letter-spacing:2.5px;color:var(--gv-red-ink);border:2.5px solid var(--gv-red-ink);
+  padding:3px 9px;border-radius:3px;opacity:.7;mix-blend-mode:multiply}
+.gv-reward{font-family:var(--gv-sans);font-size:11px;letter-spacing:1.5px;border:1.5px solid var(--gv-ink-soft);
+  display:inline-block;padding:2px 8px;border-radius:2px;color:var(--gv-ink-soft)}
+.gv-ledger{background-image:repeating-linear-gradient(#00000000 0 27px,#8c6a3a22 27px 28px);line-height:28px}
+.gv-ledger table{width:100%;border-collapse:collapse;font-size:13px;line-height:28px}
+.gv-ledger th{text-align:left;font-family:var(--gv-sans);font-size:10px;letter-spacing:1.6px;
+  color:var(--gv-ink-muted);font-weight:600;padding:0 8px 0 0}
+.gv-ledger td{padding:0 8px 0 0;vertical-align:middle}
+.deskh1{font-size:21px;letter-spacing:.5px;color:#d8bd85;text-shadow:0 1px 2px #000000cc;margin:0 0 12px;font-weight:400}
+
+/* ---------- A · the charter, as shipped ---------- */
+.title-old{max-width:680px;margin:0 auto}
+.title-old .big{font-size:34px;letter-spacing:6px;text-align:center;margin:0 0 4px;color:#d8bd85;
+  text-shadow:0 1px 2px #000000cc;font-weight:400}
+.title-old .motto{text-align:center;font-style:italic;color:var(--gv-ink-faint);margin:0 0 26px;font-size:14px}
+.title-old table{width:100%;border-collapse:collapse;font-size:13px;line-height:28px}
+.title-old .actions{text-align:right}
+
+/* ---------- A · the charter, proposed ---------- */
+.charter{max-width:600px;margin:0 auto}
+.charter .big{font-size:34px;letter-spacing:6px;text-align:center;margin:0 0 4px;color:#d8bd85;
+  text-shadow:0 1px 2px #000000cc;font-weight:400}
+.charter .motto{text-align:center;font-style:italic;color:var(--gv-ink-faint);margin:0 0 22px;font-size:14px}
+.namefield{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:0 0 4px}
+.namefield label{font-family:var(--gv-sans);font-size:11px;letter-spacing:1.6px;color:var(--gv-ink-muted)}
+.namefield .gv-input{flex:1;min-width:200px;font-size:15px;padding:8px 12px}
+.slotlist{list-style:none;margin:14px 0 0;padding:0}
+.slotrow{display:grid;grid-template-columns:minmax(0,1fr) 116px;gap:14px;align-items:center;
+  padding:10px 0;border-top:1px solid #b3a07555}
+.slotrow:first-child{border-top:none}
+.slotrow .who{min-width:0}
+.slotrow .nm{display:block;font-size:15.5px;font-weight:700;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slotrow .nm em{font-weight:400;color:var(--gv-ink-muted)}
+.slotrow .sub{display:block;font-family:var(--gv-sans);font-size:10.5px;letter-spacing:1.2px;
+  color:var(--gv-ink-muted);margin-top:1px}
+.slotrow .act{display:flex;flex-direction:column;gap:6px}
+.slotrow .act .gv-btn{width:100%;text-align:center;padding:6px 8px;font-size:12.5px}
+.slotrow .act .pairbtns{display:flex;gap:6px}
+.slotrow .act .pairbtns .gv-btn{flex:1;padding:5px 4px;font-size:12px}
+
+/* ---------- B · quest notices ---------- */
+.notices{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.notice-old{width:300px;margin:0;padding-bottom:24px;font-size:13px;--gv-tilt:-0.7deg}
+.notice-old .nm{font-size:15px;font-weight:700;padding-right:30px}
+.notice-old .meta{color:var(--gv-ink-muted);font-size:12px;line-height:1.55;margin:4px 0 8px}
+
+.notice-new{width:314px;margin:0;padding:18px 20px 26px;--gv-tilt:-0.5deg}
+.notice-new .qid{font-family:var(--gv-sans);font-size:10px;letter-spacing:1.6px;color:var(--gv-ink-faint)}
+.notice-new .qtitle{font-size:21px;font-weight:700;line-height:1.16;margin:2px 0 0;padding-right:26px}
+/* a stamped notice reserves the stamp's column so red ink never lands on the
+   name — the shipped card collides today, and a 21px title makes it worse */
+.notice-new.stamped .qid,
+.notice-new.stamped .qtitle{padding-right:104px}
+.notice-new.stamped .gv-stamp{top:16px}
+.diffline{display:flex;align-items:center;gap:7px;margin:9px 0 0;
+  font-family:var(--gv-sans);font-size:13px;font-weight:700;letter-spacing:.09em}
+.diffline i{width:11px;height:11px;border-radius:50%;border:1px solid #00000038;box-shadow:inset 0 1px 1px #ffffff44;flex:none}
+.diffline .why{font-family:var(--gv-serif);font-weight:400;font-style:italic;font-size:12px;
+  letter-spacing:0;color:var(--gv-ink-muted)}
+.statstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0 0}
+.statstrip .st{border:1px solid #a8905e;border-radius:2px;background:#e2d4b266;padding:5px 7px 6px;text-align:center}
+.statstrip .st b{display:block;font-family:var(--gv-sans);font-size:9.5px;letter-spacing:1.5px;
+  color:var(--gv-ink-muted);font-weight:600}
+.statstrip .st span{display:block;font-size:15px;font-weight:700;line-height:1.28}
+.statstrip .st span small{font-size:11.5px;font-weight:400;color:var(--gv-ink-soft)}
+.qfoot{margin:12px 0 0;font-family:var(--gv-sans);font-size:10.5px;letter-spacing:1.1px;color:var(--gv-ink-muted)}
+.qacts{margin:13px 0 0;display:flex;gap:8px}
+
+/* ---------- C · dispatch profiles ---------- */
+.choicerow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.choicerow .clabel{font-family:var(--gv-sans);font-size:10px;letter-spacing:1.8px;color:var(--gv-ink-muted);min-width:74px}
+.profgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:9px;margin:6px 0 0}
+.profcard{text-align:left;cursor:pointer;font-family:var(--gv-serif);color:var(--gv-ink);
+  border:1px solid #a8905e88;border-radius:2px;background:#e2d4b244;padding:9px 11px}
+.profcard[aria-pressed="true"]{border-color:var(--gv-wax);box-shadow:inset 0 0 0 2px #8c2f2880;background:#e2d4b299}
+.profcard b{display:block;font-family:var(--gv-sans);font-size:12.5px;letter-spacing:.07em;font-weight:700}
+.profcard span{display:block;font-size:12px;line-height:1.4;color:var(--gv-ink-soft);margin-top:2px}
+.profcard code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;color:var(--gv-ink-faint)}
+
+/* ---------- D · after-action xp ---------- */
+.xp-old td,.xp-new td,.xp-new th{padding:0 10px 0 0}
+.xp-new table{width:100%;border-collapse:collapse;font-size:13px;line-height:30px}
+.xp-new th{text-align:left;font-family:var(--gv-sans);font-size:10px;letter-spacing:1.6px;
+  color:var(--gv-ink-muted);font-weight:600;border-bottom:1px solid #b3a07577}
+.xp-new th.n,.xp-new td.n{text-align:right;font-variant-numeric:tabular-nums}
+.xp-new th.prog,.xp-new td.prog{padding-left:26px;white-space:nowrap}
+.xp-new td.tot{font-weight:700}
+.xp-new tfoot td{border-top:1px solid #b3a07577;font-weight:700}
+.sil{width:34px;height:34px;background:#2e3138;position:relative;display:inline-block;vertical-align:middle;
+  border:1px solid #a8905e;box-shadow:inset 0 0 0 2px #f4ecd8}
+.sil::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 34%,#4a505c 26%,transparent 27%),
+             radial-gradient(120% 90% at 50% 108%,#4a505c 38%,transparent 39%)}
+.face{width:34px;height:34px;display:inline-block;vertical-align:middle;border:1px solid #a8905e;
+  box-shadow:inset 0 0 0 2px #f4ecd8;background:linear-gradient(160deg,#8a6a4a,#5c4230)}
+.who2{display:flex;align-items:center;gap:9px}
+
+/* ---------- decisions ---------- */
+.decision{background:#00000044;border:1px solid #55401c66;border-radius:5px;padding:16px 20px;margin:0 0 14px}
+.decision h4{font-family:var(--gv-sans);font-size:12.5px;letter-spacing:.12em;margin:0 0 7px;color:#e6d6ae}
+.decision p{margin:0 0 8px;font-size:13.5px;line-height:1.6;color:#c3b190}
+.decision .opts{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.decision .opt{flex:1 1 260px;background:#00000038;border:1px solid #55401c55;border-radius:4px;padding:11px 13px}
+.decision .opt b{display:block;font-family:var(--gv-sans);font-size:11.5px;letter-spacing:.1em;color:#e6d6ae;margin-bottom:4px}
+.decision .opt span{font-size:12.5px;line-height:1.55;color:#b7a37c}
+code.k{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:#d8bd85;background:#0000004d;padding:1px 5px;border-radius:3px}
+
+/* ---------- flat mode ---------- */
+body.gv-flat .gv-sheet{transform:none;box-shadow:none;border:1px solid var(--gv-vellum-edge)}
+body.gv-flat .gv-sheet::before{display:none}
+body.gv-flat .gv-sheet--notice{clip-path:none}
+body.gv-flat .gv-stamp{transform:none}
+body.gv-flat .stage,body.gv-flat .stage.fixedtex{background:linear-gradient(160deg,#322822,#241c16)}
+</style>
+</head>
+<body>
+
+<h1 class="doc">GUILD VIGIL · UX PASS — EXPLORATION ROUND 01</h1>
+<p class="docsub">Readability and information hierarchy on four surfaces &nbsp;·&nbsp; wireframe, no code written &nbsp;·&nbsp; 2026-08-11</p>
+
+<div class="controls">
+  <span class="lbl">VIEW</span>
+  <button class="tbtn" id="bothOn" aria-pressed="true">Before &amp; after</button>
+  <button class="tbtn" id="afterOnly" aria-pressed="false">After only</button>
+  <span class="lbl" style="margin-left:14px">MODE</span>
+  <button class="tbtn" id="deskOn" aria-pressed="true">Desk</button>
+  <button class="tbtn" id="flatOn" aria-pressed="false">Flat mode</button>
+</div>
+
+<!-- ============================ A · THE CHARTER ============================ -->
+<section>
+  <h2>A · THE CHARTER (TITLE SCREEN) — ALIGNMENT, ORDER, AND THE BLOTCHING</h2>
+  <p class="lede">
+    Six separate problems are stacked on this screen. The loudest is not a styling issue at all: <b>the campaign-name
+    field sits below the buttons that require it</b>, so the first thing you meet is three disabled-looking controls and
+    no explanation. Reading order should match action order.
+  </p>
+  <div class="pair">
+    <div class="panel before">
+      <h3>▸ AS SHIPPED</h3>
+      <div class="stage">
+        <div class="title-old">
+          <div class="big">GUILD VIGIL</div>
+          <p class="motto">— the guild endures, or the map remembers why it didn't —</p>
+          <div class="gv-sheet gv-ledger" style="--gv-tilt:-0.3deg">
+            <span class="gv-pin"></span>
+            <h3 class="gv-head">The charter <span class="gv-sub">save slots</span></h3>
+            <table>
+              <thead><tr><th>Slot</th><th>Campaign</th><th>Week</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>slot1</td><td><em>empty</em></td><td>—</td><td class="actions"><button class="gv-btn gv-btn--seal">New campaign here</button></td></tr>
+                <tr><td>slot2</td><td><em>empty</em></td><td>—</td><td class="actions"><button class="gv-btn gv-btn--seal">New campaign here</button></td></tr>
+                <tr><td>slot3</td><td><em>empty</em></td><td>—</td><td class="actions"><button class="gv-btn gv-btn--seal">New campaign here</button></td></tr>
+              </tbody>
+            </table>
+            <p style="margin:14px 0 0">
+              <label>Campaign name: <input class="gv-input" placeholder="The Vigil"></label>
+              <span style="font-size:12px;color:var(--gv-ink-muted)">(the name seeds the world — same name, same world)</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <ul class="notes bad">
+        <li><b>Action before its prerequisite.</b> The name field is below three buttons that do nothing without it.</li>
+        <li><b>Buttons merge into a slab.</b> Row line-height sets their spacing, so three identical wax seals stack edge to edge and read as one control.</li>
+        <li><b>Dead centre column.</b> <code class="k">Week</code> holds three em-dashes across ~340px of empty sheet.</li>
+        <li><b>The pin straddles the edge</b> — half on the sheet, half off, so it reads as an artifact rather than hardware.</li>
+        <li><b>Desk blotching.</b> <code class="k">--gv-tex-leather</code> is <code class="k">baseFrequency 0.055</code> over a 300px tile. Stretched to a full viewport that is not grain, it is smeared cloud.</li>
+        <li><b>Wax on a navigation button.</b> Since brief #10 this only opens the muster — it commits nothing.</li>
+      </ul>
+    </div>
+    <div class="panel after">
+      <h3>▸ PROPOSED</h3>
+      <div class="stage fixedtex">
+        <div class="charter">
+          <div class="big">GUILD VIGIL</div>
+          <p class="motto">— the guild endures, or the map remembers why it didn't —</p>
+          <div class="gv-sheet" style="--gv-tilt:-0.3deg;padding:22px 24px 20px">
+            <span class="gv-pin gv-pin--inset"></span>
+            <h3 class="gv-head" style="padding-left:22px">The charter <span class="gv-sub">name the guild, then choose a slot</span></h3>
+            <div class="namefield">
+              <label for="cn">CAMPAIGN NAME</label>
+              <input class="gv-input" id="cn" placeholder="The Vigil">
+            </div>
+            <p class="gv-filenote" style="margin:0">the name seeds the world — same name, same world</p>
+            <ul class="slotlist">
+              <li class="slotrow">
+                <span class="who"><span class="nm">The Ashmark Vigil</span><span class="sub">SLOT 1 · WEEK 14</span></span>
+                <span class="act"><span class="pairbtns"><button class="gv-btn">Load</button><button class="gv-btn gv-btn--seal">Delete</button></span></span>
+              </li>
+              <li class="slotrow">
+                <span class="who"><span class="nm"><em>empty</em></span><span class="sub">SLOT 2</span></span>
+                <span class="act"><button class="gv-btn">New campaign</button></span>
+              </li>
+              <li class="slotrow">
+                <span class="who"><span class="nm"><em>empty</em></span><span class="sub">SLOT 3</span></span>
+                <span class="act"><button class="gv-btn">New campaign</button></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <ul class="notes good">
+        <li><b>Name first, slots second.</b> The field is the headline; the slot list answers "where do I put it".</li>
+        <li><b>Slot list, not a table.</b> Campaign name is the row's subject; slot and week demote to one small caps line under it. The <code class="k">Week</code> column disappears — it was never worth a column.</li>
+        <li><b>Fixed 116px action column</b> with real vertical rhythm and full-width buttons. Load/Delete pair on filled rows only.</li>
+        <li><b>Pin inset onto the sheet</b>, heading indented to clear it.</li>
+        <li><b>Grain retuned</b> to <code class="k">baseFrequency 0.5</code> at opacity 0.10 — leather, not weather. Compare the two stages above.</li>
+        <li><b>Wax retired here</b>, kept on Delete (irreversible) and on the muster's Sign the charter.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ B · QUEST BOARD ============================ -->
+<section>
+  <h2>B · QUEST BOARD — THE HIERARCHY YOU ASKED FOR</h2>
+  <p class="lede">
+    Target weighting: <b>title</b> loudest, then <b>level</b>, then <b>time</b>, then <b>reward</b> at level's weight,
+    with <b>difficulty as a named category</b>. Level / time / reward are equal-sized blocks read left to right in
+    priority order; difficulty sits directly under the title as the headline judgement, because it is the one field
+    that should stop you accepting. Everything that is neither a decision nor a deadline drops to one muted footer line.
+  </p>
+  <div class="pair">
+    <div class="panel before">
+      <h3>▸ AS SHIPPED</h3>
+      <div class="stage">
+        <div class="notices">
+          <div class="gv-sheet gv-sheet--notice notice-old">
+            <span class="gv-pin"></span>
+            <span class="gv-stamp">GUILD WORK</span>
+            <div class="nm">#100 The Burned Granary</div>
+            <div class="meta">Lv 1 · challenge 1 · The Ashmark<br>posted wk 1 · expires wk 3<br>48 min by road</div>
+            <span class="gv-reward">120 GOLD · 90 XP</span>
+            <div style="margin:4px 0 8px"><span class="gv-chip gv-chip--s0"><i></i>To Quiet</span></div>
+            <button class="gv-btn gv-btn--seal">Accept</button>
+            <button class="gv-btn">Map</button>
+          </div>
+        </div>
+      </div>
+      <ul class="notes bad">
+        <li><b>The green chip is regional pressure, not difficulty.</b> It describes The Ashmark, not this job — and it is the brightest thing on the card.</li>
+        <li><b>Real difficulty is 12px muted body text</b> — "challenge 1", wedged between level and region.</li>
+        <li><b>Title is 15px</b>, barely above the metadata, and carries a raw database id.</li>
+        <li><b>Three facts of different importance</b> share one undifferentiated grey block.</li>
+        <li><b>Reward is a bordered chip</b> — visually the strongest element after the stamp, though it ranks fourth.</li>
+      </ul>
+    </div>
+    <div class="panel after">
+      <h3>▸ PROPOSED</h3>
+      <div class="stage fixedtex">
+        <div class="notices">
+          <div class="gv-sheet gv-sheet--notice notice-new stamped">
+            <span class="gv-pin"></span>
+            <span class="gv-stamp">GUILD WORK</span>
+            <div class="qid">POSTING 100</div>
+            <div class="qtitle">The Burned Granary</div>
+            <div class="diffline"><i style="background:var(--gv-s0)"></i>ROUTINE <span class="why">— well within the guild</span></div>
+            <div class="statstrip">
+              <span class="st"><b>LEVEL</b><span>1</span></span>
+              <span class="st"><b>TRAVEL</b><span>48<small> min</small></span></span>
+              <span class="st"><b>REWARD</b><span>120<small>g</small></span></span>
+            </div>
+            <div class="qfoot">THE ASHMARK · 90 XP · EXPIRES WK 3</div>
+            <div class="qacts">
+              <button class="gv-btn gv-btn--seal">Accept</button>
+              <button class="gv-btn">Map</button>
+            </div>
+          </div>
+
+          <div class="gv-sheet gv-sheet--notice notice-new" style="--gv-tilt:0.6deg">
+            <span class="gv-pin"></span>
+            <div class="qid">POSTING 3</div>
+            <div class="qtitle">Skeleton Crypt</div>
+            <div class="diffline"><i style="background:var(--gv-s3)"></i>BEYOND US <span class="why">— two levels over the guild</span></div>
+            <div class="statstrip">
+              <span class="st"><b>LEVEL</b><span>2</span></span>
+              <span class="st"><b>TRAVEL</b><span>52<small> min</small></span></span>
+              <span class="st"><b>REWARD</b><span>300<small>g</small></span></span>
+            </div>
+            <div class="qfoot">THE ASHMARK · 200 XP · EXPIRES WK 3</div>
+            <div class="qacts">
+              <button class="gv-btn gv-btn--seal">Accept</button>
+              <button class="gv-btn">Map</button>
+            </div>
+          </div>
+
+          <div class="gv-sheet gv-sheet--notice notice-new stamped" style="--gv-tilt:-0.3deg">
+            <span class="gv-pin"></span>
+            <span class="gv-stamp">EXPIRES</span>
+            <div class="qid">POSTING 2</div>
+            <div class="qtitle">The Abandoned Mine</div>
+            <div class="diffline"><i style="background:var(--gv-s1)"></i>DANGEROUS <span class="why">— a level above the guild</span></div>
+            <div class="statstrip">
+              <span class="st"><b>LEVEL</b><span>1</span></span>
+              <span class="st"><b>TRAVEL</b><span>51<small> min</small></span></span>
+              <span class="st"><b>REWARD</b><span>200<small>g</small></span></span>
+            </div>
+            <div class="qfoot">GRAVEL DOWNS · 150 XP · EXPIRES WK 3</div>
+            <div class="qacts">
+              <button class="gv-btn gv-btn--seal">Accept</button>
+              <button class="gv-btn">Map</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes good">
+        <li><b>Title 21px bold</b>, id demoted to a small caps tag that no longer looks like part of the name.</li>
+        <li><b>Difficulty is a named category</b> under the title, colour + word inseparable, with a plain-language reason. Bands come from the rule the autopilot already uses: challenge vs party level.</li>
+        <li><b>Level / travel / reward are equal blocks</b> in priority order, reusing the hero sheet's stat-block component.</li>
+        <li><b>Regional pressure leaves the card.</b> It is world context, and it already has a home on the town hub's watch report and the chart.</li>
+        <li><b>Footer holds what you only check occasionally</b> — region, xp, and the expiry deadline.</li>
+        <li>Scan the three side by side: difficulty is now the first thing your eye lands on after the name.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ C · DISPATCH ============================ -->
+<section>
+  <h2>C · DISPATCH — PROFILE AND CAUTION LABELS</h2>
+  <p class="lede">
+    <code class="k">fullExplore</code> / <code class="k">bossRush</code> / <code class="k">mysteryHunt</code> /
+    <code class="k">lootRun</code> are sim ids that leaked into the interface. They are also carried in the
+    <b>frozen</b> <code class="k">dispatch.started</code> payload, so the ids cannot be renamed — but nothing stops
+    presentation from giving them a label and a sentence. Two registers below; the mechanic is identical.
+  </p>
+  <div class="pair">
+    <div class="panel before">
+      <h3>▸ AS SHIPPED</h3>
+      <div class="stage">
+        <div class="gv-sheet" style="--gv-tilt:-0.3deg">
+          <span class="gv-pin"></span>
+          <h3 class="gv-head">Marching orders <span class="gv-sub">team · profile · caution</span></h3>
+          <div class="choicerow">
+            <span class="clabel">PROFILE</span>
+            <button class="gv-btn" disabled>fullExplore</button>
+            <button class="gv-btn">bossRush</button>
+            <button class="gv-btn">mysteryHunt</button>
+            <button class="gv-btn">lootRun</button>
+          </div>
+          <div class="choicerow">
+            <span class="clabel">CAUTION</span>
+            <button class="gv-btn">cautious</button>
+            <button class="gv-btn" disabled>standard</button>
+            <button class="gv-btn">bold</button>
+          </div>
+        </div>
+      </div>
+      <ul class="notes bad">
+        <li><b>camelCase in the interface.</b> Nothing else on the desk speaks like this.</li>
+        <li><b>No consequence stated.</b> Nothing tells you what any of the four actually changes.</li>
+        <li><b>"standard" and "bold"</b> read as UI defaults, not as instructions to a party walking into a hole in the ground.</li>
+      </ul>
+    </div>
+    <div class="panel after">
+      <h3>▸ PROPOSED — TWO REGISTERS, PICK ONE</h3>
+      <div class="stage fixedtex">
+        <div class="gv-sheet" style="--gv-tilt:-0.3deg;margin-bottom:18px">
+          <span class="gv-pin"></span>
+          <h3 class="gv-head">Marching orders <span class="gv-sub">option A — plain</span></h3>
+          <span class="clabel" style="font-family:var(--gv-sans);font-size:10px;letter-spacing:1.8px;color:var(--gv-ink-muted)">ORDERS</span>
+          <div class="profgrid">
+            <button class="profcard" aria-pressed="true"><b>Search everything</b><span>Clear the whole site. Slowest, richest.</span><code>fullExplore</code></button>
+            <button class="profcard"><b>Go for the boss</b><span>Straight to the threat. Skip the rest.</span><code>bossRush</code></button>
+            <button class="profcard"><b>Follow the trail</b><span>Chase clues. Best for story leads.</span><code>mysteryHunt</code></button>
+            <button class="profcard"><b>Grab the valuables</b><span>Take what's loose and leave.</span><code>lootRun</code></button>
+          </div>
+          <div class="choicerow" style="margin-top:14px">
+            <span class="clabel">NERVE</span>
+            <button class="gv-btn">Careful</button>
+            <button class="gv-btn" disabled>Balanced</button>
+            <button class="gv-btn">Bold</button>
+          </div>
+        </div>
+
+        <div class="gv-sheet gv-sheet--aged" style="--gv-tilt:0.35deg">
+          <span class="gv-pin"></span>
+          <h3 class="gv-head">Marching orders <span class="gv-sub">option B — in the guild's voice</span></h3>
+          <span class="clabel" style="font-family:var(--gv-sans);font-size:10px;letter-spacing:1.8px;color:var(--gv-ink-muted)">ORDERS</span>
+          <div class="profgrid">
+            <button class="profcard" aria-pressed="true"><b>Sweep it clean</b><span>Every room, every door. Bring it all back.</span><code>fullExplore</code></button>
+            <button class="profcard"><b>Cut out the heart</b><span>Find what's running it. Ignore the rest.</span><code>bossRush</code></button>
+            <button class="profcard"><b>Follow the thread</b><span>Answers before spoils.</span><code>mysteryHunt</code></button>
+            <button class="profcard"><b>Strip it and go</b><span>Purse first. No heroics.</span><code>lootRun</code></button>
+          </div>
+          <div class="choicerow" style="margin-top:14px">
+            <span class="clabel">NERVE</span>
+            <button class="gv-btn">Cautious</button>
+            <button class="gv-btn" disabled>Steady</button>
+            <button class="gv-btn">Bold</button>
+          </div>
+        </div>
+      </div>
+      <ul class="notes good">
+        <li><b>Label plus one line of consequence</b> — the choice becomes readable without a manual.</li>
+        <li><b>Ids shown in the comp only</b> so you can check the mapping. They would not ship on screen.</li>
+        <li><b>Cards, not a button row</b>: four options with descriptions do not fit a single line, and the row already wrapped awkwardly.</li>
+        <li>"Caution" becomes <b>NERVE</b> — caution/cautious was a label and a value with the same word.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ D · AFTER-ACTION ============================ -->
+<section>
+  <h2>D · AFTER-ACTION — ONE ROW PER HERO</h2>
+  <p class="lede">
+    The report currently walks the event stream and prints a row per XP <em>award</em>, so a four-hero party that fought
+    and completed produces eight rows, the same four faces twice. Group by hero; make source a column.
+  </p>
+  <div class="pair">
+    <div class="panel before">
+      <h3>▸ AS SHIPPED</h3>
+      <div class="stage">
+        <div class="gv-sheet gv-sheet--old" style="--gv-tilt:0.35deg">
+          <h3 class="gv-head">The report <span class="gv-sub">experience</span></h3>
+          <table class="xp-old" style="width:100%;border-collapse:collapse;font-size:13px;line-height:30px">
+            <tbody>
+              <tr><td><span class="who2"><span class="face"></span><b>Torvald</b></span></td><td>+25 xp</td><td style="color:var(--gv-ink-muted)">combat</td></tr>
+              <tr><td><span class="who2"><span class="face"></span><b>Shade</b></span></td><td>+25 xp</td><td style="color:var(--gv-ink-muted)">combat</td></tr>
+              <tr><td><span class="who2"><span class="face"></span><b>Mira</b></span></td><td>+25 xp</td><td style="color:var(--gv-ink-muted)">combat</td></tr>
+              <tr><td><span class="who2"><span class="sil"></span><b>Elandra</b></span></td><td>+25 xp</td><td style="color:var(--gv-ink-muted)">combat</td></tr>
+              <tr><td><span class="who2"><span class="face"></span><b>Torvald</b></span></td><td>+23 xp</td><td style="color:var(--gv-ink-muted)">quest</td></tr>
+              <tr><td><span class="who2"><span class="face"></span><b>Shade</b></span></td><td>+23 xp</td><td style="color:var(--gv-ink-muted)">quest</td></tr>
+              <tr><td><span class="who2"><span class="face"></span><b>Mira</b></span></td><td>+23 xp</td><td style="color:var(--gv-ink-muted)">quest</td></tr>
+              <tr><td><span class="who2"><span class="sil"></span><b>Elandra</b></span></td><td>+23 xp</td><td style="color:var(--gv-ink-muted)">quest</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <ul class="notes bad">
+        <li><b>Every hero appears twice</b>, portrait and all — the roster looks eight strong.</li>
+        <li><b>No total.</b> The number that matters ("did anyone reach a level?") is arithmetic you do yourself.</li>
+        <li><b>Source is a row category</b>, so the two blocks cannot be compared per hero.</li>
+      </ul>
+    </div>
+    <div class="panel after">
+      <h3>▸ PROPOSED</h3>
+      <div class="stage fixedtex">
+        <div class="gv-sheet gv-sheet--old" style="--gv-tilt:0.35deg">
+          <h3 class="gv-head">The report <span class="gv-sub">experience</span></h3>
+          <div class="xp-new">
+            <table>
+              <thead>
+                <tr><th>HERO</th><th class="n">COMBAT</th><th class="n">QUEST</th><th class="n">TOTAL</th><th class="prog">PROGRESS</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="who2"><span class="face"></span><b>Torvald</b></span></td><td class="n">25</td><td class="n">23</td><td class="n tot">48</td><td class="prog" style="color:var(--gv-ink-muted)">48/1000</td></tr>
+                <tr><td><span class="who2"><span class="face"></span><b>Shade</b></span></td><td class="n">25</td><td class="n">23</td><td class="n tot">48</td><td class="prog" style="color:var(--gv-ink-muted)">48/1000</td></tr>
+                <tr><td><span class="who2"><span class="face"></span><b>Mira</b></span></td><td class="n">25</td><td class="n">23</td><td class="n tot">48</td><td class="prog" style="color:var(--gv-ink-muted)">48/1000</td></tr>
+                <tr><td><span class="who2"><span class="sil"></span><b>Elandra</b></span></td><td class="n">25</td><td class="n">23</td><td class="n tot">48</td><td class="prog" style="color:var(--gv-ink-muted)">48/1000</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td>The party</td><td class="n">100</td><td class="n">92</td><td class="n">192</td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <ul class="notes good">
+        <li><b>One row per hero</b>, four faces for a four-hero party.</li>
+        <li><b>Source becomes a column</b>: combat and quest are comparable at a glance, and the sum is shown, not implied.</li>
+        <li><b>Progress column</b> answers the question the screen exists to answer — who is close to levelling. Free; <code class="k">heroSheet().xp</code> already carries it.</li>
+        <li><b>Tabular figures, right-aligned</b> so the columns actually read as columns.</li>
+        <li>A party total in the footer, since the haul above it is already reported per party.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DECISIONS ============================ -->
+<section>
+  <h2>E · DECISIONS I NEED FROM YOU BEFORE ANY CODE</h2>
+
+  <div class="decision">
+    <h4>1 · DIFFICULTY BANDS — WORDING AND THRESHOLDS</h4>
+    <p>Bands derive from <code class="k">challenge − partyLevel</code>, reusing the autopilot's existing accept rule
+      (it declines anything above <code class="k">partyLevel + 1</code>), so the board says what the guild would say.
+      Four bands map onto the frozen status set, always label-paired.</p>
+    <div class="opts">
+      <div class="opt"><b>OPTION A — PLAIN</b><span>Easy · Fair · Hard · Too hard<br>Unambiguous, zero flavour, translates cleanly.</span></div>
+      <div class="opt"><b>OPTION B — THE GUILD'S JUDGEMENT (shown above)</b><span>Routine · Measured · Dangerous · Beyond us<br>Reads as a marshal's opinion of the job, which is what the desk fiction is.</span></div>
+    </div>
+    <p style="margin-top:10px">Thresholds either way: <code class="k">≤ −2</code> routine · <code class="k">−1…0</code> measured · <code class="k">+1</code> dangerous · <code class="k">≥ +2</code> beyond us.</p>
+  </div>
+
+  <div class="decision">
+    <h4>2 · PROFILE LABELS — REGISTER</h4>
+    <p>Option A ("Search everything") is functional and unmistakable. Option B ("Sweep it clean") sounds like an order
+      given to people. B fits the desk fiction better; A is easier to be certain about. Ids stay frozen either way.</p>
+  </div>
+
+  <div class="decision">
+    <h4>3 · REGIONAL PRESSURE ON THE BOARD</h4>
+    <p>I removed it from the notice, because it describes the region rather than the job and it was outshouting the
+      difficulty. It still appears on the town hub watch report and the chart. Alternative: keep it as a muted word in
+      the footer line (<code class="k">THE ASHMARK · QUIET</code>) so you can still see a region heating up while
+      choosing work. Say the word and I will add it back that way.</p>
+  </div>
+
+  <div class="decision">
+    <h4>4 · SCOPE — THIS IS A UX BRIEF, NOT A DRIVE-BY</h4>
+    <p>Four surfaces, one new sim query (the difficulty band), one presentation label map, no schema change, no new
+      content. By your own process this wants an implementation brief before code. I would rather write the short
+      version of that brief off your answers above than start editing components — the last thing this repo needs is
+      grammar erosion introduced by a readability pass.</p>
+  </div>
+</section>
+
+<script>
+const setPair = (bothVisible) => {
+  document.querySelectorAll('.panel.before').forEach(el => el.style.display = bothVisible ? '' : 'none');
+  document.querySelectorAll('.pair').forEach(el => el.style.gridTemplateColumns = bothVisible ? '' : 'minmax(0,1fr)');
+  document.getElementById('bothOn').setAttribute('aria-pressed', String(bothVisible));
+  document.getElementById('afterOnly').setAttribute('aria-pressed', String(!bothVisible));
+};
+document.getElementById('bothOn').onclick = () => setPair(true);
+document.getElementById('afterOnly').onclick = () => setPair(false);
+const setFlat = (on) => {
+  document.body.classList.toggle('gv-flat', on);
+  document.getElementById('flatOn').setAttribute('aria-pressed', String(on));
+  document.getElementById('deskOn').setAttribute('aria-pressed', String(!on));
+};
+document.getElementById('flatOn').onclick = () => setFlat(true);
+document.getElementById('deskOn').onclick = () => setFlat(false);
+</script>
+</body>
+</html>

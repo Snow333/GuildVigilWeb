@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
  */
 export async function newCampaign(page: Page, name: string): Promise<void> {
   await page.fill('input', name);
-  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('button:has-text("New campaign")').first().click();
   await page.locator('h1:has-text("The founding muster")').waitFor();
   await page.locator('button:has-text("Sign the charter")').click();
   await page.locator('h1:has-text("Town Hub")').waitFor();

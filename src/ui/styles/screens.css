@@ -43,16 +43,105 @@
 .gv-notices .gv-sheet--notice:nth-child(3n+1) { --gv-tilt: -0.7deg; }
 .gv-notices .gv-sheet--notice:nth-child(3n+2) { --gv-tilt: 0.8deg; }
 .gv-notices .gv-sheet--notice:nth-child(3n)   { --gv-tilt: -0.4deg; }
+/* brief #11 hierarchy: id tag → name → the guild's judgement → equal stat
+   blocks in priority order → muted footer. */
+.gv-notice-id {
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--gv-ink-faint);
+}
 .gv-notice-name {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.16;
+  margin: 2px 0 0;
+  padding-right: 26px;
+}
+/* a stamped notice reserves the stamp's column — red ink must never land
+   across the posting's name (it did, before this brief) */
+.gv-notice--stamped .gv-notice-id,
+.gv-notice--stamped .gv-notice-name {
+  padding-right: 104px;
+}
+.gv-notice--stamped .gv-stamp {
+  top: 16px;
+}
+
+.gv-difficulty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 9px 0 0;
+  font-family: var(--gv-sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+.gv-difficulty i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid #00000038;
+  box-shadow: inset 0 1px 1px #ffffff44;
+  flex: none;
+}
+/* the frozen set, in its documented semantics: quiet · attention · warning ·
+   critical. The word always ships with the colour. */
+.gv-difficulty--s0 i { background: var(--gv-s0); }
+.gv-difficulty--s1 i { background: var(--gv-s1); }
+.gv-difficulty--s2 i { background: var(--gv-s2); }
+.gv-difficulty--s3 i { background: var(--gv-s3); }
+.gv-difficulty span {
+  font-family: var(--gv-serif);
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--gv-ink-muted);
+}
+
+.gv-notice-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 13px 0 0;
+}
+.gv-nstat {
+  border: 1px solid #a8905e;
+  border-radius: 2px;
+  background: #e2d4b266;
+  padding: 5px 7px 6px;
+  text-align: center;
+}
+.gv-nstat b {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--gv-ink-muted);
+  font-weight: 600;
+}
+.gv-nstat > span {
+  display: block;
   font-size: 15px;
   font-weight: 700;
-  padding-right: 30px; /* clear of the stamp */
+  line-height: 1.28;
 }
-.gv-notice-meta {
+.gv-nstat small {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--gv-ink-soft);
+}
+.gv-notice-foot {
+  margin: 12px 0 0;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.1px;
   color: var(--gv-ink-muted);
-  font-size: 12px;
-  line-height: 1.55;
-  margin: 4px 0 8px;
+}
+.gv-notice-acts {
+  margin: 13px 0 0;
 }
 .gv-reward {
   font-family: var(--gv-sans);
@@ -233,6 +322,85 @@
   color: var(--gv-ink-muted);
   min-width: 74px;
 }
+/* ---- orders as cards (brief #11): the label plus one line of consequence.
+   Sim ids never reach the screen; src/ui/labels.ts is the only translator. ---- */
+.gv-ordergrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 9px;
+  margin: 6px 0 0;
+}
+.gv-ordercard {
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--gv-serif);
+  color: var(--gv-ink);
+  border: 1px solid #a8905e88;
+  border-radius: 2px;
+  background: #e2d4b244;
+  padding: 9px 11px;
+}
+.gv-ordercard:hover { background: #e2d4b277; }
+.gv-ordercard[aria-pressed='true'] {
+  border-color: var(--gv-wax);
+  box-shadow: inset 0 0 0 2px #8c2f2880;
+  background: #e2d4b299;
+}
+.gv-ordercard b {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+}
+.gv-ordercard span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--gv-ink-soft);
+  margin-top: 2px;
+}
+
+/* ---- after-action: one row per hero, source as columns (brief #11) ---- */
+.gv-xptable {
+  margin-bottom: 10px;
+}
+.gv-xptable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 30px;
+}
+.gv-xptable th {
+  text-align: left;
+  font-family: var(--gv-sans);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--gv-ink-muted);
+  font-weight: 600;
+  border-bottom: 1px solid #b3a07577;
+  padding: 0 10px 0 0;
+}
+.gv-xptable td { padding: 4px 10px 4px 0; }
+/* the chip's default 52px overflows a 30px ledger row and the faces collide */
+.gv-xptable .gv-paste--chip { width: 38px; }
+/* tabular figures so the columns actually read as columns */
+.gv-xptable th.gv-n,
+.gv-xptable td.gv-n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.gv-xptable td.gv-tot { font-weight: 700; }
+.gv-xptable th.gv-prog,
+.gv-xptable td.gv-prog {
+  padding-left: 26px;
+  white-space: nowrap;
+}
+.gv-xptable tfoot td {
+  border-top: 1px solid #b3a07577;
+  font-weight: 700;
+}
+
 /* the scribe's running record: ruled feed on fresh vellum */
 .gv-feed {
   height: 280px;
@@ -259,7 +427,9 @@
 
 /* ============ remaining surfaces: title + shop ============ */
 .gv-title {
-  max-width: 680px;
+  /* narrowed from 680px with the charter rebuild: the slot list has no wide
+     column left to fill, and 600 keeps each row's name and action in one glance */
+  max-width: 600px;
   margin: 0 auto;
 }
 .gv-title h1 {
@@ -273,6 +443,87 @@
   font-style: italic;
   color: var(--gv-ink-faint);
   margin: 0 0 26px;
+}
+
+/* ---- the charter (brief #11): name first, then a slot LIST ---- */
+.gv-charter {
+  padding: 22px 24px 20px;
+}
+/* the pin sits ON the sheet now, so the heading clears it */
+.gv-head--pinned {
+  padding-left: 22px;
+}
+.gv-namefield {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: 0 0 4px;
+}
+.gv-namefield label {
+  font-family: var(--gv-sans);
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  color: var(--gv-ink-muted);
+}
+.gv-namefield .gv-input {
+  flex: 1;
+  min-width: 200px;
+  font-size: 15px;
+  padding: 8px 12px;
+}
+.gv-slotlist {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.gv-slotrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 116px;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #b3a07555;
+}
+.gv-slotrow:first-child { border-top: none; }
+.gv-slotwho { min-width: 0; }
+/* names may ellipsize; numbers never do (brief #8) */
+.gv-slotname {
+  display: block;
+  font-size: 15.5px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gv-slotname em { color: var(--gv-ink-muted); }
+.gv-slotsub {
+  display: block;
+  font-family: var(--gv-sans);
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  color: var(--gv-ink-muted);
+  margin-top: 1px;
+}
+.gv-slotact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gv-slotact > .gv-btn {
+  width: 100%;
+  text-align: center;
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+.gv-slotpair {
+  display: flex;
+  gap: 6px;
+}
+.gv-slotpair .gv-btn {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 12px;
 }
 .gv-shop {
   max-width: 1140px;

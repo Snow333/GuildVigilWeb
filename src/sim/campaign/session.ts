@@ -34,6 +34,7 @@ import {
   type LevelUpApplied, type LevelUpPlan,
 } from '@sim/heroes/levelUp';
 import { portraitKey, type AncestryId, type Gender } from '@sim/heroes/ancestry';
+import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
 import { SAVE_BACKFILLS } from '@sim/save/backfills';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
@@ -79,6 +80,11 @@ export interface BoardEntry {
   minLevel: number;
   /** Real difficulty (dungeon level where set) — what the accept decision weighs. */
   challenge: number;
+  /**
+   * What the guild would SAY about that challenge, relative to its own level
+   * (brief #11). Derived here so the UI renders a judgement it never computes.
+   */
+  difficulty: DifficultyBand;
   regionId: string;
   postedWeek: number;
   expiresWeek: number;
@@ -712,7 +718,13 @@ export class CampaignSession {
     return this.stash;
   }
 
+  /**
+   * Mean character level, floored at 1. The empty-roster guard is load-bearing
+   * since brief #11: an empty `heroes` divides by zero, and `Math.max(NaN, 1)`
+   * is NaN, which would poison every difficulty band on the board.
+   */
   partyLevel(): number {
+    if (this.heroes.length === 0) return 1;
     return Math.max(Math.round(this.heroes.reduce((s, h) => s + characterLevel(h), 0) / this.heroes.length), 1);
   }
 
@@ -937,13 +949,16 @@ export class CampaignSession {
   }
 
   board(): BoardEntry[] {
+    const partyLevel = this.partyLevel();
     return this.open.map((o) => {
       const row = questsById.get(o.questId)!;
+      const challenge = Math.max((row.dungeon_level as number | null) ?? (row.min_level as number), 1);
       return {
         questId: o.questId,
         name: row.name as string,
         minLevel: row.min_level as number,
-        challenge: Math.max((row.dungeon_level as number | null) ?? (row.min_level as number), 1),
+        challenge,
+        difficulty: difficultyFor(challenge, partyLevel),
         regionId: o.regionId,
         postedWeek: o.postedWeek,
         expiresWeek: o.postedWeek + SCHEDULER.expiryWeeks,

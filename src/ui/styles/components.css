@@ -20,6 +20,9 @@
 }
 .gv-pin--left { left: 18px; }
 .gv-pin--right { left: auto; right: 18px; }
+/* driven THROUGH the sheet rather than straddling its edge — a pin half on and
+   half off the paper reads as an artifact, not as hardware (brief #11) */
+.gv-pin--inset { top: 9px; left: 14px; }
 
 .gv-tape {
   position: absolute;
@@ -342,6 +345,14 @@ body.gv-readable .gv-plaque,
 body.gv-readable .gv-plate,
 body.gv-readable .gv-plate b,
 body.gv-readable .gv-ledger th,
+body.gv-readable .gv-notice-id,
+body.gv-readable .gv-notice-foot,
+body.gv-readable .gv-difficulty,
+body.gv-readable .gv-nstat b,
+body.gv-readable .gv-slotsub,
+body.gv-readable .gv-namefield label,
+body.gv-readable .gv-ordercard b,
+body.gv-readable .gv-xptable th,
 body.gv-readable .gv-whosub,
 body.gv-readable .gv-dname,
 body.gv-readable .gv-dstat,

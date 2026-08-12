@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import type { ForecastResult } from '@sim/campaign/session';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
+import { cautionLabel, profileLabel } from '../labels';
 import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
@@ -116,7 +117,7 @@ export function DispatchSetup() {
         {/* the orders sheet: pinned = actionable now */}
         <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '-0.3deg' }}>
           <span className="gv-pin" />
-          <h3 className="gv-head">Marching orders <span className="gv-sub">team · profile · caution</span></h3>
+          <h3 className="gv-head">Marching orders <span className="gv-sub">team · orders · nerve</span></h3>
 
           <p className="gv-statline" style={{ marginBottom: 6 }}>
             <b>Team</b> (party_1 — multi-team arrives later):{' '}
@@ -142,29 +143,41 @@ export function DispatchSetup() {
             ))}
           </div>
 
-          <div className="gv-choice">
-            <span className="gv-choice-label">Profile</span>
-            {PROFILES.map((p) => (
-              <button
-                key={p}
-                className="gv-btn"
-                disabled={profile === p}
-                onClick={() => { setProfile(p); setForecast(null); }}
-              >
-                {p}
-              </button>
-            ))}
+          {/* orders as cards: four options each needing a line of consequence
+              never fit a button row, and the row wrapped awkwardly anyway */}
+          <span className="gv-choice-label">Orders</span>
+          <div className="gv-ordergrid">
+            {PROFILES.map((p) => {
+              const l = profileLabel(p);
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  className="gv-ordercard"
+                  aria-pressed={profile === p}
+                  data-profile={p}
+                  onClick={() => { setProfile(p); setForecast(null); }}
+                >
+                  <b>{l.label}</b>
+                  <span>{l.blurb}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className="gv-choice">
-            <span className="gv-choice-label">Caution</span>
+
+          {/* "Caution: cautious" read as a label repeating its own value */}
+          <div className="gv-choice" style={{ marginTop: 14 }}>
+            <span className="gv-choice-label">Nerve</span>
             {CAUTIONS.map((c) => (
               <button
                 key={c}
                 className="gv-btn"
                 disabled={caution === c}
+                data-caution={c}
+                title={cautionLabel(c).blurb}
                 onClick={() => { setCaution(c); setForecast(null); }}
               >
-                {c}
+                {cautionLabel(c).label}
               </button>
             ))}
           </div>

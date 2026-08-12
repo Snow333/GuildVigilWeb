@@ -11,19 +11,19 @@ import { test, expect } from '@playwright/test';
 test('the founding muster gates a new campaign and writes the player choices through', async ({ page }) => {
   await page.goto('/');
   await page.fill('input', 'E2E Muster');
-  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('button:has-text("New campaign")').first().click();
 
-  // Gate: "New campaign here" no longer starts a campaign — it opens the muster.
+  // Gate: "New campaign" no longer starts a campaign — it opens the muster.
   await page.locator('h1:has-text("The founding muster")').waitFor();
   await expect(page.locator('h1:has-text("Town Hub")')).toHaveCount(0);
 
   // Backing out leaves the slot untouched — nothing was committed.
   await page.locator('button:has-text("◂ Back to the charter")').click();
   await page.locator('h1:has-text("GUILD VIGIL")').waitFor();
-  await expect(page.locator('tbody tr').first()).toContainText('empty');
+  await expect(page.locator('[data-slot]').first()).toContainText('empty');
 
   await page.fill('input', 'E2E Muster');
-  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('button:has-text("New campaign")').first().click();
   await page.locator('h1:has-text("The founding muster")').waitFor();
 
   // Author recruit 1: name, gender, then an ancestry WITH art (Half-Orc).
@@ -71,7 +71,7 @@ test('the muster and its pastes are fully usable in flat mode (bible §5)', asyn
   // not retrofitted after someone plays it flat.
   await page.goto('/');
   await page.fill('input', 'E2E Flat');
-  await page.locator('button:has-text("New campaign here")').first().click();
+  await page.locator('button:has-text("New campaign")').first().click();
   await page.locator('h1:has-text("The founding muster")').waitFor();
   await page.locator('button:has-text("Sign the charter")').click();
   await page.locator('h1:has-text("Town Hub")').waitFor();
@@ -94,7 +94,7 @@ test('the muster and its pastes are fully usable in flat mode (bible §5)', asyn
   await page.locator('button:has-text("Quit to title")').click();
   await page.locator('h1:has-text("GUILD VIGIL")').waitFor();
   await page.fill('input', 'E2E Flat Two');
-  await page.locator('button:has-text("New campaign here")').last().click();
+  await page.locator('button:has-text("New campaign")').last().click();
   await page.locator('h1:has-text("The founding muster")').waitFor();
   await expect(page.locator('body')).toHaveClass(/gv-flat/);
 
