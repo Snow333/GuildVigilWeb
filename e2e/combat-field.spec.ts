@@ -128,4 +128,20 @@ test('the field mounts on a real fight, names its units, and skims and flattens 
   await expect(field.locator('text=1 SQUARE = 5 FT')).toBeVisible();
   await expect(page.locator('.gv-roster li')).toHaveCount(unitCount);
   await expect(page.locator('.gv-gauge-bar')).toHaveCount(2);
+
+  // ── brief #18 finding 2: the transport IS the persisted setting ──
+  // THE BUG THIS KILLS: the fight's ladder was `useState(0.5)`, so a speed
+  // chosen here was forgotten on the next fight and on the next session, while
+  // the identical-looking buttons in Settings set a persisted default. Same
+  // affordance, two meanings (brief #8). Choosing here must now BE the default.
+  await transport.locator('button:has-text("¼×")').click();
+  await page.locator('button:has-text("After-action")').first().click();
+  await page.locator('h1:has-text("After-action")').waitFor();
+  await page.locator('button:has-text("Return to town")').click();
+  await page.locator('h1:has-text("Town Hub")').waitFor();
+  await page.locator('button:has-text("Settings")').click();
+  await page.locator('h1:has-text("Settings")').waitFor();
+  const combatLadder = page.locator('.gv-choice').filter({ hasText: 'Combat speed' });
+  await expect(combatLadder.locator('button:has-text("¼×")')).toBeDisabled();
+  await expect(combatLadder.locator('button:has-text("½×")')).toBeEnabled();
 });

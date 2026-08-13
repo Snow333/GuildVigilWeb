@@ -37,8 +37,20 @@ export interface LaunchContext {
 
 export type ReplaySpeed = 1 | 4 | 16;
 
+/**
+ * The combat ladder is a SEPARATE setting from the dispatch one, deliberately:
+ * brief #12 §7 sized them for different jobs (a fight is 32–143 ticks, travel is
+ * not). Both live here beside the state that owns them so `CombatViewer` can
+ * import the type without an import cycle back through this provider.
+ */
+export type CombatSpeed = 0.25 | 0.5 | 1 | 4 | 16;
+
 /** Settings store speeds as plain numbers; presentation narrows to the legal set. */
 const asReplaySpeed = (n: number): ReplaySpeed => (n === 1 || n === 16 ? n : 4);
+
+const COMBAT_SPEEDS: readonly CombatSpeed[] = [0.25, 0.5, 1, 4, 16];
+const asCombatSpeed = (n: number): CombatSpeed =>
+  COMBAT_SPEEDS.find((s) => s === n) ?? 0.5;
 
 export interface GameContextValue {
   session: CampaignSession | null;
@@ -51,6 +63,8 @@ export interface GameContextValue {
   lastLaunch: LaunchContext | null;
   lastError: string | null;
   defaultSpeed: ReplaySpeed;
+  /** Player-wide combat transport (brief #12 §7 ladder) — persisted via SaveStore. */
+  defaultCombatSpeed: CombatSpeed;
   /** Player-wide flat mode (brief #8 accessibility contract) — persisted via SaveStore. */
   flatMode: boolean;
   setFlatMode: (on: boolean) => void;
@@ -62,6 +76,7 @@ export interface GameContextValue {
   exec: <T>(fn: (s: CampaignSession) => T) => T | null;
   setLastLaunch: (ctx: LaunchContext | null) => void;
   setDefaultSpeed: (speed: ReplaySpeed) => void;
+  setDefaultCombatSpeed: (speed: CombatSpeed) => void;
   /** The founding party is REQUIRED — a campaign cannot start without a muster (brief #10). */
   startNew: (slotId: string, name: string, founding: readonly MusterChoice[]) => Promise<void>;
   loadGame: (slotId: string) => Promise<boolean>;
@@ -117,6 +132,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const setFlatMode = useCallback((on: boolean) => updateSettings({ flatMode: on }), [updateSettings]);
   const setReadableType = useCallback((on: boolean) => updateSettings({ readableType: on }), [updateSettings]);
   const setDefaultSpeed = useCallback((s: ReplaySpeed) => updateSettings({ defaultSpeed: s }), [updateSettings]);
+  const setDefaultCombatSpeed = useCallback(
+    (s: CombatSpeed) => updateSettings({ defaultCombatSpeed: s }),
+    [updateSettings],
+  );
 
   const nav = useCallback((next: Screen): void => {
     setLastError(null);
@@ -195,11 +214,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const value: GameContextValue = {
     session, version, screen, store, slotId, campaignName, lastLaunch, lastError,
     defaultSpeed: asReplaySpeed(settings.defaultSpeed),
+    defaultCombatSpeed: asCombatSpeed(settings.defaultCombatSpeed),
     flatMode: settings.flatMode,
     setFlatMode,
     readableType: settings.readableType,
     setReadableType,
-    nav, exec, setLastLaunch, setDefaultSpeed, startNew, loadGame, saveGame, quitToTitle,
+    nav, exec, setLastLaunch, setDefaultSpeed, setDefaultCombatSpeed,
+    startNew, loadGame, saveGame, quitToTitle,
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

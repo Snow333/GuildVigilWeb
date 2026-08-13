@@ -30,14 +30,21 @@ export interface SaveEnvelope {
 export interface UserSettings {
   v: 1;
   flatMode: boolean;
+  /** The DISPATCH transport (1/4/16) — travel and exploration pacing. */
   defaultSpeed: number;
   /** Readable type (brief #9): swap the desk's period faces for a high-legibility
    *  face with relaxed spacing. Standalone — NOT tied to flat mode. Absent in
    *  old records; the merge-with-defaults load path backfills false. */
   readableType: boolean;
+  /** The COMBAT transport (0.25/0.5/1/4/16) — a separate ladder because a fight
+   *  is 32–143 ticks and the dispatch ladder was sized for travel (brief #12 §7).
+   *  Absent in old records; the merge-with-defaults load path backfills 0.5. */
+  defaultCombatSpeed: number;
 }
 
-export const DEFAULT_SETTINGS: UserSettings = { v: 1, flatMode: false, defaultSpeed: 4, readableType: false };
+export const DEFAULT_SETTINGS: UserSettings = {
+  v: 1, flatMode: false, defaultSpeed: 4, readableType: false, defaultCombatSpeed: 0.5,
+};
 
 export interface SaveStore {
   list(): Promise<SaveSlotMeta[]>;

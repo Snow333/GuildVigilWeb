@@ -82,8 +82,9 @@ describe('player-wide settings — brief #8 flat mode + brief #9 readable type (
 
     expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS); // absent → defaults
 
-    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 16, readableType: true });
-    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16, readableType: true });
+    const full = { v: 1, flatMode: true, defaultSpeed: 16, readableType: true, defaultCombatSpeed: 1 } as const;
+    await store.saveSettings(full);
+    expect(await store.loadSettings()).toEqual(full);
     expect(await store.list()).toHaveLength(0); // settings never list as a campaign slot
 
     storage.setItem('gv_settings', '{not json');
@@ -95,13 +96,36 @@ describe('player-wide settings — brief #8 flat mode + brief #9 readable type (
     // The real-world migration case (brief #9): a step-7-era record with no
     // readableType field loads with readableType backfilled false — no bump of v.
     storage.setItem('gv_settings', JSON.stringify({ v: 1, flatMode: true, defaultSpeed: 16 }));
-    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 16, readableType: false });
+    expect(await store.loadSettings()).toEqual({
+      ...DEFAULT_SETTINGS, v: 1, flatMode: true, defaultSpeed: 16, readableType: false,
+    });
+  });
+
+  /**
+   * Brief #18 finding 2: the combat transport became a persisted setting. This
+   * is the same migration shape as readableType and it is the assertion that
+   * fails if the field is ever added to the interface without a default — the
+   * live record on Steven's machine predates it and must keep loading.
+   */
+  it('a record written before the combat transport existed backfills it, not undefined', async () => {
+    const storage = stubStorage();
+    const store = new LocalStorageSaveStore(storage);
+
+    storage.setItem('gv_settings', JSON.stringify({ v: 1, flatMode: false, defaultSpeed: 4, readableType: true }));
+    const loaded = await store.loadSettings();
+    expect(loaded.defaultCombatSpeed).toBe(0.5);
+    expect(loaded).toEqual({ ...DEFAULT_SETTINGS, readableType: true });
+
+    // And it round-trips once the player picks one.
+    await store.saveSettings({ ...loaded, defaultCombatSpeed: 0.25 });
+    expect((await store.loadSettings()).defaultCombatSpeed).toBe(0.25);
   });
 
   it('the in-memory store honors the same settings surface (tests and harnesses)', async () => {
     const store = new MemorySaveStore();
     expect(await store.loadSettings()).toEqual(DEFAULT_SETTINGS);
-    await store.saveSettings({ v: 1, flatMode: true, defaultSpeed: 1, readableType: true });
-    expect(await store.loadSettings()).toEqual({ v: 1, flatMode: true, defaultSpeed: 1, readableType: true });
+    const chosen = { v: 1, flatMode: true, defaultSpeed: 1, readableType: true, defaultCombatSpeed: 16 } as const;
+    await store.saveSettings(chosen);
+    expect(await store.loadSettings()).toEqual(chosen);
   });
 });

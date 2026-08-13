@@ -60,8 +60,12 @@ function layoutTemplate(t: DungeonTemplate): Map<number, { x: number; y: number 
 }
 
 export function PlaybackScreen() {
-  const { session, lastLaunch, nav, defaultSpeed } = useGame();
-  const [speed, setSpeed] = useState<ReplaySpeed>(defaultSpeed);
+  // The transport IS the player-wide setting — there is no local copy. Brief #8:
+  // one meaning per affordance. These buttons used to set a session-only speed
+  // while the identical buttons in Settings set the persisted default, so the
+  // same control meant two things depending on which sheet you were looking at.
+  const { session, lastLaunch, nav, defaultSpeed, setDefaultSpeed } = useGame();
+  const speed = defaultSpeed;
   const [playing, setPlaying] = useState(true);
   const [simTick, setSimTick] = useState(0);
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -209,15 +213,25 @@ export function PlaybackScreen() {
               key={s}
               className="gv-btn"
               disabled={speed === s && playing}
-              onClick={() => { setSpeed(s); setPlaying(true); }}
+              onClick={() => { setDefaultSpeed(s); setPlaying(true); }}
             >
               {s}×
             </button>
           ))}
           <button className="gv-btn" onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Resume'}</button>
           <button className="gv-btn" onClick={() => { setSimTick(endTick); setPlaying(false); }}>Skip ▸▸</button>
-          <button className="gv-btn" disabled={!done} onClick={() => nav({ kind: 'afterAction' })}>
-            After-action ▸{done ? '' : ' (finish or skip first)'}
+          {/*
+            Ungated deliberately. The old guard required Skip first — but Skip sat
+            immediately to its left doing exactly the thing the guard asked for, so
+            it protected nothing: the stream is a finished fact and the after-action
+            reads the record, not the playhead. The surface-fight branch of this
+            same screen already renders this button ungated.
+          */}
+          <button
+            className="gv-btn"
+            onClick={() => { setSimTick(endTick); setPlaying(false); nav({ kind: 'afterAction' }); }}
+          >
+            After-action ▸
           </button>
         </div>
 

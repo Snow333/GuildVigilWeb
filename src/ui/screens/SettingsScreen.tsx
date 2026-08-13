@@ -1,5 +1,5 @@
 /**
- * Screen 9 — Settings (brief #5 §3): replay speed default + save management.
+ * Screen 9 — Settings (brief #5 §3): the two transport defaults + save management.
  *
  * Brief #8 rollout step 7: the preferences sheet is pinned (actionable);
  * choices read as pressed buttons. Flat mode is the accessibility contract
@@ -8,10 +8,15 @@
  * on. The e2e persistence spec reads [data-flat-on]/[data-flat-off].
  */
 
-import { useGame, type ReplaySpeed } from '../state/GameProvider';
+import { useGame, type CombatSpeed, type ReplaySpeed } from '../state/GameProvider';
+
+const COMBAT_SPEED_LABEL: Record<CombatSpeed, string> = { 0.25: '\u00bc\u00d7', 0.5: '\u00bd\u00d7', 1: '1\u00d7', 4: '4\u00d7', 16: '16\u00d7' };
 
 export function SettingsScreen() {
-  const { nav, defaultSpeed, setDefaultSpeed, flatMode, setFlatMode, readableType, setReadableType, saveGame, quitToTitle, slotId } = useGame();
+  const {
+    nav, defaultSpeed, setDefaultSpeed, defaultCombatSpeed, setDefaultCombatSpeed,
+    flatMode, setFlatMode, readableType, setReadableType, saveGame, quitToTitle, slotId,
+  } = useGame();
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-settings">
@@ -58,6 +63,22 @@ export function SettingsScreen() {
               </button>
             ))}
             <span style={{ fontSize: 12, color: 'var(--gv-ink-muted)' }}>default for dispatch playback</span>
+          </div>
+
+          {/* A separate ladder because a fight is 32–143 ticks (brief #12 §7). */}
+          <div className="gv-choice">
+            <span className="gv-choice-label">Combat speed</span>
+            {([0.25, 0.5, 1, 4, 16] as CombatSpeed[]).map((s) => (
+              <button
+                key={s}
+                className="gv-btn"
+                disabled={defaultCombatSpeed === s}
+                onClick={() => setDefaultCombatSpeed(s)}
+              >
+                {COMBAT_SPEED_LABEL[s]}
+              </button>
+            ))}
+            <span style={{ fontSize: 12, color: 'var(--gv-ink-muted)' }}>default for watching a fight</span>
           </div>
         </div>
 

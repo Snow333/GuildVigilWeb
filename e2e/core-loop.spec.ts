@@ -55,9 +55,19 @@ async function launchAndReturn(page: Page): Promise<void> {
   const surface = page.locator('h1:has-text("Dispatch — quest")');
   await expect(playback.or(surface)).toBeVisible();
   if (await playback.isVisible()) {
-    await page.locator('button:has-text("Skip ▸▸")').click();
-    await page.locator('text=end of record').waitFor();
-    await page.locator('button:has-text("After-action ▸")').click();
+    // Brief #18 finding 4: After-action is reachable in ONE click, IMMEDIATELY —
+    // the playhead is still near tick 0 here. It used to be `disabled` until the
+    // record finished, so this needed a Skip first: a guard that protected
+    // nothing, since Skip sat beside it doing exactly that.
+    //
+    // Asserted at MOUNT and with a short timeout on purpose. A bare `.click()`
+    // is NOT a gate — Playwright auto-waits for actionability, so it simply
+    // waits out the playback and passes with the guard restored (observed).
+    const afterAction = page.locator('button:has-text("After-action ▸")');
+    await expect(afterAction, 'reachable before the record finishes').toBeEnabled({ timeout: 1000 });
+    await expect(afterAction, 'and it does not ask to be finished or skipped first')
+      .not.toContainText('finish or skip');
+    await afterAction.click();
   } else {
     await page.locator('button:has-text("After-action report")').click();
   }

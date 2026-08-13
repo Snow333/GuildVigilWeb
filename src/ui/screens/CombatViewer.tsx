@@ -19,12 +19,17 @@ import { interpretStream } from '../beats/interpret';
 import { nameResolver } from '../beats/names';
 import { EventStream } from '@sim/core/events/stream';
 import { CombatField } from './CombatField';
+import { useGame, type CombatSpeed } from '../state/GameProvider';
 import {
   fieldGauges, fieldMarginalia, fieldStateAt, hpStep, isThrashing, spawnsFromEvents,
 } from './fieldReading';
 
-/** The combat ladder. Anything at or above SKIM_FROM holds the field. */
-export type CombatSpeed = 0.25 | 0.5 | 1 | 4 | 16;
+/**
+ * The combat ladder. Anything at or above SKIM_FROM holds the field.
+ * The TYPE lives in GameProvider beside the setting that persists it — importing
+ * it from there is what keeps this file free of an import cycle.
+ */
+export type { CombatSpeed } from '../state/GameProvider';
 const WATCH_SPEEDS: CombatSpeed[] = [0.25, 0.5, 1];
 const SKIM_SPEEDS: CombatSpeed[] = [4, 16];
 const SKIM_FROM = 4;
@@ -38,8 +43,12 @@ export interface CombatViewerProps {
 }
 
 export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
+  // Same rule as the dispatch transport: the ladder IS the persisted setting,
+  // not a local copy that forgets itself between fights and between sessions.
+  const { defaultCombatSpeed, setDefaultCombatSpeed } = useGame();
   const [tick, setTick] = useState(0);
-  const [speed, setSpeed] = useState<CombatSpeed>(0.5);
+  const speed = defaultCombatSpeed;
+  const setSpeed = setDefaultCombatSpeed;
   const [playing, setPlaying] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const carry = useRef(0);
