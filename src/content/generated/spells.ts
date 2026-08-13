@@ -23,7 +23,8 @@ export const spells = [
   "description": "Based on PF2E: Electric Arc. A bolt of lightning arcs between two targets.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": 1
  },
  {
   "id": 2,
@@ -47,7 +48,8 @@ export const spells = [
   "description": "Based on PF2E: Ray of Frost. A frigid blast of cold that slows.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 3,
@@ -71,7 +73,8 @@ export const spells = [
   "description": "Based on PF2E: Produce Flame. A ball of flame hurled at a foe.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 4,
@@ -95,7 +98,8 @@ export const spells = [
   "description": "Based on PF2E: Daze. Cloud a creature's mind with a mental jolt.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 5,
@@ -119,7 +123,8 @@ export const spells = [
   "description": "Based on PF2E: Light. Create a bright light on a touched object.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 6,
@@ -143,7 +148,8 @@ export const spells = [
   "description": "Based on PF2E: Guidance. Grant divine guidance on the next check.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 7,
@@ -167,7 +173,8 @@ export const spells = [
   "description": "Based on PF2E: Stabilize. Stop a dying creature from bleeding out.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 8,
@@ -191,7 +198,8 @@ export const spells = [
   "description": "Based on PF2E: Detect Magic. Sense magical auras in the area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 9,
@@ -215,7 +223,8 @@ export const spells = [
   "description": "Based on PF2E: Shield. Raise a magical shield for protection.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 10,
@@ -239,7 +248,8 @@ export const spells = [
   "description": "Based on PF2E: Acid Splash. A small orb of acid.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 11,
@@ -263,7 +273,8 @@ export const spells = [
   "description": "Based on PF2E: Chill Touch. A spectral hand deals negative energy and enfeebles living targets.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 12,
@@ -287,7 +298,8 @@ export const spells = [
   "description": "Based on PF2E: Telekinetic Projectile. Hurl a loose object at a foe with telekinetic force.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 13,
@@ -311,7 +323,8 @@ export const spells = [
   "description": "Based on PF2E: Message. Whisper a message to a distant creature unheard by others.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 14,
@@ -335,7 +348,8 @@ export const spells = [
   "description": "Based on PF2E: Divine Lance. Hurl a bolt of divine energy aligned with your faith.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": 1
  },
  {
   "id": 15,
@@ -359,7 +373,8 @@ export const spells = [
   "description": "Based on PF2E: Forbidding Ward. Protect an ally against a specific enemy's attacks.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 16,
@@ -383,7 +398,8 @@ export const spells = [
   "description": "Based on PF2E: Magic Missile. Unerring bolts of magical force that never miss.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 17,
@@ -407,7 +423,8 @@ export const spells = [
   "description": "A cone of scorching flames erupts from your hands.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 18,
@@ -431,7 +448,8 @@ export const spells = [
   "description": "Based on PF2E: Heal. Channel positive energy to heal wounds.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 19,
@@ -455,7 +473,8 @@ export const spells = [
   "description": "Based on PF2E: Bless. Bolster allies with divine favor, granting attack bonuses.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 20,
@@ -479,7 +498,8 @@ export const spells = [
   "description": "Based on PF2E: True Strike. Gain supernatural insight for your next attack.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 21,
@@ -503,7 +523,8 @@ export const spells = [
   "description": "Based on PF2E: Color Spray. A burst of dazzling colors blinds and stuns foes.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 22,
@@ -527,7 +548,8 @@ export const spells = [
   "description": "Based on PF2E: Mage Armor. Invisible armor of magical force protects you.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 23,
@@ -551,7 +573,8 @@ export const spells = [
   "description": "Based on PF2E: Grease. Coat an area in slippery grease.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "This conjuration creates a slippery surface using a formula derived from alchemical experimentation. The volatile components make it unsuitable for standard curricula."
+  "found_spell_rationale": "This conjuration creates a slippery surface using a formula derived from alchemical experimentation. The volatile components make it unsuitable for standard curricula.",
+  "default_cantrip": null
  },
  {
   "id": 24,
@@ -575,7 +598,8 @@ export const spells = [
   "description": "Based on PF2E: Command. Command a creature to flee, kneel, or halt.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 25,
@@ -599,7 +623,8 @@ export const spells = [
   "description": "Based on PF2E: Sleep. Put creatures in an area to sleep.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 26,
@@ -623,7 +648,8 @@ export const spells = [
   "description": "Based on PF2E: Charm. Make a creature view you as a friendly acquaintance.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 27,
@@ -647,7 +673,8 @@ export const spells = [
   "description": "Based on PF2E: Fear. Frighten a creature, possibly making it flee in terror.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 28,
@@ -671,7 +698,8 @@ export const spells = [
   "description": "Based on PF2E: Magic Weapon. A weapon gains a +1 bonus to attack and damage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 29,
@@ -695,7 +723,8 @@ export const spells = [
   "description": "Based on PF2E: Sanctuary. Enemies must save to target the warded creature.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 30,
@@ -719,7 +748,8 @@ export const spells = [
   "description": "Based on PF2E: Gust of Wind. A powerful blast of wind pushes creatures back.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 31,
@@ -743,7 +773,8 @@ export const spells = [
   "description": "Based on PF2E: Harm. Channel negative energy to wound living creatures.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 32,
@@ -767,7 +798,8 @@ export const spells = [
   "description": "Based on PF2E: Ray of Enfeeblement. Sap a creature's physical strength.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 34,
@@ -791,7 +823,8 @@ export const spells = [
   "description": "Based on PF2E: Protection. Grant a creature a bonus to saving throws.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 35,
@@ -815,7 +848,8 @@ export const spells = [
   "description": "Based on PF2E: Identify Magic. Rood Ashworth's foundational analysis technique, used to identify magical properties of items and effects.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 36,
@@ -839,7 +873,8 @@ export const spells = [
   "description": "Based on PF2E: Entangle. Fenwick's primal magic causes plants to grab and restrain creatures in the area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 37,
@@ -863,7 +898,8 @@ export const spells = [
   "description": "Based on PF2E: Unseen Servant. Ombrus's technique for conjuring an invisible force that performs simple tasks.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 38,
@@ -887,7 +923,8 @@ export const spells = [
   "description": "Based on PF2E: Alarm. Cael'drun's protective rune alerts the caster when creatures enter a warded area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 39,
@@ -911,7 +948,8 @@ export const spells = [
   "description": "Based on PF2E: Fire Shield (variant). Pyris Ashvane's signature personal ward — a shield of embers that burns attackers and resists fire.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 40,
@@ -935,7 +973,8 @@ export const spells = [
   "description": "Based on PF2E: Remove Fear. Shauncar Delwyn's calming presence dispels fear and steadies the mind.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 41,
@@ -959,7 +998,8 @@ export const spells = [
   "description": "Based on PF2E: Acid Arrow. A bolt of acid that burns over time.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 42,
@@ -983,7 +1023,8 @@ export const spells = [
   "description": "Based on PF2E: Invisibility. Turn a creature invisible until they attack.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 43,
@@ -1007,7 +1048,8 @@ export const spells = [
   "description": "Based on PF2E: Spiritual Weapon. Conjure a floating weapon of divine force.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 44,
@@ -1031,7 +1073,8 @@ export const spells = [
   "description": "Based on PF2E: Restoration. Restore vitality and remove afflictions.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 45,
@@ -1055,7 +1098,8 @@ export const spells = [
   "description": "Based on PF2E: Web. Fill an area with sticky webbing that restrains.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Conjures sticky strands that entangle creatures. The spatial geometry required to anchor the web safely was lost when Ombrus's laboratory collapsed."
+  "found_spell_rationale": "Conjures sticky strands that entangle creatures. The spatial geometry required to anchor the web safely was lost when Ombrus's laboratory collapsed.",
+  "default_cantrip": null
  },
  {
   "id": 46,
@@ -1079,7 +1123,8 @@ export const spells = [
   "description": "Based on PF2E: Scorching Ray. A blazing ray of fire scorches a target.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 47,
@@ -1103,7 +1148,8 @@ export const spells = [
   "description": "Based on PF2E: Hold Person. Freeze a humanoid in place with mental force.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 48,
@@ -1127,7 +1173,8 @@ export const spells = [
   "description": "Based on PF2E: Sound Burst. A burst of damaging sound stuns creatures.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 49,
@@ -1151,7 +1198,8 @@ export const spells = [
   "description": "Based on PF2E: Resist Energy. Grant resistance to an energy type.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 50,
@@ -1175,7 +1223,8 @@ export const spells = [
   "description": "Based on PF2E: Blur. The target's form becomes blurred, granting concealment.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 51,
@@ -1199,7 +1248,8 @@ export const spells = [
   "description": "Based on PF2E: Faerie Fire. Outline creatures in colorful light, negating invisibility and concealment.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 52,
@@ -1223,7 +1273,8 @@ export const spells = [
   "description": "Based on PF2E: False Life. Bolster yourself with temporary hit points from necromantic energy.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Channels negative energy to create a temporary buffer of false vitality. Most schools refuse to teach it due to its necromantic nature."
+  "found_spell_rationale": "Channels negative energy to create a temporary buffer of false vitality. Most schools refuse to teach it due to its necromantic nature.",
+  "default_cantrip": null
  },
  {
   "id": 53,
@@ -1247,7 +1298,8 @@ export const spells = [
   "description": "Based on PF2E: See Invisibility. See invisible creatures and objects.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Reveals invisible creatures and objects. The divination matrix was perfected by Ashworth but never published â€” copies survive only in scattered research notes."
+  "found_spell_rationale": "Reveals invisible creatures and objects. The divination matrix was perfected by Ashworth but never published â€” copies survive only in scattered research notes.",
+  "default_cantrip": null
  },
  {
   "id": 54,
@@ -1271,7 +1323,8 @@ export const spells = [
   "description": "Based on PF2E: Silence. Make a creature or area completely silent.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 56,
@@ -1295,7 +1348,8 @@ export const spells = [
   "description": "Based on PF2E: Shield Other. Share damage taken by an ally, splitting it between you.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 57,
@@ -1319,7 +1373,8 @@ export const spells = [
   "description": "Based on PF2E: Mirror Image. Create three illusory duplicates of yourself to confuse attackers.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 58,
@@ -1343,7 +1398,8 @@ export const spells = [
   "description": "Based on PF2E: Darkness. Utvise Duskhollow's signature ward — a sphere of protective shadow that grants concealment to those within.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 59,
@@ -1367,7 +1423,8 @@ export const spells = [
   "description": "Based on PF2E: Enlarge. Zaxth Thornveil's body-warping technique — double a creature's size, granting extra reach and damage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 60,
@@ -1391,7 +1448,8 @@ export const spells = [
   "description": "Based on PF2E: Calm Emotions. Shauncar Delwyn's diplomatic enchantment — suppress hostility and aggression in creatures, preventing violence.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 61,
@@ -1415,7 +1473,8 @@ export const spells = [
   "description": "Based on PF2E: Augury. Rood Ashworth's deeper analysis — read an object's history and discern curses or enchantments.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 62,
@@ -1439,7 +1498,8 @@ export const spells = [
   "description": "Based on PF2E: Frost Blade (variant). Verathos's combat technique — conjure a blade of solid ice that deals cold damage on each strike.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 63,
@@ -1463,7 +1523,8 @@ export const spells = [
   "description": "Based on PF2E: Fireball. A massive burst of fire — the classic.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 64,
@@ -1487,7 +1548,8 @@ export const spells = [
   "description": "Based on PF2E: Lightning Bolt. A devastating bolt of lightning in a line.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 65,
@@ -1511,7 +1573,8 @@ export const spells = [
   "description": "Based on PF2E: Haste. Grant an extra action each turn for incredible speed.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 66,
@@ -1535,7 +1598,8 @@ export const spells = [
   "description": "Based on PF2E: Slow. Slow a creature, reducing their actions per turn.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 67,
@@ -1559,7 +1623,8 @@ export const spells = [
   "description": "Based on PF2E: Dispel Magic. End ongoing magical effects with a countercheck.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "The foundational counter-magic incantation. While widely known in theory, the practical formula requires careful study of a working scroll to master."
+  "found_spell_rationale": "The foundational counter-magic incantation. While widely known in theory, the practical formula requires careful study of a working scroll to master.",
+  "default_cantrip": null
  },
  {
   "id": 68,
@@ -1583,7 +1648,8 @@ export const spells = [
   "description": "Based on PF2E: Heroism. Fill a creature with heroic confidence.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 69,
@@ -1607,7 +1673,8 @@ export const spells = [
   "description": "Based on PF2E: Stinking Cloud. A nauseating cloud of gas sickens all within.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 70,
@@ -1631,7 +1698,8 @@ export const spells = [
   "description": "Based on PF2E: Remove Disease. Purge disease from a creature's body.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 71,
@@ -1655,7 +1723,8 @@ export const spells = [
   "description": "Based on PF2E: Blindness. Strike a creature blind with magic.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 72,
@@ -1679,7 +1748,8 @@ export const spells = [
   "description": "Based on PF2E: Magic Circle. A protective circle wards against evil creatures.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 73,
@@ -1703,7 +1773,8 @@ export const spells = [
   "description": "Based on PF2E: Animate Dead. Raise a corpse as an undead servant.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 74,
@@ -1727,7 +1798,8 @@ export const spells = [
   "description": "Based on PF2E: Searing Light. A lance of radiant light burns undead and fiends.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 75,
@@ -1751,7 +1823,8 @@ export const spells = [
   "description": "Based on PF2E: Protection from Energy. Grant strong resistance to a chosen energy type.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 76,
@@ -1775,7 +1848,8 @@ export const spells = [
   "description": "Based on PF2E: Paralyze. Lock a creature in total paralysis with mental force.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 77,
@@ -1799,7 +1873,8 @@ export const spells = [
   "description": "Based on PF2E: Heal (3-action). Channel healing energy in a burst around you.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 78,
@@ -1823,7 +1898,8 @@ export const spells = [
   "description": "Based on PF2E: Remove Paralysis. Korrath the Unbound's liberation technique — strip away bonds, paralysis, and restraints from a creature.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 79,
@@ -1847,7 +1923,8 @@ export const spells = [
   "description": "Based on PF2E: Vampiric Touch. Valossa's forbidden blood magic — drain life force from a creature to heal yourself. Feared and shunned by respectable casters.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 80,
@@ -1871,7 +1948,8 @@ export const spells = [
   "description": "Based on PF2E: Shocking Grasp (heightened). Thessara's focused storm magic — a concentrated bolt of electricity that can stun on a critical hit.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 81,
@@ -1895,7 +1973,8 @@ export const spells = [
   "description": "Based on PF2E: Enervation (variant). Nythara's academic necromancy — a spectral hand saps vitality, leaving the target drained and slow to recover.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 82,
@@ -1919,7 +1998,8 @@ export const spells = [
   "description": "Based on PF2E: Flaming Sphere (variant). Pyris Ashvane's destructive trail — leave a line of fire in your wake that continues burning as difficult terrain.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 83,
@@ -1943,7 +2023,8 @@ export const spells = [
   "description": "Based on PF2E: Death Ward (variant). Utvise Duskhollow's shadow-woven protection — ward a creature against death magic, energy drain, and negative damage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 84,
@@ -1967,7 +2048,8 @@ export const spells = [
   "description": "Based on PF2E: Phantom Pain (heightened). Erenthia Worldweft's cunning illusion — fill an area with phantom attackers that make real enemies feel surrounded and flat-footed.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 85,
@@ -1991,7 +2073,8 @@ export const spells = [
   "description": "Based on PF2E: Wall of Fire. Create a blazing wall of flames that damages those crossing.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 86,
@@ -2015,7 +2098,8 @@ export const spells = [
   "description": "Based on PF2E: Freedom of Movement. Move freely despite restraints and magical impediments.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 87,
@@ -2039,7 +2123,8 @@ export const spells = [
   "description": "Based on PF2E: Divine Wrath. Unleash holy wrath on enemies in an area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 88,
@@ -2063,7 +2148,8 @@ export const spells = [
   "description": "Based on PF2E: Stoneskin. Skin hardens to stone, granting resistance to physical damage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Grants the subject's skin the hardness of stone. This dwarven transmutation was shared with surface scholars only in rare treaty gifts."
+  "found_spell_rationale": "Grants the subject's skin the hardness of stone. This dwarven transmutation was shared with surface scholars only in rare treaty gifts.",
+  "default_cantrip": null
  },
  {
   "id": 89,
@@ -2087,7 +2173,8 @@ export const spells = [
   "description": "Based on PF2E: Solid Fog. A thick fog that slows, conceals, and hampers all within.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 90,
@@ -2111,7 +2198,8 @@ export const spells = [
   "description": "Based on PF2E: Confusion. Scramble a creature's mind, causing random chaotic behavior.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 91,
@@ -2135,7 +2223,8 @@ export const spells = [
   "description": "Based on PF2E: Air Walk. Walk on air as if on solid ground.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 92,
@@ -2159,7 +2248,8 @@ export const spells = [
   "description": "Based on PF2E: Fly. Grant the power of flight.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 93,
@@ -2183,7 +2273,8 @@ export const spells = [
   "description": "Based on PF2E: Resist Energy (heightened). Grant resistance to all energy types simultaneously.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 94,
@@ -2207,7 +2298,8 @@ export const spells = [
   "description": "Based on PF2E: Phantasmal Killer. Manifest a target's worst fear as a lethal illusion.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 95,
@@ -2231,7 +2323,8 @@ export const spells = [
   "description": "Based on PF2E: Globe of Invulnerability. Create a sphere that blocks lower-level spells.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Creates a shimmering sphere that blocks most spells. The resonance frequencies required were computed by Cael'drun and jealously guarded."
+  "found_spell_rationale": "Creates a shimmering sphere that blocks most spells. The resonance frequencies required were computed by Cael'drun and jealously guarded.",
+  "default_cantrip": null
  },
  {
   "id": 96,
@@ -2255,7 +2348,8 @@ export const spells = [
   "description": "Based on PF2E: Dimension Door. Mordechai Voss's foundational spatial technique — tear a brief rift in space and step through to a visible location.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 97,
@@ -2279,7 +2373,8 @@ export const spells = [
   "description": "Based on PF2E: Greater Invisibility. Erenthia Worldweft's perfected concealment — invisibility that persists even through attacks and spellcasting.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 98,
@@ -2303,7 +2398,8 @@ export const spells = [
   "description": "Based on PF2E: Enervation. Nythara's signature death ray — a bolt of entropic energy that permanently saps the target's vitality.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 99,
@@ -2327,7 +2423,8 @@ export const spells = [
   "description": "Based on PF2E: Baleful Polymorph. Zaxth Thornveil's chaotic transmutation — warp a creature into a harmless beast against its will.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 100,
@@ -2351,7 +2448,8 @@ export const spells = [
   "description": "Based on PF2E: Fire Shield. Pyris Ashvane's battle aura — cloak yourself in protective flames that burn melee attackers and grant fire resistance.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 101,
@@ -2375,7 +2473,8 @@ export const spells = [
   "description": "Based on PF2E: Dominate (variant). Valossa's forbidden technique — seize partial control of a creature through its blood. Considered an abomination by all guilds.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 102,
@@ -2399,7 +2498,8 @@ export const spells = [
   "description": "Based on PF2E: Spell Immunity. Cael'drun's masterwork ward — project a barrier that grants resistance against incoming spells.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 103,
@@ -2423,7 +2523,8 @@ export const spells = [
   "description": "Based on PF2E: Cone of Cold. A massive cone of freezing cold devastates all in its path.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 104,
@@ -2447,7 +2548,8 @@ export const spells = [
   "description": "Based on PF2E: Heal (5th, 3-action). Heal all allies in a burst of positive energy.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 105,
@@ -2471,7 +2573,8 @@ export const spells = [
   "description": "Based on PF2E: Flame Strike. A pillar of divine fire from the heavens.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 106,
@@ -2495,7 +2598,8 @@ export const spells = [
   "description": "Based on PF2E: Raise Dead. Return a dead creature to life, weakened but alive.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 107,
@@ -2519,7 +2623,8 @@ export const spells = [
   "description": "Based on PF2E: Cloudkill. A cloud of deadly poison gas that moves each turn.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Creates a bank of poisonous fog that moves along the ground. Valossa's necromantic research notes contain the only surviving formulation."
+  "found_spell_rationale": "Creates a bank of poisonous fog that moves along the ground. Valossa's necromantic research notes contain the only surviving formulation.",
+  "default_cantrip": null
  },
  {
   "id": 108,
@@ -2543,7 +2648,8 @@ export const spells = [
   "description": "Based on PF2E: Telekinesis. Move objects or creatures with sustained mental force.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "Moves objects with pure arcane will. The mental discipline required can only be learned by studying the original Thessaran meditation scrolls."
+  "found_spell_rationale": "Moves objects with pure arcane will. The mental discipline required can only be learned by studying the original Thessaran meditation scrolls.",
+  "default_cantrip": null
  },
  {
   "id": 109,
@@ -2567,7 +2673,8 @@ export const spells = [
   "description": "Based on PF2E: Banishment. Send an extraplanar creature back to its home plane.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 110,
@@ -2591,7 +2698,8 @@ export const spells = [
   "description": "Based on PF2E: Breath of Life. Breathe life into a creature at the moment of death — a reaction-speed heal.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 111,
@@ -2615,7 +2723,8 @@ export const spells = [
   "description": "Based on PF2E: Wall of Ice. Verathos's signature containment — erect a wall of solid ice that damages those who try to break through.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 112,
@@ -2639,7 +2748,8 @@ export const spells = [
   "description": "Based on PF2E: Wall of Force (variant). Thessara's elemental prison — trap creatures in a crackling cage of lightning that shocks each round.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 113,
@@ -2663,7 +2773,8 @@ export const spells = [
   "description": "Based on PF2E: Animal Form (heightened). Fenwick's primal empowerment — infuse a creature with bestial strength, natural weapons, and vitality.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 114,
@@ -2687,7 +2798,8 @@ export const spells = [
   "description": "Based on PF2E: Summon Fiend/Celestial. Ombrus's advanced conjuration — call a powerful extraplanar warrior to fight by your side.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 115,
@@ -2711,7 +2823,8 @@ export const spells = [
   "description": "Based on PF2E: Dispel Magic (heightened). Korrath the Unbound's advanced anti-magic — shatter enchantments, break magical items, and tear through arcane protections.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 116,
@@ -2735,7 +2848,8 @@ export const spells = [
   "description": "Based on PF2E: Animate Dead (heightened). Valossa's mass reanimation — raise multiple corpses simultaneously as blood-bound thralls. Using this spell may cause NPC hostility.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 117,
@@ -2759,7 +2873,8 @@ export const spells = [
   "description": "Based on PF2E: Restoration (heightened). Grumply Ironpatch's thorough (if irritable) restoration — purge all debilitating conditions and restore sapped abilities.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 118,
@@ -2783,7 +2898,8 @@ export const spells = [
   "description": "Based on PF2E: Prying Eye. Rood Ashworth's comprehensive survey — scan a wide area detecting all creatures, traps, magic, and invisible entities.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 119,
@@ -2807,7 +2923,8 @@ export const spells = [
   "description": "Based on PF2E: True Seeing. See through all illusions, invisibility, darkness, and shapeshifting.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 120,
@@ -2831,7 +2948,8 @@ export const spells = [
   "description": "Based on PF2E: Blade Barrier. A wall of spinning blades slashes all who pass through.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 121,
@@ -2855,7 +2973,8 @@ export const spells = [
   "description": "Based on PF2E: Repulsion. An invisible force pushes creatures away and prevents approach.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 122,
@@ -2879,7 +2998,8 @@ export const spells = [
   "description": "Based on PF2E: Flesh to Stone. Turn a creature to stone over multiple rounds.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 123,
@@ -2903,7 +3023,8 @@ export const spells = [
   "description": "Based on PF2E: Heal (6th). A powerful burst of healing energy restores a creature.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 124,
@@ -2927,7 +3048,8 @@ export const spells = [
   "description": "Based on PF2E: Chain Lightning. Thessara's signature storm technique — lightning arcs from the primary target to up to four additional enemies.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 125,
@@ -2951,7 +3073,8 @@ export const spells = [
   "description": "Based on PF2E: Baleful Polymorph (heightened). Zaxth Thornveil's chaotic masterwork — warp multiple creatures into random harmless forms simultaneously.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 126,
@@ -2975,7 +3098,8 @@ export const spells = [
   "description": "Based on PF2E: Fire Seeds (variant). Pyris Ashvane's area denial — set an entire zone ablaze with sustained magical fire that keeps burning.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 127,
@@ -2999,7 +3123,8 @@ export const spells = [
   "description": "Based on PF2E: Shadow Walk. Utvise Duskhollow's planar shortcut — step into the shadow plane to travel great distances at incredible speed.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 128,
@@ -3023,7 +3148,8 @@ export const spells = [
   "description": "Based on PF2E: Vampiric Exsanguination. Nythara's advanced death magic — erode a creature's soul, draining vitality and bringing it closer to final death.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 129,
@@ -3047,7 +3173,8 @@ export const spells = [
   "description": "Based on PF2E: True Seeing (variant). Ashworth's comprehensive vision — see through all deception, automatically identify magical effects, and detect falsehoods.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 130,
@@ -3071,7 +3198,8 @@ export const spells = [
   "description": "Based on PF2E: Disintegrate. A green ray utterly destroys the target, reducing it to dust.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 131,
@@ -3095,7 +3223,8 @@ export const spells = [
   "description": "Based on PF2E: Plane Shift. Transport willing creatures to another plane of existence.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 132,
@@ -3119,7 +3248,8 @@ export const spells = [
   "description": "Based on PF2E: Regenerate. Continuously heal a creature and regrow lost limbs.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 133,
@@ -3143,7 +3273,8 @@ export const spells = [
   "description": "Based on PF2E: Sunburst. A blinding explosion of radiant solar energy.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 134,
@@ -3167,7 +3298,8 @@ export const spells = [
   "description": "Based on PF2E: Dimensional Lock. Mordechai Voss's spatial seal — lock down an area to prevent all teleportation and dimensional travel. Only a Pillar can match this power.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 135,
@@ -3191,7 +3323,8 @@ export const spells = [
   "description": "Based on PF2E: Holy Aura (variant). Seraphine Dawnfire's legendary technique — release a wave of purifying radiance that simultaneously heals allies and devastates undead and fiends.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 136,
@@ -3215,7 +3348,8 @@ export const spells = [
   "description": "Based on PF2E: Feeblemind (variant). Erenthia Worldweft's masterwork illusion — trap a creature's consciousness in a mental labyrinth, leaving them confused and unable to act coherently.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 137,
@@ -3239,7 +3373,8 @@ export const spells = [
   "description": "Based on PF2E: Dispel Magic (heightened, mass). Korrath the Unbound's liberation field — shatter all magical effects, curses, and enchantments on every creature in a massive area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 138,
@@ -3263,7 +3398,8 @@ export const spells = [
   "description": "Based on PF2E: Polar Ray (variant). Verathos's most devastating cold spell — flash-freeze an area to near absolute zero, slowing or paralyzing those caught within.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 139,
@@ -3287,7 +3423,8 @@ export const spells = [
   "description": "Based on PF2E: Finger of Death. Valossa's killing curse — point and snuff out a life with concentrated death magic. One of the most feared spells in existence.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 140,
@@ -3311,7 +3448,8 @@ export const spells = [
   "description": "Based on PF2E: Heal (7th, 3-action). Grumply Ironpatch's area healing — heal every ally in a wide area and clear their ailments, delivered with characteristic grumbling.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 141,
@@ -3335,7 +3473,8 @@ export const spells = [
   "description": "Based on PF2E: Earthquake. Shake the earth violently, dealing damage and destroying terrain.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 142,
@@ -3359,7 +3498,8 @@ export const spells = [
   "description": "Based on PF2E: Antimagic Field. Suppress all magic within the field — including your own.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 143,
@@ -3383,7 +3523,8 @@ export const spells = [
   "description": "Based on PF2E: Teleport (heightened). Mordechai Voss's advanced spatial mastery — tear open a rift to transport up to eight creatures anywhere on the same plane instantly.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 144,
@@ -3407,7 +3548,8 @@ export const spells = [
   "description": "Based on PF2E: Divine Aura. Seraphine Dawnfire's protective radiance — surround allies with a divine shield granting massive bonuses to defense against evil forces.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 145,
@@ -3431,7 +3573,8 @@ export const spells = [
   "description": "Based on PF2E: Storm of Vengeance (variant). Thessara's legendary storm — a sustained supernatural tempest of lightning, wind, and rain that devastates a wide area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 146,
@@ -3455,7 +3598,8 @@ export const spells = [
   "description": "Based on PF2E: Feeblemind. Erenthia Worldweft's most terrible enchantment — unravel a creature's mind, reducing intelligence to animal levels. Potentially permanent.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 147,
@@ -3479,7 +3623,8 @@ export const spells = [
   "description": "Based on PF2E: Horrid Wilting (variant). Nythara's death field — surround yourself with an aura of decay that drains life from nearby enemies and feeds it back to you.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 148,
@@ -3503,7 +3648,8 @@ export const spells = [
   "description": "Based on PF2E: Baleful Polymorph (heightened). Zaxth Thornveil's chaotic apex — subject a creature to wildly unstable transformations, shifting forms randomly each round.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 149,
@@ -3527,7 +3673,8 @@ export const spells = [
   "description": "Based on PF2E: Gate. Mordechai Voss's ultimate achievement — open a permanent gate between planes, allowing travel or summoning the most powerful extraplanar beings.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 150,
@@ -3551,7 +3698,8 @@ export const spells = [
   "description": "Based on PF2E: Miracle. Seraphine Dawnfire's connection to the divine made manifest — request divine intervention for virtually any effect.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 151,
@@ -3575,7 +3723,8 @@ export const spells = [
   "description": "Based on PF2E: Wish (variant). Erenthia Worldweft's ultimate illusion — rewrite reality itself by layering an illusion so powerful it becomes temporarily real.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 152,
@@ -3599,7 +3748,8 @@ export const spells = [
   "description": "Based on PF2E: Disjunction. Korrath the Unbound's legendary act of liberation — annihilate all magical effects, destroy enchanted items, and free every imprisoned creature in a massive area.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 153,
@@ -3623,7 +3773,8 @@ export const spells = [
   "description": "Based on PF2E: Meteor Swarm. Pyris Ashvane's ultimate destructive spell — call down four blazing meteors that crash into the battlefield in devastating explosions.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 154,
@@ -3647,7 +3798,8 @@ export const spells = [
   "description": "Based on PF2E: Feather Fall. Slow a falling creature to prevent damage — a reaction spell.",
   "traits": "",
   "is_found_spell": 1,
-  "found_spell_rationale": "A defensive incantation transcribed from a falling mage's final journal. The precise timing required makes it impractical to teach in a classroom."
+  "found_spell_rationale": "A defensive incantation transcribed from a falling mage's final journal. The precise timing required makes it impractical to teach in a classroom.",
+  "default_cantrip": null
  },
  {
   "id": 155,
@@ -3671,7 +3823,8 @@ export const spells = [
   "description": "Based on PF2E: Goblin Pox. Infect a creature with a disgusting disease.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 156,
@@ -3695,7 +3848,8 @@ export const spells = [
   "description": "Based on PF2E: Illusory Object. Create a convincing but intangible illusory object.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 157,
@@ -3719,7 +3873,8 @@ export const spells = [
   "description": "Based on PF2E: Ventriloquism. Throw your voice to a different location.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "A subtle illusion technique passed down through traveling performers. Most academies consider it beneath serious study, but field researchers prize it."
+  "found_spell_rationale": "A subtle illusion technique passed down through traveling performers. Most academies consider it beneath serious study, but field researchers prize it.",
+  "default_cantrip": null
  },
  {
   "id": 158,
@@ -3743,7 +3898,8 @@ export const spells = [
   "description": "Based on PF2E: Barkskin. Toughen skin to bark, granting natural armor.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 159,
@@ -3767,7 +3923,8 @@ export const spells = [
   "description": "Based on PF2E: Gentle Repose. Preserve a corpse from decay, extending the window for resurrection.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 160,
@@ -3791,7 +3948,8 @@ export const spells = [
   "description": "Based on PF2E: Glyph of Warding. Inscribe a hidden glyph that releases a stored spell when triggered.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 161,
@@ -3815,7 +3973,8 @@ export const spells = [
   "description": "Based on PF2E: Neutralize Poison. Neutralize poison coursing through a creature.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 162,
@@ -3839,7 +3998,8 @@ export const spells = [
   "description": "Based on PF2E: Feign Death. Nythara's deceptive necromancy — place a willing creature in a state indistinguishable from true death.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 163,
@@ -3863,7 +4023,8 @@ export const spells = [
   "description": "Based on PF2E: Remove Curse. Attempt to remove a curse afflicting a creature.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 164,
@@ -3887,7 +4048,8 @@ export const spells = [
   "description": "Based on PF2E: Outcast's Curse. Curse a creature so others instinctively distrust and shun it.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 165,
@@ -3911,7 +4073,8 @@ export const spells = [
   "description": "Based on PF2E: Wall of Stone. Conjure a solid wall of stone to block passage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 166,
@@ -3935,7 +4098,8 @@ export const spells = [
   "description": "Based on PF2E: Tongues. Understand and speak all languages.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 167,
@@ -3959,7 +4123,8 @@ export const spells = [
   "description": "Based on PF2E: Summon Entity (heightened). Ombrus's advanced conjuration — bind a powerful extraplanar guardian capable of following complex orders.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 168,
@@ -3983,7 +4148,8 @@ export const spells = [
   "description": "Based on PF2E: Shrink Item. Shrink a non-magical object to a fraction of its size for easy transport.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 169,
@@ -4007,7 +4173,8 @@ export const spells = [
   "description": "Based on PF2E: Nondetection. Ward a creature against divination magic and scrying.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
-  "found_spell_rationale": "An advanced concealment ward that hides the subject from divination. Korrath developed it to shield his research from rival scholars."
+  "found_spell_rationale": "An advanced concealment ward that hides the subject from divination. Korrath developed it to shield his research from rival scholars.",
+  "default_cantrip": null
  },
  {
   "id": 170,
@@ -4031,7 +4198,8 @@ export const spells = [
   "description": "Based on PF2E: Dimensional Anchor. Pin a creature in place, preventing teleportation and dimensional travel.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 171,
@@ -4055,7 +4223,8 @@ export const spells = [
   "description": "Based on PF2E: Protection from Energy (heightened). Cael'drun's advanced protection — a resilient shield that absorbs substantial energy damage of all types.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 172,
@@ -4079,7 +4248,8 @@ export const spells = [
   "description": "Based on PF2E: Zone of Truth (heightened). Shauncar Delwyn's inescapable truth field — create a zone where lying becomes nearly impossible and deception is painfully obvious.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 173,
@@ -4103,7 +4273,8 @@ export const spells = [
   "description": "Based on PF2E: Meteor Swarm (variant). Pyris Ashvane's penultimate fire spell — unleash a cataclysmic inferno that ignores fire resistance and melts even magical objects.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 174,
@@ -4127,7 +4298,8 @@ export const spells = [
   "description": "Based on PF2E: Nature's Reprisal (variant). Karnij Earthsong's primal call — cause explosive plant growth that heals allies, conceals them, and turns the battlefield into overgrown wilderness.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 175,
@@ -4151,7 +4323,8 @@ export const spells = [
   "description": "Based on PF2E: Earthquake (variant). Karnij Earthsong's connection to the deep earth — shake the ground so violently it shatters stone and topples structures.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 176,
@@ -4175,7 +4348,8 @@ export const spells = [
   "description": "Warlock pact spell. Curse a creature — your attacks deal bonus necrotic damage and it suffers on ability checks.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 177,
@@ -4199,7 +4373,8 @@ export const spells = [
   "description": "Warlock pact spell. Surround yourself in shadow armor — grants AC bonus without wearing physical armor.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 178,
@@ -4223,7 +4398,8 @@ export const spells = [
   "description": "Warlock pact spell. When struck, unleash a blast of infernal fire at the attacker.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 179,
@@ -4247,7 +4423,8 @@ export const spells = [
   "description": "Warlock pact spell. Shadowy tendrils grasp a creature, restraining it in place.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 180,
@@ -4271,7 +4448,8 @@ export const spells = [
   "description": "Warlock pact spell. A sustained arc of lightning — deals damage each turn without a new attack roll.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 181,
@@ -4295,7 +4473,8 @@ export const spells = [
   "description": "Warlock pact spell. Create an area of impenetrable magical darkness that even darkvision cannot pierce.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 182,
@@ -4319,7 +4498,8 @@ export const spells = [
   "description": "Warlock pact spell. When hit, vanish in a puff of mist and reappear up to 6 tiles away, invisible until your next turn.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 183,
@@ -4343,7 +4523,8 @@ export const spells = [
   "description": "Warlock pact spell. Drive a creature insane — it must use its actions to attack its own allies.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 184,
@@ -4367,7 +4548,8 @@ export const spells = [
   "description": "Warlock pact spell. Grant the ability to walk on walls and ceilings as easily as the floor.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 185,
@@ -4391,7 +4573,8 @@ export const spells = [
   "description": "Warlock pact spell. Tear open a rift to the void — creatures inside take cold damage and the area becomes freezing darkness.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 186,
@@ -4415,7 +4598,8 @@ export const spells = [
   "description": "Warlock pact spell. A barrier of pact energy absorbs damage and reflects a portion back at melee attackers.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 187,
@@ -4439,7 +4623,8 @@ export const spells = [
   "description": "Warlock pact spell. Speak and understand all tongues, with a whispered undertone that unnerves listeners.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 188,
@@ -4463,7 +4648,8 @@ export const spells = [
   "description": "Warlock pact spell. Conjure a blade of solidified shadow — a finesse weapon that deals necrotic damage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 189,
@@ -4487,7 +4673,8 @@ export const spells = [
   "description": "Warlock pact spell. Banish a creature to a demiplane — extraplanar creatures are permanently expelled if they fail the save.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 190,
@@ -4511,7 +4698,8 @@ export const spells = [
   "description": "Warlock pact spell. Step through the shadow plane, teleporting a great distance and bringing nearby allies.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 191,
@@ -4535,7 +4723,8 @@ export const spells = [
   "description": "Warlock pact spell. Brand an area with your patron's sigil — creatures who see it are overwhelmed with supernatural dread.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 192,
@@ -4559,7 +4748,8 @@ export const spells = [
   "description": "Warlock pact spell. When a creature dies nearby, trap its soul — use it to ask questions, heal yourself, or gain temporary power.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 193,
@@ -4583,7 +4773,8 @@ export const spells = [
   "description": "Warlock pact spell. Conjure chains of eldritch force that strike up to three targets, dealing damage and potentially restraining them.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 194,
@@ -4607,7 +4798,8 @@ export const spells = [
   "description": "Warlock pact spell. Open a portal between two points — allies and enemies can pass through in either direction.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 195,
@@ -4631,7 +4823,8 @@ export const spells = [
   "description": "Warlock pact spell. Channel your patron's full destructive power — a massive blast of force that ignores resistances.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 196,
@@ -4655,7 +4848,8 @@ export const spells = [
   "description": "Warlock pact spell. Draw on your patron bond to heal wounds, purge conditions, and restore pact energy.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 197,
@@ -4679,7 +4873,8 @@ export const spells = [
   "description": "Warlock pact spell. Dominate a creature's will utterly — it obeys without question for the first round, then saves each turn.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 198,
@@ -4703,7 +4898,8 @@ export const spells = [
   "description": "Draconic bloodline spell. Fire a ray of elemental energy matching your draconic lineage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 199,
@@ -4727,7 +4923,8 @@ export const spells = [
   "description": "Draconic bloodline spell. Gain resistance to the element of your draconic lineage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 200,
@@ -4751,7 +4948,8 @@ export const spells = [
   "description": "Draconic bloodline spell. Unleash a breath weapon matching your draconic ancestor.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 201,
@@ -4775,7 +4973,8 @@ export const spells = [
   "description": "Draconic bloodline spell. Transform into a draconic form with enhanced strength, natural attacks, and flight.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 202,
@@ -4799,7 +4998,8 @@ export const spells = [
   "description": "Draconic bloodline spell. Summon a devastating elemental storm matching your draconic lineage.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 203,
@@ -4823,7 +5023,8 @@ export const spells = [
   "description": "Fae bloodline spell. Weave a minor illusion laced with charm — fascinate a single target.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 204,
@@ -4847,7 +5048,8 @@ export const spells = [
   "description": "Fae bloodline spell. Emanate an aura of otherworldly beauty — enemies must save or become fascinated.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 205,
@@ -4871,7 +5073,8 @@ export const spells = [
   "description": "Fae bloodline spell. Vanish and reappear up to 6 tiles away, leaving an illusory copy behind.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 206,
@@ -4895,7 +5098,8 @@ export const spells = [
   "description": "Fae bloodline spell. Invoke the favor of the fae court — grant all allies a bonus to AC and saves.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 207,
@@ -4919,7 +5123,8 @@ export const spells = [
   "description": "Fae bloodline spell. Issue an irresistible royal decree — dominate a target with no save on the first round.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 208,
@@ -4943,7 +5148,8 @@ export const spells = [
   "description": "Restores a small amount of health.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 209,
@@ -4967,7 +5173,8 @@ export const spells = [
   "description": "Restores a moderate amount of health.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 210,
@@ -4991,7 +5198,8 @@ export const spells = [
   "description": "Restores a large amount of health.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 211,
@@ -5015,7 +5223,8 @@ export const spells = [
   "description": "Restores a very large amount of health.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 212,
@@ -5039,7 +5248,8 @@ export const spells = [
   "description": "Cures minor poisons.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 213,
@@ -5063,7 +5273,8 @@ export const spells = [
   "description": "Cures moderate poisons.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 214,
@@ -5087,7 +5298,8 @@ export const spells = [
   "description": "Restores vitality and cures sickness.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 215,
@@ -5111,7 +5323,8 @@ export const spells = [
   "description": "A flask of volatile alchemical fire.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 216,
@@ -5135,7 +5348,8 @@ export const spells = [
   "description": "Blessed water that burns the unholy.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 217,
@@ -5159,7 +5373,8 @@ export const spells = [
   "description": "Creates a cloud of concealing smoke.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 218,
@@ -5183,7 +5398,8 @@ export const spells = [
   "description": "A bag of sticky goo that immobilizes.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 219,
@@ -5207,7 +5423,8 @@ export const spells = [
   "description": "Explodes with a deafening bang.",
   "traits": "",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  },
  {
   "id": 220,
@@ -5231,6 +5448,7 @@ export const spells = [
   "description": "Your pact's signature attack. Hurl a beam of eldritch force. Ranged spell attack (CHA), 1d10+CHA force damage, range 12 tiles. Scales: +1d10 at levels 5, 11, 17. At-will — does not consume pact energy.",
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
-  "found_spell_rationale": null
+  "found_spell_rationale": null,
+  "default_cantrip": null
  }
 ] as const;

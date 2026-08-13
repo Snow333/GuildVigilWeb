@@ -54,6 +54,77 @@ describe('deriveItem — tuples to effective stats', () => {
   });
 });
 
+/**
+ * THE TWO CONTRACT BUGS from brief #14 §5, both fixed in brief #15's milestone.
+ * Neither had any cover: the striking test above only exercises `applyStriking`
+ * in ISOLATION, and no test ever derived one of the nine affected item rows —
+ * which is exactly how a weapon that reads `2d8` came to fight as `3d8`.
+ */
+describe('BUG A — potency on worn gear reaches AC', () => {
+  /** 28 = Full Plate (ac 8, potency 0) · 155 = Full Plate +3 (ac 7, potency 3). */
+  it('the most expensive armour in the game is no longer a downgrade', () => {
+    const mundane = deriveItem(inst('28'));
+    const plusThree = deriveItem(inst('155'));
+    expect({ mundane: mundane.acBonus, plusThree: plusThree.acBonus }).toEqual({ mundane: 8, plusThree: 10 });
+    expect(plusThree.acBonus).toBeGreaterThan(mundane.acBonus);
+  });
+
+  /** The whole Chain Mail line used to be ac 5 from 55 gp to 825 gp. */
+  it('the chain mail ladder actually climbs', () => {
+    const rungs = ['25', '129', '151', '153'].map((id) => deriveItem(inst(id)).acBonus);
+    expect(rungs).toEqual([5, 5, 7, 8]); // mundane, masterwork, +2, +3
+  });
+
+  /** Same maxed potency the attack roll uses, so ROLLED armour works too. */
+  it('a rolled magical armour instance beats its own mundane base', () => {
+    expect(deriveItem(inst('25', 'magical')).acBonus).toBe(6);
+    expect(deriveItem(inst('25', 'enchanted')).acBonus).toBe(7);
+  });
+
+  it('potency on a WEAPON still goes to the attack roll and not to AC', () => {
+    const sword = deriveItem(inst('17')); // Longsword +1
+    expect({ attackBonus: sword.attackBonus, acBonus: sword.acBonus }).toEqual({ attackBonus: 1, acBonus: 0 });
+  });
+});
+
+describe('BUG B — striking is applied exactly once', () => {
+  /**
+   * All nine rows carrying `striking_tier > 0` were authored at DOUBLE their
+   * base weapon's dice and then had striking applied again. Brief #14 named
+   * five of them; 171, 177, 178 and 182 are the four it missed.
+   */
+  const expected: [string, string, number][] = [
+    ['145', '2d8', 9.0],   // Striking Longsword +2  (was 3d8  / 13.5)
+    ['146', '2d12', 13.0], // Striking Greatsword +2 (was 3d12 / 19.5)
+    ['147', '2d8', 9.0],   // Striking Longbow +2
+    ['166', '2d8', 9.0],   // Dreadblade
+    ['168', '2d12', 13.0], // Lifedrinker Axe
+    ['171', '2d8', 9.0],   // Stormhammer
+    ['177', '2d6', 7.0],   // Ashenmere's Spear
+    ['178', '2d8', 9.0],   // The Last Edict
+    ['182', '2d8', 9.0],   // Silvertide's Bow
+  ];
+
+  it('every striking row derives at its authored intent, not half again more', () => {
+    const derived = expected.map(([id]) => deriveItem(inst(id)).damageDice);
+    expect(derived).toEqual(expected.map(([, dice]) => dice));
+  });
+
+  it('and the average damage lands where the content meant it to', () => {
+    for (const [id, , avg] of expected) {
+      const dice = deriveItem(inst(id)).damageDice!;
+      const m = /^(\d+)d(\d+)$/.exec(dice)!;
+      expect({ id, avg: (Number(m[1]) * (Number(m[2]) + 1)) / 2 }).toEqual({ id, avg });
+    }
+  });
+
+  it('striking_tier still ADDS a die — the mechanic works, it just stopped double-firing', () => {
+    // The base row carries one die; the tier grant is what adds the second.
+    expect(deriveItem(inst('3')).damageDice).toBe('1d8');            // Longsword, no striking
+    expect(deriveItem(inst('3', 'legendary')).damageDice).toBe('2d8'); // TIER_GRANTS.legendary striking 1
+  });
+});
+
 describe('stat bonuses from wondrous items', () => {
   it('Belt of Strength grants str; Headband grants int', () => {
     expect(deriveItem(inst('57')).statBonuses).toEqual({ str: 2 });

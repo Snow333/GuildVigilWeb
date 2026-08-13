@@ -24,6 +24,7 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     attackBonus: row.attack_bonus,
     damageDice: row.damage_dice,
     weaponRange: 1,
+    engageRange: 1, // enemy statblocks are melee until the registry grows ranged rows
     weaponAgile: false,
     weaponPenalty: 0,
     weaponSpecBonus: 0,

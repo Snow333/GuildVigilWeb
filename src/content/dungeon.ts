@@ -24,9 +24,26 @@ export const ROOM_TYPE_WEIGHTS: { type: string; weight: number }[] = [
 
 /** Hazard math, ported verbatim from dungeon_hazards.gd. */
 export const HAZARDS = {
-  /** base_dc = 10 + 2·difficulty + tierBonus + party_level/2, ±2 jitter. */
+  /** base_dc = 10 + difficultyDcScale·difficulty + tierBonus + party_level/2, ±2 jitter. */
   baseDc: 10,
-  difficultyDcScale: 2,
+  /**
+   * Brief #14 wall 2 (H4, APPROVED): 2 → 1. `openLock`/`disarmTrap` declare a
+   * check IMPOSSIBLE when `20 + mod < dc` — a natural 20 cannot pass. At the
+   * shipped scale, impossible locks went 0% at difficulty ≤5 to 6.6% at d6,
+   * **37.9% at d7** and 56.1% at d8: over a third of every door in a
+   * difficulty-7 dungeon was mathematically sealed, and rooms visited collapsed
+   * to 4.1 of 24.
+   *
+   * H4 was measured strictly stronger than H1 (dropping the `partyLevel/2`
+   * term): H4 eliminates impossibility outright through difficulty 10, where H1
+   * still leaves 6.4% at d8 and 11.6% at d10. It removes one point per
+   * difficulty step; H1 removes about five points total, once.
+   *
+   * ⚠ This is pure data and it does NOT change the RNG draw count — `hazardDc`
+   * still calls `rng.int` exactly once — so room types, template ids and
+   * downstream stream positions are unaffected and seeds stay comparable.
+   */
+  difficultyDcScale: 1,
   tierBonus: { tiny: 0, small: 1, medium: 2, large: 3 } as Record<DungeonTier, number>,
   dcJitter: 2,
   trapChanceBase: 0.10,
@@ -110,6 +127,29 @@ export const PROFILES = {
   } as Record<string, { withdrawHpFrac: number; restHpFrac: number }>,
   /** One rest charge per shrine (activated) / cleared boss room. */
   restHealFrac: 0.5,
+  /**
+   * Brief #14 wall 1 (R2, APPROVED): a rest charge every N rooms, on top of the
+   * shrine/boss grants — and charges are now spendable ANYWHERE rather than
+   * only while standing in the room that granted them.
+   *
+   * The shipped rule required the party to be STANDING IN the shrine or boss
+   * room at the exact moment party HP crossed the withdraw threshold, so
+   * measured across every tier ~1.1–1.3 charges were created per run and
+   * **0.05 spent**: 96% of the game's healing was banked and unspendable. The
+   * dungeon was one HP pool with no recovery, which made LENGTH a hard
+   * difficulty axis nobody had tuned — holding enemies at difficulty 2 and
+   * varying only tier, completion fell 70% (tiny) → 2% (large).
+   *
+   * 4 is the measured knee. On `large`/d2 it takes completion 5.3% → 28.7%,
+   * rooms visited 12.6 → 16.4 and boss-defeated 20.7% → 44.0%, at 1.02 rests
+   * per run. One charge per THREE rooms is WORSE (36.7%, wipes 43.3% → 50.7%) —
+   * the party pushes deeper than it can survive. Raising `restHealFrac` instead
+   * is strictly weaker.
+   *
+   * ⚠ Control flow only: no RNG draw is added or removed, so seeds stay
+   * comparable across this change.
+   */
+  roomsPerRestCharge: 4,
   /** Loot & Resources completes at this much collected gold-equivalent value × difficulty. */
   lootRunValueTarget: (difficulty: number) => 150 + difficulty * 100,
 } as const;

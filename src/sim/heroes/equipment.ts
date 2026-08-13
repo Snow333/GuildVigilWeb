@@ -119,8 +119,29 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
   });
 
   const grants = TIER_GRANTS[instance.tier];
-  const attackBonus = Math.max((base.potency_bonus as number) ?? 0, grants.potency);
+  const potency = Math.max((base.potency_bonus as number) ?? 0, grants.potency);
   const strikingTier = Math.max((base.striking_tier as number) ?? 0, grants.striking);
+
+  /**
+   * BUG A (brief #14 §5): potency was routed to `attackBonus` and nothing else,
+   * and `equippedGear` only reads `attackBonus` for weapons — so on armour it
+   * went nowhere. Every magical armour row in the registry was decoration:
+   * Chain Mail +3 was identical to Chain Mail, and mundane Full Plate (ac 8,
+   * 300 gp) strictly BEAT Full Plate +3 (ac 7, 4,500 gp).
+   *
+   * Potency on worn gear is an enhancement bonus to AC, the defensive twin of
+   * what the attack roll already gets. Using the same maxed value means it also
+   * reaches ROLLED instances via `TIER_GRANTS`, so a magical armour drop is
+   * finally worth more than its mundane base — which is what the loot grammar
+   * always claimed. The armour ladder is monotone after this with no content
+   * edit: Full Plate +3 becomes ac 10 against mundane Full Plate's 8.
+   *
+   * (One row stays anomalous and it is content, not code: Ironmane's Pelt (181)
+   * is legendary, level 16, 7,000 gp and carries `potency_bonus 0`, so it still
+   * lands at ac 7. Flagged, not silently patched.)
+   */
+  const worn = base.item_type === 'armor' || base.item_type === 'shield';
+  const acBonus = ((base.ac_bonus as number | null) ?? 0) + (worn ? potency : 0);
 
   const basePrice = (base.price as number) ?? 0;
   const price = Math.max(
@@ -129,14 +150,14 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
   );
 
   return {
-    displayName: composeName(base, instance.tier, props, attackBonus),
+    displayName: composeName(base, instance.tier, props, potency),
     slot: base.slot as string | null,
     itemType: base.item_type as string,
-    attackBonus,
+    attackBonus: potency,
     strikingTier,
     damageDice: applyStriking(base.damage_dice as string | null, strikingTier),
     damageType: base.damage_type as string | null,
-    acBonus: (base.ac_bonus as number | null) ?? 0,
+    acBonus,
     statBonuses: parseJson<Record<string, number>>(base.stat_bonus, {}),
     onHitEffects: props.map((p) => ({
       propertyId: p.id,

@@ -37,8 +37,8 @@ const RUNS = Number(process.env['GV_HARNESS_N'] ?? 300);
 
 type ContractPhase = 'preMilestone' | 'target';
 
-/** ⚠ Brief #15's milestone flips this to 'target'. */
-const PHASE: ContractPhase = 'preMilestone';
+/** Flipped to 'target' by brief #15's milestone, as that milestone required. */
+const PHASE: ContractPhase = 'target';
 
 interface ContractRow {
   tier: DungeonTier;
@@ -49,13 +49,17 @@ interface ContractRow {
 }
 
 /**
- * `target` is brief #15 §11.1's approved measurement (92.0 / 91.3 / 76.0
- * completed, 2.0 / 4.3 / 13.0 wiped) with the §3 noise floor subtracted.
+ * `target` floors are anchored to what the milestone ACTUALLY measured, minus
+ * the §3 noise floor — not to brief #15 §11.1's predictions, which were taken
+ * on an unequipped party and could not be assumed to survive the gear bracket.
  *
- * Note those numbers were measured on an UNEQUIPPED party, and this harness
- * runs the gear bracket, so the target floors are conservative lower bounds
- * rather than predictions — gear measured +10.6 points at d2/d3. The milestone
- * must VERIFY them, not assume them.
+ * Verified against those predictions and consistent with them: measured
+ * 91.7 / 85.3 / 80.7 against predicted 92.0 / 91.3 / 76.0. Every delta
+ * (−0.3, −6.0, +4.7) sits inside the ±8-point bar.
+ *
+ * Steven's contract itself — "about 80% at level" — is asserted separately and
+ * explicitly below, because a floor derived from a measurement drifts with the
+ * measurement, and the target should not.
  */
 const CONTRACT: Readonly<Record<ContractPhase, readonly ContractRow[]>> = {
   // Measured on THESE seeds: 72.3 / 58.7 / 42.3 completed, 9.0 / 18.0 / 25.7
@@ -65,12 +69,24 @@ const CONTRACT: Readonly<Record<ContractPhase, readonly ContractRow[]>> = {
     { tier: 'tiny', difficulty: 2, level: 2, minCompletedPct: 51, maxWipedPct: 25 },
     { tier: 'tiny', difficulty: 3, level: 3, minCompletedPct: 35, maxWipedPct: 33 },
   ],
+  // Measured post-milestone: 91.7 / 85.3 / 80.7 completed, 4.7 / 8.3 / 12.3 wiped.
   target: [
-    { tier: 'tiny', difficulty: 1, level: 1, minCompletedPct: 85, maxWipedPct: 9 },
-    { tier: 'tiny', difficulty: 2, level: 2, minCompletedPct: 84, maxWipedPct: 11 },
-    { tier: 'tiny', difficulty: 3, level: 3, minCompletedPct: 69, maxWipedPct: 20 },
+    { tier: 'tiny', difficulty: 1, level: 1, minCompletedPct: 84, maxWipedPct: 12 },
+    { tier: 'tiny', difficulty: 2, level: 2, minCompletedPct: 78, maxWipedPct: 15 },
+    { tier: 'tiny', difficulty: 3, level: 3, minCompletedPct: 73, maxWipedPct: 19 },
   ],
 };
+
+/**
+ * STEVEN'S TARGET, in his own words: "a level-N party of four in a level-N
+ * dungeon should complete about 80% of the time."
+ *
+ * Asserted on its own rather than folded into the floors above, because those
+ * floors track the measurement and this number does not. If a future change
+ * moves the curve down by a defensible amount, the floors get re-derived — and
+ * this line is what still says whether the game is hitting its target.
+ */
+const TARGET_AT_LEVEL_PCT = 80;
 
 /** Recorded, not gated: brief #14 §10.3 makes d4+ a CONTENT question. */
 const RECORDED: readonly { tier: DungeonTier; difficulty: number; level: number }[] = [
@@ -146,6 +162,21 @@ describe('the at-level contract — a level-N party in a level-N dungeon', () =>
       }
     }
     expect(failures).toEqual([]);
+  });
+
+  /**
+   * The tuning target itself. 80% minus the §3 noise floor: a cell has to be
+   * genuinely below target, not unluckily seeded, before this fires.
+   */
+  it(`STEVEN'S TARGET: a level-N party in a level-N dungeon completes about ${TARGET_AT_LEVEL_PCT}% of the time`, () => {
+    const shortfalls: string[] = [];
+    for (const key of ['d1', 'd2', 'd3']) {
+      const m = measured.get(key)!;
+      if (m.completedPct < TARGET_AT_LEVEL_PCT - 7) {
+        shortfalls.push(`${key}: ${m.completedPct}% — more than 7 points under the ${TARGET_AT_LEVEL_PCT}% target`);
+      }
+    }
+    expect(shortfalls).toEqual([]);
   });
 
   /**

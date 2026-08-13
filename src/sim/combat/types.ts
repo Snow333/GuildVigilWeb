@@ -40,8 +40,20 @@ export interface Combatant {
   // Offense
   attackBonus: number;
   damageDice: string;
-  /** Continuous range in world units (≤ ENGAGEMENT_RANGE ⇒ melee). */
+  /** Continuous range in world units. Governs WEAPON STRIKES only. */
   weaponRange: number;
+  /**
+   * The range this unit wants to fight AT — `max(weaponRange, its default
+   * at-will spell's range)`, derived once in `assembleHero` (brief #15 §11.3).
+   *
+   * Positioning reads this; weapon strikes still read `weaponRange`. The split
+   * is the whole point: a caster should hold at 6 and cast, never close to 6
+   * and swing a staff. Before it existed, `isMelee` was `weaponRange <= 1.5`
+   * and Staff/Mace carry `weapon_range: null` (defaulting to 1), so the AI
+   * classified the wizard and cleric as MELEE and marched them into the front
+   * rank — measured at 65% of all incoming attacks and 89% of hero deaths.
+   */
+  engageRange: number;
   weaponAgile: boolean;
   /** 0, or NON_PROFICIENCY_PENALTY when wielding unproficiently. */
   weaponPenalty: number;

@@ -16,6 +16,7 @@
 
 import type { ItemInstance } from '@sim/core/events/types';
 import type { LoadoutEntry } from '@sim/combat/loadout';
+import { defaultCantripFor, spellRange } from '@sim/combat/spells';
 import type { Combatant } from '@sim/combat/types';
 import type { DispatchHero } from '@sim/dungeon/checks';
 import {
@@ -130,19 +131,42 @@ function weaponSpecBonus(hero: HeroState): number {
   return 0;
 }
 
-/** Caster block from the hero's best casting class, or null for pure martials. */
-function castingBlock(
-  hero: HeroState,
-  mods: Record<AbilityKey, number>,
-  featStat: Record<string, number>,
-): Combatant['casting'] {
-  let best: { classId: number; level: number; stat: AbilityKey; name: string } | null = null;
+interface CastingClass {
+  classId: number;
+  level: number;
+  stat: AbilityKey;
+  name: string;
+  /** The class's own list ('arcane', 'divine', …) — what its cantrips derive from. */
+  spellList: string | null;
+}
+
+/** The hero's highest casting class, or null for pure martials. */
+function bestCastingClass(hero: HeroState): CastingClass | null {
+  let best: CastingClass | null = null;
   for (const cl of hero.classLevels) {
     const row = classesById.get(cl.classId);
     const stat = row?.casting_stat as AbilityKey | null | undefined;
     if (!row || !stat) continue;
-    if (!best || cl.level > best.level) best = { classId: cl.classId, level: cl.level, stat, name: row.name };
+    if (!best || cl.level > best.level) {
+      best = {
+        classId: cl.classId,
+        level: cl.level,
+        stat,
+        name: row.name,
+        spellList: (row.spell_list as string | null) ?? null,
+      };
+    }
   }
+  return best;
+}
+
+/** Caster block from the hero's best casting class, or null for pure martials. */
+function castingBlock(
+  best: CastingClass | null,
+  mods: Record<AbilityKey, number>,
+  featStat: Record<string, number>,
+  hero: HeroState,
+): Combatant['casting'] {
   if (!best) return null;
 
   const prog = progressionFor(best.classId, best.level);
@@ -202,6 +226,29 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     ? ((itemBasesById.get(weapon.instance.baseId)?.weapon_range as number | null) ?? 1)
     : 1;
 
+  // ── The caster's default at-will attack, and the range it wants to fight at ──
+  //
+  // Brief #15 §10: giving the Cleric and Wizard a damage cantrip is worth
+  // nothing on its own (69.6% vs 72.0% — they cast it and still walk into the
+  // front rank), and repositioning casters is worth LESS than nothing on its own
+  // (3,940 hero deaths, 77 stalemates — a caster that won't close and has no
+  // ranged attack cannot end a fight). Together they took hero deaths 686 → 156
+  // with zero stalemates. Both halves are here for that reason; splitting them
+  // across two commits would make each read as a regression.
+  //
+  // The cantrip is APPENDED, never prepended: the muster's authored priorities
+  // (the Wizard's Magic Missile, the Cleric's Heal) still win while they are
+  // affordable, and `canAfford` drops through to the cantrip once the slots are
+  // gone. So the caster spends its slots, then attacks at range forever, which
+  // is what a level-1 wizard swinging a 1d6−1 staff never could.
+  const casterClass = bestCastingClass(hero);
+  const casting = castingBlock(casterClass, mods, featStat, hero);
+  const cantrip = casting ? defaultCantripFor(casterClass?.spellList ?? null) : null;
+  const engageRange = Math.max(weaponRange, cantrip ? spellRange(cantrip) : 0);
+  const fullLoadout: LoadoutEntry[] = cantrip
+    ? [...loadout, { action: 'cast', spellId: cantrip.id, condition: { kind: 'always' }, target: 'scoredEnemy' }]
+    : loadout;
+
   // ── Defense ──
   const dexToAc = gear.maxDex === null ? mods.dex : Math.min(mods.dex, gear.maxDex);
   const ac = 10 + gear.acBonus + dexToAc + (itemStat['ac'] ?? 0);
@@ -216,8 +263,6 @@ export function assembleHero(kit: HeroKit): DispatchHero {
   const skill = (name: string): number =>
     (hero.skills[name] ?? 0) + mods[SKILL_ABILITY[name] ?? 'wis'] + (featSkill[name] ?? 0);
 
-  const casting = castingBlock(hero, mods, featStat);
-
   const c: Combatant = {
     id: hero.id,
     name: hero.name,
@@ -231,6 +276,7 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     attackBonus,
     damageDice,
     weaponRange,
+    engageRange,
     weaponAgile: traits.includes('agile'),
     weaponPenalty: 0,
     weaponSpecBonus: weaponSpecBonus(hero),
@@ -244,7 +290,7 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     saves,
     tempHp: 0,
     casting,
-    loadout,
+    loadout: fullLoadout,
     reactions: reactionIds(hero, features),
     lastReactionTick: -1000,
     conditions: new Map(),

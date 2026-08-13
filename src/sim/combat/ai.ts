@@ -58,10 +58,21 @@ export function chooseTarget(attacker: Combatant, all: readonly Combatant[]): Co
   return best;
 }
 
-const isMelee = (u: Combatant): boolean => u.weaponRange <= ENGAGEMENT_RANGE;
+/**
+ * Positioning keys off INTENT, not off the object in the unit's hand (brief #15
+ * §10.5). `engageRange` is `max(weaponRange, default at-will spell range)`, so a
+ * caster whose cantrip reaches 6 is ranged even while holding a staff.
+ *
+ * Reading `weaponRange` here was the actual bug: Staff and Mace carry
+ * `weapon_range: null`, which defaults to 1, so the wizard and cleric were
+ * classified MELEE and `desiredPosition` walked them into the front rank. The
+ * `standoff` purpose fired 0 times in 1,850 moves — the entire ranged branch
+ * below was dead code for the default party.
+ */
+const isMelee = (u: Combatant): boolean => u.engageRange <= ENGAGEMENT_RANGE;
 
 export const inAttackRange = (u: Combatant, target: Combatant): boolean =>
-  dist(u.pos, target.pos) <= Math.max(u.weaponRange, ENGAGEMENT_RANGE * 0.99);
+  dist(u.pos, target.pos) <= Math.max(u.engageRange, ENGAGEMENT_RANGE * 0.99);
 
 /**
  * Where this unit wants to be: melee closes to engagement; ranged holds a
@@ -77,8 +88,8 @@ export function desiredPosition(u: Combatant, target: Combatant): Vec2 {
     return stepToward(u.pos, target.pos, d - ENGAGEMENT_RANGE * 0.9);
   }
   const standoffMin = 2;
-  if (d < standoffMin) return stepToward(u.pos, target.pos, d - u.weaponRange * 0.8); // negative = away
-  if (d > u.weaponRange) return stepToward(u.pos, target.pos, d - u.weaponRange * 0.8);
+  if (d < standoffMin) return stepToward(u.pos, target.pos, d - u.engageRange * 0.8); // negative = away
+  if (d > u.engageRange) return stepToward(u.pos, target.pos, d - u.engageRange * 0.8);
   return u.pos;
 }
 

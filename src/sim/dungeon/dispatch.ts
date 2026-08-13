@@ -89,7 +89,12 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
   const killedEnemyIds: number[] = [];
   const visited = new Set<number>();
   const blocked = new Set<number>();
-  const restAvailable = new Set<number>();
+  /**
+   * R2 (brief #14 wall 1): rest charges are a COUNT the party carries, not a
+   * set of node ids it must be standing on. See `PROFILES.roomsPerRestCharge`.
+   */
+  let restCharges = 0;
+  let roomsCreditedForRest = 0;
   let current = 0;
   let outcome: DungeonDispatchResult['outcome'] | null = null;
   let retreatReason: string | undefined;
@@ -279,7 +284,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
       });
       if (room.type === 'boss') {
         bossDead = true;
-        restAvailable.add(n);
+        restCharges++;
       }
     } else if (room.type === 'treasure' || room.type === 'vault') {
       const src: LootSource = room.type === 'vault' ? 'vault' : 'treasure';
@@ -299,7 +304,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
         }
       }
     } else if (room.type === 'shrine') {
-      restAvailable.add(n);
+      restCharges++;
       stream.emit(tick, 'explore.shrine_activated', { roomId: roomId(n) });
     }
 
@@ -339,11 +344,21 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
       retreatReason = 'hardFloor';
       break;
     }
+    // R2: distance covered earns recovery. Deterministic and draw-free — the
+    // credit is a function of `visited.size`, so seeds stay comparable.
+    while (visited.size >= roomsCreditedForRest + PROFILES.roomsPerRestCharge) {
+      roomsCreditedForRest += PROFILES.roomsPerRestCharge;
+      restCharges++;
+    }
+
     const caution = PROFILES.caution[opts.caution]!;
     const frac = partyHpFrac();
     if (frac < caution.withdrawHpFrac) {
-      if (restAvailable.has(current)) {
-        restAvailable.delete(current);
+      // R2: spendable wherever the party is standing. The shipped rule required
+      // them to be IN the granting room at the moment HP crossed the threshold,
+      // which banked 96% of the game's healing permanently out of reach.
+      if (restCharges > 0) {
+        restCharges--;
         tick += TICKS.rest;
         for (const h of opts.party) {
           if (hasCondition(h.c, 'dying')) healDying(h.c, 1);

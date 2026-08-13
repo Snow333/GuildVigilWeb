@@ -13,6 +13,7 @@ import { ENGAGEMENT_RANGE } from '@content/combat';
 import type { Rng } from '@sim/core/rng';
 import type { RollBreakdown } from '@sim/core/events/types';
 import { spellsById, warlockCostByLevel } from '@sim/registry';
+import { averageDamage } from './ai';
 import { determineDegree, rollDice } from './dice';
 import { acMod, applyCondition, type ConditionId } from './conditions';
 import { dist, type Combatant } from './types';
@@ -63,6 +64,52 @@ export function spellRange(spell: SpellRow): number {
   const rt = spell.range_type as string | null;
   if (rt === 'touch' || rt === 'self') return ENGAGEMENT_RANGE;
   return (spell.range_value as number | null) ?? ENGAGEMENT_RANGE;
+}
+
+/**
+ * The default at-will attack for a caster on `spellList` (brief #15 §10–§11).
+ *
+ * Candidates are DERIVED — every damage cantrip the class's own spell list can
+ * reach — so the rule stays self-maintaining as content grows. Among them,
+ * content may DESIGNATE a preference via `default_cantrip`; where nothing is
+ * marked, the best expected damage wins, ties broken by table order.
+ *
+ * That hybrid is what settles §11.2: "derived from the class spell list" and
+ * "Electric Arc + Divine Lance" could not both be true under any single rule
+ * (best-damage picks Telekinetic Projectile; lowest-id picks Electric Arc +
+ * Produce Flame). Since §11.1 measured the choice as free — Electric Arc sits
+ * within noise of a d6 cantrip everywhere, because a cantrip's value is that it
+ * exists at range and never runs out, not its dice — designating on flavour
+ * costs nothing and keeps the derivation.
+ *
+ * `spell_list` is comma-separated on both sides ('arcane,divine'), so this is a
+ * set intersection, not a string compare.
+ */
+export function defaultCantripFor(spellList: string | null): SpellRow | null {
+  if (!spellList) return null;
+  const wanted = spellList.split(',').map((s) => s.trim()).filter(Boolean);
+  if (wanted.length === 0) return null;
+
+  let best: SpellRow | null = null;
+  let bestScore = -Infinity;
+  for (const spell of spellsById.values()) {
+    if (((spell.spell_level as number | null) ?? 0) > 0) continue;
+    if ((spell.effect_type as string | null) !== 'damage') continue;
+    const dice = (spell.damage_dice as string | null) ?? '';
+    if (dice === '' || dice === '0') continue;
+    const on = ((spell.spell_list as string | null) ?? '').split(',').map((s) => s.trim());
+    if (!wanted.some((w) => on.includes(w))) continue;
+
+    // An authored designation outranks every unmarked candidate outright; the
+    // damage term only orders the fallback.
+    const designated = (spell.default_cantrip as number | null) === 1 ? 1000 : 0;
+    const score = designated + averageDamage(dice);
+    if (score > bestScore) {
+      best = spell;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 /** Spend the cost; caller must have verified affordability. */
