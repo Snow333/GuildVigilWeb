@@ -11,7 +11,7 @@
 import { ARENA, DYING, ENCOUNTER, ENGAGEMENT_RANGE, TICKS_PER_SECOND } from '@content/combat';
 import { EventStream } from '@sim/core/events/stream';
 import { Rng } from '@sim/core/rng';
-import { desiredPosition, inAttackRange, moveStep, stepToward } from './ai';
+import { boundToRoom, desiredPosition, inAttackRange, moveStep, stepToward } from './ai';
 import { decayFlurry, flurryPenalty } from './dice';
 import { canMove, expireConditions, hasCondition, speedMod } from './conditions';
 import { damageWhileDying, healDying, knockOut, resolveDyingRecovery } from './dying';
@@ -42,12 +42,18 @@ const livingFighters = (all: Combatant[], side: Combatant['side']): Combatant[] 
 const aliveAtAll = (all: Combatant[], side: Combatant['side']): Combatant[] =>
   all.filter((u) => u.side === side && (u.hp > 0 || hasCondition(u, 'dying')));
 
-/** Line formation placement: side A on the left column, B on the right, vertically centered. */
+/**
+ * Line formation placement: side A on the left column, B on the right,
+ * vertically centered — and inside the room, which is now a real constraint
+ * rather than a drawing (brief #19). A side larger than the room is tall
+ * stacks its overflow on the wall rather than spawning outside it; the view
+ * says so in the margin via `formationFits`.
+ */
 export function placeFormation(units: Combatant[], side: Combatant['side']): void {
   const x = side === 'heroes' ? ARENA.sideAx : ARENA.sideBx;
   const startY = (ARENA.height - (units.length - 1)) / 2;
   units.forEach((u, i) => {
-    u.pos = { x, y: startY + i };
+    u.pos = boundToRoom({ x, y: startY + i }, ARENA);
   });
 }
 
@@ -370,7 +376,10 @@ function moveTick(u: Combatant, all: readonly Combatant[], rt: UnitRuntime, stre
   if (want.x === u.pos.x && want.y === u.pos.y) return;
   const step = moveStep(u, speedMod(u), TICKS_PER_SECOND);
   const arrivedBefore = inAttackRange(u, target);
-  u.pos = stepToward(u.pos, want, step);
+  // The room is the only spatial rule in the engine that isn't flanking, and it
+  // applies HERE — one place, after the step, so `desiredPosition` stays free to
+  // want something outside and the wall decides what it gets (brief #19 §9).
+  u.pos = boundToRoom(stepToward(u.pos, want, step), ARENA);
   const arrivedAfter = inAttackRange(u, target);
   if (!arrivedBefore && arrivedAfter) {
     stream.emit(tick, 'combat.unit_moved', {

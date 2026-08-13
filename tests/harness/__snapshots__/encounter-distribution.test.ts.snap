@@ -2,8 +2,8 @@
 
 exports[`encounter distribution harness — golden scenarios > 2 fighters + rogue vs 3 goblins (level-appropriate): heroes strongly favored, zero hangs 1`] = `
 {
-  "durationP50": 32,
-  "durationP90": 39,
+  "durationP50": 36,
+  "durationP90": 43,
   "hangGuardHits": 0,
   "heroDeathEvents": 0,
   "stalemateRate": 0,
@@ -13,21 +13,21 @@ exports[`encounter distribution harness — golden scenarios > 2 fighters + rogu
 
 exports[`encounter distribution harness — golden scenarios > a caster party vs the orcs: spells and heals shift the distribution, no degeneracy 1`] = `
 {
-  "durationP50": 54,
-  "durationP90": 110,
+  "durationP50": 57,
+  "durationP90": 106,
   "hangGuardHits": 0,
-  "heroDeathEvents": 87,
+  "heroDeathEvents": 74,
   "stalemateRate": 0,
-  "winRate": 0.8233333333333334,
+  "winRate": 0.85,
 }
 `;
 
 exports[`encounter distribution harness — golden scenarios > level-appropriate pressure: the party vs 3 Orc Warriors — winnable, never free 1`] = `
 {
-  "durationP50": 91,
-  "durationP90": 143,
+  "durationP50": 94,
+  "durationP90": 146,
   "hangGuardHits": 0,
-  "heroDeathEvents": 111,
+  "heroDeathEvents": 115,
   "stalemateRate": 0,
   "winRate": 0.9533333333333334,
 }
@@ -35,11 +35,11 @@ exports[`encounter distribution harness — golden scenarios > level-appropriate
 
 exports[`encounter distribution harness — golden scenarios > outnumbered: a LEVEL-1 hero vs 4 goblins — losses dominate but fights END 1`] = `
 {
-  "durationP50": 82,
-  "durationP90": 119,
+  "durationP50": 86,
+  "durationP90": 123,
   "hangGuardHits": 0,
   "heroDeathEvents": 0,
   "stalemateRate": 0,
-  "winRate": 0.5,
+  "winRate": 0.49666666666666665,
 }
 `;

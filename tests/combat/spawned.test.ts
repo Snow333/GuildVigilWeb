@@ -61,8 +61,12 @@ describe('combat.unit_spawned — the schema addition (brief #12)', () => {
       // placeFormation mutates in place before the first tick; the event agrees with it.
       expect(s.data.x).toBe(ARENA.sideAx);
     }
+    // Centred, one unit apart. DERIVED from the room, not written down: the room
+    // is 20 × 20 as of brief #19 and a hardcoded [3.5, 4.5, 5.5, 6.5] only ever
+    // described the old 14 × 10 box.
+    const startY = (ARENA.height - (heroes.length - 1)) / 2;
     const ys = spawns.filter((s) => s.data.side === 'heroes').map((s) => s.data.y);
-    expect(ys).toEqual([3.5, 4.5, 5.5, 6.5]); // centred, one unit apart
+    expect(ys).toEqual(heroes.map((_, i) => startY + i));
   });
 
   it('SCALES: party growth to 6 and larger enemy groups stay inside the arena', () => {

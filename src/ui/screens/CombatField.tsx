@@ -23,10 +23,25 @@ import {
   buildTracks, fieldStateAt, hpStep, labelLanes, positionAt, FEET_PER_UNIT, type SpawnFact,
 } from './fieldReading';
 
-/** Sheet geometry — the arena keeps its 14:10 aspect; the margins carry the rules. */
-const VIEW = { w: 700, h: 520, padL: 44, padR: 44, padT: 30, padB: 80 } as const;
-const SX = (VIEW.w - VIEW.padL - VIEW.padR) / ARENA.width;
-const SY = (VIEW.h - VIEW.padT - VIEW.padB) / ARENA.height;
+/**
+ * Sheet geometry. The plan is drawn at ONE UNIFORM SCALE and the sheet's height
+ * follows the room, rather than the room being stretched to fit a fixed box.
+ *
+ * ⚠ This is the change brief #19 §6 asked for. The old geometry took SX and SY
+ * independently from a hard 700 × 520 sheet, which was invisible only because
+ * ARENA's 14:10 happened to match it. The room is now 20 × 20 (§9), and two
+ * scales would ink a square room as a squashed rectangle — so a square on the
+ * page would stop being a square on the ground while the margin still said
+ * `1 SQUARE = 5 FT`. Presentation may ease a position (decision D1); it may not
+ * lie about a distance.
+ */
+const VIEW = { w: 700, padL: 44, padR: 44, padT: 30, padB: 80 } as const;
+/** One scale for both axes: a square of ground is a square on the sheet. */
+const S = (VIEW.w - VIEW.padL - VIEW.padR) / ARENA.width;
+const SX = S;
+const SY = S;
+/** The sheet is as tall as the room needs, plus the margins that carry the rules. */
+const VIEW_H = VIEW.padT + ARENA.height * S + VIEW.padB;
 const px = (x: number): number => VIEW.padL + x * SX;
 const py = (y: number): number => VIEW.padT + y * SY;
 
@@ -85,7 +100,7 @@ export function CombatField({ spawns, events, tick, held, heldNote, selectedId, 
   return (
     <svg
       className="gv-field"
-      viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
+      viewBox={`0 0 ${VIEW.w} ${VIEW_H}`}
       role="img"
       aria-label={`Combat field, ${guild} guild against ${foes} enemies`}
     >

@@ -93,6 +93,35 @@ export function desiredPosition(u: Combatant, target: Combatant): Vec2 {
   return u.pos;
 }
 
+/** The room a fight resolves in — width/height in world units (brief #19 §9). */
+export interface RoomBounds {
+  width: number;
+  height: number;
+}
+
+/**
+ * Confine a position to the room. THE WALLS (brief #19 §9, approved).
+ *
+ * Before this, `PopulatedRoom` carried no geometry at all and `stepToward` had
+ * no collision, so units simply left: brief #18 §1 measured 51–76% of fights
+ * rendering at least one unit off the sheet, with excursions to six arena
+ * widths out. `ARENA` was referenced in exactly two places — `placeFormation`
+ * and the field renderer — and constrained nothing.
+ *
+ * ⚠ THE CLAMP IS PER-AXIS, AND THAT IS THE WALL-SLIDE. A unit driven into a
+ * wall keeps its tangential motion and slides along it instead of sticking.
+ * Measured free (§3.1): it fires 7,000–12,500 times per 1,000 runs and moves
+ * nothing — largest delta 1.3 points against a ±2–4.4 bar. Chosen on feel and
+ * confirmed by Steven 2026-08-13: a caster sliding along a wall reads as a
+ * person, one pressed into a corner reads as a bug. Swapping this for a hard
+ * stop is a feel change, NOT a balance change; do not expect the curve to move.
+ */
+export function boundToRoom(p: Vec2, room: RoomBounds): Vec2 {
+  const x = Math.min(Math.max(p.x, 0), room.width);
+  const y = Math.min(Math.max(p.y, 0), room.height);
+  return x === p.x && y === p.y ? p : { x, y };
+}
+
 /** Move from a toward b by `amount` (negative moves away). Never overshoots b. */
 export function stepToward(a: Vec2, b: Vec2, amount: number): Vec2 {
   const d = dist(a, b);

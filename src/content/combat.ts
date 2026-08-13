@@ -71,5 +71,49 @@ export const ENCOUNTER = {
   heroTieBreakTicks: 1,
 } as const;
 
-/** Default arena (continuous units) and line formations. Room-shaped arenas arrive in 1.4. */
-export const ARENA = { width: 14, height: 10, sideAx: 2, sideBx: 12 } as const;
+/**
+ * THE COMBAT ROOM (brief #19 §9). Steven, 2026-08-13: *"Do not overcomplicate
+ * it. ONE room type, 20 × 20"*, sized to hold 4v4, 6v6 and 6v8. No per-type
+ * sizing, no seeded range, no authored shapes — so this stays a tunable in
+ * content (migration-plan R2) rather than a field on `PopulatedRoom`.
+ *
+ * ⚠ THE SIZE IS A BALANCE LEVER OF THE FIRST ORDER, not set dressing. Measured
+ * (brief #19 §0, n=300/cell on the curve's own seeds): a 6 × 5 corridor costs
+ * 11.3 points of completion at d3, 11.0 at d4 and 12.7 at d5 against a 20 × 14
+ * hall, and takes d4 wipes from 34.7% to 46.0%. The mechanism is brief #15's
+ * cantrip fix — the change that met the 80% target — which depends on the
+ * caster holding a 6-unit standoff, and a 6-wide room cannot contain one.
+ *
+ * ⚠ 20 × 20 IS ALSO WHAT MAKES THE WALLS FREE. At the old 14 × 10 the same
+ * bounds cost −4.4 points at d3 and put that cell ON its contract floor
+ * (§3.1); at 20 × 20 the whole pass measures −2.0 / −1.6 / −2.0 / +0.3 / −0.3,
+ * every cell inside the ±8-point bar. The extra space pays for the walls.
+ *
+ * `sideAx`/`sideBx` keep the old box's proportions: musters sat 10 units apart
+ * in a 14-wide room (71%), and sit 14 apart in a 20-wide one (70%).
+ *
+ * ⚠ THE MUSTER SEPARATION IS ITS OWN LEVER, IT IS SHARP, AND IT IS AIMED AT
+ * SURFACE FIGHTS — brief #19 never costed it; it turned up in implementation.
+ * Measured on `career-distribution` (480 records, ALL surface — that harness
+ * never dispatches a dungeon):
+ *
+ *     separation 10  →  96.0% completed / 4.0% wiped
+ *     separation 12  →  99.8% / 0.2%
+ *     separation 14  →  99.8% / 0.2%      ← chosen
+ *     (shipped, 14 × 10 box, separation 10:  91.3% / 8.8%)
+ *
+ * The step sits between 10 and 12 and the mechanism is arithmetic: the enemy
+ * closes at `speed` 5 units/s, so a 12-unit walk outlasts one 20-tick
+ * `attackIntervalTicks` where a 10-unit walk does not. Past that threshold the
+ * party's casters land a SECOND free cantrip volley before contact, every
+ * fight. The at-level DUNGEON curve is nearly flat across all three (every cell
+ * inside the ±8-point bar) because a dungeon is attritional and a surface quest
+ * is one encounter — which is exactly why this only shows up on the surface.
+ *
+ * ⚠ SO: Steven chose 14 (proportional) 2026-08-13 KNOWING it takes surface
+ * quests to ~99.8% completion, and the surface difficulty goes on the re-tune
+ * list with levels, mob counts and statblocks. This is a consequence the pass
+ * CREATED, not one it found — do not let the re-tune inherit it silently, and
+ * do not "discover" it again.
+ */
+export const ARENA = { width: 20, height: 20, sideAx: 3, sideBx: 17 } as const;
