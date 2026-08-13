@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runEncounter } from '@sim/combat/encounter';
 import type { Combatant } from '@sim/combat/types';
+import { abilityMod } from '@sim/heroes/types';
 import { enemiesById, spellsByName } from '@sim/registry';
 import { combatant } from '../combat/conditions.test';
 
@@ -16,16 +17,30 @@ import { combatant } from '../combat/conditions.test';
 
 const N = 300;
 
-/** Build a Combatant from a REAL converted enemy row. */
+/**
+ * Build a Combatant from a REAL converted enemy row.
+ *
+ * ⚠ This mirrors `buildEnemy` deliberately and must keep mirroring it. Brief
+ * #19 added two things a real enemy now carries that this helper was silently
+ * dropping: `reactions` from `aoo_count` (the fix — most enemies have no attack
+ * of opportunity) and the two skill totals the conceal check reads. Without
+ * them this harness would claim to measure "a REAL converted enemy row" while
+ * fighting something the dungeon never produces.
+ */
 function fromRegistry(enemyId: number, instanceId: string): Combatant {
   const row = enemiesById.get(enemyId);
   if (!row) throw new Error(`no enemy ${enemyId}`);
+  const level = row.base_level as number;
   return combatant({
     id: instanceId, name: row.name, side: 'enemies', isHero: false,
     maxHp: row.hp, hp: row.hp, ac: row.ac,
     attackBonus: row.attack_bonus, damageDice: row.damage_dice,
-    initiativeBonus: (row.base_level as number) + 2, // GD enemy initiative: d20 + level + 2
+    initiativeBonus: level + 2, // GD enemy initiative: d20 + level + 2
     speed: row.speed as number,
+    level,
+    stealth: level + abilityMod(row.dex as number),
+    perception: level + abilityMod(row.wis as number),
+    reactions: ((row.aoo_count as number | null) ?? 0) >= 1 ? ['aoo'] : [],
   });
 }
 

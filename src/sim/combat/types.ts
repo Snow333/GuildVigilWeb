@@ -68,6 +68,26 @@ export interface Combatant {
   level: number;
   /** Heroes: perception + init feats. Enemies: level + 2 folded in at build. */
   initiativeBonus: number;
+  /**
+   * THE TWO SKILL TOTALS THE CONCEAL CHECK NEEDS (brief #19 §14.2), derived
+   * once — in `assembleHero` for heroes, beside `engageRange`; in `buildEnemy`
+   * from the statblock's own ability scores.
+   *
+   * ⚠ `Combatant` carried NO skills at all before this, which is why the
+   * backstab is a chain and not a line: `resolveStrike` is where the check has
+   * to live and it had nothing to read. Third instance of the same shape after
+   * `weapon_range: null` (brief #15 §1) and `class_weapon_proficiency` (brief
+   * #16 §5.1) — the content carries the concept and the sim never reads it.
+   *
+   *   stealth    = ranks + mods.dex + featSkill + armorCheckPenalty  (+ spell: 0 today)
+   *   perception = ranks + mods.wis + featSkill                      (+ spell: 0 today)
+   *
+   * `mods.<ability>` already folds level-up boosts AND equipment `stat_bonus`
+   * (assembly.ts), so Gloves of Dexterity +2 raises every backstab with no
+   * further work — brief #19 §14.1.
+   */
+  stealth: number;
+  perception: number;
   /** AI threat flag (+75 target weight). */
   isCaster: boolean;
   saves: { fort: number; ref: number; will: number };

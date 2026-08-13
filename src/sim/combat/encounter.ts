@@ -19,7 +19,7 @@ import { featEffectsById } from '@sim/heroes/featEffects';
 import { pickAction } from './loadout';
 import { applyConditionFromCast, resolveCast, spellRange } from './spells';
 import { spellsById } from '@sim/registry';
-import { resolveStrike } from './strike';
+import { resolveStrike, rollConceal } from './strike';
 import { dist, type Combatant } from './types';
 
 export interface EncounterResult {
@@ -167,7 +167,20 @@ export function runEncounter(
   };
 
   const reactionReady = (u: Combatant, t: number): boolean => t - u.lastReactionTick >= ENCOUNTER.attackIntervalTicks;
-  const hasAoo = (u: Combatant): boolean => !u.isHero || u.reactions.includes('aoo');
+  /**
+   * ONE RULE, BOTH SIDES (brief #19 §10.2). This was
+   * `!u.isHero || u.reactions.includes('aoo')` — the `!u.isHero` gave every
+   * enemy in the game an intrinsic attack of opportunity while
+   * `enemies.aoo_count` was read by nothing. `buildEnemy` now fills `reactions`
+   * from that column, so the side asymmetry disappears and both sides answer
+   * the same question. Worth +3.6 / +6.3 / +7.6 / +9.3 / +8.3 at d1–d5.
+   *
+   * The TRIGGER needed no work: departure-only is already PF2E RAW, and
+   * `moveWithReactions` already provokes on leaving engagement while the
+   * adjacent-cast provoke is RAW's manipulate-in-reach. Steven ruled departure
+   * only, 2026-08-13. All that changed is WHO threatens.
+   */
+  const hasAoo = (u: Combatant): boolean => u.reactions.includes('aoo');
 
   /** Nimble Dodge: +2 AC against one incoming attack per interval. */
   const nimbleDodge = (target: Combatant, attacker: Combatant, s: EventStream, t: number): number => {
@@ -313,13 +326,29 @@ export function runEncounter(
         continue;
       }
 
+      // THE CONCEAL CHECK IS ROLLED HERE, ONCE, BEFORE THE BURST — not inside
+      // resolveStrike, which runs per swing. PF2E: you Hide, then you Strike
+      // (brief #19 §14.2). Returns null for everyone without sneak dice and for
+      // any target already off-guard, so the common path costs one predicate.
+      //
+      // It emits NOTHING. The event schema is additive-only and a new type is
+      // the last resort (brief #13's `sealedRoutes` is the precedent); the fact
+      // is already legible where it matters, because `attack_resolved` carries
+      // `sneakDice` on any swing the check bought. An extra
+      // `reaction_triggered` per rogue action would also draw a reaction line
+      // on the field every two seconds, which is a lie about what happened.
+      const conceal = rollConceal(u, target, all, rng);
+
       // Strike: basic attack = a burst; MAP lives INSIDE the burst (0/−5, agile 0/−4).
       for (let swing = 0; swing < ENCOUNTER.swingsPerAction; swing++) {
         if (target.hp <= 0 && !hasCondition(target, 'dying')) break;
         if (hasCondition(target, 'unconscious') && swing > 0) break; // don't wail on the downed
         const penalty = flurryPenalty(u.flurrySwings + swing, u.weaponAgile);
         const reactionAc = nimbleDodge(target, u, stream, tick);
-        const strike = resolveStrike(u, target, { rng, flurryPenalty: penalty, reactionAcBonus: reactionAc, all });
+        const strike = resolveStrike(u, target, {
+          rng, flurryPenalty: penalty, reactionAcBonus: reactionAc, all,
+          concealed: conceal?.passed ?? false,
+        });
         const atkEv = stream.emit(tick, 'combat.attack_resolved', {
           attackerId: u.id, targetId: target.id,
           roll: strike.roll, flurryPenalty: strike.flurryPenalty,

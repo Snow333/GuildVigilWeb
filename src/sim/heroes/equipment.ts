@@ -55,6 +55,18 @@ export interface DerivedItem {
   damageDice: string | null;
   damageType: string | null;
   acBonus: number;
+  /**
+   * PF2E's armour check penalty, −1 to −4 (0 or null on everything else).
+   *
+   * ⚠ THIS COLUMN WAS DEAD DATA UNTIL BRIEF #19. Brief #16 §5.1 flagged it as
+   * read by nothing, in the same breath as `item_level` and
+   * `class_weapon_proficiency`; 17 item rows carry a value. It applies to
+   * Stealth, which is why the backstab is what finally wires it, and it makes
+   * the rogue's armour choice matter twice: the gear bracket puts Shade in a
+   * Chain Shirt for its `max_dex`, and that Chain Shirt now also costs −1 on
+   * every conceal check.
+   */
+  armorCheckPenalty: number;
   /** Ability/save/speed bonuses from the base (e.g. Belt of Strength). */
   statBonuses: Record<string, number>;
   onHitEffects: OnHitEffect[];
@@ -158,6 +170,7 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
     damageDice: applyStriking(base.damage_dice as string | null, strikingTier),
     damageType: base.damage_type as string | null,
     acBonus,
+    armorCheckPenalty: (base.armor_check_penalty as number | null) ?? 0,
     statBonuses: parseJson<Record<string, number>>(base.stat_bonus, {}),
     onHitEffects: props.map((p) => ({
       propertyId: p.id,
@@ -168,6 +181,13 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
     bulk: (base.bulk as number) ?? 0,
     price,
   };
+}
+
+/** Total armour check penalty across everything worn (≤ 0). Applies to Stealth. */
+export function aggregateArmorCheckPenalty(equipped: readonly ItemInstance[]): number {
+  let total = 0;
+  for (const inst of equipped) total += deriveItem(inst).armorCheckPenalty;
+  return total;
 }
 
 /** Aggregate stat bonuses across a hero's equipped instances ({str: 2, fort_save: 1, …}). */

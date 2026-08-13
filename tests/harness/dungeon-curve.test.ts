@@ -249,11 +249,29 @@ describe('NC6 — the gear policy is wired in and measurably load-bearing', () =
     }).toMatchObject({ loadBearing: true });
   });
 
-  it('and cuts the pooled wipe rate across the whole at-level band', () => {
+  /**
+   * ⚠ THE BAND MOVED FROM d1–d3 TO d3–d5, AND THE REASON IS BRIEF #19.
+   *
+   * This control pools three cells so the lower base rate of wipes tightens the
+   * bar (±3.8 points at n=900/side). That only works while there are wipes to
+   * avert. After the room + `aoo_count` + backstab pass, at-level wipes under
+   * the bracket are 1.0 / 2.3 / 4.7 / 16.3 / 10.0 at d1–d5 — d1 and d2 have
+   * collapsed into a floor, and a control taken there is measuring nothing.
+   * Measured on the old d1–d3 band it reads 2.7 vs 4.2, a 1.5-point delta
+   * INSIDE the noise bar; on d3–d5 it reads 10.3 vs 21.8.
+   *
+   * THE THRESHOLD IS UNCHANGED (> 4) AND SO IS n. Only the band moved, to where
+   * the signal still lives — the same reasoning brief #16 §8 used when it put
+   * the completion half of this control at d3 rather than d2. Weakening the
+   * threshold instead would have been the tempting, wrong fix: it would have
+   * quietly let this control assert a difference smaller than the noise floor,
+   * which is the one thing the precision rule forbids.
+   */
+  it('and cuts the pooled wipe rate across the band where wipes still happen (d3–d5)', () => {
     let bracketWiped = 0, starterWiped = 0, cells = 0;
-    for (const difficulty of [1, 2, 3]) {
-      bracketWiped += measure('tiny', difficulty, difficulty, bracketProvider, 'bracket').wipedPct;
-      starterWiped += measure('tiny', difficulty, difficulty, starterProvider, 'starter').wipedPct;
+    for (const [tier, difficulty] of [['tiny', 3], ['small', 4], ['small', 5]] as const) {
+      bracketWiped += measure(tier, difficulty, difficulty, bracketProvider, 'bracket').wipedPct;
+      starterWiped += measure(tier, difficulty, difficulty, starterProvider, 'starter').wipedPct;
       cells++;
     }
     const bracketAvg = Math.round((bracketWiped / cells) * 10) / 10;
@@ -261,7 +279,7 @@ describe('NC6 — the gear policy is wired in and measurably load-bearing', () =
     const delta = Math.round((starterAvg - bracketAvg) * 10) / 10;
     expect({
       bracketAvg, starterAvg, wipesAverted: delta,
-      loadBearing: delta > 4, // measured 7.4 against a +/-3.8-point bar
+      loadBearing: delta > 4, // measured 11.5 on d3-d5 against a +/-3.8-point bar
     }).toMatchObject({ loadBearing: true });
   });
 

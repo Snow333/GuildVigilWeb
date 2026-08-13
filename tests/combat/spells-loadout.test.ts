@@ -130,18 +130,39 @@ describe('toggles and reactions', () => {
     }
   });
 
-  it('casting adjacent to an enemy provokes an attack of opportunity', () => {
-    // Cleric heals itself while a goblin is in its face → intrinsic enemy AoO.
-    const cleric = combatant({
+  /**
+   * The adjacent-cast provoke — PF2E's manipulate-in-reach trigger, and the
+   * half of AoO that is not departure.
+   *
+   * ⚠ THIS TEST USED TO SAY "intrinsic enemy AoO" AND THAT WAS THE BUG. Brief
+   * #19 §10.2: the loop granted an attack of opportunity to EVERY enemy while
+   * `enemies.aoo_count` was read by nothing, and 40 of the 45 rows say 0. AoO
+   * is now content-driven on both sides, so the threatening enemy has to say it
+   * threatens — and the pair below is the negative control for that fix, since
+   * an assertion that only ever tests the AoO-capable case would have passed
+   * just as happily before the change.
+   */
+  const clericUnderThreat = () =>
+    combatant({
       id: 'hero_1', maxHp: 24, hp: 10, ac: 16, isCaster: true,
       casting: { attackBonus: 6, dc: 16, casterLevel: 3, kind: 'slots', slots: [0, 3], pactEnergy: 0 },
       loadout: [
         { action: 'cast', spellId: spellId('Heal'), condition: { kind: 'selfHpBelow', pct: 0.99 }, target: 'self' },
       ],
     });
-    const r = runEncounter('c7', 'r1', [cleric], [goblin('e1')], 'aoo_1');
-    const reactions = r.stream.byType('combat.reaction_triggered');
-    expect(reactions.some((e) => e.data.reactionId === 'attackOfOpportunity' && e.data.againstId === 'hero_1')).toBe(true);
+  const provoked = (enemy: Combatant): boolean =>
+    runEncounter('c7', 'r1', [clericUnderThreat()], [enemy], 'aoo_1')
+      .stream.byType('combat.reaction_triggered')
+      .some((e) => e.data.reactionId === 'attackOfOpportunity' && e.data.againstId === 'hero_1');
+
+  it('casting adjacent to an enemy that HAS an AoO provokes one', () => {
+    expect(provoked(combatant({ ...goblin('e1'), reactions: ['aoo'] }))).toBe(true);
+  });
+
+  it('and casting adjacent to an enemy that does NOT provokes nothing', () => {
+    // A goblin. `aoo_count: 0`, like 40 of the 45 rows — and PF2E agrees, since
+    // an attack of opportunity is a Fighter feature, not something a goblin has.
+    expect(provoked(goblin('e1'))).toBe(false);
   });
 
   it('Nimble Dodge fires once per interval against incoming strikes', () => {

@@ -10,7 +10,13 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     id: 'hero_1', name: 'Testa', baseId: 'hero_1', side: 'heroes', isHero: true, pos: { x: 0, y: 0 },
     maxHp: 30, hp: 30, ac: 16, attackBonus: 7, damageDice: '1d8', weaponRange: 1, engageRange: 1,
     weaponAgile: false, weaponPenalty: 0, weaponSpecBonus: 0, isWeaponProficient: true,
-    sneakAttackDice: '', speed: 5, wounded: 0, level: 3, initiativeBonus: 3, isCaster: false,
+    sneakAttackDice: '', speed: 5, wounded: 0, level: 3, initiativeBonus: 3,
+    // Brief #19: the conceal check's two totals. Defaults match this fixture's
+    // own `level: 3` at an ability score of 10, i.e. the same `level + mod`
+    // derivation `buildEnemy` uses — so a hand-built hero and a hand-built
+    // enemy start on equal footing rather than one of them silently at zero.
+    stealth: 3, perception: 3,
+    isCaster: false,
     saves: { fort: 5, ref: 5, will: 3 }, tempHp: 0, casting: null, loadout: [], reactions: [],
     lastReactionTick: -100, conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
     ...over,

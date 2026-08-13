@@ -99,7 +99,17 @@ const TEMPLATES: readonly FoundingTemplate[] = [
     defaultGender: 'm',
     abilities: { str: 12, dex: 16, con: 12, int: 12, wis: 12, cha: 10 },
     maxHp: freshHeroMaxHp(8, 1),
-    skills: { thievery: 1, perception: 1, athletics: 1 },
+    // ⚠ Stealth is trained HERE and nowhere else (brief #19 edit #2, Steven
+    // 2026-08-13: "muster only, no priority change"). The autopilot ALREADY
+    // raises Stealth from level 2 on — `buildAutoLevelUpPlan` spills past the
+    // priority trio into the rest of the skill registry in order and Stealth is
+    // third, so Shade's ranks measure 0/1/2/4/6 at L1/2/3/5/7. Brief #19 §12.1
+    // and §13.4 both say it is never trained at all; that is WRONG, and only L1
+    // was ever actually 0. Adding 'stealth' to the global priority list would
+    // also spend Torvald's and Mira's points on a skill neither can ever use —
+    // no sneak dice, and no enemy has sneak dice either, so hero Stealth is
+    // never a defensive term. So: one rank at the muster, nothing else.
+    skills: { thievery: 1, perception: 1, athletics: 1, stealth: 1 },
     feats: [{ featId: 68 }, { featId: 69 }, { featId: 70 }],
     equipped: [inst(9), inst(22)],
     loadout: () => [],

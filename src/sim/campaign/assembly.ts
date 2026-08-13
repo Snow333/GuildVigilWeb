@@ -20,6 +20,7 @@ import { defaultCantripFor, spellRange } from '@sim/combat/spells';
 import type { Combatant } from '@sim/combat/types';
 import type { DispatchHero } from '@sim/dungeon/checks';
 import {
+  aggregateArmorCheckPenalty,
   aggregateStatBonuses,
   deriveItem,
   itemBasesById,
@@ -38,10 +39,18 @@ export interface HeroKit {
 
 const BASE_SPEED = 5; // world units/sec (medium creature; old grid: 1 unit = 5 ft)
 
+/**
+ * ⚠ A SKILL MISSING FROM THIS TABLE SILENTLY KEYS OFF WIS — see `skill()`'s
+ * `?? 'wis'` fallback. `stealth: 'dex'` is therefore load-bearing, not
+ * decorative: without it the rogue's entire backstab would derive from the
+ * wrong ability and every test asserting "the code path runs" would still pass.
+ * Steven, 2026-08-13: "Lets have stealth default to dexterity as a stat."
+ */
 const SKILL_ABILITY: Record<string, AbilityKey> = {
   perception: 'wis',
   thievery: 'dex',
   athletics: 'str',
+  stealth: 'dex',
 };
 
 function parseFeatures(raw: unknown): string[] {
@@ -263,6 +272,13 @@ export function assembleHero(kit: HeroKit): DispatchHero {
   const skill = (name: string): number =>
     (hero.skills[name] ?? 0) + mods[SKILL_ABILITY[name] ?? 'wis'] + (featSkill[name] ?? 0);
 
+  // Stealth carries the armour check penalty — PF2E, and the equipment term
+  // Steven asked for (brief #19 §13.1). There is no skill-bonus concept on
+  // items at all, so `armor_check_penalty` IS the equipment term; the spell
+  // term he also named has no content behind it and sums to zero today.
+  const stealthTotal = skill('stealth') + aggregateArmorCheckPenalty(equipped);
+  const perceptionTotal = skill('perception');
+
   const c: Combatant = {
     id: hero.id,
     name: hero.name,
@@ -285,7 +301,9 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     speed: BASE_SPEED + (featStat['speed'] ?? 0),
     wounded: hero.wounded,
     level,
-    initiativeBonus: skill('perception') + (featStat['initiative'] ?? 0),
+    initiativeBonus: perceptionTotal + (featStat['initiative'] ?? 0),
+    stealth: stealthTotal,
+    perception: perceptionTotal,
     isCaster: casting !== null,
     saves,
     tempHp: 0,
@@ -302,7 +320,7 @@ export function assembleHero(kit: HeroKit): DispatchHero {
   return {
     c,
     skills: {
-      perception: skill('perception'),
+      perception: perceptionTotal,
       thievery: skill('thievery'),
       athletics: skill('athletics'),
     },
