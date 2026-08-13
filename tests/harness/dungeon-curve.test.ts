@@ -35,6 +35,32 @@ import { bracketProvider, partyAt, starterProvider, type GearProvider } from './
 
 const RUNS = Number(process.env['GV_HARNESS_N'] ?? 300);
 
+/**
+ * ⚠ TWO TESTS IN THIS FILE MEASURE INSIDE THE `it()` BODY, AND THEY OUTGREW
+ * VITEST'S 5 000 ms DEFAULT.
+ *
+ * Every other harness file precomputes in `describe` scope, so its cost lands
+ * in vitest's COLLECT phase, which is untimed. This file is the exception: the
+ * punch-up test and NC6's pooled control each call `measure()` from inside the
+ * test, so their whole dispatch load is charged against the per-test timeout.
+ * NC6 alone runs 6 × RUNS = 1 800 dispatches there.
+ *
+ * Measured in the cloud container 2026-08-13: NC6 5 412 ms, punch-up 5 112 ms,
+ * against a 5 000 ms default — a coin-flip that failed 3 runs out of 3 and took
+ * the punch-up test with it once. It passes on Steven's Windows box, which is
+ * roughly 2× faster on this file, which is why it had never surfaced.
+ *
+ * This does NOT weaken any assertion — no threshold, band or n changed. It only
+ * stops a correct test from being scored on wall-clock. The value carries REAL
+ * headroom on purpose (~5× the observed time at the default n), because the
+ * near-miss is what made this a flake instead of a clean failure: brief #19
+ * moved NC6's band from d1–d3 to d3–d5 and deeper dungeons run more encounters,
+ * so the next honest band move must not re-trip it. It scales with `RUNS`
+ * because `GV_HARNESS_N` is an env knob and a raised n is a legitimate thing to
+ * do to this harness.
+ */
+const HEAVY_IT_TIMEOUT_MS = Math.max(30_000, RUNS * 60);
+
 type ContractPhase = 'preMilestone' | 'target';
 
 /** Flipped to 'target' by brief #15's milestone, as that milestone required. */
@@ -212,7 +238,7 @@ describe('the risk gradient — punching above your weight class', () => {
       }
     }
     expect(failures).toEqual([]);
-  });
+  }, HEAVY_IT_TIMEOUT_MS);
 });
 
 /**
@@ -281,7 +307,7 @@ describe('NC6 — the gear policy is wired in and measurably load-bearing', () =
       bracketAvg, starterAvg, wipesAverted: delta,
       loadBearing: delta > 4, // measured 11.5 on d3-d5 against a +/-3.8-point bar
     }).toMatchObject({ loadBearing: true });
-  });
+  }, HEAVY_IT_TIMEOUT_MS);
 
   it('the two policies really do equip different things', () => {
     const geared = partyAt(7, bracketProvider, 'bracket');
