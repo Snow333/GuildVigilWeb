@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the at-level contract — a level-N party in a level-N dungeon > THE BASELINE: the at-level curve, exact — drift must justify itself 1`] = `
+{
+  "curve": {
+    "d1": {
+      "completedPct": 72.3,
+      "retreatedPct": 18.7,
+      "wipedPct": 9,
+    },
+    "d2": {
+      "completedPct": 58.7,
+      "retreatedPct": 23.3,
+      "wipedPct": 18,
+    },
+    "d3": {
+      "completedPct": 42.3,
+      "retreatedPct": 32,
+      "wipedPct": 25.7,
+    },
+    "d4": {
+      "completedPct": 10.7,
+      "retreatedPct": 56.3,
+      "wipedPct": 33,
+    },
+    "d5": {
+      "completedPct": 8.3,
+      "retreatedPct": 57,
+      "wipedPct": 34.7,
+    },
+  },
+  "gear": "bracket",
+  "phase": "preMilestone",
+  "runsPerCell": 300,
+}
+`;
