@@ -22,6 +22,8 @@ There are **three independent walls**, with three different mechanisms and three
 
 Gear is a real but **fourth and minor** channel: it converts wipes into retreats and never converts either into a completion.
 
+> ⚠ **CORRECTED 2026-08-12 by §10.** That last sentence is true *in isolation* and wrong *in combination*. Once the doors open and rests work, **gear becomes the single largest lever** — at difficulty 6 it takes completion 4.7% → 36.0%. Every measurement in §2–§5 holds; the conclusion about gear's rank does not. Read §10 before acting on §7's ordering.
+
 ---
 
 ## 1. The instrument
@@ -270,3 +272,62 @@ Nothing here is implemented. My suggested sequencing, because the walls interact
 ## 9. Decision record
 
 *To be filled in on your call. Options are H1/H4/H2/H3/H5 for wall 2, R1/R2/R3/R4/R5 for wall 1, the AC term for wall 3, and Bugs A and B independently.*
+
+---
+
+## 10. Post-decision measurements (2026-08-12, after Steven's §9 calls)
+
+**Decisions taken:** wall 2 — *measure H1 and H4 first* · wall 1 — **R2 approved** · Bugs A and B — **both to be fixed** · sequencing — **regression harness first**. This section is the wall-2 costing that was asked for, plus what it revealed. Still no gameplay code: `src/` byte-identical, patched copies under `probe/variant/` (`populationVariant.ts` for the DC knobs, `dispatchVariant.ts` for the rest knobs). `hazardDc` still calls `rng.int` exactly once under both options, so draw counts — and therefore room types, template ids and downstream stream positions — are unchanged.
+
+### 10.1 H1 vs H4 on impossibility — H4 is strictly stronger
+
+Share of generated locks/traps that no hero can ever beat (`20 + mod < dc`), whole shipped pool, 24 templates × 40 seeds:
+
+| cell | H0 shipped | H1 drop `partyLevel/2` | H4 `difficultyDcScale` 2→1 | H1+H4 |
+|---|---|---|---|---|
+| medium d6 L7 | 8.8% locks / 2.8% traps | **0.0% / 0.0%** | **0.0% / 0.0%** | 0.0% / 0.0% |
+| large d7 L8 | **36.6% / 21.3%** | **0.0% / 0.0%** | **0.0% / 0.0%** | 0.0% / 0.0% |
+| large d8 L9 | 54.6% / 41.6% | 6.4% / 2.6% | **0.0% / 0.0%** | 0.0% / 0.0% |
+| large d10 L11 | 81.1% / 76.9% | 11.6% / 5.2% | **0.0% / 0.0%** | 0.0% / 0.0% |
+
+**H4 eliminates impossibility outright through difficulty 10; H1 does not.** H1 removes only `floor(partyLevel/2)` (≈5 at level 11) while H4 removes one point per difficulty (10 at d10). H1 remains worth taking on its own merits — it is the term that makes the party's own growth work against it — but as an impossibility fix it is the weaker of the two.
+
+### 10.2 The uncomfortable middle result: opening doors alone trades retreats for wipes
+
+At large / d7 / L8, `fullExplore` / standard, 150 runs:
+
+| stack | completed | retreated | **wiped** | sealed routes/run |
+|---|---|---|---|---|
+| R0 H0 shipped | 0.0% | 50.0% | 50.0% | 1.17 |
+| R2 H4 | 0.0% | 21.3% | 78.7% | 0.65 |
+| R2 H1+H4 | 0.0% | 10.0% | **90.0%** | 0.23 |
+
+The mechanism works exactly as designed — sealed routes fall 1.17 → 0.23 per run — and the party responds by walking into rooms it cannot survive. **Fixing access without fixing survival converts honest retreats into total party kills**, which is a worse felt outcome, not a better one. **§7's ordering was wrong: these do not ship one at a time.**
+
+### 10.3 The cumulative stack — where the band actually becomes playable
+
+Each row adds to the row above. 150 runs per cell, `fullExplore` / standard. "AC" = `+baseProficiency(level)`; "gear" = best in-family weapon and best effective-AC armour at `item_level ≤ party level`.
+
+| cell | shipped | +H4 | +H4+R2 | +H4+R2+AC | **+H4+R2+AC+gear** |
+|---|---|---|---|---|---|
+| small d4 L5 | 21.3% | 30.0% | 46.7% | 64.0% | **86.0%** (wipe 23.3% → **0.7%**) |
+| medium d5 L6 | 0.0% | 3.3% | 10.0% | 17.3% | **46.7%** (wipe 32.0% → 4.7%) |
+| medium d6 L7 | 0.7% | 0.7% | 2.0% | 4.7% | **36.0%** (wipe 32.7% → 19.3%) |
+| large d7 L8 | 0.0% | 0.0% | 0.0% | 0.0% | **6.7%** (boss 0.0% → 12.7%, rooms 3.6 → 11.2) |
+| large d8 L9 | 0.0% | 0.0% | 0.0% | 0.0% | **2.0%** |
+
+**Three conclusions.**
+
+1. **The fixes multiply; they do not add.** At difficulty 6 the first three are worth 4 points between them and the fourth is worth 31. At difficulty 7 the first three are worth *nothing* and the stack is worth 6.7. Any one of them measured alone will read as a failure — which is precisely why §5 mis-ranked gear.
+2. **`dungeon_level` 4–6 becomes genuinely playable** — 86% / 47% / 36% completion with wipe rates of 0.7% / 4.7% / 19.3%. That is a working difficulty curve where there was a wall.
+3. **`dungeon_level` 7+ does not.** 6.7% and 2.0% are not a band anyone would ship. The remaining gap is very likely **content, not systems**: the enemy registry has 5 rows at level 7, 2 at level 8, 1 each at 9, 10 and 12, and the party's damage output cannot chew through 67–115 HP creatures inside its HP budget. That is an R4 question, and it is a different brief.
+
+### 10.4 What this changes
+
+* **"The autopilot never equips" is promoted from housekeeping to a real lever.** §5 measured it at zero effect and that was measured with everything else broken. With the stack in place gear is the biggest single jump. The stash being empty (0.0 items over 20 × 24 weeks) is now a balance problem, not a curiosity — and it points straight at Bug A, since armour is half of the gear channel and every magical armour row is currently inert.
+* **Bugs A and B are no longer separable side-quests.** They *are* the gear channel. Fix them with the stack, not after it.
+* **The four changes want one milestone, not four.** Landing them separately means three landings that each measure as a regression.
+* **Steven's "harness first" call is now clearly right** — four interacting changes against generation code that nothing currently guards.
+* **Revised recommendation, replacing §7:** dungeon regression harness → then one milestone carrying H4 (+H1 on its own merits), R2, the AC term, and Bugs A/B together → then re-measure → then treat `dungeon_level` 7+ as a content question for R4.
+
+**Not yet measured, flagged rather than assumed:** whether H4 makes the *easy* end trivial (probe N3 is written but the low-difficulty regression numbers are not in this document yet), and whether a six-hero party closes the d7+ gap that gear does not — Steven has said the roster is going to 6, and `partyScaledBudget()` already exists to scale enemy budgets with it.
