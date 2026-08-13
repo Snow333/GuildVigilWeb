@@ -1,6 +1,6 @@
 # Design Brief #14 — The dungeon_level 5+ Wall
 
-**Status:** FOR DECISION — nothing implemented, `src/` byte-identical to the working tree I received. No gameplay code before Steven approves.
+**Status:** **DECIDED 2026-08-12 · APPROVED HALVES SHIPPED 2026-08-13** inside brief #15's milestone. Decision record §9. R2, H4 and bugs A/B are in; the wall-3 AC term was NOT taken and remains a costed option.
 **Covers:** queue item 1 — "dungeon_level 5+ looks unwinnable, and it's gear, not levels."
 **Authorities:** `core-loop.md`, `decision-ledger.md` Area 3, brief #4 (profile AI), brief #13 (dungeon balance), brief #8 (UI grammar, normative for anything that reaches the screen).
 **Measured by:** a throwaway probe (`probe/`, deleted before ship) over the real `populate()`, `runDungeonDispatch()`, `assembleParty()` and `CampaignSession`. Every number below is measured. Where an option required changing dispatch logic to cost it, a **patched copy** lives in `probe/variant/` — `src/sim/dungeon/dispatch.ts` was never touched and is verified byte-identical.
@@ -269,9 +269,22 @@ Nothing here is implemented. My suggested sequencing, because the walls interact
 
 ---
 
-## 9. Decision record
+## 9. Decision record — 2026-08-12 / 2026-08-13 (Steven)
 
-*To be filled in on your call. Options are H1/H4/H2/H3/H5 for wall 2, R1/R2/R3/R4/R5 for wall 1, the AC term for wall 3, and Bugs A and B independently.*
+| item | call | status |
+|---|---|---|
+| **Wall 1** (attrition over length) | **R2** — rest anywhere + 1 charge per 4 rooms cleared | **SHIPPED** in brief #15's milestone |
+| **Wall 2** (sealed routes) | **H4** — `difficultyDcScale` 2 → 1. Measured strictly stronger than H1 (§10.1): H4 eliminates impossibility through difficulty 10, H1 leaves 6.4% at d8 | **SHIPPED** |
+| **Wall 3** (AC has no level term) | **NOT TAKEN.** With the rest of the stack in place the band cleared its target without it (d1–d3 at 91.7 / 85.3 / 80.7). Left standing as a costed option should the curve need it later | deferred |
+| **Bug A** (armour potency inert) | **FIX.** Resolved as pure code — potency reaches AC using the same maxed value the attack roll uses. No content edit needed; the ladder is monotone after it | **SHIPPED** |
+| **Bug B** (striking double-counted) | **FIX, code authoritative** — the extra die comes out of the content rows. ⚠ **NINE rows, not the five §5 named** (171, 177, 178, 182 are the additions) | **SHIPPED** |
+| Autopilot equipping | **NO — deliberate.** Gearing is a player pleasure. The harness models a competent player instead, via `tests/harness/gearBrackets.ts` | discharged by brief #16 |
+| Sequencing | **Regression harness FIRST**, then one milestone | done — brief #16 (`d6f8527`), then the milestone |
+| Content pipeline (R4) | **stays HELD** | held |
+
+**§7's ordering was superseded by §10.4 and the outcome confirms it:** these landed as ONE milestone, not five. §10.2's warning reproduced almost exactly — at `large`/d7 the milestone took wipes from 40% to **81%** against §10.2's predicted 78.7%, because opening the doors without fixing survival converts honest retreats into total party kills. That band is a CONTENT question (§10.3), and it is now measurably louder about being unfinished.
+
+**One row §5 could not have caught, found while fixing bug A:** **Ironmane's Pelt (181)** — legendary, level 16, 7,000 gp, `potency_bonus 0` — remains **worse than a 300 gp mundane Full Plate** even after the fix. It is the only armour above masterwork with no potency. Content, not code; flagged, not patched.
 
 ---
 

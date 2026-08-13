@@ -1,6 +1,6 @@
 # Design Brief #15 — Party AI and the Caution Dial
 
-**Status:** **APPROVED 2026-08-12 (Steven)** — see §11 for the decision record. Nothing implemented yet; `src/` byte-identical. Implementation lands AFTER the dungeon regression harness.
+**Status:** **APPROVED 2026-08-12 · IMPLEMENTED AND SHIPPED 2026-08-13.** Decision record §11; §11.2's open conflict closed and the implementation record in **§12**. Landed as one milestone after brief #16's harness, as required. 444 unit + 10 e2e green.
 **Covers:** the two optimisations chosen after brief #14 — party AI (repairs **and** a threat mechanic, per Steven's scope call) and tuning the caution thresholds (between-rooms only; mid-combat withdrawal was explicitly declined).
 **Target set by Steven:** *a level-N party of four in a level-N dungeon should win about 80% of the time; punching up a level should measurably lower that.*
 **Authorities:** `core-loop.md`, `decision-ledger.md` Area 2 (universal AI), brief #4 (profile AI), brief #14 (the three walls).
@@ -183,7 +183,7 @@ This is the measured case for the mid-combat withdrawal you declined. I am not r
 
 ## 9. Decision record
 
-*To be filled in on Steven's call.*
+**Superseded by §11** — this brief was rewritten by §10 before Steven ruled on §§1–8, so the decisions live there. §11.2's one open conflict was closed 2026-08-13; see §12 for what shipped.
 
 ---
 
@@ -321,3 +321,63 @@ Only an **authored designation** produces exactly Electric Arc + Divine Lance.
 * **Baselines WILL move**, deliberately: `encounter-distribution` (positioning and casting both change) and `career-distribution` (surface fights change too). Re-baseline consciously and justify it in the commit.
 * **No schema growth.** `combat.spell_cast` and `combat.unit_moved` already exist and already carry what's needed. `combat.unit_fled` stays a dead branch.
 * **Negative controls required** on every regression test that comes out of this.
+
+---
+
+## 12. IMPLEMENTATION RECORD — 2026-08-13
+
+Shipped as one milestone after brief #16's harness (`d6f8527`). **444 unit + 10 e2e** green, bundle 1,232.52 → **1,237.91 kB**.
+
+### 12.1 §11.2's open conflict, closed
+
+**Steven's call: a `default_cantrip` marker in content, with best-expected-damage as the fallback.** Candidates still come from the class spell list, so the rule stays self-maintaining as content grows; content only expresses a preference among them. `defaultCantripFor()` lives in `spells.ts` and is a set intersection on the comma-separated `spell_list` on both sides, not a string compare.
+
+The column cost nothing to add: the converter is `SELECT *` and the count gates count ROWS, not columns, so `ALTER TABLE spells ADD COLUMN default_cantrip` needed no tooling change and no gate change.
+
+### 12.2 The measured result
+
+At level, 300 runs/cell, `fullExplore`/`standard`, under brief #16's gear bracket:
+
+| at level | before the milestone | **after** | §11.1 predicted |
+|---|---|---|---|
+| tiny d1 · L1 | 72.3% / 9.0% wiped | **91.7% / 4.7%** | 92.0 / 2.0 |
+| tiny d2 · L2 | 58.7% / 18.0% | **85.3% / 8.3%** | 91.3 / 4.3 |
+| tiny d3 · L3 | 42.3% / 25.7% | **80.7% / 12.3%** | 76.0 / 13.0 |
+| small d4 · L4 | 10.7% / 33.0% | **39.7% / 35.0%** | 33.3 / 41.0 |
+| small d5 · L5 | 8.3% | **49.3%** | 47.0 |
+
+**All three contract cells clear the 80% target.** Deltas from §11.1's predictions are −0.3 / −6.0 / +4.7, every one inside the ±8-point bar brief #16 §3 established — so this **verifies** §11.1 rather than merely agreeing with it. `dungeon-curve`'s `PHASE` flipped to `'target'` as the milestone required, and its floors were re-anchored to what this measured rather than to the prediction.
+
+### 12.3 What shipped, precisely
+
+* **`engageRange`** — a new required field on `Combatant`, derived once in `assembleHero` as `max(weaponRange, defaultCantripRange)`. `ai.ts` positions on it; `weaponRange` still governs weapon strikes, so a caster holds at 6 and casts rather than closing to 6 and swinging a staff. `inAttackRange` moved to `engageRange` too, otherwise a caster's standoff move emits no `unit_moved` event and the field renders it as never having moved.
+* **The cantrip is APPENDED to the loadout, never prepended.** The muster's authored priorities still win while affordable — the Wizard spends Magic Missile, the Cleric heals — and `canAfford` drops through to the cantrip once the slots are gone. §10.5 proposed *replacing* those entries; appending is strictly better and needed no muster change at all.
+* **R2** rewrote rest charges from a `Set<number>` of node ids to a count the party carries, plus one per `PROFILES.roomsPerRestCharge` rooms. No RNG draw added or removed, so seeds stay comparable.
+* **H4, bug A, bug B** as recorded in brief #14 §9.
+
+### 12.4 Baselines: three moved, not the four §11.3 predicted
+
+* `dungeon-curve`, `dungeon-distribution` — substantially, as intended.
+* `career-distribution` — **trivially**: completion 0.910 → 0.913, wipes 0.090 → 0.088, nothing else. The autopilot takes only short surface combat quests, so a cantrip barely registers.
+* `encounter-distribution` — **did not move at all.** It builds combatants by hand and never runs `assembleHero`, so it has no cantrip and `engageRange` defaults to 1. §11.3 expected positioning changes to reach it; they cannot. This is brief #16's central finding demonstrated from the other side.
+
+### 12.5 Negative controls — §10.2's central claim, made executable
+
+| revert | observed |
+|---|---|
+| M1 bug A | 3 failures — the whole BUG A block |
+| M2 bug B (doubled dice restored via db round-trip) | 2 — the BUG B block |
+| **M3 CANTRIP ONLY** (`engageRange` → `weaponRange`) | **3** — contract floor, the 80% target, baseline |
+| **M4 REPOSITIONING ONLY** (no cantrip in the loadout) | **6 — everything** |
+| M5 H4 reverted | 3 — contract floor, target, baseline |
+| M6 R2's per-4-rooms charge | 1 — baseline only |
+
+**M3 and M4 are §10.2's "neither half works alone" as a running test.** M4 is the more striking: it broke six tests and its runtimes went from ~4 s to **21 s and 17 s** — the P1b stalemate signature showing up as wall-clock, because casters that will not close and cannot shoot produce fights that never resolve. §10.2 measured that as 3,940 hero deaths and 77 forced stalemates; here it is visible in the clock alone.
+
+**M6 is the honest one.** Removing R2's extra charge moved only the snapshot, not the contract — at `tiny` (7 rooms) it is worth a single charge. R2's value is at `medium`/`large`, which the grid does capture: `fullExplore/medium` completion went 1% → 17% and rooms visited 6.5 → 10.4.
+
+### 12.6 New cover, and one thing still open
+
+Bugs A and B got their **first tests ever** (`tests/heroes/equipment.test.ts`, +7). Nothing in the repo had previously derived any of the nine striking rows — the existing test exercised `applyStriking` in isolation only, which is exactly how a weapon reading `2d8` came to fight as `3d8`.
+
+**Still held, unchanged by this milestone:** the threat mechanic (§2) and the `combat_action` loadout verb (§3). §10.5 predicted backline deaths would fall to 62–70% without any threat mechanic, which the positioning fix delivers. Steven has since proposed **melee interdiction** — mechanically distinct from threat, since it changes *reachability* rather than target *selection*, so §2's "the fighter has no mitigation" result does not automatically transfer. That wants its own brief.
