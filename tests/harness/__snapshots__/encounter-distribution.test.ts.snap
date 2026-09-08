@@ -13,12 +13,12 @@ exports[`encounter distribution harness — golden scenarios > 2 fighters + rogu
 
 exports[`encounter distribution harness — golden scenarios > a caster party vs the orcs: spells and heals shift the distribution, no degeneracy 1`] = `
 {
-  "durationP50": 51,
-  "durationP90": 98,
+  "durationP50": 48,
+  "durationP90": 91,
   "hangGuardHits": 0,
-  "heroDeathEvents": 51,
+  "heroDeathEvents": 23,
   "stalemateRate": 0,
-  "winRate": 0.8933333333333333,
+  "winRate": 0.9933333333333333,
 }
 `;
 

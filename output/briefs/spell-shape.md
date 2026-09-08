@@ -1,8 +1,18 @@
 # Brief #21 — SPELL SHAPE: direct vs area
 
-**Status: APPROVED 2026-09-02 (§9). No code written. Implement AFTER brief #20.**
-Written 2026-09-02 against `main` = `df573ed`, suite **483 unit** green (re-verified before
-drafting; `pnpm e2e` and the bundle figure were not re-measured this session).
+**Status: IMPLEMENTED 2026-09-02. Decisions in §9.**
+Written 2026-09-02 against `main` = `df573ed`; implemented on `11087d5` (brief #20).
+Suite **529 unit + 11 e2e** green, bundle **1,244.57 kB**.
+
+⚠ **§0's claim that the harness cannot measure this was WRONG and is corrected here.**
+`encounter-distribution`'s caster scenario HAND-AUTHORS Fireball, so it does reach the
+area branch. Its snapshot moved on the side policy: winRate **0.893 → 0.993**,
+heroDeathEvents **51 → 23**, durationP50 **51 → 48**. Attributed by isolation —
+restoring `sideRule` to `'all'` with the shape discriminator still in place reproduces
+the old snapshot exactly, so **the entire move is the side policy and none of it is the
+discriminator**. That is the intended effect of §9 Q2: the party's own wizard no longer
+burns its front rank. The autopilot claim stands (every autopilot-castable spell has
+`aoe_size: 0`); the "no harness can move" claim did not.
 
 Split out of brief #20 §4.2 site 11 on Steven's call: the AoE geometry question is
 **material** and deserves costing on its own rather than riding a feature measured free

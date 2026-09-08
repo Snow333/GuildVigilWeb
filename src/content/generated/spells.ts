@@ -24,7 +24,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": 1
+  "default_cantrip": 1,
+  "target_side": null
  },
  {
   "id": 2,
@@ -49,7 +50,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 3,
@@ -74,7 +76,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 4,
@@ -99,7 +102,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 5,
@@ -124,7 +128,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 6,
@@ -149,7 +154,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 7,
@@ -174,7 +180,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 8,
@@ -199,7 +206,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 9,
@@ -224,7 +232,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 10,
@@ -249,7 +258,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 11,
@@ -274,7 +284,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 12,
@@ -299,7 +310,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 13,
@@ -324,7 +336,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 14,
@@ -349,7 +362,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": 1
+  "default_cantrip": 1,
+  "target_side": null
  },
  {
   "id": 15,
@@ -374,7 +388,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 16,
@@ -399,7 +414,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 17,
@@ -424,7 +440,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 18,
@@ -449,7 +466,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 19,
@@ -474,7 +492,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 20,
@@ -499,7 +518,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 21,
@@ -524,7 +544,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 22,
@@ -549,7 +570,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 23,
@@ -574,7 +596,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "This conjuration creates a slippery surface using a formula derived from alchemical experimentation. The volatile components make it unsuitable for standard curricula.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 24,
@@ -599,7 +622,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 25,
@@ -624,7 +648,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 26,
@@ -649,7 +674,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 27,
@@ -674,7 +700,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 28,
@@ -699,7 +726,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 29,
@@ -724,7 +752,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 30,
@@ -749,7 +778,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 31,
@@ -774,7 +804,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 32,
@@ -799,7 +830,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 34,
@@ -824,7 +856,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 35,
@@ -849,7 +882,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 36,
@@ -874,7 +908,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 37,
@@ -899,7 +934,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 38,
@@ -924,7 +960,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 39,
@@ -949,7 +986,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 40,
@@ -974,7 +1012,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 41,
@@ -999,7 +1038,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 42,
@@ -1024,7 +1064,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 43,
@@ -1049,7 +1090,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 44,
@@ -1074,7 +1116,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 45,
@@ -1099,7 +1142,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Conjures sticky strands that entangle creatures. The spatial geometry required to anchor the web safely was lost when Ombrus's laboratory collapsed.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 46,
@@ -1124,7 +1168,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 47,
@@ -1149,7 +1194,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 48,
@@ -1174,7 +1220,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 49,
@@ -1199,7 +1246,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 50,
@@ -1224,7 +1272,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 51,
@@ -1249,7 +1298,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 52,
@@ -1274,7 +1324,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Channels negative energy to create a temporary buffer of false vitality. Most schools refuse to teach it due to its necromantic nature.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 53,
@@ -1299,7 +1350,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Reveals invisible creatures and objects. The divination matrix was perfected by Ashworth but never published â€” copies survive only in scattered research notes.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 54,
@@ -1324,7 +1376,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 56,
@@ -1349,7 +1402,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 57,
@@ -1374,7 +1428,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 58,
@@ -1399,7 +1454,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 59,
@@ -1424,7 +1480,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 60,
@@ -1449,7 +1506,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 61,
@@ -1474,7 +1532,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 62,
@@ -1499,7 +1558,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 63,
@@ -1524,7 +1584,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 64,
@@ -1549,7 +1610,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 65,
@@ -1574,7 +1636,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 66,
@@ -1599,7 +1662,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 67,
@@ -1624,7 +1688,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "The foundational counter-magic incantation. While widely known in theory, the practical formula requires careful study of a working scroll to master.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 68,
@@ -1649,7 +1714,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 69,
@@ -1674,7 +1740,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 70,
@@ -1699,7 +1766,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 71,
@@ -1724,7 +1792,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 72,
@@ -1749,7 +1818,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 73,
@@ -1774,7 +1844,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 74,
@@ -1799,7 +1870,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 75,
@@ -1824,7 +1896,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 76,
@@ -1849,7 +1922,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 77,
@@ -1874,7 +1948,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 78,
@@ -1899,7 +1974,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 79,
@@ -1924,7 +2000,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 80,
@@ -1949,7 +2026,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 81,
@@ -1974,7 +2052,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 82,
@@ -1999,7 +2078,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 83,
@@ -2024,7 +2104,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 84,
@@ -2049,7 +2130,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 85,
@@ -2074,7 +2156,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 86,
@@ -2099,7 +2182,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 87,
@@ -2124,7 +2208,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 88,
@@ -2149,7 +2234,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Grants the subject's skin the hardness of stone. This dwarven transmutation was shared with surface scholars only in rare treaty gifts.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 89,
@@ -2174,7 +2260,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 90,
@@ -2199,7 +2286,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 91,
@@ -2224,7 +2312,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 92,
@@ -2249,7 +2338,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 93,
@@ -2274,7 +2364,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 94,
@@ -2299,7 +2390,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 95,
@@ -2324,7 +2416,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Creates a shimmering sphere that blocks most spells. The resonance frequencies required were computed by Cael'drun and jealously guarded.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 96,
@@ -2349,7 +2442,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 97,
@@ -2374,7 +2468,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 98,
@@ -2399,7 +2494,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 99,
@@ -2424,7 +2520,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 100,
@@ -2449,7 +2546,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 101,
@@ -2474,7 +2572,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 102,
@@ -2499,7 +2598,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 103,
@@ -2524,7 +2624,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 104,
@@ -2549,7 +2650,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 105,
@@ -2574,7 +2676,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 106,
@@ -2599,7 +2702,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 107,
@@ -2624,7 +2728,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Creates a bank of poisonous fog that moves along the ground. Valossa's necromantic research notes contain the only surviving formulation.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 108,
@@ -2649,7 +2754,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "Moves objects with pure arcane will. The mental discipline required can only be learned by studying the original Thessaran meditation scrolls.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 109,
@@ -2674,7 +2780,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 110,
@@ -2699,7 +2806,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 111,
@@ -2724,7 +2832,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 112,
@@ -2749,7 +2858,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 113,
@@ -2774,7 +2884,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 114,
@@ -2799,7 +2910,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 115,
@@ -2824,7 +2936,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 116,
@@ -2849,7 +2962,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 117,
@@ -2874,7 +2988,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 118,
@@ -2899,7 +3014,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 119,
@@ -2924,7 +3040,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 120,
@@ -2949,7 +3066,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 121,
@@ -2974,7 +3092,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 122,
@@ -2999,7 +3118,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 123,
@@ -3024,7 +3144,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 124,
@@ -3049,7 +3170,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 125,
@@ -3074,7 +3196,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 126,
@@ -3099,7 +3222,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 127,
@@ -3124,7 +3248,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 128,
@@ -3149,7 +3274,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 129,
@@ -3174,7 +3300,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 130,
@@ -3199,7 +3326,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 131,
@@ -3224,7 +3352,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 132,
@@ -3249,7 +3378,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 133,
@@ -3274,7 +3404,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 134,
@@ -3299,7 +3430,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 135,
@@ -3324,7 +3456,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 136,
@@ -3349,7 +3482,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 137,
@@ -3374,7 +3508,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 138,
@@ -3399,7 +3534,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 139,
@@ -3424,7 +3560,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 140,
@@ -3449,7 +3586,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 141,
@@ -3474,7 +3612,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 142,
@@ -3499,7 +3638,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 143,
@@ -3524,7 +3664,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 144,
@@ -3549,7 +3690,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 145,
@@ -3574,7 +3716,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 146,
@@ -3599,7 +3742,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 147,
@@ -3624,7 +3768,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 148,
@@ -3649,7 +3794,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 149,
@@ -3674,7 +3820,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 150,
@@ -3699,7 +3846,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 151,
@@ -3724,7 +3872,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 152,
@@ -3749,7 +3898,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 153,
@@ -3774,7 +3924,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 154,
@@ -3799,7 +3950,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 1,
   "found_spell_rationale": "A defensive incantation transcribed from a falling mage's final journal. The precise timing required makes it impractical to teach in a classroom.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 155,
@@ -3824,7 +3976,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 156,
@@ -3849,7 +4002,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 157,
@@ -3874,7 +4028,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "A subtle illusion technique passed down through traveling performers. Most academies consider it beneath serious study, but field researchers prize it.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 158,
@@ -3899,7 +4054,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 159,
@@ -3924,7 +4080,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 160,
@@ -3949,7 +4106,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 161,
@@ -3974,7 +4132,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 162,
@@ -3999,7 +4158,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 163,
@@ -4024,7 +4184,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 164,
@@ -4049,7 +4210,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 165,
@@ -4074,7 +4236,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 166,
@@ -4099,7 +4262,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 167,
@@ -4124,7 +4288,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 168,
@@ -4149,7 +4314,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 169,
@@ -4174,7 +4340,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 1,
   "found_spell_rationale": "An advanced concealment ward that hides the subject from divination. Korrath developed it to shield his research from rival scholars.",
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 170,
@@ -4199,7 +4366,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 171,
@@ -4224,7 +4392,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 172,
@@ -4249,7 +4418,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 173,
@@ -4274,7 +4444,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 174,
@@ -4299,7 +4470,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 175,
@@ -4324,7 +4496,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 176,
@@ -4349,7 +4522,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 177,
@@ -4374,7 +4548,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 178,
@@ -4399,7 +4574,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 179,
@@ -4424,7 +4600,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 180,
@@ -4449,7 +4626,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 181,
@@ -4474,7 +4652,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 182,
@@ -4499,7 +4678,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 183,
@@ -4524,7 +4704,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 184,
@@ -4549,7 +4730,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 185,
@@ -4574,7 +4756,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 186,
@@ -4599,7 +4782,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 187,
@@ -4624,7 +4808,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 188,
@@ -4649,7 +4834,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 189,
@@ -4674,7 +4860,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 190,
@@ -4699,7 +4886,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 191,
@@ -4724,7 +4912,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 192,
@@ -4749,7 +4938,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 193,
@@ -4774,7 +4964,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 194,
@@ -4799,7 +4990,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 195,
@@ -4824,7 +5016,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 196,
@@ -4849,7 +5042,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 197,
@@ -4874,7 +5068,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 198,
@@ -4899,7 +5094,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 199,
@@ -4924,7 +5120,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 200,
@@ -4949,7 +5146,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 201,
@@ -4974,7 +5172,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 202,
@@ -4999,7 +5198,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 203,
@@ -5024,7 +5224,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 204,
@@ -5049,7 +5250,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 205,
@@ -5074,7 +5276,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 206,
@@ -5099,7 +5302,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 207,
@@ -5124,7 +5328,8 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 208,
@@ -5149,7 +5354,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 209,
@@ -5174,7 +5380,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 210,
@@ -5199,7 +5406,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 211,
@@ -5224,7 +5432,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 212,
@@ -5249,7 +5458,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 213,
@@ -5274,7 +5484,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 214,
@@ -5299,7 +5510,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 215,
@@ -5324,7 +5536,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 216,
@@ -5349,7 +5562,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 217,
@@ -5374,7 +5588,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 218,
@@ -5399,7 +5614,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 219,
@@ -5424,7 +5640,8 @@ export const spells = [
   "traits": "",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  },
  {
   "id": 220,
@@ -5449,6 +5666,7 @@ export const spells = [
   "traits": "[\"manipulate\"]",
   "is_found_spell": 0,
   "found_spell_rationale": null,
-  "default_cantrip": null
+  "default_cantrip": null,
+  "target_side": null
  }
 ] as const;

@@ -2,7 +2,15 @@
  * Spell resolution in combat — the data-driven caster layer over the converted
  * spells registry. Adds what the ledger demanded (Area 2 Change): AoE gets the
  * BASIC SAVE the Godot build never had (crit success none / success half /
- * fail full / crit fail double), friendly fire intact.
+ * fail full / crit fail double).
+ *
+ * ⚠ FRIENDLY FIRE IS NO LONGER THE DEFAULT (brief #21 §5). This header used to
+ * say "friendly fire intact" and that is now wrong: an area spell hits the side
+ * its content declares, and absent a declaration it derives from `effect_type`.
+ * Guild Vigil is a continuous-time auto-battler with no player intervention once
+ * engaged, so the player never aims a burst — the AI does. Punishing them for a
+ * placement they did not choose is noise, not difficulty. `target_side: 'all'`
+ * remains available per row for a deliberate design.
  *
  * Spell attacks never take flurry (ported rule). Scaling maps (cantrip curves)
  * resolve against caster level. Costs: slots by spell level, pact energy via
@@ -16,7 +24,7 @@ import { spellsById, warlockCostByLevel } from '@sim/registry';
 import { averageDamage } from './ai';
 import { determineDegree, rollDice } from './dice';
 import { acMod, applyCondition, type ConditionId } from './conditions';
-import { dist, type Combatant } from './types';
+import { dist, type Combatant, type Vec2 } from './types';
 
 type SpellRow = NonNullable<ReturnType<typeof spellsById.get>>;
 
@@ -141,14 +149,79 @@ function rollSave(target: Combatant, saveType: string, dc: number, rng: Rng): Ro
   return { d20, modifier: bonus, total: d20 + bonus, dc, degree, natStep };
 }
 
-function aoeTargets(spell: SpellRow, center: Combatant, all: readonly Combatant[]): Combatant[] {
+/**
+ * IS THIS AN AREA SPELL? Brief #21 §3 — `aoe_shape` is the AUTHORITY.
+ *
+ * ⚠ THIS USED TO BE INFERRED FROM `save_type && aoe_size`, AND THAT WAS WRONG.
+ * `save_type` is a saving-throw rule, not a shape, so 20 authored area spells
+ * silently resolved single-target — Heal Mass healing one ally, and Wall of Fire
+ * (a size-8 damage LINE) hitting one creature. The content was always right; the
+ * engine was reading the wrong columns.
+ *
+ * `aoe_shape` is authored across all 218 rows with zero inconsistencies: 156
+ * null (direct), 51 burst, 4 cone, 7 line. Direct spells resolve on the target
+ * alone and NEVER inspect its surroundings, which is also why creature radius
+ * (brief #20) touches exactly one branch instead of leaking through a save check.
+ *
+ * ⚠ `cone` and `line` still resolve AS BURSTS (11 spells). That was true before
+ * this brief and is unchanged by it — but the shape is now visible to the code,
+ * so real wedge/line geometry is an additive follow-up rather than a rewrite.
+ */
+export const isAreaSpell = (spell: SpellRow): boolean =>
+  (spell.aoe_shape as string | null) != null && ((spell.aoe_size as number | null) ?? 0) > 0;
+
+/**
+ * WHO an area spell may hit. Brief #21 §5, Steven's decision 2026-09-02.
+ *
+ * Declared wins; absent DERIVES from `effect_type`. The column is the exception
+ * channel, not the primary statement (constraints 5 and 7), so all 218 current
+ * rows leave it NULL and still resolve correctly.
+ *
+ * ⚠ FRIENDLY FIRE IS NOT THE DEFAULT and the reason is structural, not taste:
+ * this is an auto-battler with no player intervention once engaged, so the AI
+ * chooses where a burst lands. Catching your own front rank punishes a decision
+ * the player never made and cannot counterplay. PF2E's friendly fire works at a
+ * table because a human aims the fireball. `'all'` stays expressible per row.
+ */
+const sideRule = (spell: SpellRow): 'all' | 'enemies' | 'allies' => {
+  const declared = spell.target_side as 'all' | 'enemies' | 'allies' | null | undefined;
+  if (declared === 'all' || declared === 'enemies' || declared === 'allies') return declared;
+  const effect = spell.effect_type as string | null;
+  return effect === 'healing' || effect === 'buff' ? 'allies' : 'enemies';
+};
+
+/**
+ * Everything an area spell catches.
+ *
+ * ⚠ THE ORIGIN IS A POINT, NOT A CREATURE (brief #21 §4). It used to take a
+ * `Combatant`, which cannot express a ground-targeted burst. Creature-targeted
+ * spells pass `target.pos`; a future ground-targeted one passes a chosen point.
+ * Widening it later would have meant touching every call site a second time,
+ * after the AI had opinions about aiming.
+ *
+ * ⚠ Radius is subtracted for the TARGET ONLY — a burst has a centre point, not a
+ * body, so this is deliberately NOT `gap()`. PF2E catches a creature if ANY of
+ * its squares is in the burst, so edge-to-edge is rules-correct here and it means
+ * Large bodies eat more AoE (brief #20 findings §4, §7.2).
+ *
+ * ⚠ EMISSION ORDER = RESOLUTION ORDER. Iterating `all` in its existing stable
+ * order is load-bearing: change it and `EventStream.hash()` replay determinism
+ * breaks for every existing burst.
+ */
+function areaTargets(
+  spell: SpellRow,
+  origin: Vec2,
+  caster: Combatant,
+  all: readonly Combatant[],
+): Combatant[] {
   const size = (spell.aoe_size as number | null) ?? 0;
-  if (size <= 0) return [center];
-  // Burst in continuous space; cones/lines resolve as bursts at the target
-  // point for now (geometry refinement rides on the 1.4 room arenas).
-  return all.filter(
-    (u) => (u.hp > 0 || u.conditions.has('dying')) && dist(u.pos, center.pos) <= size,
-  );
+  const side = sideRule(spell);
+  return all.filter((u) => {
+    if (!(u.hp > 0 || u.conditions.has('dying'))) return false;
+    if (side === 'enemies' && u.side === caster.side) return false;
+    if (side === 'allies' && u.side !== caster.side) return false;
+    return Math.max(0, dist(u.pos, origin) - u.radius) <= size;
+  });
 }
 
 function parseCondition(spell: SpellRow): { id: ConditionId; value: number } | null {
@@ -195,13 +268,21 @@ export function resolveCast(
 
   if (effectType === 'healing') {
     const amount = rollDice(rng, dice);
-    result.targets.push({ unit: primary, damage: 0, healing: amount });
+    // ⚠ Brief #21 §2/§4 Q4: this branch used to return the PRIMARY ONLY, before
+    // any area logic ran — which is why Heal Mass (burst 3), Heal Circle (burst
+    // 2) and Grumply's Mass Mending (burst 6) each healed exactly one ally. The
+    // content was always authored correctly; the engine never asked about shape.
+    // `sideRule` sends healing to allies by derivation, so the caster's own side
+    // is what a mass heal touches.
+    const units = isAreaSpell(spell) ? areaTargets(spell, primary.pos, caster, all) : [primary];
+    for (const unit of units) result.targets.push({ unit, damage: 0, healing: amount });
     return result;
   }
 
   if (effectType === 'damage') {
     const saveType = spell.save_type as string | null;
-    const units = saveType && (spell.aoe_size as number | null) ? aoeTargets(spell, primary, all) : [primary];
+    // Brief #21 §3: shape is DECLARED, not inferred from save_type.
+    const units = isAreaSpell(spell) ? areaTargets(spell, primary.pos, caster, all) : [primary];
 
     for (const unit of units) {
       const entry: SpellTargetResult = { unit, damage: 0, healing: 0 };
