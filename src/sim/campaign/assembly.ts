@@ -286,6 +286,11 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     side: 'heroes',
     isHero: true,
     pos: { x: 0, y: 0 },
+    // ⚠ EVERY HERO IS MEDIUM, radius 0 — brief #20 §5. PF2E's Small ancestries
+    // share the Medium square, and `HeroState.ancestry` is COSMETIC (identity +
+    // portrait, zero stat effect, enforced by tests/campaign/muster.test.ts).
+    // Making a halfling smaller is a deliberate systems brief, not a drive-by.
+    radius: 0,
     maxHp,
     hp: maxHp,
     ac,

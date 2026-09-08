@@ -71,15 +71,37 @@ export function chooseTarget(attacker: Combatant, all: readonly Combatant[]): Co
  */
 const isMelee = (u: Combatant): boolean => u.engageRange <= ENGAGEMENT_RANGE;
 
+/**
+ * SURFACE-TO-SURFACE distance between two bodies — the gap, not the centre
+ * separation. Brief #20's one substitution: every range TEST in the engine
+ * measures this, so the rule cannot drift between call sites.
+ *
+ * Never negative: overlapping bodies read 0. Without that clamp an overlap
+ * would read negative and satisfy every range test in the engine at once.
+ *
+ * ⚠ `dist()` STAYS as it is and is still correct for several callers —
+ * `stepToward` (a movement primitive), `scoreTarget`'s ×0.01 tiebreaker
+ * (cosmetic), and `unit_moved.purpose` (a presentation label). Brief #20 §4.4.
+ *
+ * ⚠ TWO SITES CANNOT USE THIS HELPER and that is by design, not oversight:
+ * `conditions.ts` `withinEngagement` takes raw `Vec2` and threads radii as
+ * parameters, and `spells.ts` AoE subtracts only the TARGET's radius because a
+ * burst has a centre point, not a body (creature-size-findings.md §4).
+ */
+export const gap = (a: Combatant, b: Combatant): number =>
+  Math.max(0, dist(a.pos, b.pos) - a.radius - b.radius);
+
 export const inAttackRange = (u: Combatant, target: Combatant): boolean =>
-  dist(u.pos, target.pos) <= Math.max(u.engageRange, ENGAGEMENT_RANGE * 0.99);
+  gap(u, target) <= Math.max(u.engageRange, ENGAGEMENT_RANGE * 0.99);
 
 /**
  * Where this unit wants to be: melee closes to engagement; ranged holds a
  * standoff band (2..range from target), stepping AWAY when adjacent.
  */
 export function desiredPosition(u: Combatant, target: Combatant): Vec2 {
-  const d = dist(u.pos, target.pos);
+  // Brief #20: the deadband measures body-to-body, so a Large target is
+  // satisfied half a unit sooner and a caster standing off keeps its gap.
+  const d = gap(u, target);
   if (isMelee(u)) {
     // Satisfied only strictly INSIDE attack range (0.95 < inAttackRange's 0.99):
     // a deadband between "close enough to stop" and "close enough to swing"
@@ -116,9 +138,12 @@ export interface RoomBounds {
  * person, one pressed into a corner reads as a bug. Swapping this for a hard
  * stop is a feel change, NOT a balance change; do not expect the curve to move.
  */
-export function boundToRoom(p: Vec2, room: RoomBounds): Vec2 {
-  const x = Math.min(Math.max(p.x, 0), room.width);
-  const y = Math.min(Math.max(p.y, 0), room.height);
+export function boundToRoom(p: Vec2, room: RoomBounds, radius = 0): Vec2 {
+  // Brief #20: a body with extent clamps into [radius, width - radius] or half
+  // an Ogre hangs outside the room the walls exist to contain. NOT a gap()
+  // conversion — this clamps a POINT, and it is why the signature changed.
+  const x = Math.min(Math.max(p.x, radius), room.width - radius);
+  const y = Math.min(Math.max(p.y, radius), room.height - radius);
   return x === p.x && y === p.y ? p : { x, y };
 }
 

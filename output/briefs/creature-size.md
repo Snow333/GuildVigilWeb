@@ -1,9 +1,20 @@
 # Brief #20 — CREATURE SIZE
 
-**Status: FOR APPROVAL. No gameplay code written.**
+**Status: APPROVED 2026-09-02 — all seven §12 questions answered in
+`creature-size-findings.md` §8. No gameplay code written yet.**
 Written 2026-08-15 (eighth session) against `main` = `9925bba`, suite **483 unit + 11 e2e**
 green, bundle **1,239.30 kB** — all three re-verified in this container before anything below
 was drafted.
+
+⚠ **CORRECTED BY `creature-size-findings.md` (2026-09-02).** That document is the
+implementation record and **wins on every measured fact**. It corrects **§9.4**, whose gate
+does not work: conventions A and B land **0.3 points apart** on the d4 cell at n=300, inside
+the ±8 bar, so the curve **cannot discriminate them** and reports a false pass. The
+replacement gate is a deterministic Medium-only stream hash. **§3's question is now
+ANSWERED — the convention is B** (measured bit-identical; A is not), which discharges the
+§10 "convention is A" risk. The findings also record that §4's 13-site inventory is
+compiler-verified complete, and that **two of the thirteen cannot take `gap()` as written**
+(§4 of the findings). §§0–8 and §10–§13 otherwise stand.
 
 Steven chose this option 2026-08-15 from the three costed in
 `arena-costing.md`, and chose to write it **without waiting on `career-distribution`**.

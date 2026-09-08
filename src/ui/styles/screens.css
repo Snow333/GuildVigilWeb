@@ -793,6 +793,18 @@
   stroke-linejoin: round;
 }
 .gv-field-name--gone { opacity: 0.45; }
+/*
+  Brief #20 §6 — the size WORD, the labelled twin of the glyph diameter.
+  Flourish never replaces the number (brief #8), so size is stated in ink as
+  well as drawn. Uses --gv-ink-soft, NOT a status colour: the frozen status set
+  is label-paired to HP state and must not acquire a second meaning.
+  ⚠ DATA, not ambience — flat mode keeps it (no rule strips this).
+*/
+.gv-field-size {
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  fill: var(--gv-ink-soft);
+}
 .gv-field-hp {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 9.5px;

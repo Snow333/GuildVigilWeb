@@ -11,7 +11,7 @@
 import { ARENA, DYING, ENCOUNTER, ENGAGEMENT_RANGE, TICKS_PER_SECOND } from '@content/combat';
 import { EventStream } from '@sim/core/events/stream';
 import { Rng } from '@sim/core/rng';
-import { boundToRoom, desiredPosition, inAttackRange, moveStep, stepToward } from './ai';
+import { boundToRoom, desiredPosition, inAttackRange, moveStep, stepToward, gap } from './ai';
 import { decayFlurry, flurryPenalty } from './dice';
 import { canMove, expireConditions, hasCondition, speedMod } from './conditions';
 import { damageWhileDying, healDying, knockOut, resolveDyingRecovery } from './dying';
@@ -48,12 +48,30 @@ const aliveAtAll = (all: Combatant[], side: Combatant['side']): Combatant[] =>
  * rather than a drawing (brief #19). A side larger than the room is tall
  * stacks its overflow on the wall rather than spawning outside it; the view
  * says so in the margin via `formationFits`.
+ *
+ * ⚠ Brief #20 §7.2: spacing is `prev.radius + next.radius + 1`, NOT a flat 1.
+ * At a flat 1 two adjacent Large bodies interpenetrate AT SPAWN, before anyone
+ * has moved — a visible half-measure on the first frame the player sees.
+ *
+ * ⚠ There is still NO unit-unit collision anywhere in the game, at any size.
+ * Bodies pass through one another once moving; this only fixes the start. That
+ * is deliberate — collision changes closure times for every unit on the field,
+ * which is the mechanism the whole dungeon curve rests on, so it is its own
+ * brief and it is NOT free.
  */
 export function placeFormation(units: Combatant[], side: Combatant['side']): void {
   const x = side === 'heroes' ? ARENA.sideAx : ARENA.sideBx;
-  const startY = (ARENA.height - (units.length - 1)) / 2;
+  // Cumulative offsets: gap of 1 unit between body SURFACES.
+  const offsets: number[] = [];
+  let cursor = 0;
   units.forEach((u, i) => {
-    u.pos = boundToRoom({ x, y: startY + i }, ARENA);
+    if (i > 0) cursor += (units[i - 1]!.radius + u.radius + 1);
+    offsets.push(cursor);
+  });
+  const span = offsets[offsets.length - 1] ?? 0;
+  const startY = (ARENA.height - span) / 2;
+  units.forEach((u, i) => {
+    u.pos = boundToRoom({ x, y: startY + offsets[i]! }, ARENA, u.radius);
   });
 }
 
@@ -196,7 +214,7 @@ export function runEncounter(
     for (const e of allUnits) {
       if (e.side === provoker.side || e.hp <= 0 || hasCondition(e, 'unconscious')) continue;
       if (!hasAoo(e) || !reactionReady(e, t)) continue;
-      if (dist(e.pos, provoker.pos) > ENGAGEMENT_RANGE) continue;
+      if (gap(e, provoker) > ENGAGEMENT_RANGE) continue;
       e.lastReactionTick = t;
       const reactEv = s.emit(t, 'combat.reaction_triggered', { unitId: e.id, reactionId: 'attackOfOpportunity', againstId: provoker.id });
       const strike = resolveStrike(e, provoker, { rng: r, flurryPenalty: 0, all: allUnits });
@@ -212,11 +230,11 @@ export function runEncounter(
   const moveWithReactions = (u: Combatant, rt: UnitRuntime, t: number): void => {
     const engagedBefore = all.filter(
       (e) => e.side !== u.side && e.hp > 0 && !hasCondition(e, 'unconscious') &&
-        hasAoo(e) && dist(e.pos, u.pos) <= ENGAGEMENT_RANGE,
+        hasAoo(e) && gap(e, u) <= ENGAGEMENT_RANGE,
     );
     moveTick(u, all, rt, stream, t);
     for (const e of engagedBefore) {
-      if (dist(e.pos, u.pos) > ENGAGEMENT_RANGE && reactionReady(e, t)) {
+      if (gap(e, u) > ENGAGEMENT_RANGE && reactionReady(e, t)) {
         e.lastReactionTick = t;
         const reactEv = stream.emit(t, 'combat.reaction_triggered', { unitId: e.id, reactionId: 'attackOfOpportunity', againstId: u.id });
         const strike = resolveStrike(e, u, { rng, flurryPenalty: 0, all });
@@ -309,8 +327,8 @@ export function runEncounter(
       // Move-then-act as one action: a unit that closes into range this tick
       // acts THIS tick — first to arrive is first to strike (with heroes-first
       // tie ordering, this is where the players-win-ties feel actually lands).
-      if (dist(u.pos, target.pos) > reach) moveWithReactions(u, rt, tick);
-      if (dist(u.pos, target.pos) > reach) continue; // still closing
+      if (gap(u, target) > reach) moveWithReactions(u, rt, tick);
+      if (gap(u, target) > reach) continue; // still closing
 
       if (picked.entry.action === 'cast') {
         // Casting adjacent to an enemy provokes (the old adjacent-spellcast AoO).

@@ -94,26 +94,58 @@ export const ENCOUNTER = {
  *
  * ⚠ THE MUSTER SEPARATION IS ITS OWN LEVER, IT IS SHARP, AND IT IS AIMED AT
  * SURFACE FIGHTS — brief #19 never costed it; it turned up in implementation.
- * Measured on `career-distribution` (480 records, ALL surface — that harness
- * never dispatches a dungeon):
+ *
+ * ⚠⚠ THE FIGURES BELOW ARE DEAD AND THE KNOB IS SPENT — CORRECTED 2026-09-02
+ * (brief #20 §11.1, Steven's decision §12 Q7). This comment used to promise the
+ * re-tune a "sharp cheap knob" on surface fights and print this table:
  *
  *     separation 10  →  96.0% completed / 4.0% wiped
  *     separation 12  →  99.8% / 0.2%
- *     separation 14  →  99.8% / 0.2%      ← chosen
- *     (shipped, 14 × 10 box, separation 10:  91.3% / 8.8%)
  *
- * The step sits between 10 and 12 and the mechanism is arithmetic: the enemy
- * closes at `speed` 5 units/s, so a 12-unit walk outlasts one 20-tick
- * `attackIntervalTicks` where a 10-unit walk does not. Past that threshold the
- * party's casters land a SECOND free cantrip volley before contact, every
- * fight. The at-level DUNGEON curve is nearly flat across all three (every cell
+ * DO NOT QUOTE THOSE NUMBERS. The step moved from between sep 10–12 down to
+ * between **4–6** when brief #19's commit 2 landed, and everything from 6 up
+ * now reads **100%** surface completion. Separation 14 is therefore not a knob
+ * at all any more — it is saturated, and turning it down to 12 or 10 would move
+ * nothing until it drops below 6.
+ *
+ * The mechanism was and remains arithmetic: the enemy closes at `speed` 5
+ * units/s, so a long-enough walk outlasts one 20-tick `attackIntervalTicks` and
+ * the party's casters land a SECOND free cantrip volley before contact. The
+ * at-level DUNGEON curve is nearly flat across every separation (all cells
  * inside the ±8-point bar) because a dungeon is attritional and a surface quest
- * is one encounter — which is exactly why this only shows up on the surface.
+ * is one encounter — which is why this only ever showed up on the surface.
  *
- * ⚠ SO: Steven chose 14 (proportional) 2026-08-13 KNOWING it takes surface
- * quests to ~99.8% completion, and the surface difficulty goes on the re-tune
- * list with levels, mob counts and statblocks. This is a consequence the pass
- * CREATED, not one it found — do not let the re-tune inherit it silently, and
- * do not "discover" it again.
+ * ⚠ Steven chose 14 (proportional) 2026-08-13 knowing it takes surface quests
+ * to saturation, and surface difficulty is on the re-tune list with levels, mob
+ * counts and statblocks. This is a consequence the pass CREATED, not one it
+ * found — do not let the re-tune inherit it silently, and do not "discover" it
+ * again.
+ *
+ * ⚠ AND: `career-distribution` cannot measure any of this today — it reads
+ * completionRate 1.0 with every assertion a one-sided floor, so nothing fires.
+ * A green run there is worth NOTHING as evidence about the surface loop.
  */
 export const ARENA = { width: 20, height: 20, sideAx: 3, sideBx: 17 } as const;
+
+/**
+ * Creature size → body radius in world units, brief #20.
+ *
+ * The CONTENT says `'large'`; the radius is derived here, so this is the single
+ * tuning knob for the whole feature and it lives beside ARENA with the other
+ * translation constants.
+ *
+ * ⚠ CONVENTION B, MEASURED: the excess over Medium, not the absolute footprint.
+ * PF2E puts Small AND Medium in one 5-ft square, so Medium is 0 and only Large+
+ * moves anything. Medium-vs-Medium is therefore bit-identical to pre-#20 main —
+ * verified by stream hash, not assumed (creature-size-findings.md §2).
+ *
+ * ⚠ Doubling these is the costing's S2 arm (Large 1.0, Huge 2.0) and it also
+ * measured free. If you double them, re-read findings §6 first: HUGE HAS NEVER
+ * BEEN EXERCISED by any probe, because its only row (Adult Red Dragon, L12)
+ * cannot spawn at d1–d5.
+ */
+export const SIZE_RADIUS: Readonly<Record<string, number>> = {
+  medium: 0,
+  large: 0.5,
+  huge: 1.0,
+} as const;

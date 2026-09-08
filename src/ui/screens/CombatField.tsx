@@ -17,7 +17,8 @@
  * `fieldReading.ts`. No distance or judgement is ever derived from them.
  */
 
-import { ARENA, ENGAGEMENT_RANGE } from '@content/combat';
+import { ARENA, ENGAGEMENT_RANGE, SIZE_RADIUS } from '@content/combat';
+import { enemiesById } from '@sim/registry';
 import type { SimEvent } from '@sim/core/events/types';
 import {
   buildTracks, fieldStateAt, hpStep, labelLanes, positionAt, FEET_PER_UNIT, type SpawnFact,
@@ -44,6 +45,36 @@ const SY = S;
 const VIEW_H = VIEW.padT + ARENA.height * S + VIEW.padB;
 const px = (x: number): number => VIEW.padL + x * SX;
 const py = (y: number): number => VIEW.padT + y * SY;
+
+/**
+ * A unit's body size, DERIVED from the content registry via the spawn's
+ * `baseId` — brief #20 §6. Constraints 5 and 7: never store what you can
+ * derive, so this needs NO event-schema change at all.
+ *
+ * ⚠ The tradeoff, stated so it is not a surprise: a stream replayed after the
+ * content changes re-derives the CURRENT size. Every other derived fact in this
+ * codebase already behaves that way.
+ *
+ * Heroes are always Medium (§5), so only enemy rows are consulted.
+ */
+function sizeOf(baseId: string, hero: boolean): { word: string; radius: number } {
+  if (hero) return { word: 'medium', radius: 0 };
+  const row = enemiesById.get(Number(baseId));
+  const word = ((row?.size as string | null) ?? 'medium');
+  return { word, radius: SIZE_RADIUS[word] ?? 0 };
+}
+
+/**
+ * Glyph radius in px. Brief #20 §6 option A (Steven's decision §12 Q3):
+ * PROPORTIONAL FROM TODAY'S BASELINE — Medium keeps its existing size, Large
+ * doubles, Huge triples.
+ *
+ * ⚠ NOT a true footprint. A true footprint would put Medium at r≈15.3 and Large
+ * at r≈30.6 (a full square across) at S = 30.6 px/unit, which nearly doubles
+ * every glyph and crowds a 6v8. The glyph is a token on a plan, not a body, and
+ * the margin's `1 SQUARE = 5 FT` stays true because the GRID is unchanged.
+ */
+const glyphR = (base: number, radius: number): number => base * (1 + 2 * radius);
 
 /** A label block is name + hp + bar; lanes never pack tighter than this. */
 const LANE_SPACING = 34;
@@ -160,6 +191,7 @@ export function CombatField({ spawns, events, tick, held, heldNote, selectedId, 
         const cx = px(pos.x);
         const cy = py(pos.y);
         const hero = spawn.side === 'heroes';
+        const size = sizeOf(spawn.baseId, hero);
         const ly = lanes.get(spawn.unitId) ?? cy;
         const anchor = hero ? 'end' : 'start';
         const lx = hero ? cx - 16 : cx + 16;
@@ -186,21 +218,33 @@ export function CombatField({ spawns, events, tick, held, heldNote, selectedId, 
               </g>
             ) : hero ? (
               <>
-                <circle cx={cx} cy={cy} r={8.5} className={down ? 'gv-field-hero gv-field-hero--down' : 'gv-field-hero'} />
+                <circle cx={cx} cy={cy} r={glyphR(8.5, size.radius)} className={down ? 'gv-field-hero gv-field-hero--down' : 'gv-field-hero'} />
                 {down && <line x1={cx - 8} y1={cy} x2={cx + 8} y2={cy} className="gv-field-glyph-stroke" />}
               </>
             ) : (
               <>
-                <circle cx={cx} cy={cy} r={8} className="gv-field-foe" />
-                <circle cx={cx} cy={cy} r={3} className="gv-field-foe-pip" />
+                <circle cx={cx} cy={cy} r={glyphR(8, size.radius)} className="gv-field-foe" />
+                <circle cx={cx} cy={cy} r={glyphR(3, size.radius)} className="gv-field-foe-pip" />
               </>
             )}
 
-            {selectedId === spawn.unitId && <circle cx={cx} cy={cy} r={13.5} className="gv-field-selected" />}
+            {selectedId === spawn.unitId && <circle cx={cx} cy={cy} r={glyphR(8.5, size.radius) + 5} className="gv-field-selected" />}
 
             <text x={lx} y={ly - 2} textAnchor={anchor}
               className={dead ? 'gv-field-name gv-field-name--gone' : 'gv-field-name'}>
               {(labelFor?.(spawn.unitId) ?? spawn.name).toUpperCase()}
+              {/*
+                GRAMMAR AUDIT (brief #8, required for every new surface):
+                size is carried by glyph diameter, which is a FLOURISH — and
+                flourish NEVER replaces the number. So the size also appears as
+                a WORD, a labelled twin exactly as the status colours are
+                label-paired. Medium is the unmarked default and stays silent;
+                marking every Kobold "MEDIUM" would be noise, not information.
+                ⚠ This is DATA, not ambience: flat mode keeps it.
+              */}
+              {size.radius > 0 && (
+                <tspan className="gv-field-size">{` ${size.word.toUpperCase()}`}</tspan>
+              )}
             </text>
             {!dead && (
               <>

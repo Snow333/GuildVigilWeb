@@ -109,9 +109,21 @@ export function isFlatFootedByCondition(unit: Combatant): boolean {
   );
 }
 
-const withinEngagement = (a: Vec2, b: Vec2): boolean => {
-  const d = dist(a, b);
-  return d > 0 && d <= ENGAGEMENT_RANGE;
+/**
+ * Brief #20: adjacency measures BODY TO BODY, so allies flank a Large target
+ * from half a unit further out and a prone creature's attacker counts as
+ * adjacent sooner.
+ *
+ * ⚠ Takes raw radii rather than Combatants because this serves TWO rules from
+ * two different call shapes (flanking adjacency, and prone-vs-adjacent), so it
+ * cannot use `gap()`. The `dist(a, b) > 0` term stays on CENTRES: it exists to
+ * stop a unit flanking itself, and two overlapping bodies still have distinct
+ * centres.
+ */
+const withinEngagement = (a: Vec2, b: Vec2, ra = 0, rb = 0): boolean => {
+  const centres = dist(a, b);
+  const surface = Math.max(0, centres - ra - rb);
+  return centres > 0 && surface <= ENGAGEMENT_RANGE;
 };
 
 /**
@@ -122,7 +134,7 @@ const withinEngagement = (a: Vec2, b: Vec2): boolean => {
  */
 export function isFlanked(target: Combatant, attacker: Combatant, all: readonly Combatant[]): boolean {
   const adjacentAllies = all.filter(
-    (u) => u.side === attacker.side && u.hp > 0 && withinEngagement(u.pos, target.pos),
+    (u) => u.side === attacker.side && u.hp > 0 && withinEngagement(u.pos, target.pos, u.radius, target.radius),
   );
   for (let i = 0; i < adjacentAllies.length; i++) {
     for (let j = i + 1; j < adjacentAllies.length; j++) {
@@ -143,6 +155,6 @@ export function isFlanked(target: Combatant, attacker: Combatant, all: readonly 
 /** Full flat-footed check: conditions, prone-vs-adjacent-attacker, flanking. */
 export function isFlatFooted(target: Combatant, attacker: Combatant, all: readonly Combatant[]): boolean {
   if (isFlatFootedByCondition(target)) return true;
-  if (hasCondition(target, 'prone') && withinEngagement(attacker.pos, target.pos)) return true;
+  if (hasCondition(target, 'prone') && withinEngagement(attacker.pos, target.pos, attacker.radius, target.radius)) return true;
   return isFlanked(target, attacker, all);
 }

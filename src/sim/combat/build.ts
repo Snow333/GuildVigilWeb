@@ -5,6 +5,7 @@
  */
 
 import { abilityMod } from '@sim/heroes/types';
+import { SIZE_RADIUS } from '@content/combat';
 import { enemiesById } from '@sim/registry';
 import type { Combatant } from './types';
 
@@ -27,6 +28,9 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     side: 'enemies',
     isHero: false,
     pos: { x: 0, y: 0 },
+    // Brief #20: the CONTENT says 'large'; the radius derives here so the knob
+    // stays in one place (SIZE_RADIUS, beside ARENA). Unknown/absent → Medium.
+    radius: SIZE_RADIUS[(row.size as string | null) ?? 'medium'] ?? 0,
     maxHp: row.hp,
     hp: row.hp,
     ac: row.ac,

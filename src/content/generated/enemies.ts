@@ -25,7 +25,8 @@ export const enemies = [
   "xp_reward": 20,
   "description": "A small, vicious creature with a rusty blade.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 2,
@@ -51,7 +52,8 @@ export const enemies = [
   "xp_reward": 25,
   "description": "An animated pile of bones.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 3,
@@ -77,7 +79,8 @@ export const enemies = [
   "xp_reward": 20,
   "description": "A fierce wild wolf.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 4,
@@ -103,7 +106,8 @@ export const enemies = [
   "xp_reward": 15,
   "description": "An oversized, diseased rodent.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 5,
@@ -129,7 +133,8 @@ export const enemies = [
   "xp_reward": 18,
   "description": "A cunning reptilian trap-maker.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 6,
@@ -155,7 +160,8 @@ export const enemies = [
   "xp_reward": 40,
   "description": "A common highway robber.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 7,
@@ -181,7 +187,8 @@ export const enemies = [
   "xp_reward": 35,
   "description": "A shambling corpse.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 8,
@@ -207,7 +214,8 @@ export const enemies = [
   "xp_reward": 50,
   "description": "A massive venomous spider.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 9,
@@ -233,7 +241,8 @@ export const enemies = [
   "xp_reward": 45,
   "description": "A dark cult follower with minor magic.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 10,
@@ -259,7 +268,8 @@ export const enemies = [
   "xp_reward": 50,
   "description": "A disciplined goblinoid warrior.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 11,
@@ -285,7 +295,8 @@ export const enemies = [
   "xp_reward": 60,
   "description": "A battle-hardened orc.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 12,
@@ -311,7 +322,8 @@ export const enemies = [
   "xp_reward": 70,
   "description": "A ravenous undead with paralyzing claws.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 13,
@@ -337,7 +349,8 @@ export const enemies = [
   "xp_reward": 75,
   "description": "A massive, stealthy goblinoid brute.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 14,
@@ -363,7 +376,8 @@ export const enemies = [
   "xp_reward": 100,
   "description": "A bull-headed monster that charges ferociously.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 15,
@@ -389,7 +403,8 @@ export const enemies = [
   "xp_reward": 90,
   "description": "An intelligent undead that drains life.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 16,
@@ -415,7 +430,8 @@ export const enemies = [
   "xp_reward": 100,
   "description": "A massive, brutish giant.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 17,
@@ -441,7 +457,8 @@ export const enemies = [
   "xp_reward": 130,
   "description": "A towering green brute that regenerates.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 18,
@@ -467,7 +484,8 @@ export const enemies = [
   "xp_reward": 150,
   "description": "A dreadful incorporeal spirit.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 19,
@@ -493,7 +511,8 @@ export const enemies = [
   "xp_reward": 160,
   "description": "A powerful dark magic wielder.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 20,
@@ -519,7 +538,8 @@ export const enemies = [
   "xp_reward": 200,
   "description": "A young but deadly dragon.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 21,
@@ -545,7 +565,8 @@ export const enemies = [
   "xp_reward": 350,
   "description": "An ancient vampire of terrifying power.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 22,
@@ -571,7 +592,8 @@ export const enemies = [
   "xp_reward": 280,
   "description": "The mightiest of hill giant warriors.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 23,
@@ -597,7 +619,8 @@ export const enemies = [
   "xp_reward": 400,
   "description": "An undead archmage of immense power.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 24,
@@ -623,7 +646,8 @@ export const enemies = [
   "xp_reward": 600,
   "description": "A terrible wyrm of fire and ruin.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "huge"
  },
  {
   "id": 100,
@@ -649,7 +673,8 @@ export const enemies = [
   "xp_reward": 20,
   "description": "Carries more oil than sense. The burned granaries are its work.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 101,
@@ -675,7 +700,8 @@ export const enemies = [
   "xp_reward": 22,
   "description": "A torch in each hand and orders in its head — goblins do not usually take orders.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 102,
@@ -701,7 +727,8 @@ export const enemies = [
   "xp_reward": 38,
   "description": "Bred for war, not scavenging. Wargs do not wander this far south on their own.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 103,
@@ -727,7 +754,8 @@ export const enemies = [
   "xp_reward": 35,
   "description": "Runs for the horn before it runs for cover. Discipline, of a kind.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 104,
@@ -753,7 +781,8 @@ export const enemies = [
   "xp_reward": 40,
   "description": "A farmer six months ago, by the hands. The Dominion arms whoever it swallows.",
   "has_manufactured_armor": 1,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 105,
@@ -779,7 +808,8 @@ export const enemies = [
   "xp_reward": 55,
   "description": "Vanguard muscle. Takes what the legion will need before the legion arrives.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 106,
@@ -805,7 +835,8 @@ export const enemies = [
   "xp_reward": 48,
   "description": "A dead soldier still in Dominion issue. Somebody filed a requisition for this.",
   "has_manufactured_armor": 1,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 107,
@@ -831,7 +862,8 @@ export const enemies = [
   "xp_reward": 52,
   "description": "First in, maps everything, burns nothing. The dangerous kind of scout.",
   "has_manufactured_armor": 1,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 108,
@@ -857,7 +889,8 @@ export const enemies = [
   "xp_reward": 78,
   "description": "Doors, walls, shield lines. The Breaker does not distinguish.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 109,
@@ -883,7 +916,8 @@ export const enemies = [
   "xp_reward": 72,
   "description": "It remembers being a Krathite field-chirurgeon. Its patients still report for duty.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 110,
@@ -909,7 +943,8 @@ export const enemies = [
   "xp_reward": 75,
   "description": "Line infantry of the Iron Fist. Fights in formation even when alone.",
   "has_manufactured_armor": 1,
-  "aoo_count": 1
+  "aoo_count": 1,
+  "size": "medium"
  },
  {
   "id": 111,
@@ -935,7 +970,8 @@ export const enemies = [
   "xp_reward": 95,
   "description": "The pack answers it; it answers a whistle only two Krathites know.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "large"
  },
  {
   "id": 112,
@@ -961,7 +997,8 @@ export const enemies = [
   "xp_reward": 92,
   "description": "Knows Vel's fortification manuals by rote. Assembly is a kind of violence.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 113,
@@ -987,7 +1024,8 @@ export const enemies = [
   "xp_reward": 98,
   "description": "The Silent Office denies the necromantic auxiliary exists. The graves disagree.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 114,
@@ -1013,7 +1051,8 @@ export const enemies = [
   "xp_reward": 125,
   "description": "Sees the battle three moves out. Kill it first or fight its plan forever.",
   "has_manufactured_armor": 1,
-  "aoo_count": 1
+  "aoo_count": 1,
+  "size": "medium"
  },
  {
   "id": 115,
@@ -1039,7 +1078,8 @@ export const enemies = [
   "xp_reward": 128,
   "description": "Raised from a frontier barrow the Dominion had no right to open.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 116,
@@ -1065,7 +1105,8 @@ export const enemies = [
   "xp_reward": 130,
   "description": "Three Krathites and a machine that outranges everything Haven owns.",
   "has_manufactured_armor": 1,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  },
  {
   "id": 117,
@@ -1091,7 +1132,8 @@ export const enemies = [
   "xp_reward": 155,
   "description": "Splitfang's decorations on Koss's leash. The vanguard's hard answer.",
   "has_manufactured_armor": 1,
-  "aoo_count": 1
+  "aoo_count": 1,
+  "size": "medium"
  },
  {
   "id": 118,
@@ -1117,7 +1159,8 @@ export const enemies = [
   "xp_reward": 158,
   "description": "No insignia, no orders in writing, no face anyone remembers.",
   "has_manufactured_armor": 0,
-  "aoo_count": 1
+  "aoo_count": 1,
+  "size": "medium"
  },
  {
   "id": 119,
@@ -1143,7 +1186,8 @@ export const enemies = [
   "xp_reward": 300,
   "description": "Career officer of the Iron Fist. His foothold was to be a province; Haven is the itemized obstacle.",
   "has_manufactured_armor": 1,
-  "aoo_count": 2
+  "aoo_count": 2,
+  "size": "medium"
  },
  {
   "id": 120,
@@ -1169,6 +1213,7 @@ export const enemies = [
   "xp_reward": 36,
   "description": "Mirrors, horns, and coded flags. The Whisper reads every report first.",
   "has_manufactured_armor": 0,
-  "aoo_count": 0
+  "aoo_count": 0,
+  "size": "medium"
  }
 ] as const;

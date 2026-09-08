@@ -31,6 +31,24 @@ export interface Combatant {
   side: Side;
   isHero: boolean;
   pos: Vec2;
+  /**
+   * Body radius in world units (1 unit = 5 ft = one square). 0 = Medium/Small.
+   *
+   * Brief #20. Distance TESTS measure surface-to-surface via `gap()`; `dist()`
+   * itself stays centre-to-centre because several callers genuinely want that.
+   *
+   * ⚠ CONVENTION B, AND IT IS MEASURED, NOT ASSUMED: Medium 0, Large 0.5,
+   * Huge 1.0 — the excess over Medium, not the absolute footprint. Under the
+   * absolute reading (Medium 0.5) every fight in the game changes, including
+   * the 60% of d1 runs with no Large body in them. Medium-only fights hash
+   * BIT-IDENTICAL to pre-#20 main under B and differ under A
+   * (creature-size-findings.md §2). Do not "fix" Medium to 0.5.
+   *
+   * ⚠ Radius is a THIRD, independent term beside `weaponRange` (strikes) and
+   * `engageRange` (positioning). Collapsing any two reintroduces brief #15's
+   * central bug.
+   */
+  radius: number;
 
   // Defense & health
   maxHp: number;

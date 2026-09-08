@@ -6,8 +6,8 @@
  */
 
 import { spellsById, warlockCostByLevel } from '@sim/registry';
-import { chooseTarget } from './ai';
-import { dist, type Combatant } from './types';
+import { chooseTarget, gap } from './ai';
+import type { Combatant } from './types';
 
 export type LoadoutCondition =
   | { kind: 'always' }
@@ -39,7 +39,7 @@ function conditionMet(c: LoadoutCondition, u: Combatant, all: readonly Combatant
     case 'allyHpBelow':
       return all.some((a) => a.side === u.side && a.id !== u.id && a.hp > 0 && a.hp / a.maxHp < c.pct);
     case 'enemyWithin':
-      return all.some((e) => e.side !== u.side && e.hp > 0 && dist(u.pos, e.pos) <= c.range);
+      return all.some((e) => e.side !== u.side && e.hp > 0 && gap(u, e) <= c.range);
     case 'notActive':
       return !u.conditions.has(c.conditionId);
   }
@@ -55,8 +55,10 @@ function resolveTarget(spec: LoadoutTargetSpec, u: Combatant, all: readonly Comb
       const enemies = all.filter((e) => e.side !== u.side && e.hp > 0 && !e.conditions.has('unconscious'));
       if (enemies.length === 0) return null;
       return enemies.reduce((a, b) => {
-        const da = dist(u.pos, a.pos);
-        const db = dist(u.pos, b.pos);
+        // Brief #20: "nearest" means nearest BODY, so a giant standing on
+        // you outranks a kobold whose centre happens to be marginally closer.
+        const da = gap(u, a);
+        const db = gap(u, b);
         return db < da || (db === da && b.id < a.id) ? b : a;
       });
     }
