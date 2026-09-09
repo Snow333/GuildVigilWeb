@@ -105,11 +105,31 @@ test('the core loop: play until a level-up, spend it, save, reload, persist', as
   }
   expect(leveled, `a hero ready to level within ${MAX_WEEKS} weeks`).toBe(true);
 
-  // The wizard: class → skills → commit; the sheet must show the new level.
+  // The wizard: class → feats → skills → commit; the sheet must show the new level.
   await page.locator('button:has-text("level up!")').first().click();
   await page.locator('h1:has-text("Torvald")').waitFor();
   await page.locator('button:has-text("Level up ●")').click();
   await page.locator('button:has-text("Fighter → 2")').click();
+
+  /**
+   * ⚠ FEAT SLOTS ARE A REQUIRED STEP NOW (brief #22 M1). Fighter L2 grants
+   * 2 class + 1 general + 1 skill slots, and the skill-point table does not
+   * render until every fillable slot is filled — so a spec that jumps straight
+   * to "+" hangs forever waiting for a Commit button that never appears.
+   * That is exactly what this test caught on M1's first e2e run.
+   *
+   * Click every enabled feat offer until none remain. The picker greys
+   * unavailable feats and disables a track once its slots are full, so this
+   * converges without the spec needing to know how many slots the level
+   * grants. Matches on `data-feat-offer`, never on feat NAMES — those are
+   * content and change with the registry.
+   */
+  for (let guard = 0; guard < 12; guard++) {
+    const offer = page.locator('button[data-feat-offer]:enabled').first();
+    if ((await offer.count()) === 0) break;
+    await offer.click();
+  }
+
   // Spend every point wherever the rank cap leaves headroom (the wizard greys
   // capped skills — finding #4: ranks ≤ character level).
   while (await page.locator('button:has-text("Commit level-up")').isDisabled()) {

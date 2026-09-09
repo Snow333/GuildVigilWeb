@@ -34,9 +34,10 @@ import {
   skillPointsForLevel, type LevelUpApplied, type LevelUpPlan,
 } from '@sim/heroes/levelUp';
 import {
-  autoGrantsForLevel, offersForSlot, slotsForLevel, FEAT_SLOT_KINDS,
+  activeFeats, autoGrantsForLevel, featsById, offersForSlot, slotsForLevel, FEAT_SLOT_KINDS,
   type FeatOffer, type FeatSlotKind,
 } from '@sim/heroes/feats';
+import { castableSpells } from '@sim/heroes/knownSpells';
 import { portraitKey, type AncestryId, type Gender } from '@sim/heroes/ancestry';
 import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
@@ -1197,8 +1198,49 @@ export class CampaignSession {
     return session;
   }
 
-  /** Skill points for a prospective level-up, boost-aware (the fixed INT-boost ordering). */
-  skillPointsFor(heroId: string, classId: number, boost?: AbilityKey): number {
+  /** A feat's display name, for the auto-grant list and any picker label. */
+  featName(featId: number): string {
+    return featsById.get(featId)?.name ?? `Feat ${featId}`;
+  }
+
+  /**
+   * What this hero can ADD to their loadout right now (brief #22 M3/M2) — the
+   * pool half of core-loop D4, finally executable.
+   *
+   * ⚠ Both lists are already filtered to what the ENGINE can execute:
+   * `castableSpells` drops the 140 inert rows, `activeFeats` drops every
+   * unwired `combat_action`. The editor must never offer an entry the AI would
+   * silently skip, because a loadout row that never fires is indistinguishable
+   * from a bug at the table.
+   */
+  loadoutChoices(heroId: string): {
+    spells: { spellId: number; name: string; spellLevel: number; effectType: string }[];
+    abilities: { featId: number; name: string }[];
+  } {
+    const hero = this.heroState(heroId);
+    const spellChoices = castableSpells(hero).map((id) => {
+      const row = spellsById.get(id);
+      return {
+        spellId: id,
+        name: (row?.name as string) ?? `Spell ${id}`,
+        spellLevel: (row?.spell_level as number | null) ?? 0,
+        effectType: (row?.effect_type as string | null) ?? '',
+      };
+    });
+    const abilityChoices = activeFeats(hero.feats).map((featId) => ({
+      featId,
+      name: this.featName(featId),
+    }));
+    return { spells: spellChoices, abilities: abilityChoices };
+  }
+
+  /**
+   * Skill points for a prospective level-up, boost-aware (the fixed INT-boost
+   * ordering). Takes the FULL pending boost selection — with four boosts per
+   * milestone, projecting only the first would under-report whenever INT was
+   * picked second, third or fourth.
+   */
+  skillPointsFor(heroId: string, classId: number, boost?: AbilityKey | readonly AbilityKey[]): number {
     const hero = this.heroState(heroId);
     return skillPointsForLevel(classId, hero, boost);
   }
