@@ -6,6 +6,7 @@
  */
 
 import { spellsById, warlockCostByLevel } from '@sim/registry';
+import { abilityDef, abilityReady, type AbilityDef } from './abilities';
 import { chooseTarget, gap } from './ai';
 import type { Combatant } from './types';
 
@@ -21,7 +22,15 @@ export type LoadoutTargetSpec = 'scoredEnemy' | 'nearestEnemy' | 'lowestAlly' | 
 export type LoadoutEntry =
   | { action: 'strike'; condition: LoadoutCondition; target: 'scoredEnemy' | 'nearestEnemy' }
   | { action: 'cast'; spellId: number; condition: LoadoutCondition; target: LoadoutTargetSpec }
-  | { action: 'toggle'; featId: number; condition: LoadoutCondition };
+  | { action: 'toggle'; featId: number; condition: LoadoutCondition }
+  /**
+   * THE FOURTH VERB (brief #22 M2). `combat_action` feats — Power Attack,
+   * Knockdown, Determination — were classified by the registry and expressible
+   * NOWHERE, so a fighter's entire active kit was unreachable. Shaped like
+   * `cast` on purpose: both are "do a specific thing to a target if you can
+   * afford it", and `pickAction` treats affordability identically.
+   */
+  | { action: 'ability'; featId: number; condition: LoadoutCondition; target: LoadoutTargetSpec };
 
 export const DEFAULT_STRIKE: LoadoutEntry = { action: 'strike', condition: { kind: 'always' }, target: 'scoredEnemy' };
 
@@ -92,11 +101,35 @@ export function canAfford(u: Combatant, spellId: number): boolean {
 /**
  * Walk the loadout top-down; first entry whose condition holds, whose target
  * resolves, and whose cost is affordable wins. Falls back to DEFAULT_STRIKE.
+ *
+ * ⚠ `tick` is required by the ability branch (cooldown + once-per-combat
+ * limiters read it) and defaults to 0 so every existing caller and test keeps
+ * working: at tick 0 nothing is on cooldown and nothing has been used, so a
+ * loadout with no `ability` entries behaves exactly as before.
  */
-export function pickAction(u: Combatant, all: readonly Combatant[]): ResolvedAction {
+export function pickAction(u: Combatant, all: readonly Combatant[], tick = 0): ResolvedAction {
   for (const entry of u.loadout) {
     if (!conditionMet(entry.condition, u, all)) continue;
     if (entry.action === 'toggle') return { entry, target: null };
+    if (entry.action === 'ability') {
+      // Same shape as `cast`: affordability first, then a resolvable target.
+      // An ability on cooldown or spent for the fight is SKIPPED, not blocking
+      // — the walk continues to the next entry, so a fighter whose Power
+      // Attack is still recovering falls through to a plain strike rather than
+      // standing still. That fall-through IS the design.
+      if (!abilityReady(u, entry.featId, tick)) continue;
+      const def = abilityDef(entry.featId);
+      if (!def) continue;
+      // Self-targeted abilities (Determination, Poison Weapon, Defensive Ward)
+      // resolve without an enemy; only strike-riders need a victim.
+      if (!def.isStrike) {
+        if (!abilityWorthUsing(def, u, all)) continue;
+        return { entry, target: entry.target === 'self' ? u : resolveTarget(entry.target, u, all) };
+      }
+      const target = resolveTarget(entry.target, u, all);
+      if (!target) continue;
+      return { entry, target };
+    }
     if (entry.action === 'cast') {
       if (!canAfford(u, entry.spellId)) continue;
       const spell = spellsById.get(entry.spellId);
@@ -111,4 +144,28 @@ export function pickAction(u: Combatant, all: readonly Combatant[]): ResolvedAct
     if (target) return { entry, target };
   }
   return { entry: DEFAULT_STRIKE, target: chooseTarget(u, all) };
+}
+
+/**
+ * Would this non-strike ability actually DO something right now?
+ *
+ * ⚠ Without this the AI burns its once-per-combat Determination on turn one
+ * with no conditions to remove, and re-applies Poison Weapon over a rider it
+ * already has. A `combat_action` that no-ops still costs the action, so
+ * "can I?" and "should I?" are different questions and the loadout walk needs
+ * both. This is the ability equivalent of `canAfford`.
+ */
+function abilityWorthUsing(def: AbilityDef, u: Combatant, all: readonly Combatant[]): boolean {
+  switch (def.effect) {
+    case 'remove_condition': {
+      const removable = (def.raw['conditions_removable'] as string[] | undefined) ?? [];
+      return removable.some((id) => u.conditions.has(id));
+    }
+    case 'apply_weapon_poison':
+      return u.pendingPoisonDice === null;
+    case 'grant_ally_ac':
+      return all.some((a) => a.side === u.side && a.id !== u.id && a.hp > 0 && !a.conditions.has('defending'));
+    default:
+      return true;
+  }
 }

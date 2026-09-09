@@ -361,25 +361,57 @@ read it as evidence for this brief. The dungeon curve is the instrument.
 
 ---
 
-## 9. Open questions — answer before implementation
+## 9. Decisions — APPROVED 2026-09-09
 
-**Q1 — Unfillable slots.** Ancestry grants 5 slots against 0 feats; Fighter's class track is
-7 short at L20. Suppress the slot kind when its pool is empty (recommended, with a
-failing-on-success test) · show it greyed as future content · author feats to fill it.
+All five answered by Steven. This section is the decision record; where it disagrees with
+the body above, **this section wins**.
 
-**Q2 — Action economy for 2-action abilities.** §4.4: interval multiplier (recommended) ·
-per-feat cooldown · ignore cost (rejected — makes the choice fake).
+**D1 — Ancestry / unfillable slots: SHOW GREYED as visible future content.** Consistent with
+the spell picker's treatment. The ancestry track renders at levels 1/5/9/13/17 with an empty
+pool and the `not_yet_implemented` reason. No suppression, no failing-on-success test.
 
-**Q3 — Ability score cap.** None is enforced today. Adopt PF2E's soft +4-at-creation shape ·
-a hard cap of 20 · 18-then-+1s · keep it uncapped.
+**D2 — Action economy: THREE limiter systems are wanted, TWO are in scope now.**
 
-**Q4 — Milestone order and release grouping.** §4.3: M2 alone is a Fighter feature and M3
-alone is a caster feature. Ship M1+M2+M3 as one "character update" (recommended) · ship
-incrementally and accept a lopsided interim · M4 first to absorb one re-tune.
+| Limiter | Meaning | In scope |
+|---|---|---|
+| **Cooldown in ticks** | "usable again in N seconds of fight" | ✅ this brief |
+| **Once per combat** | "one shot per fight" (Determination authors this) | ✅ this brief |
+| Once per long rest | "one per day, restored by resting" | ❌ later — needs the rest/recovery loop |
 
-**Q5 — Does M4 wait for the re-tune?** It is the only curve-moving milestone, and CLAUDE.md's
-standing next-step is the re-tune. M4 before the re-tune (one re-tune absorbs it, recommended)
-· M4 after (avoids tuning against a moving target) · M4 split into its own brief.
+⚠ These are **distinct**, not three names for one thing, and the design must keep them
+separable so the long-rest tier drops in without reworking the other two. `actions: N`
+scaling the next interval remains the *time cost* term and is orthogonal to all three.
+
+**D3 — Boost rate: 4 × +2 at levels 5/10/15/20, to DISTINCT abilities.** Full PF2E rate.
+⚠ **Overpowered characters are explicitly ACCEPTED for now** — Steven: *"If a player wants
+to push an orc barbarian to +28 STR base that's a build-around considering for them. We can
+worry about nerfing or constraining this later."* Do not add a balance guard here and do not
+treat a high-stat build as a bug.
+
+⚠ **This supersedes §6's `4 × +1` proposal, which was arithmetically broken** and is retained
+above only as the reasoning trail: modifiers are `floor((score − 10) / 2)` and every founding
+hero's scores are even, so four +1s would have produced four odd scores and **zero modifier
+change**. Never propose +1 boosts against an all-even stat line again.
+
+**D4 — Ability score cap: DEFERRED, deliberately.** No cap is enforced and none is added.
+Steven's reasoning, recorded because it constrains the eventual design: a cap must consider
+**all** the sources at once — base stats, level-up growth, feat/ability grants, equipment,
+and buffs — and there is not enough content in place to think that through. **Revisit only
+after more player classes, enemies, quests, dungeons and bosses exist.** Pushing stats to
+extreme levels is an intended *build* fantasy, so the eventual system shapes that pressure
+rather than forbidding it.
+
+**D5 — The dungeon curve is NOT a gate for this work.** Steven: *"Let's not worry about the
+dungeon curve right now. We haven't done any real work on enemies yet."* M4 ships with the
+rest; no re-tune is required first and moved harness baselines are expected.
+
+⚠ **Standing direction for the enemy workstream that follows:** *"we want to start crafting
+enemies around the stat blocks from these first four starter classes so we aren't starting
+from zero/scratch."* The four heroes' assembled statblocks become the reference the enemy
+content is authored against — record their measured values when M1–M4 land.
+
+**D6 — Release grouping (previously Q4): M1+M2+M3 ship together.** M2 alone is a Fighter
+feature and M3 alone is a caster feature; separately they leave the party lopsided.
 
 ---
 

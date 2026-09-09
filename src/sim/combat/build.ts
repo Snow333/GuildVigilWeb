@@ -49,6 +49,13 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     initiativeBonus: level + 2, // ported enemy initiative: d20 + level + 2
     stealth: enemySkill(level, row.dex as number),
     perception: enemySkill(level, row.wis as number),
+    // Brief #22: enemies resist trips on the same level + mod curve heroes
+    // attack them on — an enemy with no athletics term would be tripped by
+    // every Knockdown regardless of what it is.
+    athletics: enemySkill(level, row.str as number),
+    abilityUses: new Map(),
+    abilityReadyAt: new Map(),
+    pendingPoisonDice: null,
     isCaster: false,
     saves: { fort: 2 + level, ref: 2 + level, will: 1 + level },
     tempHp: 0,

@@ -12,7 +12,10 @@ import { ARENA, DYING, ENCOUNTER, ENGAGEMENT_RANGE, TICKS_PER_SECOND } from '@co
 import { EventStream } from '@sim/core/events/stream';
 import { Rng } from '@sim/core/rng';
 import { boundToRoom, desiredPosition, inAttackRange, moveStep, stepToward, gap } from './ai';
-import { decayFlurry, flurryPenalty } from './dice';
+import {
+  abilityDef, abilityInterval, applySelfAbility, applyStrikeRider, consumeAbility,
+} from './abilities';
+import { decayFlurry, flurryPenalty, rollDice } from './dice';
 import { canMove, expireConditions, hasCondition, speedMod } from './conditions';
 import { damageWhileDying, healDying, knockOut, resolveDyingRecovery } from './dying';
 import { featEffectsById } from '@sim/heroes/featEffects';
@@ -303,7 +306,7 @@ export function runEncounter(
       u.flurrySwings = decayFlurry(u.flurrySwings, tick - u.lastSwingTick);
 
       // The loadout-priority layer decides what this unit DOES (core-loop D4).
-      const picked = pickAction(u, all);
+      const picked = pickAction(u, all, tick);
       const rt = runtime.get(u.id)!;
 
       // Toggles/stances (Rage, Monk stances): apply and spend the action.
@@ -311,6 +314,41 @@ export function runEncounter(
         executeToggle(u, picked.entry.featId, stream, tick);
         u.nextActionTick = tick + attackInterval(u);
         continue;
+      }
+
+      // Non-strike abilities (Determination, Defensive Ward, Poison Weapon):
+      // no target needed, no swing. Resolved before the reach check because a
+      // self-buff must not require walking into weapon range first.
+      if (picked.entry.action === 'ability') {
+        const def = abilityDef(picked.entry.featId);
+        if (def && !def.isStrike) {
+          const outcome = applySelfAbility(def, u, all, tick);
+          if (outcome.applied) {
+            consumeAbility(u, picked.entry.featId, tick);
+            lastProgressTick = tick;
+            // ⚠ NO NEW EVENT TYPE. The schema is additive-only and a new type
+            // is the last resort (brief #13's `sealedRoutes` precedent); these
+            // outcomes are already legible through existing types —
+            // `condition_expired` for what Determination cleared,
+            // `condition_applied` for the ward. `stance_changed` carries the
+            // ability's own activation, reusing the toggle vocabulary.
+            for (const id of outcome.removed) {
+              stream.emit(tick, 'combat.condition_expired', { targetId: u.id, conditionId: id });
+            }
+            if (outcome.buffedAllyId) {
+              stream.emit(tick, 'combat.condition_applied', {
+                targetId: outcome.buffedAllyId, conditionId: 'defending',
+                value: (def.raw['ac_bonus'] as number | undefined) ?? 2,
+                durationTicks: ENCOUNTER.attackIntervalTicks * 2,
+              });
+            }
+            u.nextActionTick = tick + abilityInterval(attackInterval(u), def);
+            continue;
+          }
+          // Nothing to do with it — fall through to a plain strike this action
+          // rather than standing idle. `abilityWorthUsing` normally prevents
+          // this; the guard is here because a no-op must never cost a turn.
+        }
       }
 
       const target = picked.target;
@@ -357,8 +395,24 @@ export function runEncounter(
       // on the field every two seconds, which is a lie about what happened.
       const conceal = rollConceal(u, target, all, rng);
 
+      /**
+       * ABILITY STRIKES ARE A SINGLE SWING, NOT A BURST (brief #22 M2).
+       *
+       * ⚠ A normal action is `swingsPerAction` swings with MAP inside the
+       * burst. An ability strike is ONE swing plus a rider, and its cost is
+       * paid in TIME (`actions: N` scales the next interval). Running an
+       * ability through the burst loop would apply its rider once per swing —
+       * Power Attack's extra die twice, Knockdown tripping an already-prone
+       * target — and would make actives strictly better than striking, which
+       * is the exact failure the action-cost model exists to prevent.
+       */
+      const abilityDefinition = picked.entry.action === 'ability'
+        ? abilityDef(picked.entry.featId)
+        : null;
+      const swings = abilityDefinition ? 1 : ENCOUNTER.swingsPerAction;
+
       // Strike: basic attack = a burst; MAP lives INSIDE the burst (0/−5, agile 0/−4).
-      for (let swing = 0; swing < ENCOUNTER.swingsPerAction; swing++) {
+      for (let swing = 0; swing < swings; swing++) {
         if (target.hp <= 0 && !hasCondition(target, 'dying')) break;
         if (hasCondition(target, 'unconscious') && swing > 0) break; // don't wail on the downed
         const penalty = flurryPenalty(u.flurrySwings + swing, u.weaponAgile);
@@ -367,16 +421,45 @@ export function runEncounter(
           rng, flurryPenalty: penalty, reactionAcBonus: reactionAc, all,
           concealed: conceal?.passed ?? false,
         });
+
+        let damage = strike.damage;
+        const hit = strike.damage > 0 || strike.roll.degree === 'success' || strike.roll.degree === 'critSuccess';
+
+        // Poison Weapon's rider rides the NEXT strike and is consumed by it,
+        // whether or not that strike came from an ability.
+        if (hit && u.pendingPoisonDice) {
+          damage += rollDice(rng, u.pendingPoisonDice);
+          u.pendingPoisonDice = null;
+        }
+
+        if (abilityDefinition && hit) {
+          const rider = applyStrikeRider(abilityDefinition, u, target, {
+            rng, tick, room: ARENA,
+            critical: strike.roll.degree === 'critSuccess',
+          });
+          damage += rider.bonusDamage;
+          for (const c of rider.conditions) {
+            stream.emit(tick, 'combat.condition_applied', {
+              targetId: target.id, conditionId: c.id, value: c.value, durationTicks: c.durationTicks,
+            });
+          }
+        }
+
         const atkEv = stream.emit(tick, 'combat.attack_resolved', {
           attackerId: u.id, targetId: target.id,
           roll: strike.roll, flurryPenalty: strike.flurryPenalty,
           flanked: strike.flanked, ...(strike.isSneakAttack ? { sneakDice: strike.sneakDamage } : {}),
         });
-        if (strike.damage > 0) applyDamage(target, strike.damage, 'weapon', stream, tick, atkEv.seq);
+        if (damage > 0) applyDamage(target, damage, 'weapon', stream, tick, atkEv.seq);
       }
-      u.flurrySwings += ENCOUNTER.swingsPerAction;
+      u.flurrySwings += swings;
       u.lastSwingTick = tick;
-      u.nextActionTick = tick + attackInterval(u);
+      if (abilityDefinition) {
+        consumeAbility(u, (picked.entry as { featId: number }).featId, tick);
+        u.nextActionTick = tick + abilityInterval(attackInterval(u), abilityDefinition);
+      } else {
+        u.nextActionTick = tick + attackInterval(u);
+      }
     }
 
     // Terminal checks.

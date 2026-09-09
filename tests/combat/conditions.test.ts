@@ -19,10 +19,11 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     // own `level: 3` at an ability score of 10, i.e. the same `level + mod`
     // derivation `buildEnemy` uses — so a hand-built hero and a hand-built
     // enemy start on equal footing rather than one of them silently at zero.
-    stealth: 3, perception: 3,
+    stealth: 3, perception: 3, athletics: 3,
     isCaster: false,
     saves: { fort: 5, ref: 5, will: 3 }, tempHp: 0, casting: null, loadout: [], reactions: [],
     lastReactionTick: -100, conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
+    abilityUses: new Map(), abilityReadyAt: new Map(), pendingPoisonDice: null,
     ...over,
   };
 }

@@ -106,6 +106,16 @@ export interface Combatant {
    */
   stealth: number;
   perception: number;
+  /**
+   * ⚠ ATHLETICS IS HERE FOR THE SAME REASON STEALTH IS (brief #22 M2).
+   * Knockdown and Improved Knockdown resolve a trip check against the target,
+   * and `resolveStrike`'s rider had nothing to read — the FOURTH instance of
+   * "the content carries the concept and the sim never reads it" after
+   * `weapon_range: null`, `class_weapon_proficiency` and the backstab's
+   * stealth/perception pair. Derived identically: ranks + ability mod + feat
+   * skill mods, so a hand-built enemy and a hand-built hero start level.
+   */
+  athletics: number;
   /** AI threat flag (+75 target weight). */
   isCaster: boolean;
   saves: { fort: number; ref: number; will: number };
@@ -133,6 +143,21 @@ export interface Combatant {
   lastSwingTick: number;
   /** Tick at which this combatant may next act (cooldown gate; Batch B AI drives it). */
   nextActionTick: number;
+
+  /**
+   * ABILITY LIMITERS (brief #22 M2). Both are PER-ENCOUNTER and die with the
+   * Combatant — which is exactly why M2 needs no save migration.
+   *
+   * ⚠ The third tier Steven asked for, ONCE PER LONG REST, deliberately does
+   * NOT live here: its state must survive the fight, so it belongs on
+   * `HeroState` with a backfill. Keeping the tiers separate is what lets that
+   * one land later without reworking these two.
+   */
+  abilityUses: Map<number, number>;
+  /** featId -> tick the ability comes off cooldown. */
+  abilityReadyAt: Map<number, number>;
+  /** Poison Weapon's rider, consumed by the next strike. Null = none pending. */
+  pendingPoisonDice: string | null;
 }
 
 export const isAlive = (c: Combatant): boolean => c.hp > 0 || c.conditions.has('dying');

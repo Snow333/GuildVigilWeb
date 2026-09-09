@@ -46,6 +46,82 @@ export const EFFECT_DOMAIN: Record<FeatEffectType, EffectDomain> = {
   special: 'campaign',
 };
 
+/**
+ * ⚠ THE READINESS GATE (brief #22 §2) — WHY THIS IS NOT `implemented: false`.
+ *
+ * 115 of 227 feats carry `"implemented": false` in their effects payload. That
+ * flag was measured against the engine and it is SOUND IN ONE DIRECTION ONLY:
+ *
+ *   flag says unimplemented -> engine really doesn't use it   ✔ 0 contradictions
+ *   flag is absent          -> engine implements it           ✘ 42 counter-examples
+ *
+ * The 42 are every `combat_action` (before #22 there was no verb at all),
+ * plus all `resource_grant`, `special`, `spell_modifier`, `stance`, `toggle`
+ * and `conditional_stat_mod` rows. Power Attack, Rage and the three Monk
+ * stances all read "ready" and all did nothing.
+ *
+ * The flag means "the CONTENT SPEC is complete", not "the ENGINE does this".
+ * Only the second question may grey out a picker row, so readiness is a
+ * CONJUNCTION computed here — never a bare column read.
+ *
+ * `EFFECT_HAS_CONSUMER` is the engine half, and it is a LIAR-IN-WAITING: a
+ * future brief that flips a bit before wiring the domain would silently
+ * un-grey a menu of dead feats while every harness stayed green. That is the
+ * exact failure mode brief #20 caught with its exposure test, so
+ * `tests/heroes/readiness.test.ts` asserts every `true` entry has a feat that
+ * demonstrably moves a resolver. Flip a bit without wiring it and that fails.
+ */
+export const EFFECT_HAS_CONSUMER: Record<FeatEffectType, boolean> = {
+  stat_mod: true, // resolveStatMods, here
+  skill_mod: true, // resolveSkillMods, here
+  passive_modifier: true, // assembly (sneak dice), strike.ts, conditions.ts
+  reaction: true, // assembly.reactionIds -> encounter reaction hooks
+  weapon_spec: true, // assembly.weaponSpecBonus -> strike.ts
+  combat_action: true, // brief #22 M2 — the 'ability' loadout verb
+  toggle: true, // encounter.executeToggle (Rage)
+  stance: true, // encounter.executeToggle (the Monk stances)
+  conditional_stat_mod: false, // no consumer: Reckless Abandon is inert
+  spell_modifier: false, // no consumer: Reach/Widen Spell are inert
+  resource_grant: false, // no consumer: campaign/prep layer doesn't exist
+  special: false, // no consumer: campaign layer
+};
+
+/**
+ * `combat_action` is `true` above, but only NINE rows are actually wired (the
+ * unflagged actives for the founding four — brief #22 §4.3). Per-type
+ * readiness is therefore necessary but not sufficient for that one type, and
+ * `ACTIVE_WIRED` is the row-level allow-list. Kept beside the map it refines
+ * so the two cannot drift apart unnoticed.
+ */
+export const ACTIVE_WIRED: ReadonlySet<number> = new Set([
+  1, // Power Attack        (Fighter L1)  strike_with_bonus
+  4, // Intimidating Strike (Fighter L2)  strike_plus_condition
+  9, // Brutish Shove       (Fighter L2)  strike_plus_shove
+  5, // Knockdown           (Fighter L4)  strike_plus_trip
+  7, // Improved Knockdown  (Fighter L8)  strike_plus_trip, no MAP
+  8, // Determination       (Fighter L10) remove_condition, once per combat
+  135, // Channel Smite      (Cleric L2)   strike_plus_channel
+  138, // Defensive Ward     (Cleric L6)   grant_ally_ac
+  71, // Poison Weapon       (Rogue L2)    apply_weapon_poison
+]);
+
+/** Why a feat cannot be selected. FROZEN set — the UI label-pairs each one. */
+export type UnreadyReason = 'not_yet_implemented' | 'prereq_unmet' | 'already_taken' | 'level_unmet';
+
+/**
+ * Is this feat's effect something the ENGINE can act on today? Content-spec
+ * completeness AND an engine consumer AND (for actives) a wired row.
+ * Selection eligibility adds prereqs/level/duplication on top — see `feats.ts`.
+ */
+export function isEffectReady(featId: number): boolean {
+  const fx = featEffectsById.get(featId);
+  if (!fx) return false;
+  if (fx.raw['implemented'] === false) return false;
+  if (!EFFECT_HAS_CONSUMER[fx.effectType]) return false;
+  if (fx.effectType === 'combat_action' && !ACTIVE_WIRED.has(featId)) return false;
+  return true;
+}
+
 export type Scaling = 'flat' | 'per_level' | 'per_class_level';
 
 export interface ParsedFeatEffect {
