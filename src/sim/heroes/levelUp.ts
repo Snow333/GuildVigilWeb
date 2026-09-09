@@ -41,6 +41,28 @@ export const MAX_CLASSES = 5;
 export const ABILITY_BOOST_LEVELS = [5, 10, 15, 20] as const;
 export const MULTICLASS_ABILITY_REQ = 13;
 
+/**
+ * BOOSTS PER MILESTONE (brief #22 M4, D3) — four +2s to DISTINCT abilities.
+ *
+ * Was ONE +2. PF2E grants four boosts at each of levels 5/10/15/20 and this
+ * matches that rate, so a milestone is "my character grew" rather than "my one
+ * number went up."
+ *
+ * ⚠ THE REJECTED DESIGN WAS `4 × +1`, AND IT WAS ARITHMETICALLY BROKEN.
+ * Modifiers are `floor((score − 10) / 2)` and every founding hero's scores are
+ * EVEN, so four +1s produce four ODD scores and **zero modifier change** — the
+ * player makes four choices and watches nothing happen. PF2E dodges this
+ * because its scores start at 10 and boosts are +2 below 18; the +1 rule only
+ * applies ABOVE 18 where it is deliberately braking. Never propose +1 boosts
+ * against an all-even stat line.
+ *
+ * ⚠ NO MAXIMUM SCORE IS ENFORCED, DELIBERATELY (D4). Pushing a stat to
+ * extremes is an intended build fantasy; the eventual cap must weigh base
+ * stats, growth, feats, equipment and buffs together, and there is not enough
+ * content in place to design that yet. A high-stat build is not a bug.
+ */
+export const BOOSTS_PER_MILESTONE = 4;
+
 /** Does reaching this NEW character level grant an ability boost? */
 export function isBoostLevel(newCharacterLevel: number): boolean {
   return (ABILITY_BOOST_LEVELS as readonly number[]).includes(newCharacterLevel);
@@ -52,14 +74,58 @@ export interface EligibilityResult {
 }
 
 /**
+ * The pending boosts as a list. Accepts a bare key so every existing caller
+ * and test keeps working unchanged — the single-boost era's shape is still
+ * valid input, it just now describes a one-element milestone.
+ */
+export function asBoostList(boosts?: AbilityKey | readonly AbilityKey[]): AbilityKey[] {
+  if (!boosts) return [];
+  return typeof boosts === 'string' ? [boosts] : [...boosts];
+}
+
+/** How much a pending boost selection adds to one ability. */
+function boostDelta(boosts: AbilityKey | readonly AbilityKey[] | undefined, ability: AbilityKey): number {
+  return asBoostList(boosts).filter((b) => b === ability).length * 2;
+}
+
+/**
+ * A milestone's boosts must name DISTINCT abilities (PF2E's rule, and the
+ * reason four boosts widen a character rather than spiking one number).
+ * Returns the problem, or null when the selection is legal.
+ */
+export function validateBoostSelection(
+  boosts: readonly AbilityKey[],
+  newCharacterLevel: number,
+): string | null {
+  const isMilestone = isBoostLevel(newCharacterLevel);
+  if (!isMilestone) {
+    return boosts.length > 0 ? `Level ${newCharacterLevel} grants no ability boosts` : null;
+  }
+  if (boosts.length !== BOOSTS_PER_MILESTONE) {
+    return `Level ${newCharacterLevel} grants ${BOOSTS_PER_MILESTONE} boosts (${boosts.length} chosen)`;
+  }
+  if (new Set(boosts).size !== boosts.length) {
+    return 'Boosts must go to four different abilities';
+  }
+  return null;
+}
+
+/**
  * Can this hero take/advance this class? Mirrors LevelUpPrereqCheck.check_class,
  * extended with the class-level caps the Godot picker enforced separately.
- * `selectedBoost` projects a pending boost (boost-before-class ordering).
+ *
+ * `selectedBoosts` projects the PENDING boosts (boost-before-class ordering) —
+ * a CHA-12 fighter boosting CHA can enter Sorcerer in the SAME level-up.
+ *
+ * ⚠ IT MUST PROJECT ALL FOUR, NOT ONE (brief #22 M4). With one +2 the caller
+ * could pass a single key; with four distinct +2s per milestone, checking only
+ * the first would deny a legal multiclass whenever the qualifying boost was
+ * picked second, third or fourth.
  */
 export function checkClassEligibility(
   hero: HeroState,
   classId: number,
-  selectedBoost?: AbilityKey,
+  selectedBoosts?: AbilityKey | readonly AbilityKey[],
 ): EligibilityResult {
   const classRow = classesById.get(classId);
   if (!classRow) return { met: false, reason: `Unknown class ${classId}` };
@@ -82,8 +148,7 @@ export function checkClassEligibility(
   }
 
   const keyAbility = (classRow.key_ability ?? 'str') as AbilityKey;
-  let score = hero.abilities[keyAbility];
-  if (selectedBoost === keyAbility) score += 2;
+  const score = hero.abilities[keyAbility] + boostDelta(selectedBoosts, keyAbility);
   if (score < MULTICLASS_ABILITY_REQ) {
     return {
       met: false,
@@ -109,16 +174,24 @@ export function maxSkillRanks(characterLevelValue: number): number {
  * Skill points for a level-up: class base + Int mod, floor 1 — computed from the
  * EFFECTIVE Int including a pending Int boost (the fixed bug).
  */
-export function skillPointsForLevel(classId: number, hero: HeroState, selectedBoost?: AbilityKey): number {
+export function skillPointsForLevel(
+  classId: number,
+  hero: HeroState,
+  selectedBoosts?: AbilityKey | readonly AbilityKey[],
+): number {
   const classRow = classesById.get(classId);
   if (!classRow) throw new Error(`skillPointsForLevel: unknown class ${classId}`);
-  const effectiveInt = hero.abilities.int + (selectedBoost === 'int' ? 2 : 0);
+  const effectiveInt = hero.abilities.int + boostDelta(selectedBoosts, 'int');
   return Math.max(1, (classRow.skill_points_per_level as number) + abilityMod(effectiveInt));
 }
 
 /** HP gained this level: max(1, hp_per_level + effective CON mod). */
-export function hpGainForLevel(hpPerLevel: number, hero: HeroState, selectedBoost?: AbilityKey): number {
-  const effectiveCon = hero.abilities.con + (selectedBoost === 'con' ? 2 : 0);
+export function hpGainForLevel(
+  hpPerLevel: number,
+  hero: HeroState,
+  selectedBoosts?: AbilityKey | readonly AbilityKey[],
+): number {
+  const effectiveCon = hero.abilities.con + boostDelta(selectedBoosts, 'con');
   return Math.max(1, hpPerLevel + abilityMod(effectiveCon));
 }
 
@@ -126,7 +199,14 @@ export interface LevelUpPlan {
   classId: number;
   /** From class_progression.hp_per_level for the NEW class level. */
   hpPerLevel: number;
-  boost?: AbilityKey;
+  /**
+   * Ability boosts for this level-up. A milestone (5/10/15/20) grants
+   * BOOSTS_PER_MILESTONE of them, to distinct abilities.
+   *
+   * ⚠ Accepts a bare key for the single-boost callers that predate M4; both
+   * shapes normalise through `asBoostList`.
+   */
+  boost?: AbilityKey | readonly AbilityKey[];
   /** Skill ranks to ADD, by skill name. */
   skillRanks: Record<string, number>;
   feats: HeroFeat[];
@@ -139,7 +219,8 @@ export interface LevelUpApplied {
   newCharacterLevel: number;
   hpGain: number;
   retroactiveConHp: number;
-  boost?: AbilityKey;
+  /** Every ability boosted this level-up, in the order chosen. */
+  boosts: AbilityKey[];
 }
 
 /**
@@ -151,6 +232,14 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
   if (!eligibility.met) throw new Error(`applyLevelUp: ${eligibility.reason}`);
 
   const priorCharacterLevel = characterLevel(hero);
+  const boosts = asBoostList(plan.boost);
+
+  // ⚠ DISTINCTNESS IS VALIDATED BEFORE ANY MUTATION, like every other rule
+  // here — four boosts into one ability would be +8 to a single score and is
+  // exactly the spike the distinct rule exists to prevent.
+  if (new Set(boosts).size !== boosts.length) {
+    throw new Error('applyLevelUp: ability boosts must go to distinct abilities');
+  }
 
   // Rank cap: validated against the NEW character level, before any mutation.
   const cap = maxSkillRanks(priorCharacterLevel + 1);
@@ -163,11 +252,20 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
 
   const hpGain = hpGainForLevel(plan.hpPerLevel, hero, plan.boost);
 
-  // Retroactive CON HP computed against PRIOR levels (the new level's HP already
-  // uses the boosted mod via hpGainForLevel).
+  /**
+   * Retroactive CON HP computed against PRIOR levels (the new level's HP
+   * already uses the boosted mod via hpGainForLevel).
+   *
+   * ⚠ COMPUTED FROM THE TOTAL CON DELTA, not from "was CON boosted?". With
+   * four distinct boosts CON can still only be picked once, but reading the
+   * delta rather than a boolean keeps this correct if a future design ever
+   * allows stacking, and it stays correct when the +2 crosses an odd score
+   * and moves the modifier by 1 rather than the assumed amount.
+   */
   let retroactiveConHp = 0;
-  if (plan.boost === 'con') {
-    const modDiff = abilityMod(hero.abilities.con + 2) - abilityMod(hero.abilities.con);
+  const conDelta = boostDelta(plan.boost, 'con');
+  if (conDelta > 0) {
+    const modDiff = abilityMod(hero.abilities.con + conDelta) - abilityMod(hero.abilities.con);
     if (modDiff > 0 && priorCharacterLevel > 0) retroactiveConHp = modDiff * priorCharacterLevel;
   }
 
@@ -184,7 +282,7 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
   }
 
   hero.maxHp += hpGain + retroactiveConHp;
-  if (plan.boost) hero.abilities[plan.boost] += 2;
+  for (const ability of boosts) hero.abilities[ability] += 2;
   for (const [skill, ranks] of Object.entries(plan.skillRanks)) {
     hero.skills[skill] = (hero.skills[skill] ?? 0) + ranks;
   }
@@ -193,13 +291,12 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
     if (!hero.feats.some((f) => f.featId === featId)) hero.feats.push({ featId });
   }
 
-  const result: LevelUpApplied = {
+  return {
     classId: plan.classId,
     newClassLevel,
     newCharacterLevel: priorCharacterLevel + 1,
     hpGain,
     retroactiveConHp,
+    boosts,
   };
-  if (plan.boost) result.boost = plan.boost;
-  return result;
 }

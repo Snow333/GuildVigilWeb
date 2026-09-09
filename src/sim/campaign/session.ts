@@ -30,9 +30,13 @@ import {
 import { deriveItem, itemBasesById, type DerivedItem } from '@sim/heroes/equipment';
 import { featEffectsById, partyDungeonBonus } from '@sim/heroes/featEffects';
 import {
-  applyLevelUp, checkClassEligibility, isBoostLevel, maxSkillRanks, skillPointsForLevel,
-  type LevelUpApplied, type LevelUpPlan,
+  applyLevelUp, BOOSTS_PER_MILESTONE, checkClassEligibility, isBoostLevel, maxSkillRanks,
+  skillPointsForLevel, type LevelUpApplied, type LevelUpPlan,
 } from '@sim/heroes/levelUp';
+import {
+  autoGrantsForLevel, offersForSlot, slotsForLevel, FEAT_SLOT_KINDS,
+  type FeatOffer, type FeatSlotKind,
+} from '@sim/heroes/feats';
 import { portraitKey, type AncestryId, type Gender } from '@sim/heroes/ancestry';
 import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
@@ -184,14 +188,29 @@ export interface LevelUpClassChoice {
 export interface LevelUpOptions {
   eligible: boolean;
   newCharacterLevel: number;
-  /** Reaching this level grants an ability boost (player's choice of ability). */
+  /** Reaching this level grants ability boosts (player's choice of abilities). */
   boostRequired: boolean;
+  /**
+   * How many boosts this milestone grants — 4 at levels 5/10/15/20, else 0
+   * (brief #22 M4). The wizard must read THIS, never assume one: the count is
+   * a design knob and hardcoding it in the UI would silently desync.
+   */
+  boostCount: number;
   skillNames: readonly string[];
   /** Ranks already held, by skill — the wizard greys + at the cap. */
   currentRanks: Record<string, number>;
   /** Rank ceiling at the NEW level (= character level, PF2-style — finding #4). */
   maxRanks: number;
   classes: LevelUpClassChoice[];
+}
+
+/** One offered feat slot at a level-up: the kind, and everything on the menu. */
+export interface FeatSlotOffer {
+  kind: FeatSlotKind;
+  /** How many picks of this kind this level grants. */
+  count: number;
+  /** Every candidate, selectable or greyed with a reason (brief #22 D1). */
+  offers: FeatOffer[];
 }
 
 export interface ShopOffer {
@@ -653,6 +672,34 @@ export class CampaignSession {
     return { week, questId: q.questId, outcome, ...(dispatch ? { dispatch } : {}), ...(fights.length > 0 ? { fights } : {}) };
   }
 
+  /**
+   * The feat slots a prospective level-up grants, each with its full menu.
+   *
+   * ⚠ Returns EVERY slot kind the schedule grants, including kinds whose pool
+   * is empty (D1: the ancestry track grants 5 per career against ZERO ancestry
+   * feats). The UI greys those rather than hiding them, so the hole stays
+   * legible instead of silently absent.
+   */
+  featSlotsFor(heroId: string, classId: number): FeatSlotOffer[] {
+    const hero = this.heroState(heroId);
+    const nextClassLevel = (hero.classLevels.find((cl) => cl.classId === classId)?.level ?? 0) + 1;
+    const counts = slotsForLevel(classId, nextClassLevel);
+    const out: FeatSlotOffer[] = [];
+    for (const kind of FEAT_SLOT_KINDS) {
+      const count = counts[kind];
+      if (count <= 0) continue;
+      out.push({ kind, count, offers: offersForSlot(hero, classId, kind) });
+    }
+    return out;
+  }
+
+  /** Feats auto-granted by the class features of a prospective level-up. */
+  autoGrantsFor(heroId: string, classId: number): number[] {
+    const hero = this.heroState(heroId);
+    const nextClassLevel = (hero.classLevels.find((cl) => cl.classId === classId)?.level ?? 0) + 1;
+    return autoGrantsForLevel(classId, nextClassLevel);
+  }
+
   /** The existing atomic applyLevelUp with a player-chosen plan; hpPerLevel derives here. */
   applyLevelUp(heroId: string, plan: SessionLevelUpPlan): LevelUpApplied {
     const hero = this.heroes.find((h) => h.id === heroId);
@@ -660,7 +707,18 @@ export class CampaignSession {
     const nextClassLevel = (hero.classLevels.find((cl) => cl.classId === plan.classId)?.level ?? 0) + 1;
     const prog = progressionFor(plan.classId, nextClassLevel);
     if (!prog) throw new Error(`applyLevelUp: class ${plan.classId} has no level ${nextClassLevel}`);
-    const applied = applyLevelUp(hero, { ...plan, hpPerLevel: prog.hp_per_level as number });
+    // Class features that name a real feat row are granted automatically — the
+    // player never picks Reactive Strike, the Fighter class hands it over at
+    // level 1. Merged with whatever the caller already passed, deduped downstream.
+    const autoGranted = [...new Set([
+      ...plan.autoGrantedFeatIds,
+      ...autoGrantsForLevel(plan.classId, nextClassLevel),
+    ])];
+    const applied = applyLevelUp(hero, {
+      ...plan,
+      autoGrantedFeatIds: autoGranted,
+      hpPerLevel: prog.hp_per_level as number,
+    });
     this.world.emit(this.minute, 'hero.level_up_applied', {
       heroId: hero.id, newLevel: applied.newCharacterLevel, classId: String(applied.classId),
     });
@@ -861,6 +919,7 @@ export class CampaignSession {
       eligible: canLevelUp(hero),
       newCharacterLevel,
       boostRequired,
+      boostCount: boostRequired ? BOOSTS_PER_MILESTONE : 0,
       skillNames,
       currentRanks: Object.fromEntries(skillNames.map((n) => [n, hero.skills[n] ?? 0])),
       maxRanks: maxSkillRanks(newCharacterLevel),

@@ -32,6 +32,17 @@ export interface HeroState {
   /** Skill ranks by skill name. */
   skills: Record<string, number>;
   feats: HeroFeat[];
+  /**
+   * KNOWN SPELLS — the pool half of core-loop D4 (brief #22 M3). Spell ids the
+   * hero has learned; the loadout draws its `cast` entries from here.
+   *
+   * ⚠ Optional because saves predate it. `backfillKnownSpells` fills it from
+   * the hero's loadout so an existing Mira does not lose Heal on load, and
+   * `assembleHero` still appends the auto-cantrip regardless — a caster is
+   * never left with nothing to do (brief #15 measured hero deaths 686 -> 156
+   * when the cantrip default landed; do not regress that).
+   */
+  knownSpells?: number[];
   /** PF2E wounded ratchet value (persists between fights until treated). */
   wounded: number;
   /**

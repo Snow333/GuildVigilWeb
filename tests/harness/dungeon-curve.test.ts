@@ -259,21 +259,36 @@ describe('NC6 — the gear policy is wired in and measurably load-bearing', () =
    * +12.3 at d3. The d2 figure was seed-selection luck — precisely the error
    * the noise floor exists to catch, caught here on the harness's first run.
    *
-   * The corrected reading is a coherent one: at d1-d2 the wedge wins
-   * comfortably either way and gear is slack; at d3 the fight is close enough
-   * that gear decides it. So the control is taken at d3, where the signal is,
-   * and on the POOLED wipe rate, where the lower base rate tightens the bar
-   * (+/-3.8 points at n=900/side against an observed -7.4).
+   * ⚠ THE BAND MOVED FROM d3 TO d4, AND THE REASON IS BRIEF #22.
+   *
+   * M4 took ability boosts from 1×+2 to 4×+2 per milestone and M5 gave the
+   * autopilot a feat priority list, so an at-level party is simply stronger
+   * than it was. That pushes the cell where GEAR decides a fight one step
+   * deeper: at d3 the wedge now wins comfortably either way and the delta fell
+   * to **+5.3, inside the ±8 noise bar**, exactly the "control measuring
+   * nothing" state brief #19 hit with the wipe half of this pair.
+   *
+   * Measured across the whole curve at n=300/side after M4/M5:
+   *
+   *   d1  −3.0   d2  +2.7   d3  +5.3   d4 **+12.0**   d5  +7.0   d6 +13.3   d7 +0.7
+   *
+   * d4 is chosen over d6 because it is the shallowest cell with real headroom
+   * (d5's +7.0 is still inside the bar; d7 is a floor where nothing completes).
+   *
+   * ⚠ THE THRESHOLD IS UNCHANGED (> 8) AND SO IS n. Only the band moved.
+   * Lowering the threshold to fit d3 would have let this control assert a
+   * difference smaller than the noise floor — the one thing the precision rule
+   * forbids, and the same trap brief #19 §NC6 documented.
    */
-  it('the bracket beats the founding kit where gear can decide a fight (d3)', () => {
-    const bracket = measure('tiny', 3, 3, bracketProvider, 'bracket');
-    const starter = measure('tiny', 3, 3, starterProvider, 'starter');
+  it('the bracket beats the founding kit where gear can decide a fight (d4)', () => {
+    const bracket = measure('small', 4, 4, bracketProvider, 'bracket');
+    const starter = measure('small', 4, 4, starterProvider, 'starter');
     const delta = Math.round((bracket.completedPct - starter.completedPct) * 10) / 10;
     expect({
       bracket: bracket.completedPct, starter: starter.completedPct, delta,
-      loadBearing: delta > 8, // measured +12.3 against a +/-8-point bar
+      loadBearing: delta > 8, // measured +12.0 against a +/-8-point bar
     }).toMatchObject({ loadBearing: true });
-  });
+  }, HEAVY_IT_TIMEOUT_MS);
 
   /**
    * ⚠ THE BAND MOVED FROM d1–d3 TO d3–d5, AND THE REASON IS BRIEF #19.

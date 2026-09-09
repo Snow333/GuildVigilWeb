@@ -17,8 +17,12 @@
 import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
-import { isBoostLevel, maxSkillRanks, skillPointsForLevel } from '@sim/heroes/levelUp';
-import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
+import {
+  CLASS_BOOST_PRIORITY, CLASS_FEAT_PRIORITY, DEFAULT_BOOST_ORDER, SHARED_FEAT_PRIORITY,
+} from '@content/autopilot';
+import { BOOSTS_PER_MILESTONE, isBoostLevel, maxSkillRanks, skillPointsForLevel } from '@sim/heroes/levelUp';
+import { autoGrantsForLevel, eligibleFeats, slotsForLevel, type FeatSlotKind } from '@sim/heroes/feats';
+import { characterLevel, type AbilityKey, type HeroFeat, type HeroState } from '@sim/heroes/types';
 import { canLevelUp } from '@sim/heroes/xp';
 import { classesById, progressionFor, skillNames } from '@sim/registry';
 import type { WorldMap } from '@sim/world/terrain';
@@ -51,8 +55,14 @@ export interface CampaignResult {
 }
 
 /**
- * Auto level-up policy: primary class, key-ability boosts, priority-list skills,
- * no optional feats. Returns the plan for the session to apply, or null at cap.
+ * Auto level-up policy: primary class, per-class boost and feat priorities,
+ * priority-list skills. Returns the plan for the session to apply, or null at
+ * cap.
+ *
+ * ⚠ THIS IS "LEVEL UP FOR ME" (brief #22 M5), not merely harness scaffolding.
+ * Manual level-up is the default path; this exists for players who want to
+ * skip the choices, and the harness rides the same code so it stays a valid
+ * proxy for hand play.
  */
 export function buildAutoLevelUpPlan(
   hero: HeroState,
@@ -64,7 +74,24 @@ export function buildAutoLevelUpPlan(
   if (!prog) return null; // class cap
   const newCharLevel = characterLevel(hero) + 1;
   const classRow = classesById.get(primary.classId);
-  const boost = isBoostLevel(newCharLevel) ? ((classRow?.key_ability ?? 'str') as AbilityKey) : undefined;
+
+  // ⚠ FOUR DISTINCT BOOSTS AT A MILESTONE (M4), not one. Key ability first,
+  // then survivability — picking alphabetically would quietly build worse
+  // characters than a player would.
+  const boost: AbilityKey[] = [];
+  if (isBoostLevel(newCharLevel)) {
+    const order = CLASS_BOOST_PRIORITY[primary.classId]
+      ?? [(classRow?.key_ability ?? 'str') as AbilityKey, ...DEFAULT_BOOST_ORDER];
+    for (const ability of order) {
+      if (boost.length >= BOOSTS_PER_MILESTONE) break;
+      if (!boost.includes(ability)) boost.push(ability);
+    }
+    // Top up from the full ability list if a short priority list ran out.
+    for (const ability of DEFAULT_BOOST_ORDER) {
+      if (boost.length >= BOOSTS_PER_MILESTONE) break;
+      if (!boost.includes(ability)) boost.push(ability);
+    }
+  }
   const points = skillPointsForLevel(primary.classId, hero, boost);
 
   // Round-robin the priority list, RESPECTING the rank cap (= new character
@@ -91,11 +118,45 @@ export function buildAutoLevelUpPlan(
   }
   return {
     classId: primary.classId,
-    ...(boost ? { boost } : {}),
+    ...(boost.length > 0 ? { boost } : {}),
     skillRanks,
-    feats: [],
-    autoGrantedFeatIds: [],
+    feats: autoPickFeats(hero, primary.classId, primary.level + 1),
+    autoGrantedFeatIds: autoGrantsForLevel(primary.classId, primary.level + 1),
   };
+}
+
+/**
+ * Fill this level's feat slots from the per-class priority lists.
+ *
+ * ⚠ Every candidate goes through `eligibleFeats`, so the readiness gate and
+ * prereq chains apply exactly as they do for a human picker — the autopilot
+ * cannot take something the player could not. An entry may be listed BEFORE
+ * its effect is wired; it is skipped until the day it lands, then taken.
+ *
+ * ⚠ Unfillable slots are FORFEIT, never a crash and never a substitute pick.
+ * The ancestry track grants 5 slots per career against zero authored feats, so
+ * forfeiting is the normal path, not an error case.
+ */
+function autoPickFeats(hero: HeroState, classId: number, newClassLevel: number): HeroFeat[] {
+  const counts = slotsForLevel(classId, newClassLevel);
+  const taken: HeroFeat[] = [];
+  const heroFeats = () => [...hero.feats, ...taken];
+
+  const fill = (kind: FeatSlotKind, count: number, priority: readonly number[]): void => {
+    for (let i = 0; i < count; i++) {
+      const eligible = eligibleFeats(hero, classId, kind, heroFeats());
+      if (eligible.length === 0) return; // nothing offerable — forfeit the slot
+      const preferred = priority.find((id) => eligible.some((o) => o.featId === id));
+      const pick = preferred ?? eligible[0]!.featId;
+      taken.push({ featId: pick });
+    }
+  };
+
+  fill('class', counts.class, CLASS_FEAT_PRIORITY[classId] ?? []);
+  fill('general', counts.general, SHARED_FEAT_PRIORITY);
+  fill('skill', counts.skill, SHARED_FEAT_PRIORITY);
+  fill('ancestry', counts.ancestry, []);
+  return taken;
 }
 
 /**

@@ -40,11 +40,12 @@ export function mkHero(
   skills: Record<string, number>,
   feats: { featId: number; choices?: { skill?: string } }[] = [],
   identity: { ancestry: AncestryId; gender: Gender } = deriveHeroIdentity(id),
+  knownSpells: number[] = [],
 ): HeroState {
   return {
     id, name, status: 'active', xp: 0, maxHp, abilities,
     classLevels: [{ classId, level: 1, orderTaken: 1 }],
-    skills, feats, wounded: 0,
+    skills, feats, knownSpells, wounded: 0,
     ancestry: identity.ancestry, gender: identity.gender,
   };
 }
@@ -206,14 +207,22 @@ export function musterParty(choices: readonly MusterChoice[]): HeroKit[] {
     if (!template) throw new Error(`musterParty: no founding template for class ${choice.classId}`);
     const id = Ids.hero(i + 1);
     const name = choice.name.trim() === '' ? template.defaultName : choice.name.trim();
+    const loadout = template.loadout();
+    // Brief #22 M3: the founding pool IS what the template hard-coded, so the
+    // muster and the backfill agree by construction — a new campaign and a
+    // migrated save produce the same known-spells list for the same hero.
+    const knownSpells = [
+      ...new Set(loadout.filter((e) => e.action === 'cast').map((e) => e.spellId)),
+    ].sort((a, b) => a - b);
     return {
       hero: mkHero(
         id, name, template.classId, { ...template.abilities }, template.maxHp,
         { ...template.skills }, template.feats.map((f) => ({ ...f })),
         { ancestry: choice.ancestry, gender: choice.gender },
+        knownSpells,
       ),
       equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),
-      loadout: template.loadout(),
+      loadout,
     };
   });
 }
