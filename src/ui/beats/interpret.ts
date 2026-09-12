@@ -9,10 +9,34 @@
  * misses, round bucketing) is Phase 3 polish per the plan.
  */
 
+import { spellsById } from '@sim/registry';
 import type { EventStream } from '@sim/core/events/stream';
 import type { RollBreakdown, SimEvent } from '@sim/core/events/types';
 
-export type BeatTone = 'good' | 'bad' | 'loot' | 'travel' | 'system' | 'neutral';
+/**
+ * THE SIX SEMANTIC CHANNELS (brief #24 colour pass).
+ *
+ * ⚠ THESE ARE SHARED WITH THE CHARACTER SHEET, deliberately. A red stripe in
+ * the record and a red bar on the sheet mean the same thing, so the player
+ * learns one vocabulary instead of two. The mapping:
+ *
+ *   defence     blue    our side holding, reactions, saves
+ *   harm        red     damage dealt, hits landed
+ *   magic       purple  spells, conditions, control
+ *   resource    green   healing, loot, resources gained
+ *   exceptional brass   criticals — its own channel, NOT "a stronger red"
+ *   inert       grey    misses; nothing happened, the eye may skip
+ *
+ * ⚠ COLOUR IS NEVER THE ONLY CARRIER (WCAG 1.4.1). Each tone also drives a
+ * text label in the UI, and `inert` additionally renders dashed, so the
+ * distinction survives greyscale and colour blindness.
+ *
+ * The legacy names are kept because non-combat events still use them and the
+ * pinned contract snapshot covers those lines.
+ */
+export type BeatTone =
+  | 'defence' | 'harm' | 'magic' | 'resource' | 'exceptional' | 'inert' | 'slain'
+  | 'good' | 'bad' | 'loot' | 'travel' | 'system' | 'neutral';
 
 export interface BeatLine {
   tick: number;
@@ -44,7 +68,31 @@ const CHECK_WORD: Record<RollBreakdown['degree'], string> = {
   critSuccess: 'aced',
 };
 
-const fmtRoll = (r: RollBreakdown): string => `${r.d20}+${r.modifier}=${r.total} vs DC ${r.dc}`;
+const fmtRoll = (r: RollBreakdown): string => `${r.d20} ${signed(r.modifier)} = ${r.total} vs DC ${r.dc}`;
+
+/**
+ * A signed modifier, rendered the way a human writes it.
+ *
+ * ⚠ THE OLD FORM PRINTED A DOUBLE SIGN. `${r.d20}+${r.modifier}` on a NEGATIVE
+ * modifier produced `3+-3=0` — two operators in a row, which stalls a reader
+ * mid-line and is exactly the kind of noise that makes a combat log feel
+ * unparseable. A penalty now reads `3 − 3 = 0` with a real minus sign.
+ */
+function signed(n: number): string {
+  return n < 0 ? `− ${Math.abs(n)}` : `+ ${n}`;
+}
+
+/**
+ * Spell id → authored name.
+ *
+ * ⚠ THE RECORD USED TO PRINT THE DATABASE ID: "Mira casts spell 14". That was
+ * survivable while only heroes cast, but brief #23 routed every POTION through
+ * the same path, so a healing potion read "casts spell 208" — the consumables
+ * feature was invisible in the log it exists to appear in.
+ */
+function spellName(spellId: number): string {
+  return (spellsById.get(spellId)?.name as string | undefined) ?? `spell ${spellId}`;
+}
 
 /** One event → one line, or null to drop it silently (structural noise). */
 export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id): BeatLine | null {
@@ -128,35 +176,47 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
       if (d.flanked) extras.push('flanked');
       if (d.sneakDice) extras.push(`sneak ${d.sneakDice}d`);
       const suffix = extras.length > 0 ? ` [${extras.join(', ')}]` : '';
-      return t(`${nameFor(d.attackerId)} → ${nameFor(d.targetId)}: ${DEGREE_WORD[d.roll.degree]} (${fmtRoll(d.roll)})${suffix}`);
+      /**
+       * ⚠ TONE NOW CARRIES THE DEGREE, and that is the whole point of the
+       * colour pass. Every attack line used to be 'neutral', so a critical
+       * hit, a plain hit and a whiff were typographically identical and the
+       * reader had to parse the words to find the moments that mattered.
+       *   crit  -> 'exceptional' (its own channel, not "a stronger hit")
+       *   miss  -> 'inert'       (nothing happened; the eye may skip it)
+       *   hit   -> 'harm'
+       */
+      const tone: BeatTone =
+        d.roll.degree === 'critSuccess' ? 'exceptional'
+          : d.roll.degree === 'success' ? 'harm'
+            : 'inert';
+      return t(`${nameFor(d.attackerId)} → ${nameFor(d.targetId)}: ${DEGREE_WORD[d.roll.degree]} (${fmtRoll(d.roll)})${suffix}`, tone);
     }
     case 'combat.spell_cast':
-      return t(`${nameFor(ev.data.casterId)} casts spell ${ev.data.spellId}.`, 'system');
+      return t(`${nameFor(ev.data.casterId)} casts ${spellName(Number(ev.data.spellId))}.`, 'magic');
     case 'combat.aoe_resolved':
       return t(`The ${ev.data.shape} catches ${ev.data.targets.length} target(s).`, 'system');
     case 'combat.damage_applied':
-      return t(`${nameFor(ev.data.targetId)} takes ${ev.data.amount} ${ev.data.kind} (${ev.data.hpAfter} hp left).`,
-        ev.data.hpAfter <= 0 ? 'bad' : 'neutral');
+      return t(`${nameFor(ev.data.targetId)} takes ${ev.data.amount} ${ev.data.kind} (${ev.data.hpAfter} hp left).`, 'harm');
     case 'combat.healing_applied':
-      return t(`${nameFor(ev.data.targetId)} is healed ${ev.data.amount} (${ev.data.hpAfter} hp).`, 'good');
+      return t(`${nameFor(ev.data.targetId)} is healed ${ev.data.amount} (${ev.data.hpAfter} hp).`, 'resource');
     case 'combat.condition_applied':
-      return t(`${nameFor(ev.data.targetId)} is ${ev.data.conditionId}${ev.data.value ? ` ${ev.data.value}` : ''}.`, 'bad');
+      return t(`${nameFor(ev.data.targetId)} is ${ev.data.conditionId}${ev.data.value ? ` ${ev.data.value}` : ''}.`, 'magic');
     case 'combat.condition_save_resolved':
       return t(`${nameFor(ev.data.targetId)} ${CHECK_WORD[ev.data.roll.degree]} a save vs ${ev.data.conditionId} (${fmtRoll(ev.data.roll)}).`,
         ev.data.roll.degree === 'success' || ev.data.roll.degree === 'critSuccess' ? 'good' : 'bad');
     case 'combat.condition_expired':
       return t(`${nameFor(ev.data.targetId)} shakes off ${ev.data.conditionId}.`, 'good');
     case 'combat.reaction_triggered':
-      return t(`${nameFor(ev.data.unitId)} reacts (${ev.data.reactionId}) against ${nameFor(ev.data.againstId)}.`, 'neutral');
+      return t(`${nameFor(ev.data.unitId)} reacts (${ev.data.reactionId}) against ${nameFor(ev.data.againstId)}.`, 'defence');
     case 'combat.unit_moved':
       return null; // positional noise at feed granularity
     case 'combat.unit_downed':
-      return t(`${nameFor(ev.data.unitId)} goes DOWN (dying ${ev.data.dyingValue}).`, 'bad');
+      return t(`${nameFor(ev.data.unitId)} goes DOWN (dying ${ev.data.dyingValue}).`, 'slain');
     case 'combat.dying_check_resolved':
       return t(`${nameFor(ev.data.unitId)} ${CHECK_WORD[ev.data.roll.degree]} a death save (dying ${ev.data.dyingAfter}).`,
         ev.data.dyingAfter === 0 ? 'good' : 'bad');
     case 'combat.unit_died':
-      return t(`${nameFor(ev.data.unitId)} is slain.`, 'bad');
+      return t(`${nameFor(ev.data.unitId)} is slain.`, 'slain');
     case 'combat.unit_fled':
       return t(`${nameFor(ev.data.unitId)} flees.`, 'neutral');
     case 'combat.stance_changed':

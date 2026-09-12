@@ -402,22 +402,58 @@
 }
 
 /* the scribe's running record: ruled feed on fresh vellum */
+/* ============ the record: six semantic channels (brief #24) ============
+   ⚠ THE COLOUR LIVES IN A LEFT STRIPE, NOT IN THE TEXT.
+   Colouring 13px body text is precisely what British Dyslexia Association
+   guidance warns against — it lowers contrast on the glyphs a reader must
+   actually decode. A 3px border-left carries the same signal at full
+   saturation while the words stay high-contrast ink.
+
+   ⚠ COLOUR IS NEVER ALONE (WCAG 1.4.1). Each tone below pairs with something
+   non-chromatic: `inert` is dashed AND dimmed, `exceptional` is bold, `slain`
+   is bold. Desaturate the screen and the record still reads.
+
+   The channels match the character sheet exactly, so red means offence in
+   both places and the player learns one vocabulary. */
 .gv-feed {
   height: 280px;
   overflow-y: auto;
-  background-image: repeating-linear-gradient(#00000000 0 27px, #8c6a3a22 27px 28px);
-  line-height: 28px;
+  line-height: 1.55;
   font-size: 13px;
+}
+.gv-feed .gv-beat {
+  padding: 3px 8px 3px 9px;
+  border-left: 3px solid transparent;
+  margin-bottom: 1px;
 }
 .gv-feed .gv-beat small {
   color: var(--gv-ink-muted);
   font-family: var(--gv-sans);
   font-size: 10px;
   margin-right: 8px;
+  font-variant-numeric: tabular-nums lining-nums;
 }
+/* numbers in the record line up as columns rather than drifting */
+.gv-feed .gv-beat { font-variant-numeric: tabular-nums lining-nums slashed-zero; }
+
+.gv-feed .gv-beat[data-tone='harm']        { border-left-color: var(--gv-ch-harm); background: #9c342809; }
+.gv-feed .gv-beat[data-tone='defence']     { border-left-color: var(--gv-ch-defence); background: #2f6b8f0d; }
+.gv-feed .gv-beat[data-tone='magic']       { border-left-color: var(--gv-ch-magic); background: #6b4c8f0d; }
+.gv-feed .gv-beat[data-tone='resource']    { border-left-color: var(--gv-ch-resource); background: #3f6d2e0d; }
+.gv-feed .gv-beat[data-tone='exceptional'] { border-left-color: var(--gv-ch-exceptional); background: #c9a86a2e; font-weight: 700; }
+.gv-feed .gv-beat[data-tone='slain']       { border-left-color: var(--gv-ch-slain); background: #7d282010; font-weight: 700; }
+/* nothing happened: dashed AND dimmed, so the eye skips it in any palette */
+.gv-feed .gv-beat[data-tone='inert'] {
+  border-left-style: dashed;
+  border-left-color: var(--gv-ch-inert);
+  color: var(--gv-ink-muted);
+}
+/* legacy tones, still used by travel/loot/dispatch lines */
 .gv-feed .gv-beat[data-tone='bad'] { font-weight: 600; }
-.gv-feed .gv-beat[data-tone='loot'] { font-style: italic; }
+.gv-feed .gv-beat[data-tone='loot'] { font-style: italic; border-left-color: var(--gv-ch-resource); }
+.gv-feed .gv-beat[data-tone='good'] { border-left-color: var(--gv-ch-resource); }
 .gv-feed .gv-beat[data-tone='system'] { color: var(--gv-ink-muted); }
+.gv-feed .gv-beat[data-tone='travel'] { color: var(--gv-ink-soft); }
 /* the dungeon sketch: ink on vellum, same hand as the chart */
 .gv-sketch svg {
   display: block;

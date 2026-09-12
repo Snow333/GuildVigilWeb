@@ -66,6 +66,7 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
     setTick(0);
     setPlaying(true);
     setSelectedId(null);
+    setFocusId(null);
     carry.current = 0;
   }, [segment.combatId]);
 
@@ -77,6 +78,40 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
   );
 
   const held = speed >= SKIM_FROM;
+
+  /**
+   * FOCUS: which unit the reader is following, or null for everyone.
+   *
+   * ⚠ Reset when the fight changes — a filter pinned to a unit who does not
+   * appear in the next fight would show an empty record with no obvious cause.
+   */
+  const [focusId, setFocusId] = useState<string | null>(null);
+
+  /**
+   * Units worth offering as a filter, in the order they first act.
+   *
+   * Derived from the SPAWNS rather than the name map so the buttons match the
+   * units actually present in THIS fight, and so a dead unit still gets a
+   * button (you often want to review how someone died).
+   */
+  const focusable = useMemo<[string, string][]>(
+    () => spawns.filter((sp) => sp.side === 'heroes').map((sp) => [sp.unitId, names.get(sp.unitId) ?? sp.name]),
+    [spawns, names],
+  );
+
+  /**
+   * The visible slice: up to the playhead, and narrowed to the focused unit.
+   *
+   * ⚠ MATCHES ON THE RESOLVED DISPLAY NAME, not the id. Beat text is already
+   * name-resolved by `interpretStream`, so the id never appears in it — an
+   * id-based filter silently matches nothing. Found by exactly that bug.
+   */
+  const visibleLines = useMemo(() => {
+    const upToTick = feed.lines.filter((l) => l.tick <= tick);
+    if (focusId === null) return upToTick;
+    const label = names.get(focusId) ?? focusId;
+    return upToTick.filter((l) => l.text.includes(label));
+  }, [feed.lines, tick, focusId, names]);
   const done = tick >= segment.ticks;
 
   /**
@@ -259,8 +294,38 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
       <h3 className="gv-head" style={{ marginTop: 14 }}>
         The record <span className="gv-sub">this fight, beat by beat</span>
       </h3>
+      {/*
+        THE FOCUS FILTER (brief #24). Following one character through a fight
+        used to mean scanning interleaved lines for a name; now it is one click.
+
+        ⚠ FILTERS THE VIEW, NEVER THE RECORD. `feed.lines` is untouched — this
+        only narrows what is DISPLAYED, so the underlying stream stays the
+        complete deterministic account and no filter can hide an event from the
+        contract snapshot.
+      */}
+      <div className="gv-choice" style={{ margin: '0 0 8px' }}>
+        <span className="gv-choice-label">focus</span>
+        <button className="gv-btn" disabled={focusId === null} onClick={() => setFocusId(null)}>
+          Everything
+        </button>
+        {focusable.map(([id, label]) => (
+          <button
+            key={id}
+            className="gv-btn"
+            disabled={focusId === id}
+            onClick={() => setFocusId(id)}
+            data-focus-unit={id}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div ref={feedRef} className="gv-feed">
-        {feed.lines.filter((l) => l.tick <= tick).map((l, i) => (
+        {visibleLines.length === 0 && (
+          <div className="gv-beat" data-tone="inert"><em>Nothing for this filter yet.</em></div>
+        )}
+        {visibleLines.map((l, i) => (
           <div key={i} className="gv-beat" data-tone={l.tone}>
             <small>{String(l.tick).padStart(4, ' ')}</small> {l.text}
           </div>

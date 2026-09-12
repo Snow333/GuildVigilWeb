@@ -54,6 +54,26 @@
   --gv-s2: #ec835a; /* threatened / wounded / warning */
   --gv-s3: #d03b3b; /* overrun / critical / failure   */
 
+  /* ── THE SIX SEMANTIC CHANNELS (brief #24) ──────────────────────────────
+     One vocabulary shared by the combat record and the character sheet, so a
+     red stripe in the log and a red bar on the sheet mean the same thing.
+
+     ⚠ DISTINCT IN LIGHTNESS, NOT ONLY HUE. Chosen so they stay separable
+     under the common colour-blindness simulations and in greyscale; every
+     use in the UI additionally pairs them with a word or a border style, so
+     colour is reinforcement and never the sole carrier (WCAG 1.4.1).
+
+     ⚠ NOT the --gv-s* set. Those four are the FROZEN status ramp (brief #8)
+     and mean severity; these mean CATEGORY. Keeping them separate is why a
+     critical hit can be 'exceptional' rather than 'more severe than a hit'. */
+  --gv-ch-defence: #2f6b8f;     /* our side holding, reactions, saves */
+  --gv-ch-harm: #9c3428;        /* damage dealt, hits landed          */
+  --gv-ch-magic: #6b4c8f;       /* spells, conditions, control        */
+  --gv-ch-resource: #3f6d2e;    /* healing, loot, resources gained    */
+  --gv-ch-exceptional: #8a6c38; /* criticals — its own channel        */
+  --gv-ch-inert: #8a7a5c;       /* nothing happened; may be skipped   */
+  --gv-ch-slain: #7d2820;       /* a unit died                        */
+
   /* textures — feTurbulence data-URIs (zero image assets, per brief) */
   /* Brief #11: was baseFrequency 0.055 / opacity 0.16. Over a 300px tile that
      is a ~18px feature size, which at full-viewport scale reads as smeared
