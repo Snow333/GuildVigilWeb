@@ -23,7 +23,7 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     isCaster: false,
     saves: { fort: 5, ref: 5, will: 3 }, tempHp: 0, casting: null, loadout: [], reactions: [],
     lastReactionTick: -100, conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
-    abilityUses: new Map(), abilityReadyAt: new Map(), pendingPoisonDice: null, quickSlots: [],
+    abilityUses: new Map(), abilityReadyAt: new Map(), pendingPoisonDice: null, quickSlots: [], weaponRiders: [],
     ...over,
   };
 }

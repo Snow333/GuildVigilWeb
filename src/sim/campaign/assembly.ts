@@ -61,6 +61,8 @@ export interface HeroKit {
 }
 
 const BASE_SPEED = 5; // world units/sec (medium creature; old grid: 1 unit = 5 ft)
+/** 1 world unit = 5 ft. Items author speed in FEET; the sim runs in units. */
+const FEET_PER_UNIT = 5;
 
 /**
  * ⚠ A SKILL MISSING FROM THIS TABLE SILENTLY KEYS OFF WIS — see `skill()`'s
@@ -372,7 +374,19 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     // specialisation bonus no matter what feats they hold.
     isWeaponProficient: gear.weaponProficient,
     sneakAttackDice: sneakDice(hero),
-    speed: BASE_SPEED + (featStat['speed'] ?? 0),
+    /**
+     * ⚠ ITEM SPEED IS AUTHORED IN FEET; THIS SCALE IS WORLD UNITS.
+     * Boots of Speed carry `{"speed": 10}`, meaning +10 FEET — the PF2E unit.
+     * `BASE_SPEED` is 5 world units (1 unit = 5 ft), so adding the raw 10 would
+     * take a hero from 5 to 15: TRIPLE speed, from a pair of boots. Divided by
+     * FEET_PER_UNIT it is +2 units, which is the intended +10 ft.
+     *
+     * Feat speed mods are NOT converted: `resolveStatMods` reads the feat
+     * vocabulary, which is already authored in world units. Two vocabularies
+     * meeting at one field is exactly the trap that made `fort_save` silently
+     * miss — see `aggregateStatBonuses`.
+     */
+    speed: BASE_SPEED + (featStat['speed'] ?? 0) + Math.round((itemStat['speed'] ?? 0) / FEET_PER_UNIT),
     wounded: hero.wounded,
     level,
     initiativeBonus: perceptionTotal + (featStat['initiative'] ?? 0),
@@ -385,6 +399,8 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     // The per-dispatch mirror of the kit's pouch (brief #23 M3). Index-aligned
     // with kit.quickSlots so consumption reconciles positionally afterwards.
     quickSlots: toCombatQuickSlots(normalizeQuickSlots(kit.quickSlots)),
+    // Brief #24 M1: the magic on the weapon, parsed once per assembly.
+    weaponRiders: weapon?.derived.onHitEffects ?? [],
     isCaster: casting !== null,
     saves,
     tempHp: 0,

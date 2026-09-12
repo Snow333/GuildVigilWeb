@@ -4,6 +4,7 @@
  */
 
 import type { CombatQuickSlot } from '@sim/heroes/quickSlots';
+import type { DerivedItem } from '@sim/heroes/equipment';
 
 export interface Vec2 {
   x: number;
@@ -158,6 +159,17 @@ export interface Combatant {
   abilityUses: Map<number, number>;
   /** featId -> tick the ability comes off cooldown. */
   abilityReadyAt: Map<number, number>;
+  /**
+   * THE EQUIPPED WEAPON'S RIDER EFFECTS (brief #24 M1) — flaming, wounding,
+   * venom and the rest, as parsed by `deriveItem`.
+   *
+   * ⚠ EMPTY FOR ENEMIES AND FOR MUNDANE WEAPONS, which is the common case;
+   * `resolveWeaponRiders` short-circuits on an empty list so the hot path pays
+   * nothing. Carried on the Combatant rather than re-derived per swing because
+   * `deriveItem` parses JSON, and a strike happens many times a second.
+   */
+  weaponRiders: DerivedItem['onHitEffects'];
+
   /** Poison Weapon's rider, consumed by the next strike. Null = none pending. */
   pendingPoisonDice: string | null;
 

@@ -131,8 +131,22 @@ describe('stat bonuses from wondrous items', () => {
     expect(deriveItem(inst('56')).statBonuses).toEqual({ int: 2 });
   });
 
-  it('aggregates across equipped items including save bonuses', () => {
+  /**
+   * ⚠ THIS TEST USED TO PIN THE BUG AS CORRECT (brief #24 M2).
+   *
+   * It asserted the RAW authored keys — `fort_save`, `ref_save`, `will_save` —
+   * which is exactly what items carry. But `assembly.ts` reads the FEAT
+   * vocabulary (`save_fort`, …), so the lookup silently missed and every Cloak
+   * of Resistance granted nothing. The test passed the whole time, because it
+   * checked the aggregator against itself rather than against its consumer.
+   *
+   * `aggregateStatBonuses` now normalises to the vocabulary its consumer
+   * actually reads, and this test asserts THAT — the contract that matters.
+   * See tests/combat/weaponRiders.test.ts for the end-to-end proof that a
+   * cloak now moves a hero's saves.
+   */
+  it('aggregates across equipped items, normalised to the consumer vocabulary', () => {
     const total = aggregateStatBonuses([inst('57'), inst('54')]);
-    expect(total).toEqual({ str: 2, fort_save: 1, ref_save: 1, will_save: 1 });
+    expect(total).toEqual({ str: 2, save_fort: 1, save_ref: 1, save_will: 1 });
   });
 });

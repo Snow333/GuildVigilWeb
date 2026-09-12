@@ -56,6 +56,8 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
     pendingPoisonDice: null,
+    // Enemies wield no magic weapons yet — enemy damage is authored flat.
+    weaponRiders: [],
     // Enemies carry no pouch — consumables are a player-planning verb.
     quickSlots: [],
     isCaster: false,

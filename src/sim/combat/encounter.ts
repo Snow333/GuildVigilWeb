@@ -16,11 +16,12 @@ import {
   abilityDef, abilityInterval, applySelfAbility, applyStrikeRider, consumeAbility,
 } from './abilities';
 import { decayFlurry, flurryPenalty, rollDice } from './dice';
-import { canMove, expireConditions, hasCondition, speedMod } from './conditions';
+import { applyCondition, canMove, expireConditions, hasCondition, isConditionId, speedMod } from './conditions';
 import { damageWhileDying, healDying, knockOut, resolveDyingRecovery } from './dying';
 import { featEffectsById } from '@sim/heroes/featEffects';
 import { pickAction } from './loadout';
 import { applyConditionFromCast, resolveCast, spellRange } from './spells';
+import { resolveWeaponRiders, totalRiderDamage } from './weaponRiders';
 import { spellsById } from '@sim/registry';
 import { resolveStrike, rollConceal } from './strike';
 import { dist, type Combatant } from './types';
@@ -497,6 +498,56 @@ export function runEncounter(
           flanked: strike.flanked, ...(strike.isSneakAttack ? { sneakDice: strike.sneakDamage } : {}),
         });
         if (damage > 0) applyDamage(target, damage, 'weapon', stream, tick, atkEv.seq);
+
+        /**
+         * WEAPON RIDERS (brief #24 M1) — flaming, wounding, venom, lifedrinker.
+         *
+         * ⚠ EACH RIDER GETS ITS OWN DAMAGE EVENT with its own TYPE, rather
+         * than being added to `damage` above. Resistances (M4) need the type,
+         * the record needs a line to colour, and a folded rider is invisible —
+         * which is how this content stayed dead for so long. See
+         * weaponRiders.ts for the full reasoning.
+         *
+         * ⚠ ORDER MATTERS: riders resolve AFTER the weapon damage lands, so a
+         * target already slain by the strike still takes the rider's damage
+         * event (harmless) but the LOG reads in causal order — hit, damage,
+         * then the magic.
+         */
+        if (hit) {
+          const riders = resolveWeaponRiders(
+            u.weaponRiders.length > 0 ? ({ onHitEffects: u.weaponRiders } as never) : null,
+            target,
+            strike.roll.degree === 'critSuccess',
+            rng,
+          );
+          for (const rd of riders.damage) {
+            if (rd.amount > 0) applyDamage(target, rd.amount, rd.damageType, stream, tick, atkEv.seq);
+          }
+          for (const rc of riders.conditions) {
+            /**
+             * ⚠ A "round" IS `attackIntervalTicks`, matching applyStrikeRider
+             * in abilities.ts. There is no separate round constant — the sim is
+             * continuous-time — so authored `duration_rounds` is converted at
+             * the same rate feats already use. Diverging here would make a
+             * 3-round weapon rider outlast a 3-round feat rider.
+             */
+            const durationTicks = ENCOUNTER.attackIntervalTicks * rc.durationRounds;
+            if (isConditionId(rc.conditionId)) {
+              applyCondition(target, rc.conditionId, rc.value, tick + durationTicks);
+              stream.emit(tick, 'combat.condition_applied', {
+                targetId: target.id, conditionId: rc.conditionId, value: rc.value, durationTicks,
+              }, atkEv.seq);
+            }
+            // ⚠ An UNMODELLED condition (persistent_bleed, persistent_poison)
+            // is skipped SILENTLY here but reported by a content test — see
+            // tests/combat/weaponRiders.test.ts. Emitting an event for a
+            // condition the engine cannot apply would put a lie in the record.
+          }
+          if (riders.healPercent > 0) {
+            const drained = Math.floor((damage + totalRiderDamage(riders)) * riders.healPercent / 100);
+            if (drained > 0) applyHealing(u, drained, stream, tick, atkEv.seq);
+          }
+        }
       }
       u.flurrySwings += swings;
       u.lastSwingTick = tick;

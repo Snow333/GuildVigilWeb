@@ -191,12 +191,38 @@ export function aggregateArmorCheckPenalty(equipped: readonly ItemInstance[]): n
 }
 
 /** Aggregate stat bonuses across a hero's equipped instances ({str: 2, fort_save: 1, …}). */
+/**
+ * Aggregate every equipped item's `stat_bonus` into one lookup.
+ *
+ * ⚠ THE KEY VOCABULARY IS NORMALISED HERE, and that fixes a real bug.
+ * Items author saves as `fort_save` / `ref_save` / `will_save` (19 rows,
+ * including every Cloak of Resistance). `assembly.ts` reads them as
+ * `save_fort` / `save_ref` / `save_will`, matching the FEAT stat_mod
+ * vocabulary. Neither side was wrong in isolation — they simply never agreed,
+ * so the lookup silently missed and the Cloak of Resistance +1 gave nothing.
+ *
+ * ⚠ MEASURED, NOT ASSUMED. Probed by assembling a hero with and without the
+ * cloak: saves were identical (fort 3 / ref 2 / will 2 both ways). A Belt of
+ * Strength +2 DID work, because `str` happens to spell the same on both sides
+ * — which is exactly why this went unnoticed. Half the channel worked.
+ *
+ * Aliasing rather than renaming either side: the feat vocabulary is shared
+ * with `resolveStatMods` and the item strings are authored content, so
+ * changing either would be a wider edit with its own migration.
+ */
+const STAT_BONUS_ALIASES: Readonly<Record<string, string>> = {
+  fort_save: 'save_fort',
+  ref_save: 'save_ref',
+  will_save: 'save_will',
+};
+
 export function aggregateStatBonuses(equipped: readonly ItemInstance[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const inst of equipped) {
     const derived = deriveItem(inst);
     for (const [stat, value] of Object.entries(derived.statBonuses)) {
-      out[stat] = (out[stat] ?? 0) + value;
+      const key = STAT_BONUS_ALIASES[stat] ?? stat;
+      out[key] = (out[key] ?? 0) + value;
     }
   }
   return out;
