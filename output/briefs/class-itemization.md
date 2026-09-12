@@ -254,23 +254,48 @@ mean the bracket was arming heroes off-class and the old numbers were inflated.
 
 ---
 
-## 8. Open questions
+## 8. Decisions — APPROVED 2026-09-09
 
-**Q1 — Unproficient armour: what exactly is lost?** §3.2 proposes *keep base AC, lose
-potency, take the check penalty on attacks* (a trade). Alternatives: deny ALL AC from the
-armour (strictly wrong, never worth it) · check penalty only (too weak to matter).
+All five answered by Steven. This section is the decision record; where it disagrees with
+the body above, **this section wins**.
 
-**Q2 — Does the founding muster respect proficiency?** Today's templates are already
-class-appropriate, so nothing breaks either way — but a test should pin it so a future
-starting-kit edit cannot silently hand Elandra a longsword.
+**D1 — Unproficient armour: KEEP BASE AC, LOSE POTENCY, TAKE THE CHECK PENALTY ON
+ATTACKS.** §3.2's proposal, confirmed. The armour is still physically armour, so its base
+AC applies; the *enhancement* is magic the wearer cannot channel, and `armor_check_penalty`
+now reaches attack rolls as well as Stealth. ⚠ **This must stay a TRADE, not a trap** — a
+wizard in Full Plate is making a bad-but-legible choice, not a nonsensical one. Do not
+"simplify" this later into denying all AC.
 
-**Q3 — Weapon sets now or later?** D3 locked 2 sets with an action-cost swap. Deferring
-keeps M3 small; including it means designing the swap cost in combat.
+**D2 — The autopilot USES quick-slots but NEVER STOCKS THEM.** Consumables the *player*
+loaded get consumed by the AI on its own initiative; the autopilot never buys, never
+fills, never decides what goes in a slot. ⚠ **This keeps harness baselines still**: the
+autopilot's quick-slots are always empty in every harness run, so no snapshot moves for M3
+— and that is a deliberate design property, not luck. **An exposure test must therefore
+drive a HAND-FILLED slot**, because no harness will ever reach the consume branch.
 
-**Q4 — Scroll of Raise Dead.** No Raise Dead spell exists. Author one · re-point the
-scroll at an existing divine spell · delete the row (⚠ ids are append-only — retire it by
-pointing it somewhere valid rather than deleting).
+**D3 — Scroll of Raise Dead: LEAVE IT, FLAGGED.** It stays pointing at a valid-but-wrong
+spell and is recorded as a known content hole for the content pass. ⚠ **This is a
+deliberate exception to M4's invariant test**, so the test needs an explicit allow-list of
+one, with this decision cited beside it — otherwise the next session "fixes" the test by
+weakening it. The other six scroll pointers are still corrected.
 
-**Q5 — Should the AI ever use a consumable on its own?** A `consume` loadout entry the
-player orders is clearly right. Whether `buildAutoLevelUpPlan`'s sibling (the autopilot)
-stocks quick-slots is a separate call — if it does, every harness baseline moves again.
+**D4 — Weapon sets: DATA MODEL ONLY, no in-combat swapping.** Two sets are stored and
+editable out of combat; the active set is what the sim reads. **No swap action, no swap
+cost, no combat verb** — that is a later brief. ⚠ The stored-but-unswappable state must not
+become invisible dead weight: a test asserts the second set round-trips through save/load,
+so the half-built feature cannot rot silently the way `item_level` did.
+
+**D5 — The founding muster's starting gear MUST be class-proficient, pinned by a test.**
+Today's four templates already are. The test exists so a future starting-kit edit cannot
+silently hand Elandra a longsword and quietly saddle her with −4.
+
+---
+
+## 9. Milestone order
+
+M4 (scrolls) first — it is a seed and a test, it touches no code path, and it clears a
+content bug out of the way. Then M1 (weapon proficiency, all wiring), then M2 (armour
+proficiency, the authoring half), then M3 (quick-slots + the consume verb + the weapon-set
+data model), then the UI.
+
+Each is separately committable. `pnpm check` green before each commit.
