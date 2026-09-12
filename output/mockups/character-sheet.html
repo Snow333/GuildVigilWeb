@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guild Vigil — character sheet mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --desk-warm:#322822; --vellum:#ece0c2; --vellum-aged:#e2d2a8;
+  --vellum-old:#d8c494; --vellum-edge:#b3a075;
+  --ink:#3a2d1c; --ink-soft:#5c4a30; --ink-muted:#7d6a4c; --ink-faint:#a89370;
+  --red-ink:#9c3428; --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --s0:#0ca30c; --s1:#fab219; --s2:#ec835a; --s3:#d03b3b;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  /* DATA face: not small-caps, not serif. BDA guidance for read-repeatedly text. */
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:32px 20px 80px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26 0%,#2a211c 70%);
+  font-family:var(--data);color:var(--ink);
+}
+.wrap{max-width:1180px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:26px;font-weight:500;margin:0 0 6px}
+p.page{color:var(--ink-faint);max-width:70ch;line-height:1.5;margin:0 0 28px;font-size:15px}
+
+/* ---------- paper ---------- */
+.sheet{
+  position:relative;background:var(--vellum);
+  background-image:linear-gradient(160deg,#f0e5ca 0%,#e6d9b8 55%,#ddcfa6 100%);
+  border-radius:2px;padding:30px 34px 34px;margin:0 0 30px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b,0 2px 6px #0006;
+}
+.sheet::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:2px;
+  box-shadow:inset 0 0 60px #b3a07533}
+.pin{position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--brass-hi),var(--brass-deep) 60%,#55401c);
+  box-shadow:0 2px 4px #0007}
+.pin.l{left:26px}.pin.r{right:26px}
+
+/* ---------- banners ---------- */
+.banner{
+  font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:6px;margin:0 0 14px;
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.banner .note{font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:none}
+
+/* ---------- identity ---------- */
+.ident{display:flex;gap:18px;align-items:flex-start;margin-bottom:22px}
+.portrait{width:92px;height:92px;border:3px solid #fff;box-shadow:0 3px 10px #0005;
+  background:linear-gradient(150deg,#8b7355,#5c4a36);flex:none;display:flex;
+  align-items:center;justify-content:center;color:#e8dcc0;font-family:var(--serif);font-size:34px}
+.ident h2{font-family:var(--serif);font-size:30px;font-weight:500;margin:0 0 2px;line-height:1.1}
+.ident .sub{font-family:var(--sans);font-size:13px;letter-spacing:.08em;color:var(--ink-soft);text-transform:uppercase}
+.xpwrap{margin-top:10px;max-width:330px}
+.xpbar{height:7px;background:#0000001a;border:1px solid #8c6a3a44;border-radius:2px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--brass-mid)}
+.xplabel{font-size:12px;color:var(--ink-muted);margin-top:4px;display:flex;justify-content:space-between}
+
+/* ---------- ability boxes ---------- */
+.abils{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px}
+.abil{border:1.5px solid #8c6a3a66;border-radius:2px;background:#ffffff22;padding:8px 4px 7px;text-align:center}
+.abil .k{font-family:var(--sans);font-size:11px;letter-spacing:.12em;color:var(--ink-muted);text-transform:uppercase}
+.abil .m{font-size:29px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums lining-nums slashed-zero}
+.abil .s{font-size:12px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.abil.boost{border-color:var(--brass-deep);background:#c9a86a22}
+
+/* ---------- 3-column body ---------- */
+.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+
+/* ---------- the ledger (THE core component) ---------- */
+.led{margin-bottom:18px}
+.led .top{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid #3a2d1c40;padding-bottom:3px;margin-bottom:5px}
+.led .name{font-family:var(--sans);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.led .tot{font-size:31px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums lining-nums slashed-zero}
+.led .tot.sm{font-size:24px}
+.row{display:grid;grid-template-columns:1fr auto 58px;gap:10px;align-items:baseline;
+  font-size:14px;line-height:1.55;padding:1px 0}
+.row .src{color:var(--ink)}
+.row .cat{color:var(--ink-faint);font-size:12px}
+.row .val{text-align:right;font-variant-numeric:tabular-nums lining-nums slashed-zero;font-weight:700}
+.row.item .src{color:var(--ink)}
+.row.neg .val{color:var(--ink)}
+.row.gear{cursor:default}
+.row:hover{background:#c9a86a26;border-radius:2px}
+
+/* ---------- equipment ---------- */
+.slot{border-bottom:1px solid #8c6a3a33;padding:8px 0}
+.slot:last-child{border-bottom:0}
+.slot .hd{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.slot .k{font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);flex:none;width:74px}
+.slot .nm{font-weight:700;font-size:15px;flex:1}
+.slot .empty{color:var(--ink-faint);font-style:normal;font-weight:400}
+.contrib{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 0 74px}
+.chip{font-size:12px;padding:2px 7px;border:1px solid #8c6a3a66;border-radius:2px;
+  background:#ffffff33;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip.dead{border-style:dashed;color:var(--ink-faint);background:transparent}
+.chip.riderlive{border-color:var(--brass-deep);background:#c9a86a33}
+.btn{font-family:var(--sans);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;
+  padding:3px 9px;cursor:pointer;color:var(--ink)}
+.btn:hover{background:linear-gradient(#f0e6d0,#ded0aa)}
+
+/* ---------- quick slots ---------- */
+.qs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.qslot{border:1.5px dashed #8c6a3a77;border-radius:2px;padding:7px 6px;text-align:center;min-height:62px;
+  display:flex;flex-direction:column;justify-content:center;gap:3px}
+.qslot.full{border-style:solid;background:#ffffff28}
+.qslot .n{font-size:12px;font-weight:700;line-height:1.25}
+.qslot .t{font-size:11px;color:var(--ink-muted)}
+.qslot .idx{font-family:var(--sans);font-size:10px;letter-spacing:.1em;color:var(--ink-faint)}
+
+/* ---------- comparison table ---------- */
+table.cmp{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+table.cmp th{font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-muted);text-align:right;padding:4px 8px;border-bottom:1px solid #3a2d1c40;font-weight:400}
+table.cmp th:first-child{text-align:left}
+table.cmp td{padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums lining-nums slashed-zero;
+  border-bottom:1px solid #8c6a3a22}
+table.cmp td:first-child{text-align:left;font-variant-numeric:normal}
+table.cmp td.word{text-align:left;font-size:13px;color:var(--ink-soft);width:96px}
+.glyph{font-size:11px;margin-right:3px}
+
+.callout{border-left:3px solid var(--red-ink);background:#9c342811;padding:10px 14px;margin:14px 0 0;font-size:13.5px;line-height:1.5}
+.callout b{color:var(--red-ink)}
+.legend{font-size:12.5px;color:var(--ink-muted);line-height:1.6;margin-top:12px}
+hr.soft{border:0;border-top:1px solid #8c6a3a33;margin:18px 0}
+.variant-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:var(--desk-warm);color:var(--brass-hi);padding:3px 14px;border-radius:2px;border:1px solid #8a6c3877}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">Character sheet — three layouts, real data</h1>
+<p class="page">
+  Every number below is Torvald as he actually exists in your save: Chain Mail, Ring of Protection +1,
+  Enchanted Wooden Shield +2, Magical Wounding Longsword +1. The stash is your real 11 items.
+  Nothing here is invented sample text.
+</p>
+
+<!-- ============================================================ A -->
+<div class="sheet">
+  <span class="pin l"></span><span class="pin r"></span>
+  <span class="variant-tag">Variant A — the ledger sheet</span>
+
+  <div class="ident">
+    <div class="portrait">T</div>
+    <div style="flex:1">
+      <h2>Torvald</h2>
+      <div class="sub">Human · Fighter · Level 1</div>
+      <div class="xpwrap">
+        <div class="xpbar"><i style="width:71.7%"></i></div>
+        <div class="xplabel"><span>717 / 1000 XP</span><span>next: level 2</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="abils">
+    <div class="abil"><div class="k">Str</div><div class="m">+3</div><div class="s">16</div></div>
+    <div class="abil"><div class="k">Dex</div><div class="m">+1</div><div class="s">12</div></div>
+    <div class="abil"><div class="k">Con</div><div class="m">+2</div><div class="s">14</div></div>
+    <div class="abil"><div class="k">Int</div><div class="m">+0</div><div class="s">10</div></div>
+    <div class="abil"><div class="k">Wis</div><div class="m">+1</div><div class="s">12</div></div>
+    <div class="abil"><div class="k">Cha</div><div class="m">−1</div><div class="s">8</div></div>
+  </div>
+
+  <div class="cols">
+    <!-- DEFENCES -->
+    <div>
+      <div class="banner">Defences</div>
+
+      <div class="led">
+        <div class="top"><span class="name">Armour class</span><span class="tot">21</span></div>
+        <div class="row"><span class="src">Base</span><span class="cat">—</span><span class="val">10</span></div>
+        <div class="row"><span class="src">Dexterity</span><span class="cat">ability</span><span class="val">+1</span></div>
+        <div class="row"><span class="src">Trained</span><span class="cat">proficiency</span><span class="val">+3</span></div>
+        <div class="row item"><span class="src">Chain Mail</span><span class="cat">item</span><span class="val">+5</span></div>
+        <div class="row item"><span class="src">Wooden Shield +2</span><span class="cat">item</span><span class="val">+4</span></div>
+        <div class="row item"><span class="src">Ring of Protection +1</span><span class="cat">item</span><span class="val">+1</span></div>
+      </div>
+
+      <div class="led">
+        <div class="top"><span class="name">Hit points</span><span class="tot">20</span></div>
+        <div class="row"><span class="src">Fighter, level 1</span><span class="cat">class</span><span class="val">10</span></div>
+        <div class="row"><span class="src">Constitution</span><span class="cat">ability</span><span class="val">+2</span></div>
+        <div class="row"><span class="src">Ancestry</span><span class="cat">human</span><span class="val">+8</span></div>
+      </div>
+
+      <div class="led">
+        <div class="top"><span class="name">Fortitude</span><span class="tot sm">+3</span></div>
+        <div class="row"><span class="src">Constitution</span><span class="cat">ability</span><span class="val">+2</span></div>
+        <div class="row"><span class="src">Trained</span><span class="cat">proficiency</span><span class="val">+1</span></div>
+      </div>
+      <div class="led">
+        <div class="top"><span class="name">Reflex</span><span class="tot sm">+2</span></div>
+        <div class="row"><span class="src">Dexterity</span><span class="cat">ability</span><span class="val">+1</span></div>
+        <div class="row"><span class="src">Trained</span><span class="cat">proficiency</span><span class="val">+1</span></div>
+      </div>
+      <div class="led">
+        <div class="top"><span class="name">Will</span><span class="tot sm">+2</span></div>
+        <div class="row"><span class="src">Wisdom</span><span class="cat">ability</span><span class="val">+1</span></div>
+        <div class="row"><span class="src">Trained</span><span class="cat">proficiency</span><span class="val">+1</span></div>
+      </div>
+    </div>
+
+    <!-- OFFENCE -->
+    <div>
+      <div class="banner">Offence</div>
+
+      <div class="led">
+        <div class="top"><span class="name">Strike — attack</span><span class="tot">+5</span></div>
+        <div class="row"><span class="src">Strength</span><span class="cat">ability</span><span class="val">+3</span></div>
+        <div class="row"><span class="src">Trained</span><span class="cat">proficiency</span><span class="val">+1</span></div>
+        <div class="row item"><span class="src">Longsword +1</span><span class="cat">item</span><span class="val">+1</span></div>
+      </div>
+
+      <div class="led">
+        <div class="top"><span class="name">Strike — damage</span><span class="tot">1d8+3</span></div>
+        <div class="row"><span class="src">Longsword</span><span class="cat">weapon die</span><span class="val">1d8</span></div>
+        <div class="row"><span class="src">Strength</span><span class="cat">ability</span><span class="val">+3</span></div>
+      </div>
+
+      <div class="led">
+        <div class="top"><span class="name">Speed</span><span class="tot sm">5</span></div>
+        <div class="row"><span class="src">Human</span><span class="cat">ancestry</span><span class="val">5</span></div>
+      </div>
+      <div class="led">
+        <div class="top"><span class="name">Initiative</span><span class="tot sm">+2</span></div>
+        <div class="row"><span class="src">Perception</span><span class="cat">skill</span><span class="val">+2</span></div>
+      </div>
+
+      <hr class="soft">
+      <div class="banner">Skills <span class="note">ranks · check</span></div>
+      <div class="row"><span class="src">Athletics</span><span class="cat">1 rank</span><span class="val">+4</span></div>
+      <div class="row"><span class="src">Perception</span><span class="cat">1 rank</span><span class="val">+2</span></div>
+      <div class="row"><span class="src">Thievery</span><span class="cat">0 ranks</span><span class="val">+1</span></div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div>
+      <div class="banner">Worn <span class="note">what each piece is doing</span></div>
+
+      <div class="slot">
+        <div class="hd"><span class="k">Main hand</span><span class="nm">Magical Wounding Longsword +1</span><button class="btn">Stash</button></div>
+        <div class="contrib">
+          <span class="chip">Attack +1</span>
+          <span class="chip">1d8 damage</span>
+          <span class="chip dead">Wounding — 1d6 bleed · not yet active</span>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="hd"><span class="k">Off hand</span><span class="nm">Enchanted Wooden Shield +2</span><button class="btn">Stash</button></div>
+        <div class="contrib"><span class="chip">AC +4</span></div>
+      </div>
+
+      <div class="slot">
+        <div class="hd"><span class="k">Armour</span><span class="nm">Chain Mail</span><button class="btn">Stash</button></div>
+        <div class="contrib">
+          <span class="chip">AC +5</span>
+          <span class="chip">Dex capped at +2</span>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="hd"><span class="k">Ring</span><span class="nm">Ring of Protection +1</span><button class="btn">Stash</button></div>
+        <div class="contrib"><span class="chip">AC +1</span></div>
+      </div>
+
+      <div class="slot">
+        <div class="hd"><span class="k">Accessory</span><span class="nm empty">— empty —</span><button class="btn">Equip ▸</button></div>
+        <div class="contrib"><span class="chip dead">Cloak of Resistance +1 available in stash</span></div>
+      </div>
+
+      <hr class="soft">
+      <div class="banner">Pouch <span class="note">4 quick slots · used in combat</span></div>
+      <div class="qs">
+        <div class="qslot full"><span class="idx">1</span><span class="n">Healing Potion</span><span class="t">Minor · heals 1d8</span></div>
+        <div class="qslot full"><span class="idx">2</span><span class="n">Healing Potion</span><span class="t">Minor · heals 1d8</span></div>
+        <div class="qslot"><span class="idx">3</span><span class="t">empty</span></div>
+        <div class="qslot"><span class="idx">4</span><span class="t">empty</span></div>
+      </div>
+      <div class="legend">Slots fire from your loadout: <em>“if HP below 40%, drink slot 1.”</em></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Measured, not guessed:</b> Torvald’s longsword really is <em>Wounding</em>, and the engine
+    really does ignore it. A probe equipped a Flaming Longsword +1 and ran a full fight —
+    the only damage type that appeared was <code>weapon</code>. No fire, ever.
+    That is why the rider chip above is drawn dashed and says <em>not yet active</em>
+    rather than promising 1d6 bleed the game will not deliver.
+  </div>
+</div>
+
+<!-- ============================================================ B -->
+<div class="sheet">
+  <span class="pin l"></span><span class="pin r"></span>
+  <span class="variant-tag">Variant B — gear-first, with swap comparison</span>
+
+  <div class="ident">
+    <div class="portrait">T</div>
+    <div style="flex:1">
+      <h2>Torvald <span style="font-size:16px;color:var(--ink-muted);font-family:var(--data)">— Fighter 1</span></h2>
+      <div class="sub">Human · 717 / 1000 xp</div>
+    </div>
+    <div style="display:flex;gap:22px;text-align:right">
+      <div><div class="sub" style="font-size:11px">AC</div><div style="font-size:34px;font-weight:700">21</div></div>
+      <div><div class="sub" style="font-size:11px">HP</div><div style="font-size:34px;font-weight:700">20</div></div>
+      <div><div class="sub" style="font-size:11px">Attack</div><div style="font-size:34px;font-weight:700">+5</div></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div style="grid-column:span 2">
+      <div class="banner">Considering a swap <span class="note">Chain Mail → Full Plate</span></div>
+      <table class="cmp">
+        <thead><tr><th>Stat</th><th>Now</th><th>With this</th><th>Change</th><th style="text-align:left">&nbsp;</th></tr></thead>
+        <tbody>
+          <tr><td>Armour class</td><td>21</td><td>23</td><td>+2</td><td class="word"><span class="glyph">▲</span>better</td></tr>
+          <tr><td>Speed</td><td>5</td><td>4</td><td>−1</td><td class="word"><span class="glyph">▼</span>worse</td></tr>
+          <tr><td>Stealth</td><td>+1</td><td>−2</td><td>−3</td><td class="word"><span class="glyph">▼</span>worse</td></tr>
+          <tr><td>Athletics</td><td>+4</td><td>+2</td><td>−2</td><td class="word"><span class="glyph">▼</span>worse</td></tr>
+          <tr><td>Fortitude</td><td>+3</td><td>+3</td><td>—</td><td class="word">no change</td></tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        No single verdict, on purpose. Higher AC for slower movement and worse Athletics is a
+        real trade — a green arrow would pick for you, and it would be wrong about half the time.
+        Every row carries a sign <em>and</em> a word, so it reads without relying on colour.
+      </div>
+
+      <hr class="soft">
+      <div class="banner">The guild stores <span class="note">11 items · what Torvald could use</span></div>
+      <div class="slot"><div class="hd"><span class="k">Armour</span><span class="nm">Full Plate</span><button class="btn">Compare</button></div>
+        <div class="contrib"><span class="chip">AC +8</span><span class="chip">Dex capped at +0</span><span class="chip">Speed −1</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Accessory</span><span class="nm">Magical Cloak of Resistance +1</span><button class="btn">Equip</button></div>
+        <div class="contrib"><span class="chip">All saves +1</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Main hand</span><span class="nm">Masterwork Dagger</span><button class="btn">Compare</button></div>
+        <div class="contrib"><span class="chip">1d4 damage</span><span class="chip">Attack +0</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Pouch</span><span class="nm">Masterwork Healing Potion (Lesser)</span><button class="btn">To pouch ▸</button></div>
+        <div class="contrib"><span class="chip">Heals 2d8+5</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Pouch</span><span class="nm">Magical Scroll of Magic Missile +1</span><button class="btn">To pouch ▸</button></div>
+        <div class="contrib"><span class="chip riderlive">Casts Magic Missile</span><span class="chip dead">needs a decision — see notes</span></div></div>
+    </div>
+
+    <div>
+      <div class="banner">Worn</div>
+      <div class="slot"><div class="hd"><span class="k">Main</span><span class="nm">Longsword +1</span></div>
+        <div class="contrib" style="margin-left:0"><span class="chip">Atk +1</span><span class="chip">1d8</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Off</span><span class="nm">Shield +2</span></div>
+        <div class="contrib" style="margin-left:0"><span class="chip">AC +4</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Armour</span><span class="nm">Chain Mail</span></div>
+        <div class="contrib" style="margin-left:0"><span class="chip">AC +5</span><span class="chip">Dex ≤ +2</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Ring</span><span class="nm">Protection +1</span></div>
+        <div class="contrib" style="margin-left:0"><span class="chip">AC +1</span></div></div>
+
+      <hr class="soft">
+      <div class="banner">Where AC 21 comes from</div>
+      <div class="row"><span class="src">Base</span><span class="cat"></span><span class="val">10</span></div>
+      <div class="row"><span class="src">Dexterity</span><span class="cat">ability</span><span class="val">+1</span></div>
+      <div class="row"><span class="src">Trained</span><span class="cat">prof</span><span class="val">+3</span></div>
+      <div class="row item"><span class="src">Chain Mail</span><span class="cat">item</span><span class="val">+5</span></div>
+      <div class="row item"><span class="src">Shield +2</span><span class="cat">item</span><span class="val">+4</span></div>
+      <div class="row item"><span class="src">Ring +1</span><span class="cat">item</span><span class="val">+1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ C -->
+<div class="sheet">
+  <span class="pin l"></span><span class="pin r"></span>
+  <span class="variant-tag">Variant C — compact, two columns</span>
+
+  <div class="ident">
+    <div class="portrait">T</div>
+    <div style="flex:1">
+      <h2>Torvald</h2>
+      <div class="sub">Human Fighter · Level 1</div>
+    </div>
+  </div>
+
+  <div class="abils">
+    <div class="abil"><div class="k">Str</div><div class="m">+3</div><div class="s">16</div></div>
+    <div class="abil"><div class="k">Dex</div><div class="m">+1</div><div class="s">12</div></div>
+    <div class="abil"><div class="k">Con</div><div class="m">+2</div><div class="s">14</div></div>
+    <div class="abil"><div class="k">Int</div><div class="m">+0</div><div class="s">10</div></div>
+    <div class="abil"><div class="k">Wis</div><div class="m">+1</div><div class="s">12</div></div>
+    <div class="abil"><div class="k">Cha</div><div class="m">−1</div><div class="s">8</div></div>
+  </div>
+
+  <div class="cols" style="grid-template-columns:1fr 1fr">
+    <div>
+      <div class="banner">The numbers <span class="note">tap a row to see its sources</span></div>
+      <table class="cmp">
+        <tbody>
+          <tr><td>Hit points</td><td style="font-size:19px;font-weight:700">20</td><td class="word" style="width:auto;color:var(--ink-faint)">class + con + ancestry</td></tr>
+          <tr><td>Armour class</td><td style="font-size:19px;font-weight:700">21</td><td class="word" style="width:auto;color:var(--ink-faint)">3 items · 6 sources</td></tr>
+          <tr><td>Strike attack</td><td style="font-size:19px;font-weight:700">+5</td><td class="word" style="width:auto;color:var(--ink-faint)">str + trained + sword</td></tr>
+          <tr><td>Strike damage</td><td style="font-size:19px;font-weight:700">1d8+3</td><td class="word" style="width:auto;color:var(--ink-faint)">longsword + str</td></tr>
+          <tr><td>Fortitude</td><td style="font-size:19px;font-weight:700">+3</td><td class="word" style="width:auto;color:var(--ink-faint)">con + trained</td></tr>
+          <tr><td>Reflex</td><td style="font-size:19px;font-weight:700">+2</td><td class="word" style="width:auto;color:var(--ink-faint)">dex + trained</td></tr>
+          <tr><td>Will</td><td style="font-size:19px;font-weight:700">+2</td><td class="word" style="width:auto;color:var(--ink-faint)">wis + trained</td></tr>
+          <tr><td>Speed</td><td style="font-size:19px;font-weight:700">5</td><td class="word" style="width:auto;color:var(--ink-faint)">human</td></tr>
+          <tr><td>Initiative</td><td style="font-size:19px;font-weight:700">+2</td><td class="word" style="width:auto;color:var(--ink-faint)">perception</td></tr>
+        </tbody>
+      </table>
+      <div class="legend">
+        Every stat on one screen, each with a plain-language hint at what built it.
+        The full ledger opens in place — it is never hidden behind a hover.
+      </div>
+    </div>
+
+    <div>
+      <div class="banner">Worn &amp; pouch</div>
+      <div class="slot"><div class="hd"><span class="k">Main</span><span class="nm">Wounding Longsword +1</span></div>
+        <div class="contrib"><span class="chip">Atk +1</span><span class="chip">1d8</span><span class="chip dead">rider idle</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Off</span><span class="nm">Wooden Shield +2</span></div>
+        <div class="contrib"><span class="chip">AC +4</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Armour</span><span class="nm">Chain Mail</span></div>
+        <div class="contrib"><span class="chip">AC +5</span><span class="chip">Dex ≤ +2</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Ring</span><span class="nm">Ring of Protection +1</span></div>
+        <div class="contrib"><span class="chip">AC +1</span></div></div>
+      <div class="slot"><div class="hd"><span class="k">Accessory</span><span class="nm empty">— empty —</span><button class="btn">Equip ▸</button></div></div>
+
+      <div class="qs" style="margin-top:12px">
+        <div class="qslot full"><span class="idx">1</span><span class="n">Healing</span><span class="t">1d8</span></div>
+        <div class="qslot full"><span class="idx">2</span><span class="n">Healing</span><span class="t">1d8</span></div>
+        <div class="qslot"><span class="idx">3</span><span class="t">empty</span></div>
+        <div class="qslot"><span class="idx">4</span><span class="t">empty</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="page" style="margin-top:26px">
+  <b style="color:var(--brass-hi)">Typography note.</b> The character name and the small-caps section
+  banners keep the Alegreya serif identity — they are short landmarks, not reading text.
+  Everything you actually read repeatedly (stat labels, sources, numbers) is set in
+  Atkinson Hyperlegible at 14–16px with tabular lining numerals and a slashed zero, so digits
+  form clean columns. That split follows British Dyslexia Association guidance without losing the
+  1970s paper-sheet look. Your existing “readable type” setting already ships this font.
+</p>
+
+</div>
+</body>
+</html>

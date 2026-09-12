@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guild Vigil — "The record" readability</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --vellum:#ece0c2; --ink:#3a2d1c; --ink-soft:#5c4a30;
+  --ink-muted:#7d6a4c; --ink-faint:#a89370; --red-ink:#9c3428;
+  --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --s0:#0ca30c; --s1:#fab219; --s3:#d03b3b;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 20px 80px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26 0%,#2a211c 70%);
+  font-family:var(--data);color:var(--ink)}
+.wrap{max-width:1060px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:26px;font-weight:500;margin:0 0 6px}
+p.page{color:var(--ink-faint);max-width:72ch;line-height:1.55;margin:0 0 26px;font-size:15px}
+.sheet{position:relative;background:linear-gradient(160deg,#f0e5ca,#e6d9b8 55%,#ddcfa6);
+  border-radius:2px;padding:28px 30px 30px;margin:0 0 28px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b}
+.variant-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:#322822;color:var(--brass-hi);padding:3px 14px;border-radius:2px;border:1px solid #8a6c3877}
+.banner{font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:6px;margin:0 0 14px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.banner .note{font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:none}
+
+/* ======== BEFORE: today's feed ======== */
+.old{height:250px;overflow-y:auto;font-size:13px;line-height:28px;
+  background-image:repeating-linear-gradient(#00000000 0 27px,#8c6a3a22 27px 28px);
+  font-family:var(--serif)}
+.old .b small{color:var(--ink-muted);font-family:var(--sans);font-size:10px;margin-right:8px}
+.old .b[data-t='bad']{font-weight:600}
+.old .b[data-t='system']{color:var(--ink-muted)}
+
+/* ======== AFTER: grouped rounds ======== */
+.round{margin-bottom:16px}
+.rhead{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.rhead .n{font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.rhead .rule{flex:1;height:1px;background:#8c6a3a44}
+.rhead .t{font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+
+.ex{display:grid;grid-template-columns:74px 1fr;gap:10px;padding:5px 8px;border-radius:2px;align-items:start}
+.ex + .ex{margin-top:2px}
+.ex:hover{background:#c9a86a22}
+.ex .who{font-weight:700;font-size:14px;text-align:right;color:var(--ink-soft);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex .body{font-size:14px;line-height:1.5}
+.ex .arrow{color:var(--ink-faint);margin:0 5px}
+.tgt{font-weight:700}
+
+/* outcome pill: SHAPE + WORD, never colour alone */
+.pill{display:inline-block;font-family:var(--sans);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:1px 7px;border-radius:2px;border:1px solid;margin-right:7px;
+  vertical-align:1px}
+.pill.hit{border-color:var(--ink-soft);background:#5c4a3018;color:var(--ink)}
+.pill.crit{border-color:var(--brass-deep);background:#c9a86a44;color:#5a4212;font-weight:700}
+.pill.miss{border-color:#a8937066;background:transparent;color:var(--ink-faint)}
+.pill.slain{border-color:var(--red-ink);background:#9c342815;color:var(--red-ink);font-weight:700}
+.pill.heal{border-color:#3f6d2e;background:#3f6d2e18;color:#2f5222}
+
+.math{font-variant-numeric:tabular-nums lining-nums slashed-zero;color:var(--ink-muted);font-size:12.5px}
+.dmg{display:block;margin:2px 0 0 0;font-size:13px;color:var(--ink-soft);padding-left:14px;
+  border-left:2px solid #8c6a3a44}
+.dmg b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.tag{font-size:11px;border:1px solid #8c6a3a66;padding:0 5px;border-radius:2px;
+  background:#ffffff33;margin-left:5px;color:var(--ink-soft);white-space:nowrap}
+
+.collapsed{display:flex;align-items:baseline;gap:8px;padding:4px 8px;color:var(--ink-muted);font-size:13px}
+.collapsed .cnt{font-family:var(--sans);font-size:11px;letter-spacing:.08em;border:1px dashed #8c6a3a66;
+  padding:1px 7px;border-radius:2px}
+.legend{font-size:12.5px;color:var(--ink-muted);line-height:1.65;margin-top:14px}
+.callout{border-left:3px solid var(--red-ink);background:#9c342811;padding:10px 14px;margin:16px 0 0;font-size:13.5px;line-height:1.55}
+.callout b{color:var(--red-ink)}
+.filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{font-family:var(--sans);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;
+  padding:3px 10px;cursor:pointer}
+.fbtn.on{background:linear-gradient(#c9a86a,#a4854c);border-color:#55401c}
+table.side{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+table.side td{padding:6px 8px;border-bottom:1px solid #8c6a3a22;vertical-align:top;line-height:1.5}
+table.side td:first-child{width:50%;border-right:1px solid #8c6a3a33}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">“The record” — making a fight readable</h1>
+<p class="page">
+  Both panels below are the <em>same fight</em>, from a real run: Torvald, Shade, Mira and Elandra
+  against three goblins, seed <code>mock-seed</code>, 38 ticks, victory. The left is exactly what
+  the game prints today; the right is the proposal.
+</p>
+
+<!-- ===== BEFORE ===== -->
+<div class="sheet">
+  <span class="variant-tag">Today</span>
+  <div class="banner">The record <span class="note">this fight, beat by beat</span></div>
+  <div class="old">
+    <div class="b" data-t="system"><small>   0</small> Combat: Torvald, Shade, Mira, Elandra vs Goblin ɪ, Goblin ɪɪ, Goblin ɪɪɪ.</div>
+    <div class="b" data-t="system"><small>  15</small> Mira casts spell 14.</div>
+    <div class="b"><small>  15</small> Mira → Goblin ɪɪ: miss (8+4=12 vs DC 13)</div>
+    <div class="b" data-t="system"><small>  18</small> Elandra casts spell 16.</div>
+    <div class="b"><small>  18</small> Goblin ɪɪ takes 2 force (6 hp left).</div>
+    <div class="b"><small>  21</small> Torvald → Goblin ɪɪ: CRIT (20+6=26 vs DC 13)</div>
+    <div class="b" data-t="bad"><small>  21</small> Goblin ɪɪ takes 8 weapon (0 hp left).</div>
+    <div class="b" data-t="bad"><small>  21</small> Goblin ɪɪ is slain.</div>
+    <div class="b"><small>  27</small> Goblin ɪɪɪ → Mira: hit (17+2=19 vs DC 15)</div>
+    <div class="b"><small>  27</small> Mira takes 2 weapon (16 hp left).</div>
+    <div class="b"><small>  27</small> Goblin ɪɪɪ → Mira: miss (3+-3=0 vs DC 15)</div>
+    <div class="b"><small>  29</small> Goblin ɪ → Mira: CRIT (20+2=22 vs DC 15)</div>
+    <div class="b"><small>  29</small> Mira takes 4 weapon (12 hp left).</div>
+    <div class="b"><small>  29</small> Goblin ɪ → Mira: miss (5+-3=2 vs DC 15)</div>
+    <div class="b"><small>  32</small> Shade → Goblin ɪ: CRIT (15+6=21 vs DC 11) [sneak 3d]</div>
+    <div class="b" data-t="bad"><small>  32</small> Goblin ɪ takes 18 weapon (0 hp left).</div>
+    <div class="b" data-t="bad"><small>  32</small> Goblin ɪ is slain.</div>
+  </div>
+  <div class="legend">
+    <b>What makes this hard:</b> every line has equal weight, so nothing stands out.
+    The attack and the damage it caused are two unrelated rows. Names repeat on the far left
+    but so does everything else, so there is no column to scan down.
+    <code>3+-3=0</code> prints a double sign. <code>casts spell 14</code> shows a database id.
+    Ticks are cosmetic — 15, 18, 21 mean nothing to a reader.
+  </div>
+</div>
+
+<!-- ===== AFTER ===== -->
+<div class="sheet">
+  <span class="variant-tag">Proposed</span>
+  <div class="banner">The record <span class="note">victory in 38 ticks · 3.8 seconds</span></div>
+
+  <div class="filters">
+    <button class="fbtn on">All</button>
+    <button class="fbtn">Hits only</button>
+    <button class="fbtn">Our turns</button>
+    <button class="fbtn">Kills</button>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Opening</span><span class="rule"></span><span class="t">tick 0</span></div>
+    <div class="ex"><span class="who">Field</span><span class="body">
+      Torvald, Shade, Mira and Elandra meet <b>3 goblins</b>.
+    </span></div>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 1</span><span class="rule"></span><span class="t">ticks 15 – 21</span></div>
+
+    <div class="ex">
+      <span class="who">Mira</span>
+      <span class="body">
+        <span class="pill miss">Miss</span>
+        casts <b>Bless</b> <span class="arrow">→</span> <span class="tgt">Goblin II</span>
+        <span class="math">8 + 4 = 12 vs 13</span>
+      </span>
+    </div>
+
+    <div class="ex">
+      <span class="who">Elandra</span>
+      <span class="body">
+        <span class="pill hit">Hit</span>
+        casts <b>Magic Missile</b> <span class="arrow">→</span> <span class="tgt">Goblin II</span>
+        <span class="dmg"><b>2</b> force damage · Goblin II at <b>6</b> hp</span>
+      </span>
+    </div>
+
+    <div class="ex">
+      <span class="who">Torvald</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Goblin II</span>
+        <span class="math">20 + 6 = 26 vs 13</span>
+        <span class="dmg"><b>8</b> weapon damage · <span class="pill slain" style="margin-left:0">Slain</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 2</span><span class="rule"></span><span class="t">ticks 27 – 32</span></div>
+
+    <div class="ex">
+      <span class="who">Goblin III</span>
+      <span class="body">
+        <span class="pill hit">Hit</span>
+        strikes <span class="tgt">Mira</span>
+        <span class="math">17 + 2 = 19 vs 15</span>
+        <span class="dmg"><b>2</b> weapon damage · Mira at <b>16</b> hp</span>
+      </span>
+    </div>
+
+    <div class="ex">
+      <span class="who">Goblin I</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Mira</span>
+        <span class="math">20 + 2 = 22 vs 15</span>
+        <span class="dmg"><b>4</b> weapon damage · Mira at <b>12</b> hp</span>
+      </span>
+    </div>
+
+    <div class="collapsed">
+      <span class="cnt">3 misses</span> Goblin I and Goblin III swing at Mira and miss. <span style="color:var(--ink-faint)">show ▸</span>
+    </div>
+
+    <div class="ex">
+      <span class="who">Shade</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Goblin I</span>
+        <span class="tag">sneak attack 3d</span>
+        <span class="math">15 + 6 = 21 vs 11</span>
+        <span class="dmg"><b>18</b> weapon damage · <span class="pill slain" style="margin-left:0">Slain</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 3</span><span class="rule"></span><span class="t">ticks 35 – 38</span></div>
+    <div class="ex">
+      <span class="who">Torvald</span>
+      <span class="body">
+        <span class="pill hit">Hit</span>
+        <span class="tag">reaction · attack of opportunity</span>
+        strikes <span class="tgt">Goblin III</span>
+        <span class="math">15 + 6 = 21 vs 13</span>
+        <span class="dmg"><b>7</b> weapon damage · <span class="pill slain" style="margin-left:0">Slain</span></span>
+      </span>
+    </div>
+    <div class="ex"><span class="who">Result</span><span class="body"><b>Victory.</b> 38 ticks, no losses.</span></div>
+  </div>
+
+  <div class="legend">
+    <b>Seven changes, each doing one job:</b>
+  </div>
+  <table class="side">
+    <tr>
+      <td><b>Rounds, not ticks.</b> Grouped under headers with the tick range kept as a small caption.</td>
+      <td><b>Actor column.</b> Names right-aligned in a fixed 74px column, so you scan down one edge to follow one character.</td>
+    </tr>
+    <tr>
+      <td><b>Damage attaches to its cause.</b> The result is indented under the attack that produced it, not a separate row.</td>
+      <td><b>Outcome as a word in a bordered pill.</b> Hit / Critical / Miss / Slain — shape and text, never colour alone.</td>
+    </tr>
+    <tr>
+      <td><b>Misses collapse.</b> Consecutive whiffs fold into “3 misses”, expandable. The four miss lines were 24% of this fight.</td>
+      <td><b>Spell names, not ids.</b> <code>casts spell 14</code> becomes <b>casts Bless</b>.</td>
+    </tr>
+    <tr>
+      <td><b>Clean arithmetic.</b> <code>3+-3=0</code> becomes <code>3 − 3 = 0</code>, tabular figures so digits line up.</td>
+      <td><b>Filters.</b> “Kills” or “Our turns” turns a 25-line fight into the 4 lines you wanted.</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>One real bug this surfaced.</b> The record prints <code>casts spell 14</code> — a raw database id.
+    Since the potions shipped in M3 route through the same casting path, every potion your party
+    drinks will currently read <code>casts spell 208</code>. The consumables feature is invisible
+    in the log it is supposed to appear in.
+  </div>
+</div>
+
+</div>
+</body>
+</html>
