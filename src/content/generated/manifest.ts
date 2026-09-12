@@ -8,7 +8,7 @@ export const CONTENT_MANIFEST = {
   "class_proficiency_tiers": 112,
   "class_progression": 230,
   "class_skills": 64,
-  "class_weapon_proficiency": 44,
+  "class_weapon_proficiency": 70,
   "classes": 13,
   "eight_pillars": 8,
   "enemies": 45,

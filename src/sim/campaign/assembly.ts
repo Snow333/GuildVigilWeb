@@ -15,6 +15,7 @@
  */
 
 import type { ItemInstance } from '@sim/core/events/types';
+import { NON_PROFICIENCY_PENALTY } from '@content/combat';
 import type { LoadoutEntry } from '@sim/combat/loadout';
 import { defaultCantripFor, spellRange } from '@sim/combat/spells';
 import type { Combatant } from '@sim/combat/types';
@@ -27,6 +28,7 @@ import {
   type DerivedItem,
 } from '@sim/heroes/equipment';
 import { featEffectsById, resolveSkillMods, resolveStatMods } from '@sim/heroes/featEffects';
+import { isProficientWithArmor, isProficientWithWeapon } from '@sim/heroes/gearProficiency';
 import { bestTier, totalProficiency } from '@sim/heroes/proficiency';
 import { abilityMod, characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
 import { classesById, progressionFor, warlockCostByLevel } from '@sim/registry';
@@ -74,28 +76,62 @@ function classFeatures(hero: HeroState): Set<string> {
   return out;
 }
 
-/** The equipped weapon/armor split, derived once. */
-function equippedGear(equipped: readonly ItemInstance[]): {
+/**
+ * The equipped weapon/armor split, derived once.
+ *
+ * ⚠ `unproficientArmor` is returned rather than applied here because the two
+ * consequences land in different places (brief #23 D1): the potency loss is an
+ * AC change (this function's `acBonus`), while the check penalty reaches the
+ * ATTACK roll, which is computed further down. Returning the facts keeps this
+ * function a pure split and puts each effect at its own site.
+ */
+function equippedGear(
+  equipped: readonly ItemInstance[],
+  hero: Pick<HeroState, 'classLevels'>,
+): {
   weapon: { derived: DerivedItem; instance: ItemInstance } | null;
   acBonus: number;
   maxDex: number | null;
+  weaponProficient: boolean;
+  /** Check penalty from armour the hero is NOT trained in; 0 otherwise. Negative. */
+  unproficientArmorPenalty: number;
 } {
   let weapon: { derived: DerivedItem; instance: ItemInstance } | null = null;
   let acBonus = 0;
   let maxDex: number | null = null;
+  let weaponProficient = true;
+  let unproficientArmorPenalty = 0;
+
   for (const inst of equipped) {
     const derived = deriveItem(inst);
+    const base = itemBasesById.get(inst.baseId);
     if (derived.itemType === 'weapon' && derived.damageDice && weapon === null) {
       weapon = { derived, instance: inst };
+      if (base) weaponProficient = isProficientWithWeapon(hero, base);
     } else if (derived.itemType === 'armor' || derived.itemType === 'shield') {
-      acBonus += derived.acBonus;
-      const cap = itemBasesById.get(inst.baseId)?.max_dex as number | null | undefined;
+      /**
+       * ⚠ D1: KEEP BASE AC, LOSE POTENCY, TAKE THE CHECK PENALTY ON ATTACKS.
+       * The plate is still plate — it is physically in the way — so its base
+       * AC applies. What an untrained wearer cannot use is the ENHANCEMENT:
+       * potency is magic channelled through the armour, and that is the part
+       * that goes away. This keeps a wizard in Full Plate a bad-but-legible
+       * TRADE rather than a trap; do not "simplify" it into denying all AC.
+       */
+      const proficient = base ? isProficientWithArmor(hero, base) : true;
+      if (proficient) {
+        acBonus += derived.acBonus;
+      } else {
+        const potency = derived.acBonus - (((base?.ac_bonus as number | null) ?? 0));
+        acBonus += derived.acBonus - Math.max(0, potency);
+        unproficientArmorPenalty += (base?.armor_check_penalty as number | null) ?? 0;
+      }
+      const cap = base?.max_dex as number | null | undefined;
       if (cap !== null && cap !== undefined) maxDex = maxDex === null ? cap : Math.min(maxDex, cap);
     } else {
       acBonus += derived.acBonus; // wondrous AC items (rings, cloaks)
     }
   }
-  return { weapon, acBonus, maxDex };
+  return { weapon, acBonus, maxDex, weaponProficient, unproficientArmorPenalty };
 }
 
 /** Sneak Attack: the feat's own scaling payload, keyed to the granting class's level. */
@@ -213,7 +249,7 @@ export function assembleHero(kit: HeroKit): DispatchHero {
   const featStat = resolveStatMods(hero, hero.feats);
   const featSkill = resolveSkillMods(hero, hero.feats);
   const features = classFeatures(hero);
-  const gear = equippedGear(equipped);
+  const gear = equippedGear(equipped, hero);
 
   const mods = {} as Record<AbilityKey, number>;
   for (const key of ['str', 'dex', 'con', 'int', 'wis', 'cha'] as AbilityKey[]) {
@@ -299,9 +335,21 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     weaponRange,
     engageRange,
     weaponAgile: traits.includes('agile'),
-    weaponPenalty: 0,
+    /**
+     * ⚠ BRIEF #23 M1: THIS WAS ALWAYS 0 AND THE CONSTANT WAS NEVER REFERENCED.
+     * `NON_PROFICIENCY_PENALTY` sat in content/combat.ts unused, `strike.ts`
+     * already summed this field into every attack roll, and the type comment
+     * already described the intent — only the derivation was missing. Both
+     * terms land here: an off-class WEAPON (-4) and the check penalty from
+     * armour the hero is untrained in (D1), which stack because they are
+     * separate mistakes.
+     */
+    weaponPenalty:
+      (gear.weaponProficient ? 0 : NON_PROFICIENCY_PENALTY) + gear.unproficientArmorPenalty,
     weaponSpecBonus: weaponSpecBonus(hero),
-    isWeaponProficient: true,
+    // Suppresses weaponSpecBonus in strike.ts — an untrained wielder gets no
+    // specialisation bonus no matter what feats they hold.
+    isWeaponProficient: gear.weaponProficient,
     sneakAttackDice: sneakDice(hero),
     speed: BASE_SPEED + (featStat['speed'] ?? 0),
     wounded: hero.wounded,

@@ -264,5 +264,161 @@ export const class_weapon_proficiency = [
   "class_id": 13,
   "grant_type": "category",
   "grant_value": "simple"
+ },
+ {
+  "id": 45,
+  "class_id": 1,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 46,
+  "class_id": 1,
+  "grant_type": "armor",
+  "grant_value": "medium"
+ },
+ {
+  "id": 47,
+  "class_id": 1,
+  "grant_type": "armor",
+  "grant_value": "heavy"
+ },
+ {
+  "id": 48,
+  "class_id": 1,
+  "grant_type": "armor",
+  "grant_value": "shield"
+ },
+ {
+  "id": 49,
+  "class_id": 2,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 50,
+  "class_id": 3,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 51,
+  "class_id": 3,
+  "grant_type": "armor",
+  "grant_value": "medium"
+ },
+ {
+  "id": 52,
+  "class_id": 3,
+  "grant_type": "armor",
+  "grant_value": "shield"
+ },
+ {
+  "id": 53,
+  "class_id": 4,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 54,
+  "class_id": 5,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 55,
+  "class_id": 5,
+  "grant_type": "armor",
+  "grant_value": "medium"
+ },
+ {
+  "id": 56,
+  "class_id": 6,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 57,
+  "class_id": 6,
+  "grant_type": "armor",
+  "grant_value": "medium"
+ },
+ {
+  "id": 58,
+  "class_id": 6,
+  "grant_type": "armor",
+  "grant_value": "shield"
+ },
+ {
+  "id": 59,
+  "class_id": 7,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 60,
+  "class_id": 8,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 61,
+  "class_id": 8,
+  "grant_type": "armor",
+  "grant_value": "shield"
+ },
+ {
+  "id": 62,
+  "class_id": 9,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 63,
+  "class_id": 10,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 64,
+  "class_id": 11,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 65,
+  "class_id": 11,
+  "grant_type": "armor",
+  "grant_value": "medium"
+ },
+ {
+  "id": 66,
+  "class_id": 11,
+  "grant_type": "armor",
+  "grant_value": "heavy"
+ },
+ {
+  "id": 67,
+  "class_id": 11,
+  "grant_type": "armor",
+  "grant_value": "shield"
+ },
+ {
+  "id": 68,
+  "class_id": 12,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 69,
+  "class_id": 13,
+  "grant_type": "armor",
+  "grant_value": "light"
+ },
+ {
+  "id": 70,
+  "class_id": 13,
+  "grant_type": "armor",
+  "grant_value": "shield"
  }
 ] as const;

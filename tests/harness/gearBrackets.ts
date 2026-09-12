@@ -57,12 +57,26 @@ export type GearProvider = (classId: number, level: number) => GearRung | null;
  *     keeps the bug out of this harness's first baseline. The milestone that
  *     fixes B adds these rungs and moves the snapshot for a stated reason.
  *
- *  2. ARMOUR RESPECTS CLASS FLAVOUR. The sim enforces nothing, so the wizard
- *     could wear a chain shirt for +2 AC; measured at +5.7 / +8.4 points of
- *     completion at d2/d3, which is at or inside the +/-8-point significance bar
- *     at 300 runs (brief #16 §3), so it is not a finding. Steven's call: keep
- *     the flavour, and solve the backline's exposure with positioning rather
- *     than by dressing the wizard in mail.
+ *  2. ARMOUR RESPECTS CLASS FLAVOUR — AND SINCE BRIEF #23 THE SIM ENFORCES IT.
+ *     ⚠ This note used to read "the sim enforces nothing, so the wizard could
+ *     wear a chain shirt for +2 AC". That is no longer true: #23 wired
+ *     `class_weapon_proficiency` and unproficient armour now loses its potency
+ *     and applies its check penalty to attacks.
+ *
+ *     ⚠ AND THIS TABLE WAS ITSELF IN VIOLATION, WHICH IS A FINDING, NOT A
+ *     TIDY-UP. The rungs below armed the ROGUE in a Chain Shirt (medium) from
+ *     level 2 and the CLERIC in Half/Full Plate (heavy) from level 5 — so
+ *     every harness number taken before #23 was measuring a party wearing
+ *     armour their classes are not trained in. The curve fell d4 −2.6 / d5
+ *     −3.0 when proficiency landed, and that drop is the inflation coming out.
+ *
+ *     The replacements below are legal AND equal-or-better, which is the
+ *     reassuring part: the fix costs the party nothing at the same item level.
+ *       Rogue  L2  Chain Shirt (ac 4 / md 3) -> Masterwork Studded Leather
+ *                  (ac 4 / md 3) — IDENTICAL effective AC at dex +3.
+ *       Rogue  L4  Chain Shirt -> Studded Leather +2 (ac 5 / md 3): +1.
+ *       Cleric L5  Half Plate (ac 6) -> Chain Mail +2 (ac 7): +1 at dex +0.
+ *       Cleric L7  Full Plate (ac 8) -> Chain Mail +3 (ac 8): equal.
  */
 export const GEAR_BRACKETS: Readonly<Record<number, readonly GearRung[]>> = {
   // Fighter — dex +1, so heavy armour always wins on effective AC. Longsword line.
@@ -85,16 +99,20 @@ export const GEAR_BRACKETS: Readonly<Record<number, readonly GearRung[]>> = {
   3: [
     { minLevel: 1, armor: 26, weapon: 7 },   // Scale Mail + Mace (the muster kit)
     { minLevel: 2, armor: 25, weapon: 115 }, // Chain Mail + Masterwork Mace
-    { minLevel: 5, armor: 27, weapon: 137 }, // Half Plate + Mace +2
-    { minLevel: 7, armor: 28, weapon: 137 }, // Full Plate + Mace +2
+    // #23: was Half/Full Plate — HEAVY, which the cleric is not trained in.
+    // Medium tops out just as high; it only costs item level to get there.
+    { minLevel: 5, armor: 151, weapon: 137 }, // Chain Mail +2 (ac 7) + Mace +2
+    { minLevel: 7, armor: 153, weapon: 137 }, // Chain Mail +3 (ac 8) + Mace +2
   ],
   // Rogue — dex +3, so `max_dex` is the whole game: Chain Shirt (ac 4 / md 3)
   // beats Full Plate (ac 8 / md 0) for this hero. Rapier line.
   4: [
     { minLevel: 1, armor: 22, weapon: 9 },   // Leather + Rapier (the muster kit)
-    { minLevel: 2, armor: 24, weapon: 117 }, // Chain Shirt + Masterwork Rapier
-    { minLevel: 4, armor: 24, weapon: 136 }, // Chain Shirt + Rapier +2
-    { minLevel: 8, armor: 24, weapon: 142 }, // Chain Shirt + Rapier +3
+    // #23: was Chain Shirt — MEDIUM, which the rogue is not trained in. At
+    // dex +3 the light replacement is identical (ac 4 / md 3 either way).
+    { minLevel: 2, armor: 127, weapon: 117 }, // Masterwork Studded Leather + Masterwork Rapier
+    { minLevel: 4, armor: 149, weapon: 136 }, // Studded Leather +2 (ac 5) + Rapier +2
+    { minLevel: 8, armor: 149, weapon: 142 }, // Studded Leather +2 + Rapier +3
   ],
 };
 

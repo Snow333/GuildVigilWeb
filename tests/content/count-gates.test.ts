@@ -19,7 +19,7 @@ const GATES: Record<string, number> = {
   ancestries: 6,
   skills: 15,
   class_skills: 64,
-  class_weapon_proficiency: 44,
+  class_weapon_proficiency: 70,
   loot_tables: 97,
   shop_stock: 105,
   buildings: 18,
