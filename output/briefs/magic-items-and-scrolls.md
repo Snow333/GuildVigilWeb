@@ -192,18 +192,51 @@ gate), or **(b)** they may attempt it with a skill check, failure wasting the sc
 
 ---
 
-## 6. Open questions
+## 6. Decisions — APPROVED 2026-09-12
 
-- **Q1 — Milestone order.** M1+M2 first (riders + stat bonuses), or all five as one push?
-- **Q2 — Do riders scale?** A 1d6 flaming rider is strong at level 3 and trivial at 15.
-  Flat forever, or scale with item tier?
-- **Q3 — Starting skills.** Seed Arcana on the Wizard and Religion on the Cleric?
-  It changes the founding muster, which is pinned by tests.
-- **Q4 — Unqualified scroll use:** grey it out, or allow a risky attempt that can waste the scroll?
-- **Q5 — Native discount.** Should a class reading its own tradition need only
-  `spellLevel + 1`, versus `2 × spellLevel + 1` for everyone else?
+All five answered by Steven. Where this section disagrees with the body above, **this wins**.
 
----
+**D1 — Milestones: M1 + M2 first.** Strike riders and `stat_bonus`. Roughly 60% of the
+authored magic layer becomes real, and M2 requires no new content at all.
+
+**D2 — Riders stay FLAT for now.** A 1d6 flaming rider is strong at level 3 and trivial at
+15, but scaling is a balance decision that belongs with the curve retune, not with the
+wiring. Revisit deliberately rather than guessing a formula now.
+
+**D3 — Skill points stay the player's choice.** No seeded Arcana/Religion at muster;
+allocating them at creation and level-up is a real decision with a real cost.
+⚠ **The AUTOPILOT takes Arcana for the Wizard and Religion for the Cleric**, for role-play
+coherence — so an auto-levelled party still grows into its scrolls. This extends
+`src/content/autopilot.ts` from brief #22, which already carries per-class priorities.
+
+**D4 — An unqualified hero's scroll greys out.** No risky attempt, no wasted scroll.
+Consistent with every other readiness gate in the game (feats #22, consumables #23).
+
+**D5 — Native tradition costs half.** `spellLevel + 1` for a scroll on your own class's
+tradition, `2 × spellLevel + 1` for everyone else.
+
+### The resulting ladder
+
+| Spell level | Own tradition | Anyone else | Scrolls unlocked |
+|---|---|---|---|
+| 1 | 2 | 3 | 15 |
+| 2 | 3 | 5 | +12 |
+| 3 | 4 | 7 | +11 |
+| 4 | 5 | 9 | +8 |
+| 5 | 6 | 11 | +6 (all 52) |
+
+⚠ **Ranks are capped at character level**, so the native discount matters more than the
+numbers suggest: a Cleric reaches spell-3 divine scrolls at **level 4**, a Fighter at
+**level 7**.
+
+⚠ **The gate keys on the scroll's PRIMARY tradition** (first entry in `spell_list`), not
+"any match". 51 of 52 scrolls list `arcane`, so an any-match rule would hand the Wizard 98%
+of all scrolls for free. One scroll, one skill.
+
+**On content thinness** (Steven, 2026-09-12): *"lets not over think the content we currently
+have implemented. We just don't have a lot of spells in the game yet."* So the ladder is
+built against all 52 scrolls and the 40 the engine cannot yet cast simply grey out. The
+buff/debuff resolver work is running in parallel and will light them up without a gate change.
 
 ## 7. ⚠ The structural fix (recommended regardless)
 

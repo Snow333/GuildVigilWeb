@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brief #24 — magic items &amp; scrolls, visually</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --vellum:#ece0c2; --ink:#3a2d1c; --ink-soft:#5c4a30;
+  --ink-muted:#7d6a4c; --ink-faint:#a89370;
+  --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+  --c-def:#2f6b8f; --c-off:#9c3428; --c-util:#6b4c8f;
+  --c-res:#3f6d2e; --c-dead:#8a7a5c; --c-exc:#8a6c38;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:30px 20px 90px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26,#2a211c 70%);
+  font-family:var(--data);color:var(--ink)}
+.wrap{max-width:1120px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:28px;font-weight:500;margin:0 0 4px}
+.subtitle{color:var(--ink-faint);font-size:14px;margin:0 0 26px;font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase}
+.sheet{position:relative;background:linear-gradient(160deg,#f0e5ca,#e6d9b8 55%,#ddcfa6);
+  border-radius:3px;padding:26px 30px 28px;margin:0 0 24px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b}
+h2.sec{font-family:var(--serif);font-size:22px;font-weight:500;margin:0 0 4px}
+.sec-sub{font-size:13px;color:var(--ink-muted);margin:0 0 16px;line-height:1.5}
+.banner{font-family:var(--sans);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:5px;margin:18px 0 12px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.banner .note{font-size:11px;letter-spacing:.05em;color:var(--ink-faint);text-transform:none}
+.tabnum{font-variant-numeric:tabular-nums lining-nums slashed-zero}
+p{line-height:1.6;font-size:14.5px}
+
+/* ===== the headline stat ===== */
+.headline{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:6px}
+.big{border-top:4px solid var(--c-dead);background:#8a7a5c14;border-radius:3px;padding:14px 16px}
+.big .n{font-size:42px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.big .l{font-family:var(--sans);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-muted);margin-top:4px}
+.big .d{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.45}
+
+/* ===== dead-channel bars ===== */
+.chan{margin-bottom:14px}
+.chan .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;font-size:14px}
+.chan .top b{font-weight:700}
+.chan .top span{font-size:12.5px;color:var(--ink-muted)}
+.cbar{height:26px;border-radius:3px;background:#0000000d;display:flex;overflow:hidden;border:1px solid #8c6a3a33}
+.cbar i{display:flex;align-items:center;justify-content:center;height:100%;
+  font-size:11px;font-family:var(--sans);letter-spacing:.07em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.cbar .dead{background:repeating-linear-gradient(45deg,var(--c-dead),var(--c-dead) 6px,#9a8a6c 6px,#9a8a6c 12px)}
+.cbar .live{background:var(--c-res)}
+
+/* ===== shape taxonomy ===== */
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+th{font-family:var(--sans);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-muted);text-align:left;padding:5px 9px;border-bottom:1.5px solid #8c6a3a55;font-weight:400}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+td{padding:6px 9px;border-bottom:1px solid #8c6a3a22;vertical-align:top;line-height:1.45}
+tr.m1{background:#3f6d2e12}
+tr.m2{background:#2f6b8f10}
+.chip{display:inline-block;font-family:var(--sans);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  border:1px solid;padding:1px 6px;border-radius:2px;white-space:nowrap}
+.chip.m1{border-color:var(--c-res);color:var(--c-res);background:#3f6d2e12}
+.chip.m2{border-color:var(--c-def);color:var(--c-def);background:#2f6b8f12}
+.chip.later{border-color:var(--c-dead);color:var(--c-dead);border-style:dashed}
+
+/* ===== milestone ladder ===== */
+.miles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.mile{border-radius:3px;padding:11px 12px;border-top:4px solid;background:#ffffff2a}
+.mile.now{border-color:var(--c-res);background:#3f6d2e14}
+.mile.next{border-color:var(--c-def);background:#2f6b8f12}
+.mile.later{border-color:var(--c-dead);opacity:.72}
+.mile .m{font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)}
+.mile .t{font-size:14px;font-weight:700;line-height:1.25;margin:3px 0 5px}
+.mile .u{font-size:12px;color:var(--ink-soft);line-height:1.4}
+.mile .cnt{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ===== the ladder ===== */
+.ladder{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.rung{display:grid;grid-template-columns:62px 1fr 96px;gap:12px;align-items:center;
+  padding:7px 10px;border-radius:3px;background:#ffffff2a;border-left:4px solid var(--c-util)}
+.rung .lv{font-family:var(--sans);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft)}
+.rung .track{height:20px;border-radius:3px;background:#0000000d;position:relative;overflow:hidden}
+.rung .track i{display:block;height:100%;background:var(--c-util);opacity:.75}
+.rung .track span{position:absolute;left:8px;top:0;line-height:20px;font-size:11.5px;color:#fff;font-weight:700}
+.rung .req{text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums}
+.rung.native{border-left-color:var(--c-res)}
+
+.warnbox{border-left:3px solid var(--c-exc);background:#c9a86a14;padding:11px 14px;margin:14px 0 0;font-size:13.5px;line-height:1.55}
+.warnbox b{color:#5a4212}
+.deadbox{border-left:3px solid var(--c-dead);background:#8a7a5c12;padding:11px 14px;margin:14px 0 0;font-size:13.5px;line-height:1.55}
+.q{border-left:3px solid var(--c-res);background:#3f6d2e10;padding:11px 14px;margin-bottom:9px;font-size:13.5px;line-height:1.55}
+.q b{display:block;color:var(--ink);margin-bottom:3px}
+.q .ans{color:var(--c-res);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.two{grid-template-columns:1fr}.headline{grid-template-columns:1fr}.miles{grid-template-columns:1fr}}
+.pie{display:flex;height:30px;border-radius:3px;overflow:hidden;border:1px solid #8c6a3a33;margin-top:6px}
+.pie i{display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-family:var(--sans);letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">Brief #24 — magic items that do something, and scrolls anyone can read</h1>
+<p class="subtitle">Measured 2026-09-12 · all figures from the live database and real probe runs</p>
+
+<!-- ===== 1. THE HEADLINE ===== -->
+<div class="sheet">
+  <h2 class="sec">The finding</h2>
+  <p class="sec-sub">You asked about weapon riders. There are <b>three</b> dead channels, not one.</p>
+
+  <div class="headline">
+    <div class="big">
+      <div class="n">33</div>
+      <div class="l">item properties</div>
+      <div class="d">flaming · frost · wounding · venom · keen · lifedrinker …<br><b>0 have an engine consumer</b></div>
+    </div>
+    <div class="big">
+      <div class="n">19</div>
+      <div class="l">items with stat_bonus</div>
+      <div class="d">Cloak of Resistance, Belt of Strength, Boots of Speed …<br><b>0 are read</b></div>
+    </div>
+    <div class="big" style="border-top-color:var(--c-exc);background:#c9a86a14">
+      <div class="n">63</div>
+      <div class="l">magic-tier items</div>
+      <div class="d">magical, enchanted and legendary rows that differ from their mundane base by <b>price and potency only</b></div>
+    </div>
+  </div>
+
+  <div class="banner">The three channels <span class="note">authored vs. actually read</span></div>
+
+  <div class="chan">
+    <div class="top"><b>item_properties.on_hit_effect / on_crit_effect</b><span>20 of 33 properties</span></div>
+    <div class="cbar"><i class="dead" style="width:100%">20 authored · 0 consumed</i></div>
+  </div>
+  <div class="chan">
+    <div class="top"><b>item_properties.passive_effect</b><span>13 of 33 properties</span></div>
+    <div class="cbar"><i class="dead" style="width:100%">13 authored · 0 consumed</i></div>
+  </div>
+  <div class="chan">
+    <div class="top"><b>items.stat_bonus</b><span>19 items</span></div>
+    <div class="cbar"><i class="dead" style="width:100%">19 authored · 0 consumed</i></div>
+  </div>
+
+  <div class="warnbox">
+    <b>⚠ How this was proven, not assumed.</b> <code>deriveItem()</code> computes
+    <code>onHitEffects</code> and <code>statBonuses</code> correctly and returns them —
+    a grep finds <b>zero consumers</b> outside <code>equipment.ts</code>. Then the experiment:
+    a <b>Flaming Longsword +1</b> was equipped and driven through a real encounter.
+    The only damage kind the engine emitted was <code>weapon</code>. No fire. Ever.
+  </div>
+
+  <div class="deadbox">
+    <b>In your current save:</b> Torvald's <b>Magical Wounding Longsword +1</b> deals no bleed.
+    The <b>Magical Cloak of Resistance +1</b> in the stash would give +1 to all three saves —
+    it gives nothing. Same for Headband of Intellect +2, Belt of Strength +2, Boots of Speed.
+  </div>
+</div>
+
+<!-- ===== 2. WHY ===== -->
+<div class="sheet">
+  <h2 class="sec">Why it broke this way</h2>
+  <p class="sec-sub">Nothing here was built badly. It was built <em>half</em>.</p>
+
+  <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin:14px 0">
+    <div style="border:1.5px solid var(--c-res);border-radius:3px;padding:12px;text-align:center;background:#3f6d2e10">
+      <div style="font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-res)">Content</div>
+      <div style="font-weight:700;margin:4px 0">Authored</div>
+      <div style="font-size:12px;color:var(--ink-muted)">33 properties, 19 stat bonuses, valid JSON</div>
+    </div>
+    <div style="font-size:20px;color:var(--ink-faint)">→</div>
+    <div style="border:1.5px solid var(--c-res);border-radius:3px;padding:12px;text-align:center;background:#3f6d2e10">
+      <div style="font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-res)">deriveItem()</div>
+      <div style="font-weight:700;margin:4px 0">Parsed &amp; returned</div>
+      <div style="font-size:12px;color:var(--ink-muted)">validates, type-checks, hands back a clean DerivedItem</div>
+    </div>
+    <div style="font-size:20px;color:var(--ink-faint)">→</div>
+    <div style="border:2px dashed var(--c-dead);border-radius:3px;padding:12px;text-align:center;background:#8a7a5c12">
+      <div style="font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-dead)">Engine</div>
+      <div style="font-weight:700;margin:4px 0;color:var(--c-dead)">Nobody listening</div>
+      <div style="font-size:12px;color:var(--ink-muted)">the fields are optional-shaped, so nothing ever errored</div>
+    </div>
+  </div>
+
+  <div class="warnbox">
+    <b>⚠ This is the third occurrence of the same pattern.</b>
+    <code>class_weapon_proficiency</code> (found in brief #23), then <code>onHitEffects</code>,
+    now <code>stat_bonus</code>. Each time: content authored against a contract with no consumer,
+    and nothing detected it. §7 proposes content-reachability tests so the next one fails CI
+    the day it is authored rather than surfacing two briefs later.
+  </div>
+</div>
+
+<!-- ===== 3. TAXONOMY + MILESTONES ===== -->
+<div class="sheet">
+  <h2 class="sec">What each property needs</h2>
+  <p class="sec-sub">Grouped by the <em>shape</em> of the effect, which is what determines engine cost. Measured, not invented.</p>
+
+  <table>
+    <thead><tr><th>Shape</th><th class="r">Count</th><th>Properties</th><th>Milestone</th></tr></thead>
+    <tbody>
+      <tr class="m1"><td><b>hit: flat damage</b> + crit: condition</td><td class="r">7</td>
+        <td>flaming, frost, shock, disrupting, wounding, thundering, corrosive</td><td><span class="chip m1">M1</span></td></tr>
+      <tr class="m1"><td><b>hit: flat damage</b> + crit: damage</td><td class="r">2</td>
+        <td>holy, unholy</td><td><span class="chip m1">M1</span></td></tr>
+      <tr class="m1"><td>hit: condition + crit: condition</td><td class="r">2</td>
+        <td>dread, binding</td><td><span class="chip m1">M1</span></td></tr>
+      <tr class="m1"><td>hit: lifesteal</td><td class="r">1</td>
+        <td>lifedrinker</td><td><span class="chip m1">M1</span></td></tr>
+      <tr class="m2"><td><b>stat_bonus</b> (saves, abilities, speed)</td><td class="r">19 items</td>
+        <td>Cloak of Resistance, Belt of Strength, Boots of Speed …</td><td><span class="chip m2">M2</span></td></tr>
+      <tr><td>passive: combat rule</td><td class="r">6</td>
+        <td>keen, ghost_touch, returning, shifting, fortification, slick</td><td><span class="chip later">M3</span></td></tr>
+      <tr><td>passive: damage resistance</td><td class="r">5</td>
+        <td>fire / cold / shock / acid / sonic resistant</td><td><span class="chip later">M4</span></td></tr>
+      <tr><td>passive: dungeon</td><td class="r">5</td>
+        <td>trapfinding, shadowstep, truesight, lockbreaker, everlight</td><td><span class="chip later">M5</span></td></tr>
+      <tr><td>other passives</td><td class="r">5</td>
+        <td>ethereal, pathfinding, shadow, sorvai_marked …</td><td><span class="chip later">M5</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="banner">Milestones <span class="note">approved: M1 + M2 first</span></div>
+  <div class="miles">
+    <div class="mile now"><div class="m">Approved · first</div><div class="t">M1 — Strike riders</div>
+      <div class="cnt">12</div><div class="u">properties live. Reuses <code>applyStrikeRider</code> from #22.</div></div>
+    <div class="mile next"><div class="m">Approved · first</div><div class="t">M2 — stat_bonus</div>
+      <div class="cnt">19</div><div class="u">items live, and <b>zero new content</b> — the values already exist.</div></div>
+    <div class="mile later"><div class="m">Later</div><div class="t">M3 — Combat rules</div>
+      <div class="cnt">6</div><div class="u">keen, fortification, ghost touch …</div></div>
+    <div class="mile later"><div class="m">Later</div><div class="t">M4 — Resistances</div>
+      <div class="cnt">5</div><div class="u">needs M1's typed damage first</div></div>
+    <div class="mile later"><div class="m">Later</div><div class="t">M5 — Dungeon</div>
+      <div class="cnt">10</div><div class="u">feeds existing check bonuses</div></div>
+  </div>
+
+  <div class="banner">Coverage after M1 + M2 <span class="note">of all authored magic effects</span></div>
+  <div class="pie">
+    <i style="width:23%;background:var(--c-res)">M1 · 12</i>
+    <i style="width:37%;background:var(--c-def)">M2 · 19</i>
+    <i style="width:40%;background:var(--c-dead)">remaining · 21</i>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-muted);margin-top:8px">
+    Roughly <b>60%</b> of the authored magic-item layer becomes real in the first two milestones.
+  </p>
+
+  <div class="warnbox">
+    <b>⚠ Riders must emit SEPARATE damage events</b>, not be folded into the weapon total.
+    Resistances (M4) need to see the type; the record must be able to say “and 4 fire”;
+    and a folded total makes the rider invisible — which is precisely how it became dead
+    content the first time.
+  </div>
+  <div class="deadbox">
+    <b>Q2 answered — riders stay flat for now.</b> A 1d6 flaming rider is strong at level 3 and
+    trivial at 15, but scaling is a balance decision that belongs with the curve retune,
+    not with the wiring. Flat now; revisit deliberately.
+  </div>
+</div>
+
+<!-- ===== 4. SCROLLS ===== -->
+<div class="sheet">
+  <h2 class="sec">Scrolls — the skill ladder</h2>
+  <p class="sec-sub">Your rule generalises to <b>skill ≥ 2 × spell level + 1</b>, halved for your own tradition.</p>
+
+  <div class="two">
+    <div>
+      <div class="banner">Anyone else <span class="note">2L + 1</span></div>
+      <div class="ladder">
+        <div class="rung"><span class="lv">Spell 1</span>
+          <span class="track"><i style="width:29%"></i><span>15 scrolls</span></span>
+          <span class="req">Arcana <b>3</b></span></div>
+        <div class="rung"><span class="lv">Spell 2</span>
+          <span class="track"><i style="width:52%"></i><span>+12</span></span>
+          <span class="req">Arcana <b>5</b></span></div>
+        <div class="rung"><span class="lv">Spell 3</span>
+          <span class="track"><i style="width:73%"></i><span>+11</span></span>
+          <span class="req">Arcana <b>7</b></span></div>
+        <div class="rung"><span class="lv">Spell 4</span>
+          <span class="track"><i style="width:88%"></i><span>+8</span></span>
+          <span class="req">Arcana <b>9</b></span></div>
+        <div class="rung"><span class="lv">Spell 5</span>
+          <span class="track"><i style="width:100%"></i><span>+6 · all 52</span></span>
+          <span class="req">Arcana <b>11</b></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="banner">Your own tradition <span class="note">L + 1 · approved Q5</span></div>
+      <div class="ladder">
+        <div class="rung native"><span class="lv">Spell 1</span>
+          <span class="track"><i style="width:29%;background:var(--c-res)"></i><span>15 scrolls</span></span>
+          <span class="req">skill <b>2</b></span></div>
+        <div class="rung native"><span class="lv">Spell 2</span>
+          <span class="track"><i style="width:52%;background:var(--c-res)"></i><span>+12</span></span>
+          <span class="req">skill <b>3</b></span></div>
+        <div class="rung native"><span class="lv">Spell 3</span>
+          <span class="track"><i style="width:73%;background:var(--c-res)"></i><span>+11</span></span>
+          <span class="req">skill <b>4</b></span></div>
+        <div class="rung native"><span class="lv">Spell 4</span>
+          <span class="track"><i style="width:88%;background:var(--c-res)"></i><span>+8</span></span>
+          <span class="req">skill <b>5</b></span></div>
+        <div class="rung native"><span class="lv">Spell 5</span>
+          <span class="track"><i style="width:100%;background:var(--c-res)"></i><span>+6 · all 52</span></span>
+          <span class="req">skill <b>6</b></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warnbox">
+    <b>⚠ Ranks are capped at character level.</b> So “Arcana 3” is not “spend 3 points” —
+    it is <b>“be at least level 3, with every rank in Arcana.”</b> The native ladder matters
+    more than it looks: a Cleric reaches spell-3 divine scrolls at <b>level 4</b>,
+    where a Fighter needs <b>level 7</b>.
+  </div>
+
+  <div class="banner">The stock, and who it favours <span class="note">52 scrolls, spell_list is multi-valued</span></div>
+  <table>
+    <thead><tr><th>Tradition</th><th class="r">Scrolls</th><th>Share</th></tr></thead>
+    <tbody>
+      <tr><td><b>arcane</b></td><td class="r">51</td>
+        <td><span class="pie" style="height:14px;margin:0"><i style="width:98%;background:var(--c-util)"></i><i style="width:2%;background:#0000000d"></i></span></td></tr>
+      <tr><td>occult</td><td class="r">22</td>
+        <td><span class="pie" style="height:14px;margin:0"><i style="width:42%;background:var(--c-util);opacity:.7"></i><i style="width:58%;background:#0000000d"></i></span></td></tr>
+      <tr><td>divine</td><td class="r">13</td>
+        <td><span class="pie" style="height:14px;margin:0"><i style="width:25%;background:var(--c-util);opacity:.5"></i><i style="width:75%;background:#0000000d"></i></span></td></tr>
+      <tr><td>primal</td><td class="r">0</td>
+        <td><span style="font-size:12px;color:var(--ink-faint)">no primal scrolls exist</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="deadbox">
+    <b>Why “native auto-use” needed adjusting.</b> 51 of 52 scrolls include <code>arcane</code>,
+    so a naive “any tradition match” rule hands the <b>Wizard 98% of all scrolls for free</b>.
+    The gate therefore keys on the scroll's <b>primary</b> tradition — the first entry in
+    <code>spell_list</code> — so one scroll maps to exactly one skill.
+    Exactly <b>one</b> scroll is divine-but-not-arcane (Scroll of Heal), which is simply
+    what the content is today.
+  </div>
+
+  <div class="banner">What the engine can actually cast <span class="note">today</span></div>
+  <div class="pie">
+    <i style="width:23%;background:var(--c-res)">12 resolve</i>
+    <i style="width:77%;background:var(--c-dead)">40 need buff / debuff resolvers</i>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-muted);margin-top:8px">
+    The gate is built against all 52; the 40 grey out until the spell pass lands —
+    <b>same readiness discipline as feats (#22) and consumables (#23)</b>.
+    That spell work is running in parallel.
+  </p>
+</div>
+
+<!-- ===== 5. DECISIONS ===== -->
+<div class="sheet">
+  <h2 class="sec">Your five decisions</h2>
+  <p class="sec-sub">Recorded 2026-09-12.</p>
+
+  <div class="q"><b>Q1 · Milestone order</b>
+    <span class="ans">M1 + M2 first</span> — strike riders and stat_bonus. ~60% of the magic layer, and M2 needs no new content.</div>
+  <div class="q"><b>Q2 · Do riders scale?</b>
+    <span class="ans">Flat for now</span> — revisit when the level curve is retuned. Scaling is a balance call, not a wiring one.</div>
+  <div class="q"><b>Q3 · Starting skills</b>
+    <span class="ans">Players allocate their own</span> — at creation and level-up, so taking Arcana or Religion is a real choice.
+    <b>Auto-level-up</b> takes Arcana for the Wizard and Religion for the Cleric, for role-play coherence.</div>
+  <div class="q"><b>Q4 · Unqualified scroll use</b>
+    <span class="ans">Grey it out</span> — consistent with every other readiness gate in the game.</div>
+  <div class="q"><b>Q5 · Native-tradition discount</b>
+    <span class="ans">Yes — L + 1 for your own tradition</span>, 2L + 1 for everyone else.</div>
+</div>
+
+</div>
+</body>
+</html>

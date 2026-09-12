@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guild Vigil — sheet G · H · I (paperdoll blends)</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --vellum:#ece0c2; --ink:#3a2d1c; --ink-soft:#5c4a30;
+  --ink-muted:#7d6a4c; --ink-faint:#a89370;
+  --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+  /* the six channels — identical to the record, now shipped in tokens.css */
+  --c-def:#2f6b8f; --c-off:#9c3428; --c-util:#6b4c8f;
+  --c-res:#3f6d2e; --c-dead:#8a7a5c; --c-exc:#8a6c38;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 20px 90px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26,#2a211c 70%);
+  font-family:var(--data);color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:26px;font-weight:500;margin:0 0 6px}
+p.page{color:var(--ink-faint);max-width:74ch;line-height:1.55;margin:0 0 26px;font-size:15px}
+.sheet{position:relative;background:linear-gradient(160deg,#f0e5ca,#e6d9b8 55%,#ddcfa6);
+  border-radius:3px;padding:30px 32px 32px;margin:0 0 32px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b}
+.variant-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:#322822;color:var(--brass-hi);padding:3px 14px;border-radius:2px;border:1px solid #8a6c3877}
+.banner{font-family:var(--sans);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:5px;margin:0 0 12px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.banner .note{font-size:11px;letter-spacing:.05em;color:var(--ink-faint);text-transform:none}
+.legend{font-size:12.5px;color:var(--ink-muted);line-height:1.65;margin-top:12px}
+.tabnum{font-variant-numeric:tabular-nums lining-nums slashed-zero}
+
+/* ===== identity + KPI (from D) ===== */
+.hero-bar{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;margin-bottom:18px}
+.avatar{width:72px;height:72px;border-radius:3px;border:2px solid #fff;box-shadow:0 3px 10px #0005;
+  background:linear-gradient(150deg,#8b7355,#5c4a36);display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:28px;color:#e8dcc0}
+.hero-bar h2{font-family:var(--serif);font-size:26px;font-weight:500;margin:0}
+.hero-bar .sub{font-family:var(--sans);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted)}
+.kpis{display:flex;gap:7px}
+.kpi{min-width:84px;padding:7px 11px;border-radius:3px;border-top:3px solid;background:#ffffff30}
+.kpi .k{font-family:var(--sans);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-muted)}
+.kpi .v{font-size:25px;font-weight:700;line-height:1.1}
+.kpi .d{font-size:10.5px;color:var(--ink-muted)}
+.kpi.def{border-color:var(--c-def)} .kpi.off{border-color:var(--c-off)}
+.kpi.res{border-color:var(--c-res)} .kpi.util{border-color:var(--c-util)}
+
+/* ===== THE PAPERDOLL ===== */
+.doll{position:relative;width:100%;max-width:300px;margin:0 auto;aspect-ratio:3/4}
+.doll svg{position:absolute;inset:0;width:100%;height:100%}
+.dslot{position:absolute;width:74px;transform:translate(-50%,-50%);text-align:center;cursor:pointer}
+.dbox{border:1.5px solid #8c6a3a88;border-radius:3px;background:#ffffff44;padding:5px 3px;
+  min-height:42px;display:flex;flex-direction:column;justify-content:center;gap:1px;
+  transition:border-color .12s,background .12s}
+.dslot:hover .dbox{border-color:var(--brass-deep);background:#c9a86a3a}
+.dslot.sel .dbox{border-color:var(--brass-deep);border-width:2px;background:#c9a86a4d}
+.dbox .icon{font-size:14px;line-height:1}
+.dbox .nm{font-size:10px;font-weight:700;line-height:1.15;overflow:hidden}
+.dbox .co{font-size:9.5px;font-variant-numeric:tabular-nums;line-height:1.1}
+.dlabel{font-family:var(--sans);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-muted);margin-bottom:2px}
+
+/* the three slot states — shape and text, not colour alone */
+.dslot.filled .dbox{border-style:solid}
+.dslot.empty .dbox{border-style:dashed;background:transparent}
+.dslot.empty .nm{color:var(--ink-faint);font-weight:400}
+/* ⚠ UNDERSERVED: filled, but with something the game ignores or a weak item */
+.dslot.under .dbox{border-style:solid;border-color:var(--c-exc);
+  background:repeating-linear-gradient(45deg,#c9a86a1f,#c9a86a1f 5px,transparent 5px,transparent 10px)}
+.warn{position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;
+  background:var(--c-exc);color:#fff;font-size:11px;font-weight:700;line-height:17px;text-align:center;
+  box-shadow:0 1px 3px #0006}
+.warn.gap{background:var(--c-dead)}
+
+.dollkey{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;font-size:11.5px;
+  color:var(--ink-muted);margin-top:10px}
+.dollkey span{display:flex;align-items:center;gap:5px}
+.sw{width:22px;height:13px;border-radius:2px;border:1.5px solid #8c6a3a88;display:inline-block}
+.sw.e{border-style:dashed;background:transparent}
+.sw.u{border-color:var(--c-exc);background:repeating-linear-gradient(45deg,#c9a86a1f,#c9a86a1f 4px,transparent 4px,transparent 8px)}
+.sw.f{background:#ffffff66}
+
+/* ===== inspector (from E) ===== */
+.effect{display:grid;grid-template-columns:12px 1fr auto;gap:9px;align-items:baseline;
+  padding:6px 0;border-bottom:1px solid #8c6a3a26;font-size:13.5px}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:5px}
+.effect .amt{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.effect small{display:block;color:var(--ink-muted);font-size:11.5px;line-height:1.45;margin-top:2px}
+.badge{font-family:var(--sans);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+  border:1px solid;padding:1px 5px;border-radius:2px;margin-left:5px;white-space:nowrap}
+.badge.live{border-color:var(--c-res);color:var(--c-res)}
+.badge.dead{border-color:var(--c-dead);color:var(--c-dead);border-style:dashed}
+.badge.gap{border-color:var(--c-exc);color:#5a4212;background:#c9a86a2e}
+
+/* ===== stacked bars (from D) ===== */
+.bar-row{display:grid;grid-template-columns:78px 1fr 40px;gap:9px;align-items:center;font-size:13px;padding:3px 0}
+.bar-row .lab{color:var(--ink-soft)}
+.bar-row .val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#0000000f}
+.stack i{height:100%}
+.src-key{display:flex;flex-wrap:wrap;gap:9px;font-size:10.5px;color:var(--ink-muted);margin:4px 0 0 87px}
+.src-key b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px}
+
+.cols3{display:grid;grid-template-columns:1fr 300px 1fr;gap:22px}
+@media(max-width:1000px){.cols3{grid-template-columns:1fr}}
+.cols2{display:grid;grid-template-columns:320px 1fr;gap:24px}
+@media(max-width:900px){.cols2{grid-template-columns:1fr}}
+.qs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.qslot{border:1.5px solid var(--c-res);border-radius:3px;padding:6px 4px;text-align:center;background:#3f6d2e0f}
+.qslot.e{border-style:dashed;border-color:#8c6a3a66;background:transparent;color:var(--ink-faint)}
+.qslot .n{font-size:10.5px;font-weight:700}
+.qslot .t{font-size:9.5px;color:var(--ink-muted)}
+.btn{font-family:var(--sans);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;
+  padding:3px 9px;cursor:pointer;color:var(--ink)}
+.gaps{border-left:3px solid var(--c-exc);background:#c9a86a14;padding:9px 12px;margin-top:12px;font-size:13px;line-height:1.55}
+.gaps b{color:#5a4212}
+.gaps ul{margin:6px 0 0;padding-left:18px}
+.gaps li{margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">Character sheet — D + E blended, with a paperdoll</h1>
+<p class="page">
+  Three ways to combine the dashboard (D) and the inspector (E) around a paperdoll.
+  The paperdoll's job here is not decoration — it is to make <b>empty</b> and
+  <b>underserved</b> slots visible at a glance. Three states, each carrying shape
+  <em>and</em> text so they survive greyscale: <b>solid</b> = working,
+  <b>dashed</b> = empty, <b>hatched with a badge</b> = filled but not pulling its weight.
+</p>
+
+<!-- ==================== G ==================== -->
+<div class="sheet">
+  <span class="variant-tag">Variant G — doll centre, numbers left, inspector right</span>
+
+  <div class="hero-bar">
+    <div class="avatar">T</div>
+    <div><h2>Torvald</h2><div class="sub">Human Fighter · Level 1 · 717 / 1000 xp</div></div>
+    <div class="kpis">
+      <div class="kpi def"><div class="k">Armour</div><div class="v tabnum">21</div><div class="d">+10 gear</div></div>
+      <div class="kpi res"><div class="k">Health</div><div class="v tabnum">20</div><div class="d">full</div></div>
+      <div class="kpi off"><div class="k">Attack</div><div class="v tabnum">+5</div><div class="d">1d8+3</div></div>
+      <div class="kpi util"><div class="k">Speed</div><div class="v tabnum">5</div><div class="d">init +2</div></div>
+    </div>
+  </div>
+
+  <div class="cols3">
+    <!-- numbers -->
+    <div>
+      <div class="banner">Defence</div>
+      <div class="bar-row">
+        <span class="lab">Armour</span>
+        <span class="stack">
+          <i style="width:47.6%;background:var(--ink-faint)"></i>
+          <i style="width:4.8%;background:#8ca9bd"></i>
+          <i style="width:14.3%;background:#5b8aa8"></i>
+          <i style="width:33.3%;background:var(--c-def)"></i>
+        </span>
+        <span class="val">21</span>
+      </div>
+      <div class="src-key">
+        <span><b style="background:var(--ink-faint)"></b>base 10</span>
+        <span><b style="background:#8ca9bd"></b>dex +1</span>
+        <span><b style="background:#5b8aa8"></b>trained +3</span>
+        <span><b style="background:var(--c-def)"></b>gear +10</span>
+      </div>
+      <div class="bar-row" style="margin-top:8px"><span class="lab">Fortitude</span>
+        <span class="stack"><i style="width:30%;background:var(--c-def)"></i></span><span class="val">+3</span></div>
+      <div class="bar-row"><span class="lab">Reflex</span>
+        <span class="stack"><i style="width:20%;background:var(--c-def)"></i></span><span class="val">+2</span></div>
+      <div class="bar-row"><span class="lab">Will</span>
+        <span class="stack"><i style="width:20%;background:var(--c-def)"></i></span><span class="val">+2</span></div>
+
+      <div class="banner" style="margin-top:16px">Offence</div>
+      <div class="bar-row">
+        <span class="lab">Attack</span>
+        <span class="stack">
+          <i style="width:60%;background:var(--c-off)"></i>
+          <i style="width:20%;background:#c4765f"></i>
+          <i style="width:20%;background:#e0a68f"></i>
+        </span>
+        <span class="val">+5</span>
+      </div>
+      <div class="src-key">
+        <span><b style="background:var(--c-off)"></b>str +3</span>
+        <span><b style="background:#c4765f"></b>trained +1</span>
+        <span><b style="background:#e0a68f"></b>sword +1</span>
+      </div>
+      <div class="bar-row" style="margin-top:8px"><span class="lab">Damage</span>
+        <span style="font-size:13px">1d8 + 3</span><span class="val"></span></div>
+      <div class="bar-row"><span class="lab">Per round</span>
+        <span style="font-size:12.5px;color:var(--ink-muted)">~7.5 avg</span><span class="val"></span></div>
+
+      <div class="banner" style="margin-top:16px">Abilities</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">STR</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">+3</div><div style="font-size:10px;color:var(--ink-muted)">16</div></div>
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">DEX</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">+1</div><div style="font-size:10px;color:var(--ink-muted)">12</div></div>
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">CON</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">+2</div><div style="font-size:10px;color:var(--ink-muted)">14</div></div>
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">INT</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">+0</div><div style="font-size:10px;color:var(--ink-muted)">10</div></div>
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">WIS</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">+1</div><div style="font-size:10px;color:var(--ink-muted)">12</div></div>
+        <div style="text-align:center;border:1px solid #8c6a3a55;border-radius:3px;padding:4px 2px;background:#ffffff26">
+          <div style="font-family:var(--sans);font-size:9.5px;letter-spacing:.1em;color:var(--ink-muted)">CHA</div>
+          <div style="font-size:19px;font-weight:700" class="tabnum">−1</div><div style="font-size:10px;color:var(--ink-muted)">8</div></div>
+      </div>
+    </div>
+
+    <!-- the doll -->
+    <div>
+      <div class="banner">Worn <span class="note">4 of 8 slots</span></div>
+      <div class="doll">
+        <svg viewBox="0 0 300 400" aria-hidden="true">
+          <g stroke="#8c6a3a" stroke-width="1.5" fill="none" opacity=".45" stroke-linecap="round">
+            <circle cx="150" cy="62" r="26"/>
+            <path d="M150 88 L150 236"/>
+            <path d="M150 112 L96 152 L92 208"/>
+            <path d="M150 112 L204 152 L208 208"/>
+            <path d="M150 236 L120 330 L116 372"/>
+            <path d="M150 236 L180 330 L184 372"/>
+            <path d="M118 120 Q150 104 182 120 L188 232 Q150 246 112 232 Z" opacity=".35"/>
+          </g>
+        </svg>
+
+        <div class="dslot filled sel" style="left:50%;top:8%">
+          <div class="dlabel">Head</div>
+          <div class="dbox" style="border-style:dashed;background:transparent">
+            <span class="nm" style="color:var(--ink-faint);font-weight:400">empty</span>
+          </div>
+        </div>
+        <div class="dslot empty" style="left:50%;top:25%">
+          <div class="dlabel">Neck</div>
+          <div class="dbox"><span class="nm">empty</span></div>
+          <span class="warn gap">–</span>
+        </div>
+        <div class="dslot under" style="left:14%;top:40%">
+          <div class="dlabel">Main</div>
+          <div class="dbox"><span class="icon">⚔</span><span class="nm">Longsword +1</span>
+            <span class="co" style="color:var(--c-off)">Atk +1 · 1d8</span></div>
+          <span class="warn">!</span>
+        </div>
+        <div class="dslot filled" style="left:86%;top:40%">
+          <div class="dlabel">Off</div>
+          <div class="dbox"><span class="icon">🛡</span><span class="nm">Shield +2</span>
+            <span class="co" style="color:var(--c-def)">AC +4</span></div>
+        </div>
+        <div class="dslot filled" style="left:50%;top:46%">
+          <div class="dlabel">Armour</div>
+          <div class="dbox"><span class="icon">▦</span><span class="nm">Chain Mail</span>
+            <span class="co" style="color:var(--c-def)">AC +5</span></div>
+        </div>
+        <div class="dslot filled" style="left:14%;top:62%">
+          <div class="dlabel">Ring</div>
+          <div class="dbox"><span class="icon">◎</span><span class="nm">Protection +1</span>
+            <span class="co" style="color:var(--c-def)">AC +1</span></div>
+        </div>
+        <div class="dslot empty" style="left:86%;top:62%">
+          <div class="dlabel">Ring</div>
+          <div class="dbox"><span class="nm">empty</span></div>
+          <span class="warn gap">–</span>
+        </div>
+        <div class="dslot empty" style="left:50%;top:80%">
+          <div class="dlabel">Accessory</div>
+          <div class="dbox"><span class="nm">empty</span></div>
+          <span class="warn gap">–</span>
+        </div>
+      </div>
+
+      <div class="dollkey">
+        <span><i class="sw f"></i> working</span>
+        <span><i class="sw e"></i> empty</span>
+        <span><i class="sw u"></i> underserved</span>
+      </div>
+
+      <div class="banner" style="margin-top:14px">Pouch <span class="note">2 of 4</span></div>
+      <div class="qs">
+        <div class="qslot"><div class="n">Potion</div><div class="t">1d8</div></div>
+        <div class="qslot"><div class="n">Potion</div><div class="t">1d8</div></div>
+        <div class="qslot e"><div class="t">empty</div></div>
+        <div class="qslot e"><div class="t">empty</div></div>
+      </div>
+    </div>
+
+    <!-- inspector -->
+    <div>
+      <div class="banner">Main hand <span class="note">selected</span></div>
+      <div style="font-family:var(--serif);font-size:19px;margin-bottom:2px">Magical Wounding Longsword +1</div>
+      <div style="font-family:var(--sans);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px">
+        Magical · 1d8 slashing</div>
+
+      <div class="effect">
+        <span class="dot" style="background:var(--c-off)"></span>
+        <span>Attack bonus <span class="badge live">active</span>
+          <small>Potency +1, added to every strike roll.</small></span>
+        <span class="amt" style="color:var(--c-off)">+1</span>
+      </div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-off)"></span>
+        <span>Weapon damage <span class="badge live">active</span>
+          <small>Strength adds +3 on top.</small></span>
+        <span class="amt" style="color:var(--c-off)">1d8</span>
+      </div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Wounding <span class="badge dead">not built</span>
+          <small>Should bleed 1d6 per hit. Measured: the engine emits only
+          <code>weapon</code> damage — this rider never fires. That is why the
+          slot is flagged underserved.</small></span>
+        <span class="amt" style="color:var(--c-dead)">1d6</span>
+      </div>
+
+      <div class="gaps">
+        <b>⚠ 4 slots want attention</b>
+        <ul>
+          <li><b>Main hand</b> — carries a rider the game ignores</li>
+          <li><b>Accessory</b> — empty, and a Cloak of Resistance +1 is in the stash</li>
+          <li><b>Neck, second ring</b> — empty, nothing available</li>
+        </ul>
+      </div>
+      <div class="legend">
+        Selecting any doll slot fills this panel. The gap list is derived, never authored —
+        it is simply every slot that is empty or holds an inert effect.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== H ==================== -->
+<div class="sheet">
+  <span class="variant-tag">Variant H — doll left, everything else in one reading column</span>
+
+  <div class="hero-bar">
+    <div class="avatar">T</div>
+    <div><h2>Torvald</h2><div class="sub">Human Fighter · Level 1</div></div>
+    <div class="kpis">
+      <div class="kpi def"><div class="k">AC</div><div class="v tabnum">21</div></div>
+      <div class="kpi res"><div class="k">HP</div><div class="v tabnum">20</div></div>
+      <div class="kpi off"><div class="k">Atk</div><div class="v tabnum">+5</div></div>
+    </div>
+  </div>
+
+  <div class="cols2">
+    <div>
+      <div class="doll" style="max-width:290px">
+        <svg viewBox="0 0 300 400" aria-hidden="true">
+          <g stroke="#8c6a3a" stroke-width="1.5" fill="none" opacity=".4" stroke-linecap="round">
+            <circle cx="150" cy="62" r="26"/><path d="M150 88 L150 236"/>
+            <path d="M150 112 L96 152 L92 208"/><path d="M150 112 L204 152 L208 208"/>
+            <path d="M150 236 L120 330 L116 372"/><path d="M150 236 L180 330 L184 372"/>
+          </g>
+        </svg>
+        <div class="dslot empty" style="left:50%;top:8%"><div class="dlabel">Head</div>
+          <div class="dbox"><span class="nm">empty</span></div><span class="warn gap">–</span></div>
+        <div class="dslot empty" style="left:50%;top:25%"><div class="dlabel">Neck</div>
+          <div class="dbox"><span class="nm">empty</span></div><span class="warn gap">–</span></div>
+        <div class="dslot under" style="left:14%;top:40%"><div class="dlabel">Main</div>
+          <div class="dbox"><span class="icon">⚔</span><span class="nm">Longsword +1</span>
+          <span class="co" style="color:var(--c-off)">Atk +1</span></div><span class="warn">!</span></div>
+        <div class="dslot filled" style="left:86%;top:40%"><div class="dlabel">Off</div>
+          <div class="dbox"><span class="icon">🛡</span><span class="nm">Shield +2</span>
+          <span class="co" style="color:var(--c-def)">AC +4</span></div></div>
+        <div class="dslot filled" style="left:50%;top:46%"><div class="dlabel">Armour</div>
+          <div class="dbox"><span class="icon">▦</span><span class="nm">Chain Mail</span>
+          <span class="co" style="color:var(--c-def)">AC +5</span></div></div>
+        <div class="dslot filled" style="left:14%;top:62%"><div class="dlabel">Ring</div>
+          <div class="dbox"><span class="icon">◎</span><span class="nm">Prot. +1</span>
+          <span class="co" style="color:var(--c-def)">AC +1</span></div></div>
+        <div class="dslot empty" style="left:86%;top:62%"><div class="dlabel">Ring</div>
+          <div class="dbox"><span class="nm">empty</span></div><span class="warn gap">–</span></div>
+        <div class="dslot empty" style="left:50%;top:80%"><div class="dlabel">Accessory</div>
+          <div class="dbox"><span class="nm">empty</span></div><span class="warn gap">–</span></div>
+      </div>
+      <div class="dollkey">
+        <span><i class="sw f"></i> working</span>
+        <span><i class="sw e"></i> empty</span>
+        <span><i class="sw u"></i> underserved</span>
+      </div>
+      <div class="qs" style="margin-top:14px">
+        <div class="qslot"><div class="n">Potion</div><div class="t">1d8</div></div>
+        <div class="qslot"><div class="n">Potion</div><div class="t">1d8</div></div>
+        <div class="qslot e"><div class="t">empty</div></div>
+        <div class="qslot e"><div class="t">empty</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="banner">Where every number comes from</div>
+      <div class="bar-row"><span class="lab">Armour</span>
+        <span class="stack">
+          <i style="width:47.6%;background:var(--ink-faint)"></i>
+          <i style="width:19%;background:#5b8aa8"></i>
+          <i style="width:33.4%;background:var(--c-def)"></i></span><span class="val">21</span></div>
+      <div class="src-key"><span><b style="background:var(--ink-faint)"></b>base</span>
+        <span><b style="background:#5b8aa8"></b>dex + training</span>
+        <span><b style="background:var(--c-def)"></b>gear — 48%</span></div>
+
+      <div class="bar-row" style="margin-top:8px"><span class="lab">Attack</span>
+        <span class="stack">
+          <i style="width:60%;background:var(--c-off)"></i>
+          <i style="width:20%;background:#c4765f"></i>
+          <i style="width:20%;background:#e0a68f"></i></span><span class="val">+5</span></div>
+      <div class="src-key"><span><b style="background:var(--c-off)"></b>strength</span>
+        <span><b style="background:#c4765f"></b>training</span>
+        <span><b style="background:#e0a68f"></b>gear</span></div>
+
+      <div class="bar-row" style="margin-top:8px"><span class="lab">Fortitude</span>
+        <span class="stack"><i style="width:30%;background:var(--c-def)"></i></span><span class="val">+3</span></div>
+      <div class="bar-row"><span class="lab">Reflex</span>
+        <span class="stack"><i style="width:20%;background:var(--c-def)"></i></span><span class="val">+2</span></div>
+      <div class="bar-row"><span class="lab">Will</span>
+        <span class="stack"><i style="width:20%;background:var(--c-def)"></i></span><span class="val">+2</span></div>
+
+      <div class="banner" style="margin-top:16px">Slot audit <span class="note">derived, not authored</span></div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-exc)"></span>
+        <span>Main hand — underserved
+          <small>Wounding rider (1d6 bleed) has no engine consumer.</small></span>
+        <span class="amt"><button class="btn">Inspect</button></span>
+      </div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Accessory — empty, and fillable
+          <small>Magical Cloak of Resistance +1 is sitting in the stash.</small></span>
+        <span class="amt"><button class="btn">Equip</button></span>
+      </div>
+      <div class="effect" style="border:0">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Head · Neck · Ring 2 — empty
+          <small>Nothing in the stash fits these slots yet.</small></span>
+        <span class="amt" style="color:var(--ink-faint);font-size:12px">no options</span>
+      </div>
+
+      <div class="legend">
+        One reading column on the right means no left-to-right hopping between related numbers —
+        the layout a dyslexic reader handles best. The doll stays a fixed, scannable landmark.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== I ==================== -->
+<div class="sheet">
+  <span class="variant-tag">Variant I — compact doll, effects grouped by what they improve</span>
+
+  <div class="hero-bar">
+    <div class="avatar">T</div>
+    <div><h2>Torvald</h2><div class="sub">Human Fighter · Level 1</div></div>
+    <div class="kpis">
+      <div class="kpi def"><div class="k">AC</div><div class="v tabnum">21</div></div>
+      <div class="kpi res"><div class="k">HP</div><div class="v tabnum">20</div></div>
+      <div class="kpi off"><div class="k">Atk</div><div class="v tabnum">+5</div></div>
+      <div class="kpi util"><div class="k">Slots</div><div class="v tabnum">4/8</div></div>
+    </div>
+  </div>
+
+  <div class="cols2" style="grid-template-columns:240px 1fr">
+    <div>
+      <div class="doll" style="max-width:220px;aspect-ratio:2/3">
+        <svg viewBox="0 0 220 330" aria-hidden="true">
+          <g stroke="#8c6a3a" stroke-width="1.5" fill="none" opacity=".35" stroke-linecap="round">
+            <circle cx="110" cy="48" r="20"/><path d="M110 68 L110 196"/>
+            <path d="M110 88 L68 120 L64 168"/><path d="M110 88 L152 120 L156 168"/>
+            <path d="M110 196 L86 274 L82 310"/><path d="M110 196 L134 274 L138 310"/>
+          </g>
+        </svg>
+        <div class="dslot empty" style="left:50%;top:7%;width:58px"><div class="dbox" style="min-height:30px"><span class="nm">head</span></div></div>
+        <div class="dslot empty" style="left:50%;top:23%;width:58px"><div class="dbox" style="min-height:30px"><span class="nm">neck</span></div></div>
+        <div class="dslot under" style="left:12%;top:40%;width:62px"><div class="dbox" style="min-height:30px"><span class="icon">⚔</span></div><span class="warn">!</span></div>
+        <div class="dslot filled" style="left:88%;top:40%;width:62px"><div class="dbox" style="min-height:30px"><span class="icon">🛡</span></div></div>
+        <div class="dslot filled" style="left:50%;top:47%;width:62px"><div class="dbox" style="min-height:30px"><span class="icon">▦</span></div></div>
+        <div class="dslot filled" style="left:12%;top:64%;width:58px"><div class="dbox" style="min-height:30px"><span class="icon">◎</span></div></div>
+        <div class="dslot empty" style="left:88%;top:64%;width:58px"><div class="dbox" style="min-height:30px"><span class="nm">ring</span></div></div>
+        <div class="dslot empty" style="left:50%;top:82%;width:62px"><div class="dbox" style="min-height:30px"><span class="nm">acc.</span></div></div>
+      </div>
+      <div class="dollkey" style="font-size:10.5px">
+        <span><i class="sw f"></i> worn</span><span><i class="sw e"></i> empty</span><span><i class="sw u"></i> idle</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="banner">What your gear is doing <span class="note">grouped by what it improves</span></div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+          color:var(--c-def);border-bottom:2px solid var(--c-def);padding-bottom:3px;margin-bottom:6px;
+          display:flex;justify-content:space-between">
+          <span>Armour class</span><span class="tabnum">+10 from gear</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-def)"></span>
+          <span>Chain Mail</span><span class="amt">+5</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-def)"></span>
+          <span>Enchanted Wooden Shield +2</span><span class="amt">+4</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-def)"></span>
+          <span>Ring of Protection +1</span><span class="amt">+1</span></div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+          color:var(--c-off);border-bottom:2px solid var(--c-off);padding-bottom:3px;margin-bottom:6px;
+          display:flex;justify-content:space-between">
+          <span>Attack &amp; damage</span><span class="tabnum">+1 from gear</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-off)"></span>
+          <span>Wounding Longsword +1 <small>1d8 base die, +1 potency</small></span><span class="amt">+1</span></div>
+      </div>
+
+      <div>
+        <div style="font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+          color:var(--c-dead);border-bottom:2px dashed var(--c-dead);padding-bottom:3px;margin-bottom:6px;
+          display:flex;justify-content:space-between">
+          <span>Carried but doing nothing</span><span>2 things</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-dead)"></span>
+          <span>Wounding rider <small>1d6 bleed per hit — no engine consumer</small></span>
+          <span class="amt" style="color:var(--c-dead)">idle</span></div>
+        <div class="effect" style="border:0;padding:3px 0"><span class="dot" style="background:var(--c-dead)"></span>
+          <span>Cloak of Resistance +1 <small>in the stash; accessory slot is empty</small></span>
+          <span class="amt" style="color:var(--c-dead)">unworn</span></div>
+      </div>
+
+      <div class="gaps">
+        <b>⚠ Four empty slots</b> — head, neck, second ring, accessory.
+        Only the accessory has something waiting for it.
+      </div>
+
+      <div class="legend">
+        Grouping by <em>what it improves</em> rather than by slot answers the question a player
+        actually asks — “what is making my AC 21?” — without needing a separate ledger.
+        The third group is the honest one: everything carried that produces no effect.
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="page">
+  <b style="color:var(--brass-hi)">The underserved state is the new idea here.</b>
+  Empty slots are easy; the harder signal is a slot that <em>looks</em> filled but is not pulling
+  its weight — a weapon whose magic the engine ignores, or an off-class item taking the
+  proficiency penalty from brief #23. Those get a hatched fill and a <b>!</b> badge,
+  so a fully-equipped hero can still show you where the slack is.
+</p>
+
+</div>
+</body>
+</html>
