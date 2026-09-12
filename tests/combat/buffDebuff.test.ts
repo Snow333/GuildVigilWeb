@@ -397,7 +397,7 @@ describe('EXPOSURE: buffs and debuffs change what happens in a live encounter', 
     let checked = false;
     for (const s of SEEDS) {
       const { stream } = fight(s, withDebuff);
-      const ev = stream.events;
+      const ev = stream.all();
       const par = ev.find((e) => e.type === 'combat.condition_applied' && e.data.conditionId === 'paralyzed');
       if (!par) continue;
       const victim = (par.data as { targetId: string }).targetId;
