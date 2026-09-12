@@ -35,7 +35,7 @@ import { isBuffShapeResolvable } from '@sim/combat/spells';
 import type { UnreadyReason } from './featEffects';
 import type { HeroState } from './types';
 
-type SpellRow = (typeof spells)[number];
+export type SpellRow = (typeof spells)[number];
 
 /**
  * The effect types `resolveCast` executes for EVERY row of that type.

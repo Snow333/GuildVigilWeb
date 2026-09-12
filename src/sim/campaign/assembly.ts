@@ -76,6 +76,12 @@ const SKILL_ABILITY: Record<string, AbilityKey> = {
   thievery: 'dex',
   athletics: 'str',
   stealth: 'dex',
+  // Brief #24: the two scroll-literacy skills. Without these rows arcana would
+  // silently key off WIS via the fallback above — so a Wizard's INT would not
+  // help them read arcane scrolls, which is precisely backwards.
+  arcana: 'int',
+  religion: 'wis',
+  nature: 'wis',
 };
 
 function parseFeatures(raw: unknown): string[] {

@@ -74,3 +74,31 @@ export const CLASS_BOOST_PRIORITY: Readonly<Record<number, readonly AbilityKey[]
 
 /** Fallback for classes without an authored list (the other nine). */
 export const DEFAULT_BOOST_ORDER: readonly AbilityKey[] = ['con', 'dex', 'str', 'wis', 'int', 'cha'];
+
+/**
+ * SKILL-POINT PRIORITIES for auto level-up (brief #24 D3).
+ *
+ * Steven, 2026-09-12: *"We want players to allocate points on character
+ * creation and level up. So it's up to the player... For auto-level up we
+ * should assume the character takes the skill point wizard/arcana
+ * cleric/religion for RP purposes."*
+ *
+ * ⚠ THIS IS THE AUTOPILOT ONLY — a hand-levelled hero is never steered here.
+ * The scroll ladder (scrolls.ts) is deliberately reachable by ANY class that
+ * invests, so a Fighter who wants Arcana may take it; the autopilot simply
+ * makes the role-play-obvious choice on the player's behalf.
+ *
+ * ⚠ THE CASTER SKILL LEADS ITS LIST ON PURPOSE. `buildAutoLevelUpPlan`
+ * round-robins the priority order under the rank cap, so a leading entry gets
+ * the first point at every level — which is what keeps an auto-levelled Wizard
+ * on the native ladder (spellLevel + 1) as scrolls get harder.
+ */
+export const CLASS_SKILL_PRIORITY: Readonly<Record<number, readonly string[]>> = {
+  1: ['athletics', 'perception'],              // Fighter
+  2: ['arcana', 'perception'],                 // Wizard — reads arcane natively
+  3: ['religion', 'perception', 'athletics'],  // Cleric — reads divine natively
+  4: ['thievery', 'stealth', 'perception'],    // Rogue
+};
+
+/** The dungeon trio, for classes without an authored list. */
+export const DEFAULT_SKILL_PRIORITY: readonly string[] = ['perception', 'thievery', 'athletics'];

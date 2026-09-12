@@ -80,7 +80,7 @@ interface EffectJson {
  * Creature type is not modelled yet, so the ONLY honest answer for a filtered
  * rider is "do not fire". Returning true would be inventing a match.
  */
-function passesFilter(effect: EffectJson, _target: Combatant): boolean {
+function passesFilter(effect: EffectJson): boolean {
   return effect.target_filter === undefined;
 }
 
@@ -93,7 +93,7 @@ function passesFilter(effect: EffectJson, _target: Combatant): boolean {
  */
 export function resolveWeaponRiders(
   weapon: DerivedItem | null,
-  target: Combatant,
+  _target: Combatant,
   critical: boolean,
   rng: Rng,
 ): RiderResult {
@@ -105,7 +105,7 @@ export function resolveWeaponRiders(
 
   for (const entry of weapon.onHitEffects) {
     const effect = (critical ? entry.onCrit : entry.onHit) as EffectJson | null;
-    if (!effect || !passesFilter(effect, target)) continue;
+    if (!effect || !passesFilter(effect)) continue;
 
     if (effect.damage_dice) {
       damage.push({

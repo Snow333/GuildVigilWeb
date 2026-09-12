@@ -18,7 +18,8 @@ import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
 import {
-  CLASS_BOOST_PRIORITY, CLASS_FEAT_PRIORITY, DEFAULT_BOOST_ORDER, SHARED_FEAT_PRIORITY,
+  CLASS_BOOST_PRIORITY, CLASS_FEAT_PRIORITY, CLASS_SKILL_PRIORITY, DEFAULT_BOOST_ORDER,
+  DEFAULT_SKILL_PRIORITY, SHARED_FEAT_PRIORITY,
 } from '@content/autopilot';
 import { BOOSTS_PER_MILESTONE, isBoostLevel, maxSkillRanks, skillPointsForLevel } from '@sim/heroes/levelUp';
 import { autoGrantsForLevel, eligibleFeats, slotsForLevel, type FeatSlotKind } from '@sim/heroes/feats';
@@ -125,6 +126,12 @@ export function buildAutoLevelUpPlan(
   };
 }
 
+/** The class's own skill priorities, or the dungeon trio. */
+function skillPriorityFor(hero: HeroState): readonly string[] {
+  const classId = hero.classLevels[0]?.classId;
+  return (classId === undefined ? undefined : CLASS_SKILL_PRIORITY[classId]) ?? DEFAULT_SKILL_PRIORITY;
+}
+
 /**
  * Fill this level's feat slots from the per-class priority lists.
  *
@@ -168,7 +175,12 @@ function autoPickFeats(hero: HeroState, classId: number, newClassLevel: number):
  */
 export function autopilotWeek(
   session: CampaignSession,
-  priorities: readonly string[],
+  /**
+   * ⚠ NULL MEANS "use each hero's class list" (brief #24 D3), which is the new
+   * default. An explicit list still overrides for every hero — the harness
+   * passes one and must keep its exact, snapshot-pinned behaviour.
+   */
+  priorities: readonly string[] | null = null,
 ): { record: QuestRecord | null; levelUps: number } {
   session.advanceWeek();
   const pl = session.partyLevel();
@@ -185,7 +197,14 @@ export function autopilotWeek(
   for (const entry of session.roster()) {
     const hero = session.heroState(entry.id);
     while (canLevelUp(hero)) {
-      const plan = buildAutoLevelUpPlan(hero, priorities);
+      /**
+       * ⚠ PER-CLASS PRIORITIES, NOT ONE LIST FOR THE PARTY (brief #24 D3).
+       * An explicit `priorities` argument still wins — the harness passes one
+       * and must keep its exact behaviour — but the DEFAULT is now the class's
+       * own list, so an auto-levelled Wizard trains Arcana and a Cleric trains
+       * Religion, putting them on the native scroll ladder.
+       */
+      const plan = buildAutoLevelUpPlan(hero, priorities ?? skillPriorityFor(hero));
       if (!plan) break;
       session.applyLevelUp(hero.id, plan);
       levelUps++;
@@ -204,7 +223,8 @@ export function runCampaign(opts: CampaignOptions): CampaignResult {
     profile: opts.profile ?? 'fullExplore',
     caution: opts.caution ?? 'standard',
   });
-  const priorities = opts.skillPriorities ?? ['perception', 'athletics', 'thievery'];
+  // null = let each hero use their class list (brief #24 D3).
+  const priorities = opts.skillPriorities ?? null;
 
   const records: QuestRecord[] = [];
   let levelUps = 0;
