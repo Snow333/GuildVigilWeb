@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  enemies, loot_tables, npcs, quests, story_dialogue, storyline_quests, storylines,
+  enemies, items, loot_tables, npcs, quests, spells, story_dialogue, storyline_quests, storylines,
 } from '@content/generated';
 
 /**
@@ -112,5 +112,79 @@ describe('content validators — stat bands (volume never outruns integrity)', (
       expect(q.reward_xp, `quest ${q.id} xp`).toBeLessThanOrEqual(200 + lv * 200);
       expect(q.reward_gold, `quest ${q.id} gold floor`).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * SCROLL POINTER INTEGRITY (brief #23 M4).
+ *
+ * Six scrolls pointed at the WRONG spell — Scroll of Fireball resolved to
+ * Harm, Scroll of Magic Missile to Chill Touch — and a seventh pointed at a
+ * spell id that did not exist. Every target spell was present all along; the
+ * ids were assigned before the spells table settled and never re-pointed.
+ *
+ * ⚠ This was INVISIBLE for the whole project's life because nothing reads
+ * scrolls yet. It would have surfaced as "Fireball heals nobody" the day they
+ * became usable. The fix is `data/seeds/seed_scroll_spell_ids.sql`; THIS test
+ * is the part that matters, because it stops the next content edit from
+ * silently re-breaking the same six pointers.
+ */
+describe('content validators — scroll pointers', () => {
+  /**
+   * ⚠ ONE DELIBERATE EXCEPTION, DECIDED NOT OVERLOOKED (brief #23 D3).
+   *
+   * `Scroll of Raise Dead` (#53) points at Scorching Ray because **no Raise
+   * Dead spell exists in the game**, and item ids are append-only so the row
+   * cannot be dropped. Steven's call: leave it pointing somewhere valid and
+   * flag it for the content pass.
+   *
+   * If you are here because this test failed: DO NOT widen this list to make
+   * it pass. A new entry means a new broken pointer, which is the bug this
+   * test exists to catch. Fix the data. The only legitimate reason to REMOVE
+   * this entry is someone authoring a real Raise Dead spell.
+   */
+  const KNOWN_UNRESOLVED: readonly number[] = [53];
+
+  const scrolls = items.filter((i) => i.item_type === 'scroll');
+  const spellNameById = new Map<number, string>(spells.map((s) => [s.id as number, s.name as string]));
+
+  it('every scroll points at a spell that EXISTS', () => {
+    for (const scroll of scrolls) {
+      const spellId = scroll.spell_id as number | null;
+      expect(spellId, `scroll ${scroll.id} "${scroll.name}" has no spell_id`).not.toBeNull();
+      expect(
+        spellNameById.has(spellId as number),
+        `scroll ${scroll.id} "${scroll.name}" points at spell ${spellId}, which does not exist`,
+      ).toBe(true);
+    }
+  });
+
+  it('a "Scroll of X" resolves to the spell actually named X', () => {
+    const broken: string[] = [];
+    for (const scroll of scrolls) {
+      if (KNOWN_UNRESOLVED.includes(scroll.id as number)) continue;
+      const claimed = scroll.name.replace(/^Scroll of /, '').trim().toLowerCase();
+      const actual = (spellNameById.get(scroll.spell_id as number) ?? '').trim().toLowerCase();
+      if (claimed !== actual) {
+        broken.push(`#${scroll.id} "${scroll.name}" -> "${spellNameById.get(scroll.spell_id as number)}"`);
+      }
+    }
+    expect(broken, `scrolls pointing at the wrong spell:\n  ${broken.join('\n  ')}`).toHaveLength(0);
+  });
+
+  it('the six repaired pointers land on their named spells', () => {
+    // Pinned explicitly so a bulk re-seed cannot quietly revert the repair.
+    const expected: [number, string][] = [
+      [47, 'Magic Missile'], [48, 'Heal'], [49, 'Fireball'],
+      [50, 'Lightning Bolt'], [51, 'Haste'], [52, 'Invisibility'],
+    ];
+    for (const [itemId, spellName] of expected) {
+      const scroll = scrolls.find((s) => s.id === itemId)!;
+      expect(spellNameById.get(scroll.spell_id as number), `scroll #${itemId}`).toBe(spellName);
+    }
+  });
+
+  it('the allow-list stays a list of one — a second entry means a new bug', () => {
+    expect(KNOWN_UNRESOLVED).toHaveLength(1);
   });
 });
