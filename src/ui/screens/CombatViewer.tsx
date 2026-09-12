@@ -33,6 +33,13 @@ export type { CombatSpeed } from '../state/GameProvider';
 const WATCH_SPEEDS: CombatSpeed[] = [0.25, 0.5, 1];
 const SKIM_SPEEDS: CombatSpeed[] = [4, 16];
 const SKIM_FROM = 4;
+
+/**
+ * Wall-clock milliseconds per sim tick, DERIVED from the sim's own constant
+ * rather than restated as a literal 100 — if the tick rate ever changes,
+ * playback speed follows it instead of silently desynchronising.
+ */
+const TICK_MS = 1000 / TICKS_PER_SECOND;
 const SPEED_LABEL: Record<CombatSpeed, string> = { 0.25: '¼×', 0.5: '½×', 1: '1×', 4: '4×', 16: '16×' };
 
 export interface CombatViewerProps {
@@ -72,18 +79,47 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
   const held = speed >= SKIM_FROM;
   const done = tick >= segment.ticks;
 
-  // 100 ms sim-ticks → wall time by multiplier. Sub-1× speeds carry the
-  // fraction between frames so ¼× is a real quarter, not a stutter.
+  /**
+   * PLAYBACK CLOCK — rAF-driven, wall-clock accurate (brief #23 UX).
+   *
+   * ⚠ THIS USED TO BE `setInterval(..., 100)`, WHICH IS 10 FPS BY
+   * CONSTRUCTION. One sim tick is 100 ms, so stepping once per 100 ms of wall
+   * time is correct ARITHMETIC but renders only ten frames a second — the
+   * dots visibly stepped rather than moved, and at ¼× the interval fired ten
+   * times a second to advance nothing at all. Steven reported it as "laggy
+   * fps"; it was never a performance problem, it was the frame budget.
+   *
+   * requestAnimationFrame instead: the browser paints at its own refresh rate
+   * and we advance the playhead by ELAPSED WALL TIME, not by a fixed step.
+   * That also fixes two latent bugs in the interval version —
+   *
+   *   1. setInterval drifts and coalesces in background tabs, so a fight
+   *      watched in an unfocused window ran slower than one watched in focus.
+   *   2. The old `carry` accumulated per-FIRING, not per-millisecond, so any
+   *      timer jitter silently changed playback speed.
+   *
+   * Determinism is untouched: this moves the PLAYHEAD over a finished event
+   * stream. Nothing here feeds the sim.
+   */
   useEffect(() => {
     if (!playing || done) return;
-    const id = setInterval(() => {
-      carry.current += speed;
+    let raf = 0;
+    let last = performance.now();
+    const frame = (now: number) => {
+      // Clamp the delta so a tab-switch (or a breakpoint) cannot fast-forward
+      // the whole fight in a single frame when the page comes back.
+      const deltaMs = Math.min(now - last, 250);
+      last = now;
+      carry.current += (deltaMs / TICK_MS) * speed;
       const step = Math.floor(carry.current);
-      if (step <= 0) return;
-      carry.current -= step;
-      setTick((t) => Math.min(t + step, segment.ticks));
-    }, 100);
-    return () => clearInterval(id);
+      if (step > 0) {
+        carry.current -= step;
+        setTick((t) => Math.min(t + step, segment.ticks));
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
   }, [playing, speed, done, segment.ticks]);
 
   useEffect(() => {

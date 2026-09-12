@@ -6,8 +6,11 @@ import { newCampaign } from './newCampaign';
  *
  * WHY THIS SPEC EXISTS AT ALL. Nothing in the e2e suite had ever mounted a
  * DUNGEON playback. `core-loop` and `combat-field` both take the FIRST posting
- * each week, which lands on surface missions — and the surface branch renders a
- * different, always-ungated "After-action report ▸". So the gated dungeon
+ * each week, which lands on surface missions — and the surface branch used to
+ * render a DIFFERENT, always-ungated "After-action report ▸" at the BOTTOM of
+ * the page. (Brief #23 UX standardised both paths onto one top control bar with
+ * one label; the divergence described here is gone, but the reason this spec
+ * exists is not — the two branches are still separate code.) So the gated dungeon
  * button was unreachable from the suite, and an assertion placed in either of
  * those specs passes whether the fix is present or not (observed twice while
  * writing this).
@@ -47,7 +50,7 @@ async function reachDungeonPlayback(page: Page): Promise<void> {
     if (await playback.isVisible()) return;
 
     // A surface mission — take its (already ungated) report and keep going.
-    await page.locator('button:has-text("After-action report")').click();
+    await page.locator('button:has-text("After-action ▸")').click();
     await page.locator('h1:has-text("After-action")').waitFor();
     await page.locator('button:has-text("Return to town")').click();
     await page.locator('h1:has-text("Town Hub")').waitFor();

@@ -20,6 +20,7 @@ import { nameResolver, namesFromStream } from '../beats/names';
 import { combatSegments, type CombatSegment } from '@sim/core/events/segments';
 import { CombatViewer } from './CombatViewer';
 import { useGame, type ReplaySpeed } from '../state/GameProvider';
+import { TICKS_PER_SECOND } from '@content/combat';
 
 /**
  * Brief #12: a fight the player can open, wherever it happened. Dungeon fights
@@ -58,6 +59,9 @@ function layoutTemplate(t: DungeonTemplate): Map<number, { x: number; y: number 
   }
   return pos;
 }
+
+/** Wall-clock ms per sim tick, derived from the sim constant (see CombatViewer). */
+const TICK_MS = 1000 / TICKS_PER_SECOND;
 
 export function PlaybackScreen() {
   // The transport IS the player-wide setting — there is no local copy. Brief #8:
@@ -132,11 +136,29 @@ export function PlaybackScreen() {
     return { w: Math.max(...xs) + 70, h: Math.max(...ys) + 50 };
   }, [layout]);
 
-  // 100 ms sim-ticks → wall time by multiplier: advance `speed` ticks every 100 ms.
+  /**
+   * Dungeon playhead — rAF, wall-clock accurate. Same reasoning as
+   * CombatViewer's clock: the old `setInterval(..., 100)` pinned the whole
+   * screen to 10 FPS and drifted in background tabs. See that file's comment.
+   */
   useEffect(() => {
     if (!playing || simTick >= endTick) return;
-    const id = setInterval(() => setSimTick((t) => Math.min(t + speed, endTick)), 100);
-    return () => clearInterval(id);
+    let raf = 0;
+    let last = performance.now();
+    let carry = 0;
+    const frame = (now: number) => {
+      const deltaMs = Math.min(now - last, 250);
+      last = now;
+      carry += (deltaMs / TICK_MS) * speed;
+      const step = Math.floor(carry);
+      if (step > 0) {
+        carry -= step;
+        setSimTick((t) => Math.min(t + step, endTick));
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
   }, [playing, speed, simTick >= endTick, endTick]);
 
   useEffect(() => {
@@ -166,16 +188,23 @@ export function PlaybackScreen() {
       <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
         <div className="gv-run">
           <h1>Dispatch — quest {lastLaunch.questName}</h1>
-          {fights.length > 1 && (
-            <div className="gv-choice" style={{ marginBottom: 14 }}>
-              <span className="gv-choice-label">the fights</span>
-              {fights.map((f, i) => (
-                <button key={f.key} className="gv-btn" disabled={i === openFight} onClick={() => setOpenFight(i)}>
-                  {f.siteLabel}
-                </button>
-              ))}
-            </div>
-          )}
+          {/*
+            ⚠ THE CONTROL BAR SITS AT THE TOP ON BOTH PATHS, DELIBERATELY.
+            This branch used to put "After-action" at the BOTTOM of the page,
+            below the fight viewer, while the dungeon branch put it at the top —
+            so the same button moved depending on whether the quest happened to
+            have a dungeon. On a long fight the surface version was below the
+            fold entirely. Same control, same place, every time.
+          */}
+          <div className="gv-choice" style={{ marginBottom: 16 }}>
+            {fights.length > 1 && <span className="gv-choice-label">the fights</span>}
+            {fights.length > 1 && fights.map((f, i) => (
+              <button key={f.key} className="gv-btn" disabled={i === openFight} onClick={() => setOpenFight(i)}>
+                {f.siteLabel}
+              </button>
+            ))}
+            <button className="gv-btn" onClick={() => nav({ kind: 'afterAction' })}>After-action ▸</button>
+          </div>
           {only ? (
             <CombatViewer segment={only.segment} siteLabel={only.siteLabel} names={names} />
           ) : (
@@ -183,9 +212,6 @@ export function PlaybackScreen() {
               <p style={{ margin: '0 0 10px' }}>The mission resolved without a fight.</p>
             </div>
           )}
-          <p style={{ margin: '14px 0 0' }}>
-            <button className="gv-btn" onClick={() => nav({ kind: 'afterAction' })}>After-action report ▸</button>
-          </p>
         </div>
       </div>
     );

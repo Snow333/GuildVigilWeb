@@ -69,7 +69,9 @@ async function launchAndReturn(page: Page): Promise<void> {
       .not.toContainText('finish or skip');
     await afterAction.click();
   } else {
-    await page.locator('button:has-text("After-action report")').click();
+    // Brief #23 UX: both dispatch paths now use the SAME top control bar and
+      // the SAME label, so the surface branch no longer has its own wording.
+      await page.locator('button:has-text("After-action ▸")').click();
   }
   await page.locator('h1:has-text("After-action")').waitFor();
   await page.locator('button:has-text("Return to town")').click();
