@@ -13,11 +13,56 @@ export const CONDITION_IDS = [
   'prone', 'flat_footed', 'grabbed', 'restrained', 'blinded', 'hasted', 'blessed',
   'heroism', 'defending', 'persistent_damage', 'paralyzed',
   'raging', 'fatigued', 'tiger_stance', 'crane_stance', 'mountain_stance',
+  /**
+   * THE SPELL-BUFF QUARTET (brief #25). `{bonus, to}` is the second-largest
+   * authored buff shape (13 rows) and it needs a place to LAND: a timed numeric
+   * modifier keyed by what it modifies.
+   *
+   * ⚠ THESE ARE NEW IDS, NOT REUSES, AND THAT IS DELIBERATE. `defending`
+   * already carries a numeric AC bonus and `blessed` already carries +1 attack,
+   * so Mage Armor could have ridden `defending`. It must not: values stack
+   * KEEP-HIGHEST per id, so folding a spell into a feat's condition would let
+   * Defensive Ward silently swallow Mage Armor (and vice versa), and the
+   * after-action log would say "Defensive Ward" for a wizard spell. One id per
+   * authored source keeps both the stacking and the read-out honest.
+   *
+   *   warded      → acMod       (`to: 'ac'`)            Shield, Mage Armor
+   *   emboldened  → attackMod   (`to: 'attack'`)        Bless
+   *   steeled     → saveMod     (`to: 'saves'`)         Protection
+   *   honed       → damageMod   (`to: 'weapon_damage'`) Magic Weapon
+   *
+   * ⚠ Every one of the four is VALUE-CARRYING, not a flag. `bonus` is authored
+   * as 1, 2 or 4 across the rows, so a boolean would flatten Barkskin's +2 and
+   * Seraphine's +4 into Shield's +1.
+   */
+  'warded', 'emboldened', 'steeled', 'honed',
+  /**
+   * ⚠ `immobilized` IS A MOVEMENT LOCK, NOT A SLOW, and it is the only new
+   * CONDITION the debuff resolver needed. Three authored rows name it (Web,
+   * Fenwick's Tangling Growth, Tanglefoot Bag) and the engine had no way to
+   * say "rooted but still fighting" — `grabbed`/`restrained` both also strip
+   * AC via `isFlatFootedByCondition`, which is a different and much harsher
+   * spell. `canMove` is its consumer and its only one.
+   */
+  'immobilized',
 ] as const;
 
 export type ConditionId = (typeof CONDITION_IDS)[number];
 
 // ── CRUD (tracker semantics: keep-highest value, keep-longest duration) ─────
+
+/**
+ * Is this string a condition the engine actually models?
+ *
+ * ⚠ EXISTS BECAUSE AUTHORED CONTENT OUTRUNS THE ENGINE. Weapon riders name
+ * conditions like `persistent_bleed` and `persistent_poison` that CONDITION_IDS
+ * does not contain. A cast to ConditionId would apply a condition nothing reads
+ * — silent dead content, the exact failure brief #24 is cleaning up. This makes
+ * the gap checkable, and a content test lists what is still missing.
+ */
+export function isConditionId(id: string): id is ConditionId {
+  return (CONDITION_IDS as readonly string[]).includes(id);
+}
 
 export function applyCondition(unit: Combatant, id: ConditionId, value = 1, expiresAtTick: number | null = null): void {
   const existing = unit.conditions.get(id);
@@ -64,6 +109,9 @@ export function attackMod(unit: Combatant): number {
   if (hasCondition(unit, 'blessed')) mod += 1;
   if (hasCondition(unit, 'heroism')) mod += 1;
   if (hasCondition(unit, 'fatigued')) mod -= 1;
+  // Brief #25: Bless's `{bonus:1, to:'attack'}` lands here. Value-carrying, so
+  // a +2 row would be worth +2 without touching this line.
+  mod += conditionValue(unit, 'emboldened');
   return mod;
 }
 
@@ -78,11 +126,30 @@ export function acMod(unit: Combatant): number {
   if (hasCondition(unit, 'fatigued')) mod -= 1;
   if (hasCondition(unit, 'crane_stance')) mod += 1;
   if (hasCondition(unit, 'mountain_stance')) mod += 2;
+  // Brief #25: Shield, Mage Armor, Barkskin, Armor of Shadows all land here.
+  mod += conditionValue(unit, 'warded');
   return mod;
 }
 
-/** Bonus melee damage from toggles (Rage +2). */
-export const damageMod = (unit: Combatant): number => (hasCondition(unit, 'raging') ? 2 : 0);
+/**
+ * SAVE BONUS FROM CONDITIONS (brief #25) — the fourth modifier query, added
+ * because `{bonus:1, to:'saves'}` (Protection, Magic Circle, Heroism,
+ * Seraphine's Divine Aegis) had nowhere to land.
+ *
+ * ⚠ There was NO save-modifier query at all before this. `rollSave` in
+ * spells.ts read `target.saves.<type>` raw, so no condition in the game could
+ * ever move a saving throw — the fifth instance of "the content carries the
+ * concept and the sim never reads it" after `weapon_range`,
+ * `class_weapon_proficiency`, stealth/perception and athletics.
+ */
+export const saveMod = (unit: Combatant): number => conditionValue(unit, 'steeled');
+
+/**
+ * Bonus melee damage from toggles (Rage +2) and buffs (Magic Weapon, brief
+ * #25 — `{bonus:1, to:'weapon_damage'}`).
+ */
+export const damageMod = (unit: Combatant): number =>
+  (hasCondition(unit, 'raging') ? 2 : 0) + conditionValue(unit, 'honed');
 
 /** Raging blocks concentrate actions. */
 export const canCastSpells = (unit: Combatant): boolean => !hasCondition(unit, 'raging');
@@ -98,7 +165,13 @@ export function unarmedOverride(unit: Combatant): { dice: string; type: string }
 export const speedMod = (unit: Combatant): number => (hasCondition(unit, 'mountain_stance') ? -1 : 0);
 
 export const canMove = (unit: Combatant): boolean =>
-  !(hasCondition(unit, 'grabbed') || hasCondition(unit, 'restrained') || hasCondition(unit, 'unconscious'));
+  !(
+    hasCondition(unit, 'grabbed') || hasCondition(unit, 'restrained') ||
+    hasCondition(unit, 'unconscious') ||
+    // Brief #25: Web / Tangling Growth root a unit in place without stripping
+    // its AC — the deliberate difference from `grabbed`/`restrained`.
+    hasCondition(unit, 'immobilized')
+  );
 
 // ── Flat-footed & flanking (continuous space) ───────────────────────────────
 

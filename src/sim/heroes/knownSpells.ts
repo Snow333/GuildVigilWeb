@@ -8,13 +8,11 @@
  * cantrip. The loadout editor said so in its own margin: "spell entries join
  * the editor with the known-spells model."
  *
- * ⚠ THE POOL IS MOSTLY FUTURE CONTENT, AND THE PICKER SAYS SO.
- * `resolveCast` handles `damage` and `healing`; the other 140 of 218 spells
- * are inert (buff 52, debuff 44, utility 40, summon 4 — brief #21 left that
- * as its own brief). Measured for the two founding casters at levels 0–3:
- *
- *   Wizard (arcane): 17 of 72 resolvable  (24%) — L1 is 3 of 22, L2 is 2 of 16
- *   Cleric (divine): 12 of 43 resolvable  (28%)
+ * ⚠ THE POOL IS PARTLY FUTURE CONTENT, AND THE PICKER SAYS SO.
+ * `resolveCast` handles `damage`, `healing`, and the two head SHAPES of
+ * `buff`/`debuff` (brief #25: `{condition,…}` and `{bonus,to}`). MEASURED:
+ * 24 of the 96 buff/debuff rows resolve, so 102 of 218 spells are live and
+ * 116 are still inert (72 long-tail buff/debuff, utility 40, summon 4).
  *
  * Steven's decision (#22 §5.2): show the rest GREYED with a reason rather than
  * hiding them, exactly as the feat picker does. A player seeing "Mage Armor —
@@ -26,23 +24,49 @@
 import { spells } from '@content/generated';
 import { classesById, spellsById } from '@sim/registry';
 import { progressionFor } from '@sim/registry';
+/**
+ * ⚠ THE GATE IMPORTS THE RESOLVER, not a copy of its rules. `isBuffShapeResolvable`
+ * lives in `combat/spells.ts` beside the code that actually executes the shape,
+ * so the picker cannot drift out of step with the engine — the readiness
+ * question is answered by the CONSUMER, which is brief #22's witness-table
+ * lesson applied to spells.
+ */
+import { isBuffShapeResolvable } from '@sim/combat/spells';
 import type { UnreadyReason } from './featEffects';
 import type { HeroState } from './types';
 
 type SpellRow = (typeof spells)[number];
 
 /**
- * The effect types `resolveCast` can actually execute today.
+ * The effect types `resolveCast` executes for EVERY row of that type.
  *
  * ⚠ THIS IS THE SPELL SIDE OF THE READINESS GATE and it is deliberately
  * derived from the ENGINE, not from a content column: spells carry no
- * `implemented` flag at all (0 of 218 rows). When the buff/debuff brief lands,
- * add its types here and the picker widens on its own.
+ * `implemented` flag at all (0 of 218 rows).
+ *
+ * ⚠ `buff` AND `debuff` ARE DELIBERATELY NOT IN THIS SET, even though brief
+ * #25 shipped their resolvers. Only 42 of the 96 authored rows land on a shape
+ * the engine handles; the other 54 name whole systems that do not exist (fly,
+ * polymorph, dominate, damage-type resistance, mirror images). Adding the
+ * TYPE here would offer the player Mirror Image and have it do nothing —
+ * exactly the dishonesty this gate was built to prevent. Those two types are
+ * gated PER SPELL instead, by `isBuffShapeResolvable`.
  */
 export const RESOLVABLE_EFFECTS: ReadonlySet<string> = new Set(['damage', 'healing']);
 
+/**
+ * Can the engine execute THIS spell?
+ *
+ * ⚠ PER-SPELL, NOT PER-TYPE — the signature takes a row rather than an
+ * `effect_type` string for that reason, and it must stay that way. A type-level
+ * answer is only correct where every row of the type resolves, which is true
+ * for `damage` and `healing` and false for `buff` and `debuff`.
+ */
 export function isSpellResolvable(spell: SpellRow): boolean {
-  return RESOLVABLE_EFFECTS.has((spell.effect_type as string | null) ?? '');
+  const effect = (spell.effect_type as string | null) ?? '';
+  if (RESOLVABLE_EFFECTS.has(effect)) return true;
+  if (effect === 'buff' || effect === 'debuff') return isBuffShapeResolvable(spell);
+  return false;
 }
 
 /** Does this spell appear on the given tradition's list? */

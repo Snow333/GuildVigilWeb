@@ -72,32 +72,47 @@ describe('the tradition filter', () => {
   });
 });
 
-describe('⚠ the pool is mostly future content, and it is SHOWN not hidden', () => {
-  it('only damage and healing resolve today', () => {
+describe('⚠ the pool is partly future content, and it is SHOWN not hidden', () => {
+  it('damage and healing resolve type-wide; buff/debuff are gated per SPELL', () => {
+    // ⚠ Brief #25 did NOT add 'buff'/'debuff' to this set, and must not. Only
+    // 24 of the 96 authored rows land on a shape the engine executes, so a
+    // type-level answer would offer Mirror Image and have it do nothing.
     expect([...RESOLVABLE_EFFECTS].sort()).toEqual(['damage', 'healing']);
   });
 
   it('an inert spell is offered, greyed not_yet_implemented', () => {
     const offers = spellOffers(caster(WIZARD, 9), WIZARD);
-    const inert = offers.find((o) => !RESOLVABLE_EFFECTS.has(o.effectType));
+    // Mirror Image: `{images: 3}` — a buff whose shape has no resolver. The
+    // old form of this test looked for any non-RESOLVABLE_EFFECTS type, which
+    // brief #25 made the wrong question: `buff` is now a type that sometimes
+    // resolves, so the row must be named.
+    const inert = offers.find((o) => o.name === 'Mirror Image');
     expect(inert).toBeDefined();
+    expect(inert!.effectType).toBe('buff');
     expect(inert!.selectable).toBe(false);
     expect(inert!.reason).toBe('not_yet_implemented');
   });
 
-  it('MEASURED: the arcane L1 menu is 3 learnable of 22 offered', () => {
-    // ⚠ This is the honest number and it is the argument for landing the
-    // buff/debuff resolvers next. If it ever rises without that brief, the
-    // filter has been loosened and the picker is lying again.
+  it('MEASURED: the arcane L1 menu is 9 learnable of 22 offered', () => {
+    // ⚠ WAS 3 OF 22, AND BRIEF #25 IS WHY IT MOVED. The old comment here said
+    // "if it ever rises without that brief, the filter has been loosened and
+    // the picker is lying again" — this IS that brief, so the number is
+    // re-pinned rather than relaxed. The six new rows are True Strike's
+    // neighbours: Mage Armor, Grease, Sleep, Fear, Magic Weapon, Goblin Pox.
     const offers = spellOffers(caster(WIZARD, 1), WIZARD).filter((o) => o.spellLevel === 1);
     const learnable = offers.filter((o) => o.selectable);
     expect(offers.length).toBe(22);
-    expect(learnable.length).toBe(3);
+    expect(learnable.length).toBe(9);
   });
 
   it('every learnable spell is one resolveCast can actually execute', () => {
+    // ⚠ Asserts through `isSpellResolvable`, the SAME predicate the offer list
+    // uses, so on its own this is the tautology brief #22 warned about. The
+    // real witness lives in tests/combat/buffDebuff.test.ts, which casts each
+    // newly-unlocked row in a live encounter and asserts the outcome changed.
     for (const o of learnableSpells(caster(WIZARD, 9), WIZARD)) {
-      expect(RESOLVABLE_EFFECTS.has(o.effectType)).toBe(true);
+      const row = spells.find((s) => s.id === o.spellId)!;
+      expect(isSpellResolvable(row)).toBe(true);
     }
   });
 
