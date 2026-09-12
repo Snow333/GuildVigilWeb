@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guild Vigil — sheet variants D · E · F</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --vellum:#ece0c2; --ink:#3a2d1c; --ink-soft:#5c4a30;
+  --ink-muted:#7d6a4c; --ink-faint:#a89370; --red-ink:#9c3428;
+  --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+  /* SEMANTIC CHANNELS — shared with the record. Colour is never alone. */
+  --c-def:#2f6b8f;   /* defence  — blue   */
+  --c-off:#9c3428;   /* offence  — red    */
+  --c-util:#6b4c8f;  /* utility  — purple */
+  --c-res:#3f6d2e;   /* resource — green  */
+  --c-dead:#8a7a5c;  /* inert    — grey   */
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 20px 90px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26,#2a211c 70%);
+  font-family:var(--data);color:var(--ink)}
+.wrap{max-width:1180px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:26px;font-weight:500;margin:0 0 6px}
+p.page{color:var(--ink-faint);max-width:74ch;line-height:1.55;margin:0 0 26px;font-size:15px}
+.sheet{position:relative;background:linear-gradient(160deg,#f0e5ca,#e6d9b8 55%,#ddcfa6);
+  border-radius:3px;padding:30px 32px 32px;margin:0 0 32px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b}
+.variant-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:#322822;color:var(--brass-hi);padding:3px 14px;border-radius:2px;border:1px solid #8a6c3877}
+.banner{font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:6px;margin:0 0 14px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.banner .note{font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:none}
+.legend{font-size:12.5px;color:var(--ink-muted);line-height:1.65;margin-top:12px}
+.tabnum{font-variant-numeric:tabular-nums lining-nums slashed-zero}
+
+/* ============ D — DASHBOARD ============ */
+.hero-bar{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;margin-bottom:20px}
+.avatar{width:76px;height:76px;border-radius:3px;border:2px solid #fff;box-shadow:0 3px 10px #0005;
+  background:linear-gradient(150deg,#8b7355,#5c4a36);display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:30px;color:#e8dcc0}
+.hero-bar h2{font-family:var(--serif);font-size:27px;font-weight:500;margin:0}
+.hero-bar .sub{font-family:var(--sans);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted)}
+.kpis{display:flex;gap:8px}
+.kpi{min-width:92px;padding:8px 12px;border-radius:3px;border-top:3px solid;background:#ffffff30;text-align:left}
+.kpi .k{font-family:var(--sans);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+.kpi .v{font-size:27px;font-weight:700;line-height:1.1}
+.kpi .d{font-size:11px;color:var(--ink-muted)}
+.kpi.def{border-color:var(--c-def)} .kpi.off{border-color:var(--c-off)}
+.kpi.res{border-color:var(--c-res)} .kpi.util{border-color:var(--c-util)}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:960px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid #8c6a3a44;border-radius:3px;background:#ffffff26;padding:12px 14px}
+.card h4{margin:0 0 8px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft);display:flex;justify-content:space-between}
+.bar-row{display:grid;grid-template-columns:88px 1fr 44px;gap:9px;align-items:center;
+  font-size:13.5px;padding:3px 0}
+.bar-row .lab{color:var(--ink-soft)}
+.bar-row .val{text-align:right;font-weight:700}
+.track{height:8px;background:#0000000f;border-radius:4px;overflow:hidden;position:relative}
+.track i{display:block;height:100%;border-radius:4px}
+.track .base{background:var(--ink-faint)}
+.track .gear{background:repeating-linear-gradient(45deg,var(--c-def),var(--c-def) 4px,#ffffff55 4px,#ffffff55 8px)}
+.stack{display:flex;height:8px;border-radius:4px;overflow:hidden}
+.stack i{height:100%}
+.src-key{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--ink-muted);margin-top:7px}
+.src-key b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+/* ============ E — INSPECTOR ============ */
+.split{display:grid;grid-template-columns:300px 1fr;gap:20px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.slotlist{border-right:1px solid #8c6a3a33;padding-right:16px}
+.srow{display:flex;gap:9px;align-items:center;padding:8px 9px;border-radius:3px;cursor:pointer;
+  border:1px solid transparent;margin-bottom:2px}
+.srow:hover{background:#c9a86a26}
+.srow.sel{background:#c9a86a3a;border-color:var(--brass-deep)}
+.srow .ic{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;background:#ffffff44;border:1px solid #8c6a3a55;flex:none}
+.srow .nm{flex:1;font-size:13.5px;line-height:1.25}
+.srow .nm b{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-muted);font-weight:400;font-family:var(--sans)}
+.srow .mini{font-size:11px;color:var(--ink-muted);text-align:right;white-space:nowrap}
+.inspector{padding-left:4px}
+.insp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:12px}
+.insp-head h3{font-family:var(--serif);font-size:22px;margin:0 0 3px;font-weight:500}
+.tierline{font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)}
+.effect{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid #8c6a3a26;font-size:14px}
+.dot{width:9px;height:9px;border-radius:50%;margin-top:5px}
+.effect .amt{font-weight:700;white-space:nowrap}
+.effect small{display:block;color:var(--ink-muted);font-size:12px;line-height:1.45;margin-top:2px}
+.badge{font-family:var(--sans);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid;padding:1px 6px;border-radius:2px;margin-left:6px;white-space:nowrap}
+.badge.live{border-color:var(--c-res);color:var(--c-res);background:#3f6d2e12}
+.badge.dead{border-color:var(--c-dead);color:var(--c-dead);border-style:dashed}
+
+/* ============ F — TIMELINE / BUILD ============ */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:#8c6a3a44}
+.tlrow{position:relative;padding:9px 0 9px 4px;border-bottom:1px solid #8c6a3a26}
+.tlrow::before{content:'';position:absolute;left:-22px;top:15px;width:10px;height:10px;border-radius:50%;
+  background:var(--vellum);border:2px solid var(--brass-deep)}
+.tlrow.now::before{background:var(--brass-hi);box-shadow:0 0 0 3px #c9a86a44}
+.tlrow .lv{font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)}
+.tlrow .what{font-size:14px;line-height:1.45}
+.tlrow.future{opacity:.5}
+.tlrow.future::before{border-color:var(--ink-faint);border-style:dashed}
+.pill2{display:inline-block;font-size:11px;padding:1px 7px;border-radius:2px;border:1px solid #8c6a3a66;
+  background:#ffffff33;margin-right:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.ring{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.ringbox{text-align:center}
+.ringbox svg{display:block}
+.ringbox .cap{font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">Character sheet — three more, leaning modern</h1>
+<p class="page">
+  Same real data as before (Torvald, level 1 Fighter, his actual equipped gear and stash).
+  These deviate from the paper-sheet convention on purpose. One colour system runs through all
+  three and matches the record: <b style="color:#2f6b8f">blue = defence</b>,
+  <b style="color:#9c3428">red = offence</b>, <b style="color:#6b4c8f">purple = utility</b>,
+  <b style="color:#3f6d2e">green = resource</b>, <b style="color:#8a7a5c">grey = inert</b>.
+  Colour never carries meaning alone — every use is paired with a label, a number or a shape.
+</p>
+
+<!-- ================= D ================= -->
+<div class="sheet">
+  <span class="variant-tag">Variant D — dashboard, stacked contribution bars</span>
+
+  <div class="hero-bar">
+    <div class="avatar">T</div>
+    <div>
+      <h2>Torvald</h2>
+      <div class="sub">Human Fighter · Level 1 · 717 / 1000 xp</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi def"><div class="k">Armour</div><div class="v tabnum">21</div><div class="d">+10 from gear</div></div>
+      <div class="kpi res"><div class="k">Health</div><div class="v tabnum">20</div><div class="d">full</div></div>
+      <div class="kpi off"><div class="k">Attack</div><div class="v tabnum">+5</div><div class="d">1d8+3 damage</div></div>
+      <div class="kpi util"><div class="k">Speed</div><div class="v tabnum">5</div><div class="d">init +2</div></div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4><span>Defence</span><span style="color:var(--c-def)">■</span></h4>
+      <div class="bar-row">
+        <span class="lab">Armour class</span>
+        <span class="stack">
+          <i style="width:47.6%;background:var(--ink-faint)"></i>
+          <i style="width:4.8%;background:#8ca9bd"></i>
+          <i style="width:14.3%;background:#5b8aa8"></i>
+          <i style="width:33.3%;background:var(--c-def)"></i>
+        </span>
+        <span class="val tabnum">21</span>
+      </div>
+      <div class="src-key">
+        <span><b style="background:var(--ink-faint)"></b>base 10</span>
+        <span><b style="background:#8ca9bd"></b>dex +1</span>
+        <span><b style="background:#5b8aa8"></b>trained +3</span>
+        <span><b style="background:var(--c-def)"></b>gear +10</span>
+      </div>
+      <div class="bar-row" style="margin-top:9px">
+        <span class="lab">Fortitude</span><span class="track"><i class="base" style="width:30%"></i></span><span class="val tabnum">+3</span>
+      </div>
+      <div class="bar-row"><span class="lab">Reflex</span><span class="track"><i class="base" style="width:20%"></i></span><span class="val tabnum">+2</span></div>
+      <div class="bar-row"><span class="lab">Will</span><span class="track"><i class="base" style="width:20%"></i></span><span class="val tabnum">+2</span></div>
+      <div class="legend" style="margin-top:9px">
+        Bars compare saves <em>to each other</em>, not to a fake maximum.
+        The AC bar is a true stacked total — each segment is one source, widths are real proportions.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4><span>Offence</span><span style="color:var(--c-off)">■</span></h4>
+      <div class="bar-row">
+        <span class="lab">Attack bonus</span>
+        <span class="stack">
+          <i style="width:60%;background:var(--c-off)"></i>
+          <i style="width:20%;background:#c4765f"></i>
+          <i style="width:20%;background:#e0a68f"></i>
+        </span>
+        <span class="val tabnum">+5</span>
+      </div>
+      <div class="src-key">
+        <span><b style="background:var(--c-off)"></b>str +3</span>
+        <span><b style="background:#c4765f"></b>trained +1</span>
+        <span><b style="background:#e0a68f"></b>sword +1</span>
+      </div>
+      <div class="bar-row" style="margin-top:9px">
+        <span class="lab">Damage</span><span style="font-size:13.5px">1d8 + 3</span><span class="val"></span>
+      </div>
+      <div class="bar-row"><span class="lab">Per round</span><span style="font-size:13px;color:var(--ink-muted)">~7.5 average</span><span class="val"></span></div>
+      <div class="legend" style="margin-top:9px">
+        “Per round” is the number that actually answers <em>is this build working</em> —
+        derived, never authored.
+      </div>
+    </div>
+
+    <div class="card">
+      <h4><span>Gear &amp; pouch</span><span style="color:var(--c-util)">■</span></h4>
+      <div style="font-size:13.5px;line-height:1.9">
+        <div><span class="pill2" style="border-color:var(--c-off);color:var(--c-off)">Atk +1</span> Longsword +1
+          <span class="badge dead">rider idle</span></div>
+        <div><span class="pill2" style="border-color:var(--c-def);color:var(--c-def)">AC +4</span> Wooden Shield +2</div>
+        <div><span class="pill2" style="border-color:var(--c-def);color:var(--c-def)">AC +5</span> Chain Mail</div>
+        <div><span class="pill2" style="border-color:var(--c-def);color:var(--c-def)">AC +1</span> Ring of Protection +1</div>
+        <div style="color:var(--ink-faint)"><span class="pill2" style="border-style:dashed">empty</span> Accessory</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px">
+        <div style="border:1.5px solid var(--c-res);border-radius:3px;padding:6px 4px;text-align:center;background:#3f6d2e0f">
+          <div style="font-size:11px;font-weight:700">Potion</div><div style="font-size:10px;color:var(--ink-muted)">1d8</div></div>
+        <div style="border:1.5px solid var(--c-res);border-radius:3px;padding:6px 4px;text-align:center;background:#3f6d2e0f">
+          <div style="font-size:11px;font-weight:700">Potion</div><div style="font-size:10px;color:var(--ink-muted)">1d8</div></div>
+        <div style="border:1.5px dashed #8c6a3a66;border-radius:3px;padding:6px 4px;text-align:center;color:var(--ink-faint);font-size:11px">empty</div>
+        <div style="border:1.5px dashed #8c6a3a66;border-radius:3px;padding:6px 4px;text-align:center;color:var(--ink-faint);font-size:11px">empty</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= E ================= -->
+<div class="sheet">
+  <span class="variant-tag">Variant E — inspector, click a slot to see its effects</span>
+
+  <div class="hero-bar" style="margin-bottom:16px">
+    <div class="avatar">T</div>
+    <div><h2>Torvald</h2><div class="sub">Human Fighter · Level 1</div></div>
+    <div class="kpis">
+      <div class="kpi def"><div class="k">AC</div><div class="v tabnum">21</div></div>
+      <div class="kpi res"><div class="k">HP</div><div class="v tabnum">20</div></div>
+      <div class="kpi off"><div class="k">Atk</div><div class="v tabnum">+5</div></div>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="slotlist">
+      <div class="banner">Worn <span class="note">6 slots</span></div>
+      <div class="srow sel">
+        <div class="ic">⚔</div>
+        <div class="nm"><b>Main hand</b>Wounding Longsword +1</div>
+        <div class="mini" style="color:var(--c-off)">+1 · 1d8</div>
+      </div>
+      <div class="srow">
+        <div class="ic">🛡</div>
+        <div class="nm"><b>Off hand</b>Wooden Shield +2</div>
+        <div class="mini" style="color:var(--c-def)">AC +4</div>
+      </div>
+      <div class="srow">
+        <div class="ic">▦</div>
+        <div class="nm"><b>Armour</b>Chain Mail</div>
+        <div class="mini" style="color:var(--c-def)">AC +5</div>
+      </div>
+      <div class="srow">
+        <div class="ic">◎</div>
+        <div class="nm"><b>Ring</b>Ring of Protection +1</div>
+        <div class="mini" style="color:var(--c-def)">AC +1</div>
+      </div>
+      <div class="srow" style="opacity:.6">
+        <div class="ic" style="border-style:dashed">＋</div>
+        <div class="nm"><b>Accessory</b><span style="color:var(--ink-faint)">empty</span></div>
+        <div class="mini">1 available</div>
+      </div>
+      <div class="srow" style="opacity:.6">
+        <div class="ic" style="border-style:dashed">＋</div>
+        <div class="nm"><b>Neck</b><span style="color:var(--ink-faint)">empty</span></div>
+        <div class="mini">—</div>
+      </div>
+    </div>
+
+    <div class="inspector">
+      <div class="insp-head">
+        <div>
+          <h3>Magical Wounding Longsword +1</h3>
+          <div class="tierline">Magical · main hand · 1d8 slashing</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button style="font-family:var(--sans);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+            background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;padding:4px 11px;cursor:pointer">Compare</button>
+          <button style="font-family:var(--sans);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+            background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;padding:4px 11px;cursor:pointer">Stash</button>
+        </div>
+      </div>
+
+      <div class="banner">What it does <span class="note">every effect, live or not</span></div>
+
+      <div class="effect">
+        <span class="dot" style="background:var(--c-off)"></span>
+        <span>Attack bonus <span class="badge live">active</span>
+          <small>Potency +1 — added to every strike roll.</small></span>
+        <span class="amt tabnum" style="color:var(--c-off)">+1</span>
+      </div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-off)"></span>
+        <span>Weapon damage <span class="badge live">active</span>
+          <small>Base die for the longsword; Strength adds +3 on top.</small></span>
+        <span class="amt tabnum" style="color:var(--c-off)">1d8</span>
+      </div>
+      <div class="effect">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Wounding <span class="badge dead">not yet built</span>
+          <small>Should inflict 1d6 persistent bleed on a hit, 2d6 on a critical.
+          Measured: the engine emits only <code>weapon</code> damage — this rider never fires.</small></span>
+        <span class="amt tabnum" style="color:var(--c-dead)">1d6</span>
+      </div>
+
+      <div class="banner" style="margin-top:18px">Where it shows up</div>
+      <div class="effect" style="border:0">
+        <span class="dot" style="background:var(--c-off)"></span>
+        <span>Strike attack
+          <small>+3 Strength · +1 trained · <b>+1 this weapon</b></small></span>
+        <span class="amt tabnum">+5</span>
+      </div>
+
+      <div class="legend">
+        Selecting a slot on the left fills this panel — one item at a time, every effect named,
+        and anything the engine ignores is marked plainly instead of being hidden or over-promised.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= F ================= -->
+<div class="sheet">
+  <span class="variant-tag">Variant F — build view: where the numbers came from, and where they go</span>
+
+  <div class="hero-bar" style="margin-bottom:18px">
+    <div class="avatar">T</div>
+    <div><h2>Torvald</h2><div class="sub">Human Fighter · Level 1 · 283 xp to level 2</div></div>
+    <div class="ring">
+      <div class="ringbox">
+        <svg width="62" height="62" viewBox="0 0 62 62">
+          <circle cx="31" cy="31" r="26" fill="none" stroke="#0000001a" stroke-width="7"/>
+          <circle cx="31" cy="31" r="26" fill="none" stroke="var(--brass-mid)" stroke-width="7"
+            stroke-dasharray="163.4" stroke-dashoffset="46.2" transform="rotate(-90 31 31)" stroke-linecap="round"/>
+          <text x="31" y="36" text-anchor="middle" font-size="15" font-weight="700" fill="#3a2d1c" font-family="Atkinson Hyperlegible">72%</text>
+        </svg>
+        <div class="cap">to level 2</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="banner">Career so far <span class="note">every choice that shaped him</span></div>
+      <div class="tl">
+        <div class="tlrow now">
+          <div class="lv">Level 1 · now</div>
+          <div class="what">
+            <span class="pill2" style="border-color:var(--c-res);color:var(--c-res)">HP 20</span>
+            <span class="pill2" style="border-color:var(--c-def);color:var(--c-def)">AC 21</span>
+            Str 16 · Dex 12 · Con 14
+          </div>
+        </div>
+        <div class="tlrow now">
+          <div class="lv">Level 1 · gear</div>
+          <div class="what">Chain Mail, Shield +2, Ring +1 and Longsword +1 —
+            <b style="color:var(--c-def)">+10 AC</b> and <b style="color:var(--c-off)">+1 attack</b> of his total.</div>
+        </div>
+        <div class="tlrow future">
+          <div class="lv">Level 2 · next</div>
+          <div class="what">Class feat · +1 skill rank · HP +12
+            <span class="badge dead" style="margin-left:0">not yet reached</span></div>
+        </div>
+        <div class="tlrow future">
+          <div class="lv">Level 5 · milestone</div>
+          <div class="what">Four ability boosts at once, to four different abilities.
+            <small style="display:block;color:var(--ink-muted);font-size:12px">The biggest single jump in a career.</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="banner">What is carrying this build <span class="note">share of each total</span></div>
+
+      <div class="bar-row" style="grid-template-columns:96px 1fr 44px">
+        <span class="lab">Armour class</span>
+        <span class="stack">
+          <i style="width:47.6%;background:var(--ink-faint)"></i>
+          <i style="width:19%;background:#5b8aa8"></i>
+          <i style="width:33.4%;background:var(--c-def)"></i>
+        </span>
+        <span class="val tabnum">21</span>
+      </div>
+      <div class="src-key"><span><b style="background:var(--ink-faint)"></b>base</span>
+        <span><b style="background:#5b8aa8"></b>training + dex</span>
+        <span><b style="background:var(--c-def)"></b>gear — 48% of it</span></div>
+
+      <div class="bar-row" style="grid-template-columns:96px 1fr 44px;margin-top:12px">
+        <span class="lab">Attack</span>
+        <span class="stack">
+          <i style="width:60%;background:var(--c-off)"></i>
+          <i style="width:20%;background:#c4765f"></i>
+          <i style="width:20%;background:#e0a68f"></i>
+        </span>
+        <span class="val tabnum">+5</span>
+      </div>
+      <div class="src-key"><span><b style="background:var(--c-off)"></b>strength</span>
+        <span><b style="background:#c4765f"></b>training</span>
+        <span><b style="background:#e0a68f"></b>gear</span></div>
+
+      <div class="banner" style="margin-top:20px">Unrealised <span class="note">carried, but doing nothing</span></div>
+      <div class="effect" style="grid-template-columns:14px 1fr auto">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Wounding rider on his longsword
+          <small>1d6 bleed per hit — the engine has no consumer for it.</small></span>
+        <span class="amt" style="color:var(--c-dead)">idle</span>
+      </div>
+      <div class="effect" style="grid-template-columns:14px 1fr auto;border:0">
+        <span class="dot" style="background:var(--c-dead)"></span>
+        <span>Cloak of Resistance +1 <span style="color:var(--ink-muted)">(in the stash)</span>
+          <small>+1 to all three saves — the <code>stat_bonus</code> channel is also unread.</small></span>
+        <span class="amt" style="color:var(--c-dead)">idle</span>
+      </div>
+      <div class="legend">
+        A build view is the honest place to admit what the game is <em>not</em> doing yet.
+        Both lines above were measured, not assumed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="page">
+  <b style="color:var(--brass-hi)">On colour and accessibility.</b> The five channels are distinguishable
+  in the common forms of colour blindness because they differ in lightness as well as hue, and
+  every coloured element is also labelled in text. Stacked bars carry a written key underneath;
+  status pills carry a word; inert things additionally use a dashed border, so the “this does nothing”
+  signal survives even in greyscale.
+</p>
+
+</div>
+</body>
+</html>

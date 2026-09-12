@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guild Vigil — the record, colour-coded</title>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;500;700&family=Alegreya+Sans+SC:wght@400;500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#2a211c; --vellum:#ece0c2; --ink:#3a2d1c; --ink-soft:#5c4a30;
+  --ink-muted:#7d6a4c; --ink-faint:#a89370;
+  --brass-hi:#c9a86a; --brass-mid:#a4854c; --brass-deep:#8a6c38;
+  --serif:'Alegreya',Georgia,serif;
+  --sans:'Alegreya Sans SC','Segoe UI',system-ui,sans-serif;
+  --data:'Atkinson Hyperlegible',Verdana,system-ui,sans-serif;
+
+  /* ===== THE FIVE CHANNELS — identical to the character sheet ===== */
+  --c-def:#2f6b8f;    /* defence / our side holding   — blue   */
+  --c-off:#9c3428;    /* offence / harm done          — red    */
+  --c-util:#6b4c8f;   /* utility / magic / control    — purple */
+  --c-res:#3f6d2e;    /* resource / healing / gain    — green  */
+  --c-dead:#8a7a5c;   /* nothing happened             — grey   */
+  --c-crit:#8a6c38;   /* exceptional                  — brass  */
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 20px 90px;background:var(--desk);
+  background-image:radial-gradient(ellipse at 50% 0%,#3a2e26,#2a211c 70%);
+  font-family:var(--data);color:var(--ink)}
+.wrap{max-width:1080px;margin:0 auto}
+h1.page{font-family:var(--serif);color:var(--brass-hi);font-size:26px;font-weight:500;margin:0 0 6px}
+p.page{color:var(--ink-faint);max-width:74ch;line-height:1.55;margin:0 0 24px;font-size:15px}
+.sheet{position:relative;background:linear-gradient(160deg,#f0e5ca,#e6d9b8 55%,#ddcfa6);
+  border-radius:3px;padding:28px 30px 30px;margin:0 0 28px;
+  box-shadow:0 1px 0 #fff6 inset,0 18px 40px -18px #000b}
+.variant-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:#322822;color:var(--brass-hi);padding:3px 14px;border-radius:2px;border:1px solid #8a6c3877}
+.banner{font-family:var(--sans);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid #8c6a3a55;padding-bottom:6px;margin:0 0 14px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.banner .note{font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:none}
+.tabnum{font-variant-numeric:tabular-nums lining-nums slashed-zero}
+
+/* ===== the key ===== */
+.key{display:flex;flex-wrap:wrap;gap:14px;padding:10px 12px;border:1px solid #8c6a3a44;
+  border-radius:3px;background:#ffffff26;margin-bottom:16px;font-size:12.5px}
+.key div{display:flex;align-items:center;gap:6px}
+.key b{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+/* ===== filters ===== */
+.filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.fbtn{font-family:var(--sans);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(#e8dcc0,#d6c69e);border:1px solid #8c6a3a88;border-radius:2px;
+  padding:4px 11px;cursor:pointer;color:var(--ink)}
+.fbtn.on{background:linear-gradient(#c9a86a,#a4854c);border-color:#55401c;color:#2a211c;font-weight:700}
+.fsep{width:1px;height:18px;background:#8c6a3a44;margin:0 3px}
+
+/* ===== rounds ===== */
+.round{margin-bottom:15px}
+.rhead{display:flex;align-items:baseline;gap:10px;margin:0 0 7px}
+.rhead .n{font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.rhead .rule{flex:1;height:1px;background:#8c6a3a44}
+.rhead .t{font-size:11px;color:var(--ink-faint)}
+.rhead .tally{font-size:11px;color:var(--ink-muted)}
+
+/* ===== the entry: a 4px SIDE STRIPE is the colour channel ===== */
+.ex{display:grid;grid-template-columns:4px 76px 1fr;gap:0 11px;padding:6px 8px 6px 0;
+  border-radius:0 3px 3px 0;align-items:start;margin-bottom:3px;background:#ffffff18}
+.ex:hover{background:#c9a86a26}
+.ex .stripe{align-self:stretch;border-radius:2px;min-height:22px}
+.ex .who{font-weight:700;font-size:13.5px;text-align:right;padding-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex .body{font-size:14px;line-height:1.5}
+.ex.ours .who{color:var(--c-def)}
+.ex.theirs .who{color:var(--c-off)}
+.tgt{font-weight:700}
+.arrow{color:var(--ink-faint);margin:0 4px}
+
+/* outcome pill: colour + WORD + border. never colour alone */
+.pill{display:inline-block;font-family:var(--sans);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:1px 7px;border-radius:2px;border:1px solid;margin-right:7px;vertical-align:1px}
+.pill.hit{border-color:var(--c-off);color:var(--c-off);background:#9c342812}
+.pill.crit{border-color:var(--c-crit);color:#5a4212;background:#c9a86a4d;font-weight:700}
+.pill.miss{border-color:var(--c-dead);color:var(--c-dead);background:transparent;border-style:dashed}
+.pill.slain{border-color:#5c1a14;color:#fff;background:#7d2820;font-weight:700}
+.pill.heal{border-color:var(--c-res);color:var(--c-res);background:#3f6d2e14}
+.pill.magic{border-color:var(--c-util);color:var(--c-util);background:#6b4c8f12}
+.pill.save{border-color:var(--c-def);color:var(--c-def);background:#2f6b8f12}
+
+.math{font-variant-numeric:tabular-nums lining-nums slashed-zero;color:var(--ink-muted);font-size:12.5px;white-space:nowrap}
+.dmg{display:block;margin-top:3px;font-size:13px;color:var(--ink-soft);padding-left:11px;border-left:3px solid}
+.dmg b{font-variant-numeric:tabular-nums;color:var(--ink);font-size:14px}
+.dmg.harm{border-color:var(--c-off)}
+.dmg.heal{border-color:var(--c-res)}
+.tag{font-size:11px;border:1px solid #8c6a3a66;padding:0 5px;border-radius:2px;
+  background:#ffffff44;margin-left:5px;color:var(--ink-soft);white-space:nowrap}
+.hpbar{display:inline-block;width:48px;height:6px;border-radius:3px;background:#00000014;
+  vertical-align:1px;margin-left:6px;overflow:hidden}
+.hpbar i{display:block;height:100%;border-radius:3px}
+
+.collapsed{display:grid;grid-template-columns:4px 76px 1fr;gap:0 11px;padding:5px 8px 5px 0;
+  color:var(--ink-muted);font-size:13px;align-items:center;margin-bottom:3px}
+.collapsed .cnt{font-family:var(--sans);font-size:10.5px;letter-spacing:.08em;border:1px dashed var(--c-dead);
+  padding:1px 7px;border-radius:2px;color:var(--c-dead);margin-right:7px}
+.legend{font-size:12.5px;color:var(--ink-muted);line-height:1.65;margin-top:14px}
+table.side{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+table.side td{padding:7px 9px;border-bottom:1px solid #8c6a3a22;vertical-align:top;line-height:1.5}
+table.side td:first-child{width:50%;border-right:1px solid #8c6a3a33}
+.callout{border-left:3px solid var(--c-util);background:#6b4c8f11;padding:10px 14px;margin:16px 0 0;font-size:13.5px;line-height:1.55}
+.callout b{color:var(--c-util)}
+.swatch{display:flex;gap:0;margin:6px 0 0;border-radius:3px;overflow:hidden;height:26px;font-size:10px}
+.swatch div{flex:1;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:var(--sans);letter-spacing:.08em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1 class="page">“The record” — one colour system, five meanings</h1>
+<p class="page">
+  Same real fight as before: Torvald, Shade, Mira and Elandra against three goblins,
+  seed <code>mock-seed</code>, 38 ticks, victory. The colour vocabulary is shared with the
+  character sheet, so a red pill in the log and a red bar on the sheet mean the same thing.
+</p>
+
+<div class="sheet">
+  <span class="variant-tag">Proposed — colour-coded</span>
+
+  <div class="banner">The record <span class="note">victory · 38 ticks · 3.8 seconds · no losses</span></div>
+
+  <div class="key">
+    <div><b style="background:var(--c-def)"></b> Our side / defence</div>
+    <div><b style="background:var(--c-off)"></b> Harm done</div>
+    <div><b style="background:var(--c-util)"></b> Magic &amp; control</div>
+    <div><b style="background:var(--c-res)"></b> Healing &amp; resources</div>
+    <div><b style="background:var(--c-dead)"></b> Nothing happened</div>
+    <div><b style="background:var(--c-crit)"></b> Exceptional</div>
+  </div>
+
+  <div class="filters">
+    <button class="fbtn on">Everything</button>
+    <button class="fbtn">Kills</button>
+    <button class="fbtn">Our turns</button>
+    <button class="fbtn">Damage taken</button>
+    <div class="fsep"></div>
+    <button class="fbtn">Torvald</button>
+    <button class="fbtn">Shade</button>
+    <button class="fbtn">Mira</button>
+    <button class="fbtn">Elandra</button>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 1</span><span class="rule"></span>
+      <span class="tally">1 kill · 10 damage dealt</span><span class="t">ticks 15–21</span></div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-dead)"></span>
+      <span class="who">Mira</span>
+      <span class="body">
+        <span class="pill miss">Miss</span>
+        casts <b>Bless</b> <span class="arrow">→</span> <span class="tgt">Goblin II</span>
+        <span class="math">8 + 4 = 12 vs 13</span>
+      </span>
+    </div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-util)"></span>
+      <span class="who">Elandra</span>
+      <span class="body">
+        <span class="pill magic">Spell</span>
+        casts <b>Magic Missile</b> <span class="arrow">→</span> <span class="tgt">Goblin II</span>
+        <span class="dmg harm"><b>2</b> force damage · Goblin II
+          <span class="hpbar"><i style="width:75%;background:var(--c-off)"></i></span>
+          <span class="tabnum">6 / 8</span></span>
+      </span>
+    </div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-crit)"></span>
+      <span class="who">Torvald</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Goblin II</span>
+        <span class="math">20 + 6 = 26 vs 13</span>
+        <span class="dmg harm"><b>8</b> weapon damage <span class="pill slain" style="margin-left:4px">Slain</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 2</span><span class="rule"></span>
+      <span class="tally">1 kill · 6 damage taken</span><span class="t">ticks 27–32</span></div>
+
+    <div class="ex theirs">
+      <span class="stripe" style="background:var(--c-off)"></span>
+      <span class="who">Goblin III</span>
+      <span class="body">
+        <span class="pill hit">Hit</span>
+        strikes <span class="tgt">Mira</span>
+        <span class="math">17 + 2 = 19 vs 15</span>
+        <span class="dmg harm"><b>2</b> weapon damage · Mira
+          <span class="hpbar"><i style="width:89%;background:var(--c-res)"></i></span>
+          <span class="tabnum">16 / 18</span></span>
+      </span>
+    </div>
+
+    <div class="ex theirs">
+      <span class="stripe" style="background:var(--c-crit)"></span>
+      <span class="who">Goblin I</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Mira</span>
+        <span class="math">20 + 2 = 22 vs 15</span>
+        <span class="dmg harm"><b>4</b> weapon damage · Mira
+          <span class="hpbar"><i style="width:67%;background:#c98a2e"></i></span>
+          <span class="tabnum">12 / 18</span></span>
+      </span>
+    </div>
+
+    <div class="collapsed">
+      <span class="stripe" style="background:var(--c-dead);border-radius:2px;height:16px"></span>
+      <span></span>
+      <span><span class="cnt">3 misses</span> Goblin I and Goblin III swing at Mira and miss
+        <span style="color:var(--ink-faint)">· show ▸</span></span>
+    </div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-crit)"></span>
+      <span class="who">Shade</span>
+      <span class="body">
+        <span class="pill crit">Critical</span>
+        strikes <span class="tgt">Goblin I</span>
+        <span class="tag">sneak attack 3d</span>
+        <span class="math">15 + 6 = 21 vs 11</span>
+        <span class="dmg harm"><b>18</b> weapon damage <span class="pill slain" style="margin-left:4px">Slain</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="round">
+    <div class="rhead"><span class="n">Round 3</span><span class="rule"></span>
+      <span class="tally">1 kill · fight ends</span><span class="t">ticks 35–38</span></div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-util)"></span>
+      <span class="who">Mira</span>
+      <span class="body">
+        <span class="pill magic">Spell</span>
+        casts <b>Bless</b> <span class="arrow">→</span> <span class="tgt">Goblin III</span>
+        <span class="math">10 + 4 = 14 vs 13</span>
+        <span class="dmg harm"><b>1</b> divine damage · Goblin III
+          <span class="hpbar"><i style="width:88%;background:var(--c-off)"></i></span>
+          <span class="tabnum">7 / 8</span></span>
+      </span>
+    </div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-def)"></span>
+      <span class="who">Torvald</span>
+      <span class="body">
+        <span class="pill save">Reaction</span>
+        <span class="tag">attack of opportunity</span>
+        strikes <span class="tgt">Goblin III</span>
+        <span class="math">15 + 6 = 21 vs 13</span>
+        <span class="dmg harm"><b>7</b> weapon damage <span class="pill slain" style="margin-left:4px">Slain</span></span>
+      </span>
+    </div>
+
+    <div class="ex ours">
+      <span class="stripe" style="background:var(--c-res)"></span>
+      <span class="who">Result</span>
+      <span class="body"><b>Victory</b> — 38 ticks, all four standing.</span>
+    </div>
+  </div>
+
+  <div class="legend"><b>How the colour is applied — and why it stays honest:</b></div>
+  <table class="side">
+    <tr>
+      <td><b>The stripe is the channel.</b> A 4px bar on the left edge, not coloured text.
+        Coloured body text at 13–14px is the thing BDA guidance warns about; a stripe carries
+        the signal without touching legibility.</td>
+      <td><b>Actor colour = side.</b> Blue names are ours, red names are theirs. You can tell whose
+        turn it is before reading a single word.</td>
+    </tr>
+    <tr>
+      <td><b>Every pill has a word.</b> Hit, Critical, Miss, Slain, Spell, Reaction. Turn the
+        monitor to greyscale and nothing is lost — the dashed border on Miss and the filled
+        Slain badge still separate them.</td>
+      <td><b>Health bars replace bare numbers.</b> <code>16 / 18</code> still prints, but the bar
+        shows the proportion instantly. Colour shifts green → amber → red as a second cue,
+        with the fraction always present.</td>
+    </tr>
+    <tr>
+      <td><b>Grey means nothing happened.</b> Misses and collapsed groups are the only grey rows,
+        so the eye skips them on the way to the rows that mattered.</td>
+      <td><b>Brass means exceptional.</b> Criticals get their own channel rather than being
+        "a stronger red" — in this fight 3 of 4 kills were crits, which the old flat log
+        never let you see.</td>
+    </tr>
+    <tr>
+      <td><b>Round tallies.</b> "1 kill · 10 damage dealt" in the header answers the question
+        most players actually have without reading the rows at all.</td>
+      <td><b>Per-hero filters.</b> Following one character through a fight is one click,
+        rather than scanning 25 interleaved lines for a name.</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>The same five channels run through the character sheet.</b> Red is offence in both places,
+    blue is defence in both, grey is "authored but doing nothing" in both — which is how
+    the Wounding rider on Torvald's sword and a missed swing end up looking related, because
+    they are: in each case the game is showing you something that produced no effect.
+  </div>
+</div>
+
+<div class="sheet">
+  <span class="variant-tag">The palette, and its greyscale behaviour</span>
+  <div class="banner">Five channels <span class="note">each differs in lightness, not only hue</span></div>
+  <div class="swatch">
+    <div style="background:var(--c-def)">Defence</div>
+    <div style="background:var(--c-off)">Offence</div>
+    <div style="background:var(--c-util)">Utility</div>
+    <div style="background:var(--c-res)">Resource</div>
+    <div style="background:var(--c-crit)">Exceptional</div>
+    <div style="background:var(--c-dead)">Inert</div>
+  </div>
+  <div class="swatch" style="filter:grayscale(1)">
+    <div style="background:var(--c-def)">Defence</div>
+    <div style="background:var(--c-off)">Offence</div>
+    <div style="background:var(--c-util)">Utility</div>
+    <div style="background:var(--c-res)">Resource</div>
+    <div style="background:var(--c-crit)">Exceptional</div>
+    <div style="background:var(--c-dead)">Inert</div>
+  </div>
+  <div class="legend">
+    The second strip is the first one desaturated. The channels remain distinguishable because
+    they were chosen to differ in <em>lightness</em> as well as hue — and in the interface every
+    one of them is additionally paired with a word, so colour is reinforcement and never the
+    only carrier of meaning (WCAG 1.4.1).
+  </div>
+</div>
+
+</div>
+</body>
+</html>
