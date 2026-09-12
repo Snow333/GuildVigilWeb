@@ -38,6 +38,10 @@ import {
   type FeatOffer, type FeatSlotKind,
 } from '@sim/heroes/feats';
 import { castableSpells } from '@sim/heroes/knownSpells';
+import {
+  isConsumableUsable, isQuickSlottable, normalizeQuickSlots, reconcileQuickSlots, trackedMask,
+  QUICK_SLOT_COUNT, type QuickSlots,
+} from '@sim/heroes/quickSlots';
 import { portraitKey, type AncestryId, type Gender } from '@sim/heroes/ancestry';
 import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
@@ -55,6 +59,7 @@ import { planTravel, type TravelPlan } from '@sim/world/travel';
 import { EscalationLedger, type EscalationFact } from '@sim/world/escalation';
 import type { LoadoutEntry } from '@sim/combat/loadout';
 import { assembleHero, assembleParty, type HeroKit } from './assembly';
+import type { DispatchHero } from '@sim/dungeon/checks';
 
 export interface SessionConfig {
   campaignId: string;
@@ -546,6 +551,14 @@ export class CampaignSession {
     let minute = this.minute;
 
     for (const h of this.heroes) h.wounded = 0;
+    /**
+     * ⚠ THE MASK IS TAKEN BEFORE THE DISPATCH, AND THAT ORDER IS LOAD-BEARING.
+     * `toCombatQuickSlots` mirrors only the items the ENGINE can execute, so a
+     * `buff` potion is null from the start. After the run, "null" alone cannot
+     * distinguish "drunk" from "never tracked" — reading the mask afterwards
+     * would therefore delete every inert consumable on the party's first fight.
+     */
+    const quickSlotMasks = this.kits.map((k) => trackedMask(normalizeQuickSlots(k.quickSlots)));
     const party = assembleParty(this.kits);
     this.dispatchN++;
     const dispatchId = Ids.dispatch(this.dispatchN);
@@ -668,9 +681,29 @@ export class CampaignSession {
       }
     }
 
+    /**
+     * ⚠ WITHOUT THIS THE PARTY HAS INFINITE POTIONS. The sim spends from the
+     * Combatant mirror; this is the only place that spend becomes real. Runs
+     * on EVERY outcome — victory, retreat, wipe — because a potion drunk in a
+     * fight you then lost is still gone.
+     */
+    this.reconcilePartyQuickSlots(party, quickSlotMasks);
+
     this.active = null;
     this.minute = minute;
     return { week, questId: q.questId, outcome, ...(dispatch ? { dispatch } : {}), ...(fights.length > 0 ? { fights } : {}) };
+  }
+
+  /** Write each hero's consumed quick-slots back from the dispatch mirror. */
+  private reconcilePartyQuickSlots(party: DispatchHero[], masks: readonly boolean[][]): void {
+    party.forEach((h, i) => {
+      const kit = this.kits[i];
+      const mask = masks[i];
+      if (!kit || !mask) return;
+      const slots = normalizeQuickSlots(kit.quickSlots);
+      reconcileQuickSlots(slots, h.c.quickSlots, mask);
+      kit.quickSlots = slots;
+    });
   }
 
   /**
@@ -740,6 +773,49 @@ export class CampaignSession {
     const displaced = kit.equipped.findIndex((e) => (itemBasesById.get(e.baseId)?.slot as string | null) === slot);
     if (displaced >= 0) this.stash.push(...kit.equipped.splice(displaced, 1));
     kit.equipped.push(instance);
+  }
+
+  /**
+   * Stash → quick-slot (brief #23 M3). The pre-expedition pouch.
+   *
+   * ⚠ D3's rule is enforced HERE, not in the UI: `consumable` and `scroll`
+   * only. Gear belongs in gear slots, and putting the check in the sim means
+   * no future caller can quick-slot a longsword.
+   *
+   * An occupied slot swaps its item back to the stash, mirroring `equip()`.
+   */
+  setQuickSlot(heroId: string, slotIndex: number, stashIndex: number): void {
+    if (slotIndex < 0 || slotIndex >= QUICK_SLOT_COUNT) {
+      throw new Error(`setQuickSlot: slot ${slotIndex} is out of range (0-${QUICK_SLOT_COUNT - 1})`);
+    }
+    const kit = this.kitFor(heroId);
+    const instance = this.stash[stashIndex];
+    if (!instance) throw new Error(`setQuickSlot: no stash item at index ${stashIndex}`);
+    if (!isQuickSlottable(instance.baseId)) {
+      throw new Error(`setQuickSlot: ${instance.baseId} is not a consumable or scroll`);
+    }
+    const slots = normalizeQuickSlots(kit.quickSlots);
+    this.stash.splice(stashIndex, 1);
+    const displaced = slots[slotIndex];
+    if (displaced) this.stash.push(displaced);
+    slots[slotIndex] = instance;
+    kit.quickSlots = slots;
+  }
+
+  /** Quick-slot → stash. */
+  clearQuickSlot(heroId: string, slotIndex: number): void {
+    const kit = this.kitFor(heroId);
+    const slots = normalizeQuickSlots(kit.quickSlots);
+    const instance = slots[slotIndex];
+    if (!instance) throw new Error(`clearQuickSlot: slot ${slotIndex} is empty`);
+    this.stash.push(instance);
+    slots[slotIndex] = null;
+    kit.quickSlots = slots;
+  }
+
+  /** The hero's pouch, always exactly QUICK_SLOT_COUNT entries. */
+  quickSlotsFor(heroId: string): QuickSlots {
+    return normalizeQuickSlots(this.kitFor(heroId).quickSlots);
   }
 
   /** Hero slot → stash. */
@@ -1216,6 +1292,7 @@ export class CampaignSession {
   loadoutChoices(heroId: string): {
     spells: { spellId: number; name: string; spellLevel: number; effectType: string }[];
     abilities: { featId: number; name: string }[];
+    consumables: { slotIndex: number; baseId: string; name: string; usable: boolean }[];
   } {
     const hero = this.heroState(heroId);
     const spellChoices = castableSpells(hero).map((id) => {
@@ -1231,7 +1308,24 @@ export class CampaignSession {
       featId,
       name: this.featName(featId),
     }));
-    return { spells: spellChoices, abilities: abilityChoices };
+    /**
+     * ⚠ Quick-slots report UNUSABLE entries too, unlike spells and abilities.
+     * A slot the player filled with a `buff` potion must still show — it is
+     * THEIR item sitting in THEIR pouch, and hiding it would read as the game
+     * having eaten it. The `usable` flag lets the editor grey the row instead.
+     */
+    const consumables = normalizeQuickSlots(this.kitFor(heroId).quickSlots)
+      .map((inst, slotIndex) => {
+        if (!inst) return null;
+        return {
+          slotIndex,
+          baseId: inst.baseId,
+          name: (itemBasesById.get(inst.baseId)?.name as string) ?? inst.baseId,
+          usable: isConsumableUsable(inst.baseId),
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+    return { spells: spellChoices, abilities: abilityChoices, consumables };
   }
 
   /**

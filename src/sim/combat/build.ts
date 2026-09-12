@@ -56,6 +56,8 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
     pendingPoisonDice: null,
+    // Enemies carry no pouch — consumables are a player-planning verb.
+    quickSlots: [],
     isCaster: false,
     saves: { fort: 2 + level, ref: 2 + level, will: 1 + level },
     tempHp: 0,

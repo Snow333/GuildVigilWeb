@@ -29,6 +29,7 @@ import {
 } from '@sim/heroes/equipment';
 import { featEffectsById, resolveSkillMods, resolveStatMods } from '@sim/heroes/featEffects';
 import { isProficientWithArmor, isProficientWithWeapon } from '@sim/heroes/gearProficiency';
+import { normalizeQuickSlots, toCombatQuickSlots, type QuickSlots } from '@sim/heroes/quickSlots';
 import { bestTier, totalProficiency } from '@sim/heroes/proficiency';
 import { abilityMod, characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
 import { classesById, progressionFor, warlockCostByLevel } from '@sim/registry';
@@ -37,6 +38,26 @@ export interface HeroKit {
   hero: HeroState;
   equipped: ItemInstance[];
   loadout: LoadoutEntry[];
+  /**
+   * The pre-expedition pouch (brief #23 M3). Length QUICK_SLOT_COUNT, entries
+   * `consumable` or `scroll` only. THE AUTHORITY for what the hero carries —
+   * the Combatant's copy is a per-dispatch mirror that gets reconciled back.
+   *
+   * ⚠ Optional because saves predate it; `normalizeQuickSlots` accepts
+   * undefined and any malformed shape without throwing.
+   */
+  quickSlots?: QuickSlots;
+  /**
+   * WEAPON SETS — data model only (brief #23 D4). D3 locked two sets with an
+   * action-cost swap; Steven's call is to STORE them now and build the swap
+   * later. `equipped` remains the ACTIVE set, so nothing in the sim reads this
+   * yet beyond round-tripping it through save/load.
+   *
+   * ⚠ Deliberately half-built, and guarded against rotting the way
+   * `item_level` did: a test asserts it survives serialize/deserialize, so the
+   * feature cannot quietly become dead weight before its brief arrives.
+   */
+  altWeaponSet?: ItemInstance[];
 }
 
 const BASE_SPEED = 5; // world units/sec (medium creature; old grid: 1 unit = 5 ft)
@@ -361,6 +382,9 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
     pendingPoisonDice: null,
+    // The per-dispatch mirror of the kit's pouch (brief #23 M3). Index-aligned
+    // with kit.quickSlots so consumption reconciles positionally afterwards.
+    quickSlots: toCombatQuickSlots(normalizeQuickSlots(kit.quickSlots)),
     isCaster: casting !== null,
     saves,
     tempHp: 0,

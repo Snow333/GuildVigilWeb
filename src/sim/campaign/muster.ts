@@ -16,6 +16,7 @@
  */
 
 import type { ItemInstance } from '@sim/core/events/types';
+import { emptyQuickSlots } from '@sim/heroes/quickSlots';
 import { Ids } from '@sim/core/ids';
 import { deriveHeroIdentity, type AncestryId, type Gender } from '@sim/heroes/ancestry';
 import { freshHeroMaxHp } from '@sim/heroes/levelUp';
@@ -223,6 +224,16 @@ export function musterParty(choices: readonly MusterChoice[]): HeroKit[] {
       ),
       equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),
       loadout,
+      /**
+       * ⚠ MUSTER AND THE BACKFILL MUST AGREE BY CONSTRUCTION, same rule as
+       * knownSpells above. If a new campaign omitted these, `serialize` would
+       * write a kit without them while `deserialize` ran the backfill and
+       * added them — so save → load → save would not round-trip, and the
+       * determinism tests would fail for a reason that has nothing to do with
+       * determinism. Found exactly that way.
+       */
+      quickSlots: emptyQuickSlots(),
+      altWeaponSet: [],
     };
   });
 }

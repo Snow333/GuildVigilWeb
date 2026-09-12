@@ -11,11 +11,17 @@
  */
 
 import { deriveHeroIdentity, isAncestryId, isGender } from '@sim/heroes/ancestry';
+import { normalizeQuickSlots, QUICK_SLOT_COUNT } from '@sim/heroes/quickSlots';
 import type { BackfillStage } from './saveStore';
 
 /** Shape we probe for — deliberately loose: a save older than these fields is the point. */
 interface PartyBearing {
   party?: { hero?: { id?: unknown; ancestry?: unknown; gender?: unknown } }[];
+}
+
+/** Quick-slots and the alt weapon set (brief #23 M3/D4). */
+interface PouchBearing {
+  party?: { quickSlots?: unknown; altWeaponSet?: unknown }[];
 }
 
 /** Same looseness for the known-spells stage: the loadout WAS the pool. */
@@ -91,5 +97,39 @@ export const backfillKnownSpells: BackfillStage = (state) => {
   return touched ? s : state;
 };
 
+/**
+ * Quick-slots (brief #23 M3): saves predate the pouch. Give every kit an
+ * empty one of the right length, and seed the alt weapon set as empty.
+ *
+ * ⚠ INVENTS NOTHING — an empty pouch is the honest starting state. Handing
+ * veteran parties free potions would silently rewrite an economy the player
+ * built, and the restock path is the shop's job, not a migration's.
+ *
+ * ⚠ NORMALISES rather than only filling: a save written by a future build
+ * with a different slot count, or a hand-edited one, is repaired to exactly
+ * QUICK_SLOT_COUNT here rather than crashing a resolver later.
+ */
+export const backfillQuickSlots: BackfillStage = (state) => {
+  const s = state as PouchBearing | null;
+  if (!s || !Array.isArray(s.party)) return state;
+
+  let touched = false;
+  for (const kit of s.party) {
+    if (!kit || typeof kit !== 'object') continue;
+    const already = Array.isArray(kit.quickSlots) && kit.quickSlots.length === QUICK_SLOT_COUNT;
+    if (!already) {
+      kit.quickSlots = normalizeQuickSlots(kit.quickSlots);
+      touched = true;
+    }
+    if (!Array.isArray(kit.altWeaponSet)) {
+      kit.altWeaponSet = [];
+      touched = true;
+    }
+  }
+  return touched ? s : state;
+};
+
 /** Stages run in order. Append only — a stage's position is part of its contract. */
-export const SAVE_BACKFILLS: readonly BackfillStage[] = [backfillHeroIdentity, backfillKnownSpells];
+export const SAVE_BACKFILLS: readonly BackfillStage[] = [
+  backfillHeroIdentity, backfillKnownSpells, backfillQuickSlots,
+];

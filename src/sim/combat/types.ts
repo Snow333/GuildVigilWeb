@@ -3,6 +3,8 @@
  * Position is world units (1 unit ≈ one old grid square); time is 100ms ticks.
  */
 
+import type { CombatQuickSlot } from '@sim/heroes/quickSlots';
+
 export interface Vec2 {
   x: number;
   y: number;
@@ -158,6 +160,22 @@ export interface Combatant {
   abilityReadyAt: Map<number, number>;
   /** Poison Weapon's rider, consumed by the next strike. Null = none pending. */
   pendingPoisonDice: string | null;
+
+  /**
+   * THE QUICK-SLOT MIRROR (brief #23 M3) — a per-dispatch copy of the kit's
+   * pouch, index-aligned with it. The sim nulls an entry when it is drunk;
+   * `reconcileQuickSlots` writes that back to the kit afterwards.
+   *
+   * ⚠ THE MIRROR SURVIVES THE WHOLE DISPATCH, NOT ONE FIGHT. `assembleParty`
+   * builds Combatants once per dispatch and every room reuses them, so a
+   * potion drunk in room 3 is correctly still gone in room 7. That is the
+   * property that makes the "spend it permanently" requirement work at all.
+   *
+   * ⚠ Entries the ENGINE cannot execute are mirrored as `null` from the
+   * start, so "null" alone does not mean "used" — reconciliation needs the
+   * tracked mask to tell those apart.
+   */
+  quickSlots: (CombatQuickSlot | null)[];
 }
 
 export const isAlive = (c: Combatant): boolean => c.hp > 0 || c.conditions.has('dying');

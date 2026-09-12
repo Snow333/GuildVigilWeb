@@ -30,7 +30,16 @@ export type LoadoutEntry =
    * `cast` on purpose: both are "do a specific thing to a target if you can
    * afford it", and `pickAction` treats affordability identically.
    */
-  | { action: 'ability'; featId: number; condition: LoadoutCondition; target: LoadoutTargetSpec };
+  | { action: 'ability'; featId: number; condition: LoadoutCondition; target: LoadoutTargetSpec }
+  /**
+   * THE FIFTH VERB (brief #23 M3): drink/throw a quick-slotted item.
+   *
+   * ⚠ Addressed by SLOT INDEX, not item id. The pouch is positional — "use
+   * what is in slot 2" survives the item being swapped out between
+   * expeditions, whereas an id would silently stop firing the moment the
+   * player restocked with a different potion.
+   */
+  | { action: 'consume'; slotIndex: number; condition: LoadoutCondition; target: LoadoutTargetSpec };
 
 export const DEFAULT_STRIKE: LoadoutEntry = { action: 'strike', condition: { kind: 'always' }, target: 'scoredEnemy' };
 
@@ -127,6 +136,19 @@ export function pickAction(u: Combatant, all: readonly Combatant[], tick = 0): R
         return { entry, target: entry.target === 'self' ? u : resolveTarget(entry.target, u, all) };
       }
       const target = resolveTarget(entry.target, u, all);
+      if (!target) continue;
+      return { entry, target };
+    }
+    if (entry.action === 'consume') {
+      // Affordability for a consumable is simply "is it still there" — the
+      // mirror nulls a slot the moment it is spent.
+      const slot = u.quickSlots[entry.slotIndex];
+      if (!slot) continue;
+      const spell = spellsById.get(slot.spellId);
+      const healGate = spell?.effect_type === 'healing' && entry.condition.kind === 'allyHpBelow'
+        ? entry.condition.pct
+        : undefined;
+      const target = resolveTarget(entry.target, u, all, healGate);
       if (!target) continue;
       return { entry, target };
     }

@@ -358,15 +358,61 @@ export function runEncounter(
         stream.emit(tick, 'combat.unit_engaged', { unitId: u.id, targetId: target.id }, startEv.seq);
       }
 
+      /**
+       * How close this unit must be for the action it picked.
+       *
+       * ⚠ A CONSUMABLE USES ITS OWN SPELL'S RANGE, NOT WEAPON REACH. Without
+       * this branch a wounded hero would have to walk into melee before
+       * drinking their own healing potion (`range_type: 'touch'`, self-target)
+       * — the reach check above would hold them at arm's length from an enemy
+       * they have no intention of hitting. Alchemist Fire is `ranged/4` and is
+       * thrown from there for the same reason.
+       */
       const reach = picked.entry.action === 'cast'
         ? spellRange(spellRow(picked.entry.spellId))
-        : Math.max(u.weaponRange, ENGAGEMENT_RANGE * 0.99);
+        : picked.entry.action === 'consume'
+          ? consumeReach(u, picked.entry.slotIndex)
+          : Math.max(u.weaponRange, ENGAGEMENT_RANGE * 0.99);
 
       // Move-then-act as one action: a unit that closes into range this tick
       // acts THIS tick — first to arrive is first to strike (with heroes-first
       // tie ordering, this is where the players-win-ties feel actually lands).
       if (gap(u, target) > reach) moveWithReactions(u, rt, tick);
       if (gap(u, target) > reach) continue; // still closing
+
+      // Consumables (brief #23 M3): a potion is a spell with a physical cost,
+      // so it routes through resolveCast and inherits saves, AoE and scaling
+      // for free. Placed beside the cast branch because they resolve
+      // identically once the spell id is in hand.
+      if (picked.entry.action === 'consume') {
+        const slotIndex = picked.entry.slotIndex;
+        const slot = u.quickSlots[slotIndex];
+        const consumeTarget = picked.target;
+        if (slot && consumeTarget) {
+          /**
+           * ⚠ THE SLOT EMPTIES BEFORE RESOLUTION, NOT AFTER. If resolveCast
+           * throws or the drinker dies mid-action, the item must still be
+           * gone — a potion you fumbled is spent. Nulling first also makes
+           * double-spending structurally impossible.
+           */
+          u.quickSlots[slotIndex] = null;
+          const cast = resolveCast(u, slot.spellId, consumeTarget, all, tick, rng);
+          const castEv = stream.emit(tick, 'combat.spell_cast', {
+            casterId: u.id, spellId: String(cast.spell.id),
+            // ⚠ 'atWill' is what spendCost returns for these level-0 rows, and
+            // that is CORRECT: the cost was the item, not a spell slot. A
+            // consumable must never drain the drinker's casting resources.
+            resource: cast.resource, cost: cast.cost,
+            tier: (cast.spell.spell_level as number | null) ?? 0,
+          });
+          emitCastResults(cast, u, stream, tick, castEv.seq);
+          lastProgressTick = tick;
+          u.nextActionTick = tick + attackInterval(u);
+          continue;
+        }
+        // Slot empty or no target — fall through to a plain strike rather
+        // than burning the action on nothing.
+      }
 
       if (picked.entry.action === 'cast') {
         // Casting adjacent to an enemy provokes (the old adjacent-spellcast AoO).
@@ -531,6 +577,18 @@ function spellRow(spellId: number): NonNullable<ReturnType<typeof spellsById.get
   const row = spellsById.get(spellId);
   if (!row) throw new Error(`unknown spell ${spellId}`);
   return row;
+}
+
+/**
+ * Reach for a quick-slot action — the item's own spell range.
+ *
+ * Falls back to weapon reach when the slot is empty, which only happens on the
+ * fall-through path where the action is about to become a plain strike anyway.
+ */
+function consumeReach(u: Combatant, slotIndex: number): number {
+  const slot = u.quickSlots[slotIndex];
+  if (!slot) return Math.max(u.weaponRange, ENGAGEMENT_RANGE * 0.99);
+  return spellRange(spellRow(slot.spellId));
 }
 
 /** Feat name → the condition its toggle applies (conditions.ts owns the modifiers). */
