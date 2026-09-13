@@ -9,6 +9,7 @@ import './styles/materials.css';
 import './styles/components.css';
 import './styles/treatment.css';
 import './styles/screens.css';
+import './styles/sheet.css';
 
 const el = document.getElementById('root');
 if (!el) throw new Error('no #root');

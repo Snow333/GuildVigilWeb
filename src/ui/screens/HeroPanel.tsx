@@ -17,14 +17,14 @@ import type { AbilityKey } from '@sim/heroes/types';
 import type { FeatSlotKind } from '@sim/heroes/feats';
 import type { UnreadyReason } from '@sim/heroes/featEffects';
 import type { LoadoutEntry } from '@sim/combat/loadout';
-import { Portrait, conditionFor, hasPortrait } from '../portrait';
 import { useGame } from '../state/GameProvider';
+import { SheetTab } from './SheetTab';
 
 const ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 export function HeroPanel({ heroId }: { heroId: string }) {
   const { session, nav } = useGame();
-  const [tab, setTab] = useState<'sheet' | 'levelup' | 'gear' | 'loadout'>('sheet');
+  const [tab, setTab] = useState<'sheet' | 'levelup' | 'loadout'>('sheet');
   if (!session) return null;
   const sheet = session.heroSheet(heroId);
 
@@ -34,7 +34,7 @@ export function HeroPanel({ heroId }: { heroId: string }) {
         <h1>{sheet.name} — level {sheet.level} {sheet.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}</h1>
         <div className="gv-tabs">
           <button className="gv-btn" onClick={() => nav({ kind: 'town' })}>◂ Town</button>
-          {(['sheet', 'levelup', 'gear', 'loadout'] as const).map((t) => (
+          {(['sheet', 'levelup', 'loadout'] as const).map((t) => (
             <button
               key={t}
               className={t === 'levelup' && sheet.canLevelUp ? 'gv-btn gv-btn--seal' : 'gv-btn'}
@@ -52,91 +52,12 @@ export function HeroPanel({ heroId }: { heroId: string }) {
         </div>
         {tab === 'sheet' && <SheetTab heroId={heroId} />}
         {tab === 'levelup' && <LevelUpTab heroId={heroId} />}
-        {tab === 'gear' && <GearTab heroId={heroId} />}
         {tab === 'loadout' && <LoadoutTab heroId={heroId} />}
       </div>
     </div>
   );
 }
 
-function SheetTab({ heroId }: { heroId: string }) {
-  const { session } = useGame();
-  const s = session!.heroSheet(heroId);
-  return (
-    <div>
-      <div className="gv-sheet gv-sheet--aged" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
-        <span className="gv-tape" />
-        <h3 className="gv-head">The measure of them <span className="gv-sub">derived — the desk computes nothing</span></h3>
-        <div className="gv-herohead">
-          {/* the dossier photograph. Its condition grade is the twin of the
-              Wounded number in the statline directly beside it. */}
-          <Portrait
-            portraitKey={s.portraitKey}
-            alt={s.name}
-            size="lg"
-            faction="haven"
-            condition={conditionFor(s)}
-            taped
-          />
-          <div className="gv-heroident">
-            <p className="gv-statline" style={{ margin: 0 }}>
-              <b>{s.ancestryName}</b> · {s.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}
-            </p>
-            {/* a clerk's note on the file, NOT red ink — the world isn't
-                talking back, the archive just hasn't been drawn yet */}
-            <p className="gv-filenote gv-italic" style={{ margin: '2px 0 0' }}>
-              {hasPortrait(s.portraitKey) ? 'likeness on file' : 'awaiting field sketch'}
-            </p>
-          </div>
-        </div>
-        <div className="gv-abilities">
-          {ABILITIES.map((a) => (
-            <span className="gv-ab" key={a}>
-              <b>{a.toUpperCase()}</b>
-              {s.abilities[a].score} ({s.abilities[a].mod >= 0 ? '+' : ''}{s.abilities[a].mod})
-            </span>
-          ))}
-        </div>
-        <p className="gv-statline">
-          HP {s.maxHp} · AC {s.ac} · Attack +{s.attackBonus} ({s.damageDice}) · Speed {s.speed} ·
-          Init +{s.initiativeBonus} · Fort +{s.saves.fort} / Ref +{s.saves.ref} / Will +{s.saves.will} ·
-          Wounded {s.wounded > 0 ? <span className="gv-marg">{s.wounded}</span> : s.wounded} ·
-          XP {s.xp.atCap ? 'CAP' : `${s.xp.progress}/${s.xp.threshold}`}
-        </p>
-      </div>
-
-      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '-0.35deg' }}>
-        <span className="gv-tape" />
-        <h3 className="gv-head">Skills <span className="gv-sub">ranks · check</span></h3>
-        <table>
-          <tbody>
-            {s.skills.filter((sk) => sk.ranks > 0 || sk.total !== null).map((sk) => (
-              <tr key={sk.name}>
-                <td>{sk.name}</td>
-                <td>{sk.ranks} ranks</td>
-                <td>{sk.total !== null ? `check +${sk.total}` : '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="gv-sheet gv-sheet--old" style={{ ['--gv-tilt' as never]: '0.25deg' }}>
-        <span className="gv-pin gv-pin--left" />
-        <h3 className="gv-head">Feats <span className="gv-sub">the record</span></h3>
-        <p style={{ margin: 0, fontSize: 13.5 }}>
-          {s.feats.length > 0 ? s.feats.map((f) => f.name).join(' · ') : <em>none</em>}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * The FROZEN reason set (brief #22 §2.1). Every greyed row is LABEL-PAIRED --
- * brief #8's law is that status colour is never the sole carrier of a state,
- * so an unavailable pick always says why in words.
- */
 const REASON_LABEL: Record<UnreadyReason, string> = {
   not_yet_implemented: 'Not yet available',
   prereq_unmet: 'Locked',
@@ -370,53 +291,6 @@ function LevelUpTab({ heroId }: { heroId: string }) {
           </p>
         </>
       )}
-    </div>
-  );
-}
-
-function GearTab({ heroId }: { heroId: string }) {
-  const { session, exec } = useGame();
-  const sheet = session!.heroSheet(heroId);
-  const stash = session!.stashView();
-  return (
-    <div>
-      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '0.3deg' }}>
-        <span className="gv-tape" />
-        <h3 className="gv-head">Equipped <span className="gv-sub">slot by slot</span></h3>
-        <table>
-          <tbody>
-            {sheet.equipped.map((e) => (
-              <tr key={e.slot}>
-                <td>{e.slot}</td>
-                <td><b>{e.derived.displayName}</b></td>
-                <td>{e.derived.damageDice ? `dmg ${e.derived.damageDice}` : e.derived.acBonus ? `AC +${e.derived.acBonus}` : '—'}</td>
-                <td><button className="gv-btn" onClick={() => exec((s) => s.unequip(heroId, e.slot))}>Unequip ▸ stash</button></td>
-              </tr>
-            ))}
-            {sheet.equipped.length === 0 && <tr><td><em>bare hands and courage</em></td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div className="gv-sheet gv-sheet--aged gv-ledger" style={{ ['--gv-tilt' as never]: '-0.3deg' }}>
-        <span className="gv-tape" />
-        <h3 className="gv-head">Stash ({stash.length}) <span className="gv-sub">the guild stores</span></h3>
-        <table>
-          <tbody>
-            {stash.map((v) => (
-              <tr key={v.index}>
-                <td><b>{v.derived.displayName}</b></td>
-                <td>{v.derived.slot ?? 'not equippable'}</td>
-                <td>
-                  {v.derived.slot && (
-                    <button className="gv-btn" onClick={() => exec((s) => s.equip(heroId, v.index))}>◂ Equip</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {stash.length === 0 && <tr><td><em>the stash is empty</em></td></tr>}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

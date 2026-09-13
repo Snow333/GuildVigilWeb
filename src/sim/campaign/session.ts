@@ -39,6 +39,11 @@ import {
 } from '@sim/heroes/feats';
 import { castableSpells } from '@sim/heroes/knownSpells';
 import {
+  acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
+  itemContributions, slotState,
+  type ItemContribution, type SlotState, type StatLedger,
+} from '@sim/heroes/attribution';
+import {
   isConsumableUsable, isQuickSlottable, normalizeQuickSlots, reconcileQuickSlots, trackedMask,
   QUICK_SLOT_COUNT, type QuickSlots,
 } from '@sim/heroes/quickSlots';
@@ -178,6 +183,39 @@ export interface HeroSheet extends HeroIdentityView {
   loadout: LoadoutEntry[];
   wounded: number;
   canLevelUp: boolean;
+}
+
+
+// Re-exported so the UI imports its view types from one place.
+export type { StatLedger, ItemContribution, SlotState };
+
+/** The eight slots the paperdoll draws, in layout order. */
+export const PAPERDOLL_SLOTS: readonly string[] = [
+  'head', 'accessory', 'main_hand', 'armor', 'off_hand', 'ring', 'boots',
+];
+
+export interface AttributionSlot {
+  slot: string;
+  state: SlotState;
+  name: string | null;
+  contributions: ItemContribution[];
+  /** How many stash items would fit here (0 when the slot is filled). */
+  stashOptions: number;
+}
+
+export interface HeroAttribution {
+  ac: StatLedger;
+  attack: StatLedger;
+  /** Sums to `Combatant.weaponPenalty`, applied at roll time — not to attack. */
+  attackPenalties: StatLedger;
+  fort: StatLedger;
+  ref: StatLedger;
+  will: StatLedger;
+  hp: StatLedger;
+  speed: StatLedger;
+  slots: AttributionSlot[];
+  quickSlots: { index: number; name: string | null; usable: boolean }[];
+  pouchOptions: { stashIndex: number; name: string; usable: boolean }[];
 }
 
 export interface LevelUpClassChoice {
@@ -968,6 +1006,69 @@ export class CampaignSession {
       loadout: jsonClone(kit.loadout),
       wounded: hero.wounded,
       canLevelUp: canLevelUp(hero),
+    };
+  }
+
+
+  /**
+   * THE CHARACTER SHEET'S ATTRIBUTION VIEW (brief #24, Variant G).
+   *
+   * ⚠ EVERY LEDGER HERE IS CHECKED AGAINST `assembleHero` BY TEST. The whole
+   * value of this surface is that the explanation matches the number the sim
+   * actually uses — a plausible-but-drifted breakdown is worse than none,
+   * because it looks authoritative while being wrong.
+   */
+  heroAttribution(heroId: string): HeroAttribution {
+    const kit = this.kitFor(heroId);
+    const { hero, equipped } = kit;
+
+    const bySlot = new Map<string, ItemInstance>();
+    for (const instance of equipped) {
+      const slot = deriveItem(instance).slot;
+      if (slot) bySlot.set(slot, instance);
+    }
+
+    const slots: AttributionSlot[] = PAPERDOLL_SLOTS.map((slot) => {
+      const instance = bySlot.get(slot) ?? null;
+      return {
+        slot,
+        state: slotState(hero, instance),
+        name: instance ? deriveItem(instance).displayName : null,
+        contributions: instance ? itemContributions(hero, instance) : [],
+        /**
+         * ⚠ "Could this slot be filled from the stash?" is what turns an empty
+         * box into an ACTIONABLE one. An empty ring slot with nothing to put in
+         * it is not a problem the player can solve; one with a ring waiting in
+         * the stash is.
+         */
+        stashOptions: instance ? 0 : this.stash.filter((i) => deriveItem(i).slot === slot).length,
+      };
+    });
+
+    return {
+      ac: acLedger(hero, equipped),
+      attack: attackLedger(hero, equipped),
+      attackPenalties: attackPenaltyLedger(hero, equipped),
+      fort: saveLedger(hero, equipped, 'fort'),
+      ref: saveLedger(hero, equipped, 'ref'),
+      will: saveLedger(hero, equipped, 'will'),
+      hp: hpLedger(hero, equipped),
+      speed: speedLedger(hero, equipped),
+      slots,
+      quickSlots: normalizeQuickSlots(kit.quickSlots).map((inst, index) => ({
+        index,
+        name: inst ? (itemBasesById.get(inst.baseId)?.name as string) ?? inst.baseId : null,
+        usable: inst ? isConsumableUsable(inst.baseId) : false,
+      })),
+      /** Stash items that can go in a pouch, for the quick-slot picker. */
+      pouchOptions: this.stash
+        .map((inst, stashIndex) => ({ inst, stashIndex }))
+        .filter(({ inst }) => isQuickSlottable(inst.baseId))
+        .map(({ inst, stashIndex }) => ({
+          stashIndex,
+          name: (itemBasesById.get(inst.baseId)?.name as string) ?? inst.baseId,
+          usable: isConsumableUsable(inst.baseId),
+        })),
     };
   }
 

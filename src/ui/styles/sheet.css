@@ -1,0 +1,228 @@
+/* ============ the character sheet, Variant G (brief #24) ============
+   One surface: ledgers left, paperdoll centre, inspector right. The colour
+   channels are the SAME six the combat record uses — red is offence in both
+   places — and every channel is paired with a word or a border style, so
+   nothing here depends on colour alone (WCAG 1.4.1). */
+.gv-sheetg { display: flex; flex-direction: column; gap: 16px; }
+.gv-gcols { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .gv-gcols { grid-template-columns: 1fr; } }
+
+/* identity band */
+.gv-idbar { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+.gv-avatar-fallback {
+  width: 72px; height: 72px; border: 2px solid #fff; border-radius: 3px;
+  background: linear-gradient(150deg, #8b7355, #5c4a36);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--gv-serif); font-size: 28px; color: #e8dcc0;
+}
+.gv-idname { font-family: var(--gv-serif); font-size: 26px; font-weight: 500; margin: 0; }
+.gv-idsub {
+  font-family: var(--gv-sans); font-size: 12px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--gv-ink-muted);
+}
+.gv-xpwrap { margin-top: 8px; max-width: 320px; }
+.gv-xpbar {
+  height: 7px; background: #0000001a; border: 1px solid #8c6a3a44;
+  border-radius: 2px; overflow: hidden;
+}
+.gv-xpbar i { display: block; height: 100%; background: var(--gv-brass-mid); }
+.gv-xplabel {
+  font-size: 12px; color: var(--gv-ink-muted); margin-top: 4px;
+  display: flex; justify-content: space-between; gap: 10px;
+}
+.gv-ready { color: var(--gv-ch-resource); font-weight: 700; }
+
+.gv-kpis { display: flex; gap: 8px; }
+.gv-kpi {
+  min-width: 86px; padding: 7px 11px; border-radius: 3px;
+  border-top: 3px solid var(--gv-ink-faint); background: #ffffff30;
+}
+.gv-kpi[data-ch='defence'] { border-top-color: var(--gv-ch-defence); }
+.gv-kpi[data-ch='harm'] { border-top-color: var(--gv-ch-harm); }
+.gv-kpi[data-ch='resource'] { border-top-color: var(--gv-ch-resource); }
+.gv-kpi[data-ch='magic'] { border-top-color: var(--gv-ch-magic); }
+.gv-kpi-k {
+  display: block; font-family: var(--gv-sans); font-size: 10px;
+  letter-spacing: .11em; text-transform: uppercase; color: var(--gv-ink-muted);
+}
+.gv-kpi-v {
+  display: block; font-size: 25px; font-weight: 700; line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+}
+
+/* ability boxes — SCORE large on top, modifier beneath (Steven, 2026-09-12) */
+.gv-abils { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 14px; }
+.gv-abil {
+  border: 1.5px solid #8c6a3a55; border-radius: 3px; background: #ffffff22;
+  padding: 6px 3px; text-align: center;
+}
+.gv-abil-k {
+  display: block; font-family: var(--gv-sans); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--gv-ink-muted);
+}
+.gv-abil-score {
+  display: block; font-size: 26px; font-weight: 700; line-height: 1.05;
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+}
+.gv-abil-mod {
+  display: block; font-size: 13px; color: var(--gv-ink-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* the ledger — a total with its sources printed underneath, never hover-gated */
+.gv-led { margin-bottom: 14px; }
+.gv-led-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid #3a2d1c40; padding-bottom: 3px; margin-bottom: 4px;
+}
+.gv-led-name {
+  font-family: var(--gv-sans); font-size: 12px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gv-ink-soft);
+}
+.gv-led-total {
+  font-size: 29px; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+}
+.gv-led-total--sm { font-size: 21px; }
+.gv-led-row {
+  display: grid; grid-template-columns: 1fr auto 54px; gap: 9px;
+  align-items: baseline; font-size: 13.5px; line-height: 1.5; padding: 1px 0;
+}
+.gv-led-src { color: var(--gv-ink); }
+.gv-led-cat { color: var(--gv-ink-faint); font-size: 11.5px; }
+.gv-led-val {
+  text-align: right; font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+}
+/* A PENALTY IS THE SAME INK, NOT RED. The minus sign carries it; colouring the
+   whole row would make the sheet depend on hue to say "bad". */
+.gv-led-row[data-category='penalty'] .gv-led-cat { color: var(--gv-ch-harm); }
+
+/* the paperdoll */
+.gv-doll { position: relative; width: 100%; aspect-ratio: 3 / 4; }
+/* The figure is a BACKDROP: inset from the edges so the two columns of slot
+   boxes flank it, and knocked back so cream boxes read clearly on top. */
+.gv-doll-figure {
+  position: absolute; inset: 0 22%; width: 56%; height: 100%;
+  object-fit: contain; opacity: .8;
+  filter: saturate(.75) contrast(1.05);
+}
+.gv-doll-figure--none {
+  background: radial-gradient(ellipse at 50% 35%, #8c6a3a22, transparent 70%);
+}
+.gv-dslot {
+  position: absolute; width: 84px; transform: translate(-50%, -50%);
+  text-align: center; cursor: pointer; background: none; border: 0; padding: 0;
+  font-family: inherit; color: inherit;
+}
+.gv-dlabel {
+  display: block; font-family: var(--gv-sans); font-size: 9px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--gv-ink-muted);
+  margin-bottom: 2px;
+}
+.gv-dbox {
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  border: 1.5px solid #8c6a3a88; border-radius: 3px;
+  /* Opaque, not translucent: a see-through box over an illustration is how
+     the first draft made "Chain Mail" unreadable against a linen tunic. */
+  background: #f2e8d0ee;
+  padding: 5px 4px; min-height: 40px;
+}
+.gv-dslot:hover .gv-dbox, .gv-dslot:focus-visible .gv-dbox {
+  border-color: var(--gv-brass-deep); background: #c9a86a3a;
+}
+.gv-dbox[data-selected='yes'] { border-color: var(--gv-brass-deep); border-width: 2px; background: #c9a86a4d; }
+.gv-dnm { font-size: 10px; font-weight: 700; line-height: 1.15; }
+.gv-dco { font-size: 9.5px; font-variant-numeric: tabular-nums; color: var(--gv-ink-soft); }
+
+/* THREE SLOT STATES, EACH WITH A SHAPE — not colour alone.
+   solid = working · dashed = empty · hatched = filled but not pulling its weight */
+.gv-dslot[data-state='empty'] .gv-dbox { border-style: dashed; background: #f2e8d0aa; }
+.gv-dslot[data-state='empty'] .gv-dnm { color: var(--gv-ink-faint); font-weight: 400; }
+.gv-dslot[data-state='underserved'] .gv-dbox {
+  border-color: var(--gv-ch-exceptional);
+  background: repeating-linear-gradient(45deg, #c9a86a1f, #c9a86a1f 5px, transparent 5px, transparent 10px);
+}
+.gv-dwarn {
+  position: absolute; top: 8px; right: -6px; width: 17px; height: 17px;
+  border-radius: 50%; background: var(--gv-ch-exceptional); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 17px; text-align: center;
+  box-shadow: 0 1px 3px #0006;
+}
+.gv-dwarn--gap { background: var(--gv-ch-inert); }
+
+.gv-dollkey {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+  font-size: 11.5px; color: var(--gv-ink-muted); margin-top: 10px;
+}
+.gv-dollkey span { display: flex; align-items: center; gap: 5px; }
+.gv-sw {
+  width: 22px; height: 13px; border-radius: 2px;
+  border: 1.5px solid #8c6a3a88; display: inline-block; background: #ffffff66;
+}
+.gv-sw[data-state='empty'] { border-style: dashed; background: transparent; }
+.gv-sw[data-state='underserved'] {
+  border-color: var(--gv-ch-exceptional);
+  background: repeating-linear-gradient(45deg, #c9a86a1f, #c9a86a1f 4px, transparent 4px, transparent 8px);
+}
+
+/* the pouch */
+.gv-qs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.gv-qslot {
+  border: 1.5px dashed #8c6a3a66; border-radius: 3px; padding: 6px 7px;
+  min-height: 46px; display: flex; flex-direction: column; gap: 2px;
+}
+.gv-qslot[data-filled='yes'] {
+  border-style: solid; border-color: var(--gv-ch-resource); background: #3f6d2e0f;
+}
+.gv-qidx {
+  font-family: var(--gv-sans); font-size: 9px; letter-spacing: .1em;
+  color: var(--gv-ink-faint);
+}
+.gv-qnm { font-size: 11.5px; font-weight: 700; line-height: 1.2; }
+.gv-qempty { font-size: 11px; color: var(--gv-ink-faint); }
+.gv-pouchpick { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; align-items: center; }
+
+/* the inspector */
+.gv-insp-name { font-family: var(--gv-serif); font-size: 19px; margin-bottom: 8px; }
+.gv-insp-none { font-size: 13px; color: var(--gv-ink-muted); line-height: 1.55; }
+.gv-effect {
+  display: grid; grid-template-columns: 12px 1fr; gap: 9px;
+  padding: 6px 0; border-bottom: 1px solid #8c6a3a26; font-size: 13.5px;
+}
+.gv-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 5px;
+  background: var(--gv-ink-faint);
+}
+.gv-dot[data-kind='attack'], .gv-dot[data-kind='damage'] { background: var(--gv-ch-harm); }
+.gv-dot[data-kind='ac'] { background: var(--gv-ch-defence); }
+.gv-dot[data-kind='rider'] { background: var(--gv-ch-magic); }
+.gv-dot[data-kind='ability'] { background: var(--gv-ch-resource); }
+.gv-dot[data-kind='penalty'] { background: var(--gv-ch-exceptional); }
+.gv-effect[data-live='no'] .gv-dot { background: var(--gv-ch-inert); }
+.gv-effect small { display: block; color: var(--gv-ink-muted); font-size: 11.5px; line-height: 1.45; margin-top: 2px; }
+.gv-badge {
+  font-family: var(--gv-sans); font-size: 9.5px; letter-spacing: .07em;
+  text-transform: uppercase; border: 1px solid; padding: 1px 5px;
+  border-radius: 2px; margin-left: 5px; white-space: nowrap;
+}
+.gv-badge--live { border-color: var(--gv-ch-resource); color: var(--gv-ch-resource); }
+/* dashed AND grey: "not built" must survive greyscale */
+.gv-badge--dead { border-color: var(--gv-ch-inert); color: var(--gv-ch-inert); border-style: dashed; }
+
+.gv-gaps {
+  border-left: 3px solid var(--gv-ch-exceptional); background: #c9a86a14;
+  padding: 9px 12px; margin-top: 14px; font-size: 13px; line-height: 1.55;
+}
+.gv-gaps ul { margin: 6px 0 0; padding-left: 18px; }
+.gv-gaps li { margin-bottom: 3px; }
+
+.gv-btn--tiny { font-size: 10px; padding: 2px 7px; }
+.gv-stash { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.gv-stash td { padding: 5px 8px; border-bottom: 1px solid #8c6a3a22; }
+.gv-stash-nm { font-weight: 700; }
+.gv-stash-slot {
+  font-family: var(--gv-sans); font-size: 11px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--gv-ink-muted);
+}
+.gv-stash-act { text-align: right; }
