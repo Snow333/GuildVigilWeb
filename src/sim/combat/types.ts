@@ -5,7 +5,7 @@
 
 import type { CombatQuickSlot } from '@sim/heroes/quickSlots';
 import type { DerivedItem } from '@sim/heroes/equipment';
-import type { DamageModifiers } from './enemyAbilities';
+import type { DamageModifiers, EnemyTraits } from './enemyAbilities';
 
 export interface Vec2 {
   x: number;
@@ -189,6 +189,36 @@ export interface Combatant {
    * hot path skip the lookup entirely.
    */
   damageModifiers: DamageModifiers;
+
+  /**
+   * POSITIONAL AND CONDITIONAL TRAITS (brief #26 M3) — pack tactics, formation
+   * bonus, charge, ferocity, regeneration.
+   *
+   * ⚠ FLAGS, NOT BEHAVIOUR. Each is consulted by the combat loop at one
+   * specific moment; the numbers live in `enemyAbilities.ts` so the re-tune
+   * edits one file (migration-plan risk R2: translation knobs belong in data).
+   * Empty for every hero.
+   */
+  traits: EnemyTraits;
+
+  /**
+   * ⚠ FEROCITY STATE, AND IT IS PER-ENCOUNTER BY DESIGN. The Orc survives one
+   * killing blow at 1 hp, once per fight. This lives on the Combatant, which
+   * dies with the encounter, so it needs NO save migration — the same tier
+   * distinction brief #22 drew for cooldowns and once-per-combat abilities.
+   * Once-per-LONG-REST would have to live on `HeroState` with a backfill; do
+   * not collapse the tiers.
+   */
+  ferocityUsed: boolean;
+
+  /** Tick regeneration last fired, so it runs on the attack interval, not per tick. */
+  lastRegenTick: number;
+
+  /**
+   * Distance to the target at the START of the current approach, for `charge`.
+   * −1 = not currently closing. Reset when a swing resolves.
+   */
+  chargeStartDistance: number;
 
 
   /** Poison Weapon's rider, consumed by the next strike. Null = none pending. */

@@ -23,13 +23,35 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 
 ## The ranked backlog
 
-### 1. Enemy abilities — brief #26 — ✅ M1+M2 SHIPPED 2026-09-13
+### 1. Enemy abilities — brief #26 — ✅ M1+M2+M3 SHIPPED 2026-09-13
 
-**M1 (riders) and M2 (resistance/weakness/immunity) are built.** `enemies.abilities` now reaches the
-engine: `src/sim/combat/enemyAbilities.ts`, wired through `buildEnemy` and `applyDamage`.
+**M1 (riders), M2 (resistance/weakness/immunity) and M3 (positional/conditional) are built.**
+`enemies.abilities` now reaches the engine: `src/sim/combat/enemyAbilities.ts`, wired through
+`buildEnemy`, `applyDamage`, `resolveStrike` and the encounter tick loop.
 
 Shipped: poison, disease, trip, gore, energy_drain, dark_bolt, sneak_attack_1d6, stealth,
-undead_immunities (derived), fire_weakness. **11 of the 19 reachable abilities.**
+undead_immunities (derived), fire_weakness, **pack_tactics, formation_bonus, charge, ferocity,
+regeneration_10**. **16 of the 19 reachable abilities.**
+
+**M3 decisions and traps, recorded:**
+
+- **`pack_tactics` is NOT flanking.** Flanking needs two allies on opposite sides and grants sneak
+  damage; pack tactics needs ONE ally in contact from any angle and grants +2 to hit. Collapsing
+  them would make every wolf pair a flanking pair and rebalance the rogue.
+- **`formation_bonus` requires an ally of the SAME base**, not any ally — a hobgoblin beside a wolf
+  is not in formation. The discipline is the point.
+- **`charge` pays out once**, on the swing that ends an approach of ≥6 units, and is cleared after
+  the swing. ⚠ `chargeStartDistance` is set ONCE per approach, not per tick — setting it per tick
+  would leave it holding the last step's distance and the bonus would never fire.
+- **`ferocity` lives in `applyDamage`**, the only place hp reaches zero, so riders/spells/AoO/traps
+  all trigger it. It emits `combat.reaction_triggered` with `reactionId: 'ferocity'` — ⚠ **reusing
+  the frozen event schema rather than adding a type**, since it genuinely is a reaction.
+- **`regeneration_10` ticks on `attackIntervalTicks`, not per sim tick.** At 100ms/tick, per-tick
+  regeneration would return 10 hp ten times a second and no party could kill a Troll. It also
+  requires `hp > 0`, so it never raises the dead — `fire_weakness` is the authored counterplay and
+  both landed in the same brief on purpose.
+- ⚠ **All five M3 numbers live in `enemyAbilities.ts`, not in the combat loop** — migration-plan
+  risk R2: translation knobs belong in data, so the re-tune edits one file.
 
 Decisions taken (Steven, 2026-09-13):
 
@@ -53,12 +75,19 @@ Decisions taken (Steven, 2026-09-13):
 | wipes before | 1.3 | 1.3 | 4.0 | 10.3 | 4.0 |
 | wipes after | 1.7 | 2.3 | 3.7 | **14.3** | — |
 
+**M3's additional effect** (n=300, measured on top of M1+M2): d3 89.0 → 88.7, **d5 69.7 → 65.0**,
+d5 wipes 6.3 → 10.7. ⚠ **d5's −4.7 is the largest single move of the whole brief and it is STILL
+inside the ±8 bar** — see `output/reference/measurement.md`, where the bar is now measured rather
+than extrapolated (worst observed spread at d5: 8.3 at n=300).
+
 ⚠ **EVERY COMPLETION DELTA IS INSIDE THE ±8 NOISE BAR, so the curve is NOT evidence that this
 works.** The direction is right (harder, as predicted) and d4 moved most, but −3.6 at d4 cannot be
 distinguished from noise at n=300. **The exposure tests are the evidence** —
-`tests/combat/enemyAbilities.test.ts`, 12 tests, verified by three separate negative controls:
-stripping the rider wiring fails 3 tests, stripping the damage-modifier lookup fails 2, and
-switching immunity back to reading the ability string fails 1.
+`tests/combat/enemyAbilities.test.ts` (12 tests) and `tests/combat/enemyAbilitiesM3.test.ts`
+(11 tests), verified by **eight separate negative controls**. M1+M2: stripping the rider wiring
+fails 3, stripping the damage-modifier lookup fails 2, switching immunity back to the ability string
+fails 1. M3: zeroing each of pack tactics, formation, charge, ferocity and regeneration fails
+exactly one test apiece, with `src/` confirmed byte-identical after each restore.
 
 ⚠ **One exposure test was rewritten because a sabotage run proved it worthless.** It asserted
 `skeleton.damageModifiers.immune.has('poison')` — reading the TABLE — and stayed green with
@@ -66,13 +95,12 @@ switching immunity back to reading the ability string fails 1.
 damage **with the event still emitted**. Same family as brief #22's tautological gate; the lesson
 keeps re-earning its place.
 
-**Still deferred here — M3 and M4:**
+**Still deferred — M4 only:**
 
-- **M3 (positional/conditional):** `pack_tactics`, `formation_bonus`, `charge`, `ferocity`,
-  `regeneration_10`. 5 more abilities, no new engine systems.
 - **M4 (save-gated control):** `paralysis`, `web`, `slow`, `trap_expertise`. ⚠ **The brief itself
   flags M4 as the one to cut** — enemy control effects applied to the party are the sharpest balance
-  lever in the game, and the curve still overshoots at d1–d3.
+  lever in the game, and the curve still overshoots at d1–d3. `slow` carries an open design question
+  (slow-but-tough zombie, or one that ignores speed penalties) deferred with it.
 - ⚠ **`trip` currently applies `prone` WITHOUT an opposed athletics check** — the rider channel has
   no place to hang a contest. Revisit with M3/M4, where the contest machinery is in scope.
 
@@ -146,16 +174,6 @@ full corrected inventory in `output/reference/content.md`. Headlines:
   Dexterity +2 is not in `shop_stock` at any level**, so it was never a valid example of it.
 
 
-Known-inert content, queued rather than rediscovered. Full inventory in
-`output/reference/content.md`. The headline items:
-
-- **`class_progression.features` is 45-of-47 dead for the founding four** — only
-  `attack_of_opportunity` and `sneak_attack_1d6` resolve. `bravery`, `evasion`, `weapon_training_1..4`,
-  `channel_energy`, `domain` and the rest name features nothing defines.
-- **The ambush ladder is dead by arithmetic** — `detectDc = 12 + difficulty × 2` needs 32 at d5, so
-  surprise fires 5.3% at d1 and **0% at d3 and d5**.
-- `item_level` is read by nothing.
-
 ### 6b. ⚠ THE CONTENT LONG POLE — the largest unbuilt thing in the game
 
 The 2026-08-10 migration plan named this as risk **R4**: combat/build data would arrive ~90%
@@ -190,12 +208,12 @@ author the missing 255–455. Both are needed and they are separate pieces of wo
 
 | Job | Steps |
 |---|---|
-| **check** | typecheck · lint · 880 unit tests · build · **bundle-size gate** · uploads the artifact |
+| **check** | typecheck · lint · unit tests · build · **bundle-size gate** · uploads the artifact |
 | **e2e** | installs Chromium · `pnpm e2e` (builds, then Playwright against the BUILT artifact) · uploads the report on failure |
 
 **The size gate** is `tools/check-bundle-size.mjs`, wired as `pnpm size`. Thresholds are the ones the
-migration plan specified in August: **warn at 8 MB, fail at 12 MB**, uncompressed. Today's artifact is
-2,377.54 kB — **19.8% of the fail ceiling**.
+migration plan specified in August: **warn at 8 MB, fail at 12 MB**, uncompressed. The artifact sits
+around **20% of the fail ceiling**; `pnpm size` prints the current figure.
 
 ⚠ **The gate reports in 1000-byte kB, matching Vite and every size written down in this repo.** Using
 1024 makes it read ~2.4% smaller than `vite build` and starts an argument about which number is real.

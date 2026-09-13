@@ -10,6 +10,11 @@ import type { Rng } from '@sim/core/rng';
 import type { RollBreakdown } from '@sim/core/events/types';
 import { acMod, attackMod, damageMod, isFlanked, isFlatFooted, unarmedOverride } from './conditions';
 import { determineDegree, rollDice } from './dice';
+import { gap } from './ai';
+import {
+  hasEngagedAlly, CHARGE_BONUS_DAMAGE, CHARGE_MIN_DISTANCE,
+  FORMATION_AC_BONUS, PACK_TACTICS_BONUS,
+} from './enemyAbilities';
 import type { Combatant } from './types';
 
 export interface StrikeResult {
@@ -101,6 +106,16 @@ export function rollConceal(
   };
 }
 
+/**
+ * Adjacency for the M3 traits: surface-to-surface contact.
+ *
+ * ⚠ USES `gap()`, NOT raw centre distance — brief #20's convention B means a
+ * Large body's surface reaches further than its centre does, and a formation of
+ * two Large hobgoblins must count as adjacent. Reusing the shipped helper keeps
+ * one definition of "in contact" across the engine.
+ */
+const engagedWith = (a: Combatant, b: Combatant): boolean => gap(a, b) <= ENGAGEMENT_RANGE;
+
 export function resolveStrike(attacker: Combatant, defender: Combatant, ctx: StrikeContext): StrikeResult {
   const d20 = ctx.rng.die(20);
   const atkCondMod = attackMod(attacker);
@@ -108,8 +123,23 @@ export function resolveStrike(attacker: Combatant, defender: Combatant, ctx: Str
   const meleeBonus =
     attacker.isHero && attacker.weaponRange <= ENGAGEMENT_RANGE ? MELEE_ENGAGEMENT_BONUS : 0;
 
+  /**
+   * PACK TACTICS (brief #26 M3) — the wolf hits harder when a packmate already
+   * holds the target.
+   *
+   * ⚠ THIS IS NOT FLANKING, DELIBERATELY. Flanking requires two allies on
+   * roughly OPPOSITE sides (dot < −0.5) and grants sneak damage; pack tactics
+   * needs only ONE ally in contact, from any angle, and grants an attack bonus.
+   * Two wolves crowding the same flank still hunt as a pack. Collapsing the two
+   * would make every wolf pair a flanking pair and rebalance the rogue too.
+   */
+  const packBonus =
+    attacker.traits.packTactics && hasEngagedAlly(attacker, defender, ctx.all, engagedWith)
+      ? PACK_TACTICS_BONUS
+      : 0;
+
   const modifier =
-    attacker.attackBonus + ctx.flurryPenalty + atkCondMod + meleeBonus + attacker.weaponPenalty;
+    attacker.attackBonus + ctx.flurryPenalty + atkCondMod + meleeBonus + attacker.weaponPenalty + packBonus;
   const total = d20 + modifier;
   /**
    * A passed conceal check makes the target OFF-GUARD, which in PF2E is −2 AC
@@ -125,7 +155,25 @@ export function resolveStrike(attacker: Combatant, defender: Combatant, ctx: Str
    * drive-by in this commit.
    */
   const concealAcPenalty = ctx.concealed === true ? -2 : 0;
-  const effectiveAc = defender.ac + acCondMod + (ctx.reactionAcBonus ?? 0) + concealAcPenalty;
+  /**
+   * FORMATION BONUS (brief #26 M3) — hobgoblins fight shoulder to shoulder.
+   *
+   * ⚠ REQUIRES AN ADJACENT ALLY OF THE SAME BASE, not merely any ally. A
+   * hobgoblin standing beside a wolf is not in formation; the discipline is the
+   * point. `baseId` is the registry row id, so this is exactly "another one of
+   * me".
+   */
+  const formationBonus =
+    defender.traits.formationBonus &&
+    ctx.all.some(
+      (u) => u !== defender && u.side === defender.side && u.hp > 0 &&
+        u.baseId === defender.baseId && engagedWith(u, defender),
+    )
+      ? FORMATION_AC_BONUS
+      : 0;
+
+  const effectiveAc =
+    defender.ac + acCondMod + (ctx.reactionAcBonus ?? 0) + concealAcPenalty + formationBonus;
   const { degree, natStep } = determineDegree(total, effectiveAc, d20);
 
   const roll: RollBreakdown = { d20, modifier, total, dc: effectiveAc, degree, natStep };
@@ -151,8 +199,22 @@ export function resolveStrike(attacker: Combatant, defender: Combatant, ctx: Str
   const isSneakAttack = attacker.sneakAttackDice.length > 0 && offGuard;
   const sneakDamage = isSneakAttack ? rollDice(ctx.rng, attacker.sneakAttackDice) : 0;
 
+  /**
+   * CHARGE (brief #26 M3) — the minotaur's opening impact.
+   *
+   * ⚠ IT PAYS OUT ONCE, ON THE SWING THAT ENDS A REAL APPROACH. The encounter
+   * loop records how far the unit was when it began closing; anything under
+   * CHARGE_MIN_DISTANCE was not a charge, it was already in the fight. The loop
+   * clears `chargeStartDistance` after the swing, so a minotaur standing still
+   * and trading blows never charges again without disengaging first.
+   */
+  const chargeBonus =
+    attacker.traits.charge && attacker.chargeStartDistance >= CHARGE_MIN_DISTANCE
+      ? CHARGE_BONUS_DAMAGE
+      : 0;
+
   const conditionDamageMod = damageMod(attacker);
-  let damage = baseDamage + conditionDamageMod + sneakDamage;
+  let damage = baseDamage + conditionDamageMod + sneakDamage + chargeBonus;
   if (degree === 'critSuccess') damage *= 2;
   damage = Math.max(damage, 1);
 

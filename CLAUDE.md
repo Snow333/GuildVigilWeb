@@ -6,12 +6,12 @@ auto-battler combat) being rebuilt from Godot in TypeScript.
 
 ## Where things stand
 
-- **Suite:** 892 unit + 14 e2e green. Bundle **2,379.24 kB** (brief #24's 12 paperdoll figures ship
+- **Suite:** 907 unit + 14 e2e green. Bundle **~2,379 kB** (`pnpm size` prints the live figure) (brief #24's 12 paperdoll figures ship
   as inline data URIs — if load time ever bites, lazy-load `src/content/generated/figures.ts`
   rather than dropping the art).
 - **Phase:** 3 substantially complete but **NOT to its exit criteria** (audio and the Playwright
   visual baselines). **Phase 4 is not next.**
-- **Shipped:** briefs #8–#26 (M1+M2). Status per brief, and which findings file corrects which, is in
+- **Shipped:** briefs #8–#26 (M1+M2+M3). Status per brief, and which findings file corrects which, is in
   **`output/briefs/INDEX.md`** — read that, not the directory.
 - **What is next, what is blocked, what is held, and what is not built yet:
   `output/future-work.md`.** It is stack-ranked. Do not re-derive the roadmap from this file.

@@ -17,7 +17,7 @@
 import type { ItemInstance } from '@sim/core/events/types';
 import { NON_PROFICIENCY_PENALTY } from '@content/combat';
 import type { LoadoutEntry } from '@sim/combat/loadout';
-import { NO_DAMAGE_MODIFIERS } from '@sim/combat/enemyAbilities';
+import { NO_DAMAGE_MODIFIERS, NO_TRAITS } from '@sim/combat/enemyAbilities';
 import { defaultCantripFor, spellRange } from '@sim/combat/spells';
 import type { Combatant } from '@sim/combat/types';
 import type { DispatchHero } from '@sim/dungeon/checks';
@@ -417,6 +417,13 @@ export function assembleHero(kit: HeroKit): DispatchHero {
      * the hero hot path pays nothing.
      */
     damageModifiers: NO_DAMAGE_MODIFIERS,
+    // ⚠ M3 traits are enemy-side only, for the same reason as damage
+    // modifiers: no hero content authors them, and inventing a hero channel
+    // with nothing behind it is the defect #26 exists to fix.
+    traits: NO_TRAITS,
+    ferocityUsed: false,
+    lastRegenTick: 0,
+    chargeStartDistance: -1,
     isCaster: casting !== null,
     saves,
     tempHp: 0,

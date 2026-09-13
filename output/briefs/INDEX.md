@@ -40,7 +40,7 @@
 | #23 | [`class-itemization.md`](class-itemization.md) | APPROVED · IMPLEMENTED | Weapon/armour proficiency, consumables + quick-slots, scroll `spell_id` repair. Corrected the illegal-armour brackets. |
 | #24 | [`magic-items-and-scrolls.md`](magic-items-and-scrolls.md) | APPROVED · IMPLEMENTED | Strike riders, `stat_bonus`, the Arcana/Religion scroll ladder, the Variant G sheet. ⚠ the brief is WRONG about `stat_bonus` — see §6. |
 | #25 | *(no brief file)* | shipped | Buff/debuff resolvers — ran as a parallel session off #24's findings. Record = commits `1a96ade`, `755d4a3` + `tests/combat/buffDebuff.test.ts`. |
-| #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2 IMPLEMENTED** | Making the 45 existing statblocks fight differently. ⚠ M3/M4 DEFERRED, and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
+| #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2+M3 IMPLEMENTED** | Making the 45 existing statblocks fight differently. 16 of 19 reachable abilities live. ⚠ M4 DEFERRED (the brief flags it as the one to cut), and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
 
 ## Findings companions — these WIN over their briefs
 

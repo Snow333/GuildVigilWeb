@@ -12,12 +12,12 @@
  *
  * M1 — the rider abilities, through the channel brief #24 already built.
  * M2 — resistance / weakness / immunity, the one genuinely new system.
+ * M3 — the positional and conditional abilities (Steven, 2026-09-13).
  *
- * M3 (positional: pack_tactics, formation_bonus, charge, ferocity,
- * regeneration_10) and M4 (save-gated control: paralysis, web, slow,
- * trap_expertise) are DEFERRED, not cancelled. ⚠ M4 in particular is the
- * sharpest balance lever available — enemy control effects applied to the
- * party — and the curve is already overshooting.
+ * ⚠ M4 (save-gated control: paralysis, web, slow, trap_expertise) is STILL
+ * DEFERRED, and deliberately so — the brief flags it as the one to cut, because
+ * enemy control effects applied to the PARTY are the sharpest balance lever in
+ * the game and the curve still overshoots at d1–d3.
  *
  * ⚠ THE 16 L7+ ABILITIES ARE DEFERRED TO THE 7+ BAND BRIEF. `levelBand` is 1,
  * so nothing above level 6 can spawn at d1–d5; building them now would be
@@ -132,7 +132,11 @@ const RIDER_ABILITIES: Record<string, OnHitEntry> = {
  * Abilities that modify a numeric field on the combatant rather than riding a
  * hit. Applied by `applyEnemyAbilities` after the riders are collected.
  */
-const FIELD_ABILITIES = new Set(['sneak_attack_1d6', 'stealth', 'fire_weakness']);
+const FIELD_ABILITIES = new Set([
+  'sneak_attack_1d6', 'stealth', 'fire_weakness',
+  // M3
+  'pack_tactics', 'formation_bonus', 'charge', 'ferocity', 'regeneration_10',
+]);
 
 /**
  * Abilities that are deliberately NOT built in M1+M2 — deferred to M3/M4 or to
@@ -145,8 +149,6 @@ const FIELD_ABILITIES = new Set(['sneak_attack_1d6', 'stealth', 'fire_weakness']
  * both should be loud.
  */
 const DEFERRED_ABILITIES = new Set([
-  // M3 — positional and conditional
-  'pack_tactics', 'formation_bonus', 'charge', 'ferocity', 'regeneration_10',
   // M4 — save-gated control
   'paralysis', 'web', 'slow', 'trap_expertise',
   // 7+ band: cannot spawn at d1–d5 given levelBand 1
@@ -176,11 +178,39 @@ export function parseAbilities(raw: unknown): string[] {
   }
 }
 
+/**
+ * M3 traits — positional and conditional behaviour, as opposed to M1's riders
+ * (which hang off a landed hit) and M2's damage table (which hangs off
+ * `applyDamage`). Each is a flag or a number the combat loop consults at a
+ * specific moment; none of them adds a new engine system.
+ */
+export interface EnemyTraits {
+  /** `pack_tactics` — attack bonus when an ally is already engaged with the target. */
+  packTactics: boolean;
+  /** `formation_bonus` — AC bonus while beside an ally of the SAME base. */
+  formationBonus: boolean;
+  /** `charge` — bonus damage on the first swing after closing from range. */
+  charge: boolean;
+  /** `ferocity` — survives one killing blow at 1 hp, once per encounter. */
+  ferocity: boolean;
+  /** `regeneration_10` — hp regained per regeneration interval. 0 = none. */
+  regeneration: number;
+}
+
+export const NO_TRAITS: EnemyTraits = {
+  packTactics: false,
+  formationBonus: false,
+  charge: false,
+  ferocity: false,
+  regeneration: 0,
+};
+
 export interface EnemyAbilityEffects {
   riders: OnHitEntry[];
   damage: DamageModifiers;
   sneakAttackDice: string;
   stealthBonus: number;
+  traits: EnemyTraits;
 }
 
 /**
@@ -196,6 +226,7 @@ export function resolveEnemyAbilities(abilities: string[], enemyType: string | n
   const weak = new Map<string, number>();
   let sneakAttackDice = '';
   let stealthBonus = 0;
+  const traits: EnemyTraits = { ...NO_TRAITS };
 
   // Derived first, so an authored ability could in principle override it.
   if (enemyType === 'undead') for (const t of UNDEAD_IMMUNITIES) immune.add(t);
@@ -220,6 +251,21 @@ export function resolveEnemyAbilities(abilities: string[], enemyType: string | n
       case 'fire_weakness':
         weak.set('fire', 1.5);
         break;
+      case 'pack_tactics':
+        traits.packTactics = true;
+        break;
+      case 'formation_bonus':
+        traits.formationBonus = true;
+        break;
+      case 'charge':
+        traits.charge = true;
+        break;
+      case 'ferocity':
+        traits.ferocity = true;
+        break;
+      case 'regeneration_10':
+        traits.regeneration = REGENERATION_PER_INTERVAL;
+        break;
       default:
         // Deferred or unknown: no effect. The content test is what
         // distinguishes those two cases, not this switch.
@@ -227,7 +273,7 @@ export function resolveEnemyAbilities(abilities: string[], enemyType: string | n
     }
   }
 
-  return { riders, damage: { immune, resist, weak }, sneakAttackDice, stealthBonus };
+  return { riders, damage: { immune, resist, weak }, sneakAttackDice, stealthBonus, traits };
 }
 
 /**
@@ -251,4 +297,54 @@ export function applyDamageModifiers(mods: DamageModifiers, amount: number, kind
 export function hasDamageModifiers(u: Combatant): boolean {
   const m = u.damageModifiers;
   return m.immune.size > 0 || m.resist.size > 0 || m.weak.size > 0;
+}
+
+/* ────────────────────────────── M3 — the positional rules ────────────────── */
+
+/**
+ * ⚠ ALL FIVE M3 NUMBERS LIVE HERE, NOT IN THE COMBAT LOOP. The migration plan's
+ * risk R2 named this explicitly: translation knobs belong in DATA, never in
+ * code, because the re-tune will move them. Keeping them in one block means the
+ * re-tune edits one file.
+ */
+
+/** `pack_tactics` — the wolf's bonus when a packmate already holds the target. */
+export const PACK_TACTICS_BONUS = 2;
+
+/** `formation_bonus` — AC while shoulder to shoulder with the same unit type. */
+export const FORMATION_AC_BONUS = 1;
+
+/** `charge` — extra damage on the first swing after closing a real distance. */
+export const CHARGE_BONUS_DAMAGE = 4;
+
+/** How far a charger must have been from its target to earn the bonus. */
+export const CHARGE_MIN_DISTANCE = 6;
+
+/** `regeneration_10` — hp per interval. The authored name says 10. */
+export const REGENERATION_PER_INTERVAL = 10;
+
+/**
+ * ⚠ REGENERATION TICKS ON THE ATTACK INTERVAL, NOT EVERY SIM TICK. At 100ms per
+ * tick, per-tick regeneration would return 10 hp ten times a second and no
+ * party could ever kill a Troll. Once per `attackIntervalTicks` puts it on the
+ * same clock as everything else that recurs in this engine.
+ */
+export const REGENERATION_INTERVAL_MULTIPLIER = 1;
+
+/**
+ * Is an ally of the same base already engaged with this target?
+ *
+ * ⚠ REUSES THE FLANKING GEOMETRY DELIBERATELY (`isFlanked`'s adjacency half),
+ * but is NOT flanking: pack tactics needs only ONE ally in contact, with no
+ * opposite-sides requirement. Two wolves on the same flank still hunt as a pack.
+ */
+export function hasEngagedAlly(
+  attacker: Combatant,
+  target: Combatant,
+  all: readonly Combatant[],
+  withinEngagement: (a: Combatant, b: Combatant) => boolean,
+): boolean {
+  return all.some(
+    (u) => u !== attacker && u.side === attacker.side && u.hp > 0 && withinEngagement(u, target),
+  );
 }

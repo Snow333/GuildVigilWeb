@@ -22,7 +22,9 @@ import { featEffectsById } from '@sim/heroes/featEffects';
 import { pickAction } from './loadout';
 import { applyConditionFromCast, resolveCast, spellRange } from './spells';
 import { resolveWeaponRiders, totalRiderDamage } from './weaponRiders';
-import { applyDamageModifiers, hasDamageModifiers } from './enemyAbilities';
+import {
+  applyDamageModifiers, hasDamageModifiers, REGENERATION_INTERVAL_MULTIPLIER,
+} from './enemyAbilities';
 import { spellsById } from '@sim/registry';
 import { resolveStrike, rollConceal } from './strike';
 import { dist, type Combatant } from './types';
@@ -157,6 +159,32 @@ export function runEncounter(
     target.tempHp -= absorbed;
     const through = amount - absorbed;
     target.hp = Math.max(target.hp - through, 0);
+    /**
+     * FEROCITY (brief #26 M3) — the Orc refuses to die, once per fight.
+     *
+     * ⚠ APPLIED HERE, BEFORE THE DEATH EVENT, because this is the only place a
+     * unit's hp reaches zero. Putting it in the strike path would miss riders,
+     * spells, AoO and traps.
+     *
+     * ⚠ IT EMITS ITS OWN EVENT. A unit that silently failed to die would be
+     * indistinguishable from a damage bug, and the record could not narrate the
+     * moment — which is the whole point of the ability in play.
+     */
+    if (target.hp === 0 && through > 0 && target.traits.ferocity && !target.ferocityUsed) {
+      target.ferocityUsed = true;
+      target.hp = 1;
+      const ferEv = s.emit(t, 'combat.damage_applied', { targetId: target.id, amount, kind, hpAfter: 1 }, cause);
+      /**
+       * ⚠ REUSES `reaction_triggered` RATHER THAN ADDING AN EVENT TYPE. The
+       * event schema is FROZEN and additive-only, and CLAUDE.md's rule is to
+       * prefer an existing channel where one will do. Ferocity IS a reaction —
+       * it fires in response to a killing blow — so `reactionId: 'ferocity'`
+       * reads correctly in the record beside AoO, and the manifest snapshot
+       * does not move for a single ability.
+       */
+      s.emit(t, 'combat.reaction_triggered', { unitId: target.id, reactionId: 'ferocity', againstId: target.id }, ferEv.seq);
+      return;
+    }
     const dmgEv = s.emit(t, 'combat.damage_applied', { targetId: target.id, amount, kind, hpAfter: target.hp }, cause);
     if (target.hp === 0 && through > 0) {
       if (target.isHero) {
@@ -296,6 +324,27 @@ export function runEncounter(
       // Timed condition expiry.
       for (const id of expireConditions(u, tick)) {
         stream.emit(tick, 'combat.condition_expired', { targetId: u.id, conditionId: id });
+      }
+
+      /**
+       * REGENERATION (brief #26 M3) — the Troll knits itself back together.
+       *
+       * ⚠ ON THE ATTACK INTERVAL, NOT PER SIM TICK. A tick is 100ms, so
+       * per-tick regeneration would return 10 hp ten times a second and no
+       * party in the game could ever kill a Troll. This puts it on the same
+       * clock as every other recurring thing in the engine.
+       *
+       * ⚠ IT DOES NOT RAISE THE DEAD. `hp > 0` is required, so once the Troll
+       * is down it stays down — regeneration is attrition pressure during the
+       * fight, not an immortality clause. The authored fire_weakness is the
+       * counterplay, and both landed in the same brief on purpose.
+       */
+      if (u.traits.regeneration > 0 && u.hp > 0 && u.hp < u.maxHp) {
+        const interval = ENCOUNTER.attackIntervalTicks * REGENERATION_INTERVAL_MULTIPLIER;
+        if (tick - u.lastRegenTick >= interval) {
+          u.lastRegenTick = tick;
+          applyHealing(u, Math.min(u.traits.regeneration, u.maxHp - u.hp), stream, tick, 0);
+        }
       }
 
       // Dying heroes roll recovery on the timer. Recovery churn counts as
@@ -567,6 +616,10 @@ export function runEncounter(
           }
         }
       }
+      // ⚠ The charge is SPENT once a swing lands. Without this a minotaur that
+      // closed once would keep the bonus for every subsequent swing of the
+      // fight — the bonus is the impact of arriving, not a permanent buff.
+      u.chargeStartDistance = -1;
       u.flurrySwings += swings;
       u.lastSwingTick = tick;
       if (abilityDefinition) {
@@ -617,6 +670,18 @@ function moveTick(u: Combatant, all: readonly Combatant[], rt: UnitRuntime, stre
   const target = all.find((t) => t.id === rt.targetId);
   if (!target || (target.hp <= 0 && !hasCondition(target, 'dying'))) return;
   if (!canMove(u)) return;
+  /**
+   * CHARGE (brief #26 M3) — record where an approach BEGAN.
+   *
+   * ⚠ SET ONCE PER APPROACH, NOT EVERY TICK. A charger closes over many ticks;
+   * overwriting this each tick would leave it holding the LAST step's distance
+   * (about one step long) and the bonus would never fire. −1 means "not
+   * currently closing", and `resolveStrike` clears it back to −1 after a swing,
+   * so standing and trading blows never re-earns the charge.
+   */
+  if (u.traits.charge && u.chargeStartDistance < 0 && !inAttackRange(u, target)) {
+    u.chargeStartDistance = gap(u, target);
+  }
   const want = desiredPosition(u, target);
   if (want.x === u.pos.x && want.y === u.pos.y) return;
   const step = moveStep(u, speedMod(u), TICKS_PER_SECOND);

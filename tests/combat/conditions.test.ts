@@ -28,6 +28,13 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     // in this suite measures exactly what it measured before. Pass a populated
     // `damageModifiers` to build a resistant or immune body.
     damageModifiers: { immune: new Set(), resist: new Map(), weak: new Map() },
+    // Brief #26 M3: no traits by default, so every pre-existing assertion in
+    // this suite measures exactly what it measured before. Override `traits`
+    // to build a pack hunter, a formation fighter, a charger or a regenerator.
+    traits: { packTactics: false, formationBonus: false, charge: false, ferocity: false, regeneration: 0 },
+    ferocityUsed: false,
+    lastRegenTick: 0,
+    chargeStartDistance: -1,
     ...over,
   };
 }

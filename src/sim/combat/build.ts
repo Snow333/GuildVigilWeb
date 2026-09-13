@@ -80,6 +80,11 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
      */
     weaponRiders: abilities.riders,
     damageModifiers: abilities.damage,
+    // Brief #26 M3: positional traits, and the per-encounter state they need.
+    traits: abilities.traits,
+    ferocityUsed: false,
+    lastRegenTick: 0,
+    chargeStartDistance: -1,
     // Enemies carry no pouch — consumables are a player-planning verb.
     quickSlots: [],
     isCaster: false,
