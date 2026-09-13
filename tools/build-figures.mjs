@@ -59,14 +59,17 @@ const QUALITY = 78;
  * dark hair and a dark background have the same luminance. Verified by
  * compositing onto parchment and looking at it.
  *
- * Keying on COLOUR DISTANCE from the actual background instead separates them:
- * the field is a desaturated blue-grey (#232833-ish), while the figure's dark
- * regions carry hue — green skin, warm brown hair. Same luminance, different
- * colour, so distance tells them apart where brightness cannot.
+ * Keying on COLOUR DISTANCE from the actual background got closer — the field
+ * is a desaturated blue-grey while the figure's dark regions carry hue — but
+ * probing the hair region measured a minimum distance of 0.0: the darkest hair
+ * pixels ARE the background colour. No per-pixel rule can separate them,
+ * because they are not different.
+ *
+ * What separates them is CONNECTIVITY: the field touches the image border, the
+ * figure does not. So the key is a flood fill from the edges (see keyOut
+ * below), and this constant survives only as a loose outer bound on it.
  */
 const BG_TOLERANCE = 26;
-/** Distance above which a pixel is fully opaque; between the two it ramps. */
-const BG_FEATHER = 22;
 
 /** `hero-human-m-figure-01.png` → { key: 'hero-human-m', variant: 1 } */
 function parseFigure(cls, file) {
@@ -145,30 +148,67 @@ async function keyBackground(image) {
     stack.push(y * width, y * width + width - 1);
   }
 
+  /**
+   * ⚠ THE FLOOD SPREADS BY LOCAL SIMILARITY, NOT BY DISTANCE FROM THE SEED.
+   *
+   * Measuring the renders explains why this matters. Sampling the background
+   * along a line near the bottom of each image, as colour distance from the
+   * corner pixel:
+   *
+   *   hero-human-m    (hand-made)  2..6    <- flat field
+   *   hero-elf-f      (generated)  0..1    <- flat field
+   *   hero-dwarf-m    (generated)  27..46  <- GRADIENT
+   *   hero-halfling-f (generated)  16..75  <- STRONG GRADIENT
+   *
+   * The diffusion model likes to paint a soft vignette and a ground shadow.
+   * A seed-relative test stalls partway up such a gradient and leaves a pale
+   * slab behind the figure's feet — visible on three of the eight new figures.
+   *
+   * Comparing each pixel to the NEIGHBOUR it spread from instead lets the fill
+   * walk a smooth ramp of any depth, while still stopping at the figure's
+   * edge, where colour changes abruptly. The seed test is kept as a loose
+   * outer bound so a figure touching the frame cannot swallow the whole image.
+   */
+  const LOCAL_TOLERANCE = 10;
+  const OUTER_BOUND = 120;
+
   while (stack.length > 0) {
     const i = stack.pop();
     if (seen[i]) continue;
     const o = i * channels;
-    if (dist(o) > BG_TOLERANCE + BG_FEATHER) continue; // hit the figure
+    if (dist(o) > OUTER_BOUND) continue; // nowhere near the field: the figure
     seen[i] = 1;
 
     const x = i % width;
     const y = (i - x) / width;
-    if (x > 0) stack.push(i - 1);
-    if (x < width - 1) stack.push(i + 1);
-    if (y > 0) stack.push(i - width);
-    if (y < height - 1) stack.push(i + width);
+    /** Spread only into neighbours that look like THIS pixel. */
+    const spread = (j) => {
+      if (seen[j]) return;
+      const p = j * channels;
+      const local = Math.hypot(
+        data[p] - data[o],
+        data[p + 1] - data[o + 1],
+        data[p + 2] - data[o + 2],
+      );
+      if (local <= LOCAL_TOLERANCE) stack.push(j);
+    };
+    if (x > 0) spread(i - 1);
+    if (x < width - 1) spread(i + 1);
+    if (y > 0) spread(i - width);
+    if (y < height - 1) spread(i + width);
   }
 
+  /**
+   * ⚠ ALPHA COMES FROM THE FLOOD, NOT FROM THE SEED DISTANCE. Everything the
+   * flood reached is field by construction, so it goes fully transparent. The
+   * old seed-relative ramp would leave the far end of a gradient at partial
+   * opacity — the pale slab again, just fainter.
+   *
+   * The soft edge instead comes from feathering the MASK below, which is what
+   * actually needs softening: the boundary between field and figure.
+   */
   for (let i = 0; i < width * height; i++) {
-    if (!seen[i]) continue;
-    const o = i * channels;
-    const d = dist(o);
-    // Inside the field proper: fully transparent. On the vignette boundary:
-    // ramp, so the cut-out has no hard edge against parchment.
-    data[o + 3] = d <= BG_TOLERANCE
-      ? 0
-      : Math.round(((d - BG_TOLERANCE) / BG_FEATHER) * data[o + 3]);
+    if (seen[i]) data[i * channels + 3] = 0;
   }
 
   /**
