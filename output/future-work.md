@@ -129,6 +129,23 @@ structural fix. Details in `output/reference/content.md`.
 
 ### 6. Dead content fixes
 
+⚠ **Re-audited 2026-09-13 against the code. Two entries flipped and seven numbers were wrong** —
+full corrected inventory in `output/reference/content.md`. Headlines:
+
+- **The ambush ladder is worse than recorded.** 0% at d3 and d5 is right (d1 is exactly 5.0%, not
+  5.3%), but even when surprise DOES fire it changes nothing: `runEncounter` takes **no tier
+  argument** and `combat.started.ambushTier` is never populated. **All five tiers are pure UI
+  narration.** Fixing the DC alone would buy nothing — the mechanical channel does not exist.
+- **`class_progression.features` is 44 of 47 dead** for the founding four (not 45 — `sneak_attack_1d6`
+  is named on both Rogue L1 and L2). Across all 13 classes: **307 of 314**.
+- **`items.loot_tier` is dead and was never on the list.** Zero consumers.
+- ⚠ **`2^(level − difficulty)` in `pickEnemies` was NEVER a no-op** — that claim was false
+  arithmetic. The combat band spans three levels, so a third of every draw pool costs double. Only
+  the boss branch is flat, by design. **Nothing to fix here; the entry was wrong.**
+- **The shop defect is exact:** 53 of 105 rows skipped, 0 of 8 armour rows survive. But **Gloves of
+  Dexterity +2 is not in `shop_stock` at any level**, so it was never a valid example of it.
+
+
 Known-inert content, queued rather than rediscovered. Full inventory in
 `output/reference/content.md`. The headline items:
 

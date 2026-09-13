@@ -34,6 +34,40 @@ them with legal equal-or-better gear.
 completion rate, wipe rate or delta from a brief, check its date. If it predates 2026-09-12, it was
 measured against gear the class cannot legally wear — re-measure rather than quote it.
 
+## The noise floor is MEASURED now, not extrapolated — and it is depth-dependent
+
+⚠ **The ±8 bar was an extrapolation until 2026-09-13.** Brief #16 §3 measured 30 points apart at
+n=30, 8.0 at n=100 and 7.0 at n=300, and the working bar was inferred from those. It has now been
+measured directly: **12 independent blocks per depth at n=1000 and at n=300, identical parameters,
+different seed prefixes — 78,000 dispatches.** Setup validated first by reproducing the published
+snapshot bit-for-bit (94.7 / 91.7 / 89.0 / 57.7 / 69.7).
+
+**Spread of an UNCHANGED game across 12 blocks (completion %):**
+
+| Depth | spread @ n=1000 | spread @ n=300 | 95% two-measurement bar @ n=1000 | @ n=300 |
+|---|---|---|---|---|
+| d1 | 2.5 | 4.0 | ±2.2 | ±3.3 |
+| d2 | 3.1 | 5.4 | ±2.3 | ±3.9 |
+| d3 | 4.2 | 6.3 | ±3.3 | ±5.3 |
+| d4 | **5.7** | **8.3** | **±4.2** | **±6.4** |
+| d5 | 4.2 | **8.3** | ±3.5 | ±6.9 |
+
+**The ±8 bar at n=300 is CONFIRMED** — if anything marginally generous to the instrument, since two
+depths landed at 8.3. Keep using it.
+
+⚠ **NOISE IS DEPTH-DEPENDENT AND ONE FLAT BAR IS WRONG IN BOTH DIRECTIONS.** Binomial variance peaks
+near p=0.5, and d4 sits at ~59% while d1 sits at ~95%. A flat ±8 is roughly **2× too loose at d1**
+and about right at d4. A d1 comparison at n=1000 is trustworthy to ±2.2 points; a d4 comparison needs
+±4.2. When a claim rests on a shallow-depth difference, the flat bar is hiding a real effect.
+
+⚠ **n=1000 costs ~73 seconds for all five depths.** Buying the tighter bar (**±6** max-spread, or
+±4.2 as a proper 95% interval) is cheap — use it whenever a decision actually turns on the number.
+
+⚠ **THE PUBLISHED SNAPSHOT IS ONE DRAW, NOT THE CURVE'S TRUE LOCATION.** Measured: d3's published
+89.0 is the **exact maximum** of twelve n=300 blocks and sits 3.0 points above the n=1000 mean of
+86.0; d4's 57.7 sits near the low end of its range. That is ordinary seed luck, fully inside the bar,
+and says nothing about balance — but never read a single snapshot cell as the game's real value.
+
 ## ⚠ An immunity/resistance test must assert the DAMAGE, never the table
 
 Brief #26 M2 shipped an exposure test reading `skeleton.damageModifiers.immune.has('poison')`. A
