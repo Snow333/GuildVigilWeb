@@ -149,53 +149,100 @@ async function keyBackground(image) {
   }
 
   /**
-   * ⚠ THE FLOOD SPREADS BY LOCAL SIMILARITY, NOT BY DISTANCE FROM THE SEED.
+   * ⚠ THE FIELD IS MODELLED FROM THE BORDERS, NOT FROM ONE CORNER PIXEL.
    *
-   * Measuring the renders explains why this matters. Sampling the background
-   * along a line near the bottom of each image, as colour distance from the
-   * corner pixel:
+   * Three approaches failed before this one, and each failed for a reason
+   * worth keeping:
    *
-   *   hero-human-m    (hand-made)  2..6    <- flat field
-   *   hero-elf-f      (generated)  0..1    <- flat field
-   *   hero-dwarf-m    (generated)  27..46  <- GRADIENT
-   *   hero-halfling-f (generated)  16..75  <- STRONG GRADIENT
+   *   1. LUMINANCE THRESHOLD — punched holes through dark hair, hands and
+   *      feet. Dark hair and a dark background share a brightness.
+   *   2. DISTANCE FROM THE CORNER PIXEL — better, but the generated renders
+   *      carry vignettes and ground shadows. Measured background variation
+   *      along a line near the bottom of each image:
    *
-   * The diffusion model likes to paint a soft vignette and a ground shadow.
-   * A seed-relative test stalls partway up such a gradient and leaves a pale
-   * slab behind the figure's feet — visible on three of the eight new figures.
+   *        hero-human-m    (hand-made)  2..6    flat
+   *        hero-elf-f      (generated)  0..1    flat
+   *        hero-dwarf-m    (generated)  27..46  GRADIENT
+   *        hero-halfling-f (generated)  16..75  STRONG GRADIENT
    *
-   * Comparing each pixel to the NEIGHBOUR it spread from instead lets the fill
-   * walk a smooth ramp of any depth, while still stopping at the figure's
-   * edge, where colour changes abruptly. The seed test is kept as a loose
-   * outer bound so a figure touching the frame cannot swallow the whole image.
+   *      A single reference colour stalls partway up such a ramp and leaves a
+   *      pale slab behind the figure's feet.
+   *   3. LOCAL SIMILARITY (each pixel compared to the neighbour it spread
+   *      from) — cleared the slabs, but a chain of small steps can walk
+   *      ANYWHERE. It strolled up the pale robes and bare legs of the four
+   *      hand-made figures and dissolved them from the waist down. That
+   *      regression shipped, and it is what these notes exist to prevent.
+   *
+   * The property all three missed: a vignette is a SMOOTH FUNCTION OF
+   * POSITION. So the reference colour is a function of position too —
+   * bilinearly interpolated from the four border pixels on this pixel's row
+   * and column. A flat field degenerates to a constant (case 1 and 2 still
+   * work), a vignette is tracked exactly, and because the tolerance around
+   * that reference stays TIGHT, no chain of small steps can wander into a
+   * cream robe that sits 60+ away from the field.
    */
-  const LOCAL_TOLERANCE = 10;
-  const OUTER_BOUND = 120;
+  const at = (i) => i * channels;
+  const sample = (x, y) => {
+    const o = at(y * width + x);
+    return [data[o], data[o + 1], data[o + 2]];
+  };
+  /** Border colours, read once. */
+  const top = [];
+  const bottom = [];
+  for (let x = 0; x < width; x++) {
+    top.push(sample(x, 0));
+    bottom.push(sample(x, height - 1));
+  }
+  const left = [];
+  const right = [];
+  for (let y = 0; y < height; y++) {
+    left.push(sample(0, y));
+    right.push(sample(width - 1, y));
+  }
+
+  /** The field's expected colour AT THIS POSITION. */
+  const reference = (x, y) => {
+    const fx = width === 1 ? 0 : x / (width - 1);
+    const fy = height === 1 ? 0 : y / (height - 1);
+    const out = [0, 0, 0];
+    for (let ch = 0; ch < 3; ch++) {
+      const horizontal = left[y][ch] * (1 - fx) + right[y][ch] * fx;
+      const vertical = top[x][ch] * (1 - fy) + bottom[x][ch] * fy;
+      out[ch] = (horizontal + vertical) / 2;
+    }
+    return out;
+  };
+
+  /**
+   * ⚠ TIGHT, AND IT MUST STAY TIGHT — this is the number that stops the fill
+   * entering the figure. Swept against the two hardest cases, measuring both
+   * how much field was cleared and how many opaque pixels survived across the
+   * figure's LEGS (where the regression showed first):
+   *
+   *   tolerance        30     45     60     75     90
+   *   human-m legs    290    289    208    142    126   <- pale robe, eaten from 60
+   *   dwarf-m  legs   561    558    558    554    465
+   *
+   * 45 is the last value that clears meaningfully more field while leaving the
+   * robed figure whole. Past 60 the fill walks into cream cloth.
+   */
+  const FIELD_TOLERANCE = 45;
 
   while (stack.length > 0) {
     const i = stack.pop();
     if (seen[i]) continue;
-    const o = i * channels;
-    if (dist(o) > OUTER_BOUND) continue; // nowhere near the field: the figure
-    seen[i] = 1;
-
     const x = i % width;
     const y = (i - x) / width;
-    /** Spread only into neighbours that look like THIS pixel. */
-    const spread = (j) => {
-      if (seen[j]) return;
-      const p = j * channels;
-      const local = Math.hypot(
-        data[p] - data[o],
-        data[p + 1] - data[o + 1],
-        data[p + 2] - data[o + 2],
-      );
-      if (local <= LOCAL_TOLERANCE) stack.push(j);
-    };
-    if (x > 0) spread(i - 1);
-    if (x < width - 1) spread(i + 1);
-    if (y > 0) spread(i - width);
-    if (y < height - 1) spread(i + width);
+    const o = at(i);
+    const ref = reference(x, y);
+    const d = Math.hypot(data[o] - ref[0], data[o + 1] - ref[1], data[o + 2] - ref[2]);
+    if (d > FIELD_TOLERANCE) continue; // the figure's edge
+    seen[i] = 1;
+
+    if (x > 0) stack.push(i - 1);
+    if (x < width - 1) stack.push(i + 1);
+    if (y > 0) stack.push(i - width);
+    if (y < height - 1) stack.push(i + width);
   }
 
   /**
@@ -257,7 +304,25 @@ async function keyBackground(image) {
     }
   }
 
-  return sharp(data, { raw: { width, height, channels } });
+  /**
+   * ⚠ REPORT A PAINTED BACKDROP RATHER THAN SILENTLY SHIPPING IT.
+   *
+   * Some renders do not have a removable background at all: the model painted
+   * a scene — a stone wall, a vignette disc behind the subject — and keyed
+   * the figure into it. No tolerance separates that, because it is not a flat
+   * field with a figure on top; it is a picture.
+   *
+   * Measured by sweeping the tolerance: a clean figure clears 65-80% of its
+   * frame, and clears MORE as tolerance rises. A painted backdrop plateaus
+   * low (the dwarf held at 38% even at tolerance 90). So a low clear ratio is
+   * the signature, and it means "regenerate this one", not "raise the number".
+   * Raising the number to chase it is how the figures got eaten.
+   */
+  let cleared = 0;
+  for (let i = 0; i < width * height; i++) if (data[i * channels + 3] === 0) cleared++;
+  const clearRatio = cleared / (width * height);
+
+  return { image: sharp(data, { raw: { width, height, channels } }), clearRatio };
 }
 
 async function build() {
@@ -267,11 +332,12 @@ async function build() {
   }
 
   const rows = [];
+  const suspect = [];
   for (const fig of figures) {
     const src = sharp(fig.path);
     const { width, height } = await src.metadata();
 
-    const keyed = await keyBackground(sharp(fig.path));
+    const { image: keyed, clearRatio } = await keyBackground(sharp(fig.path));
     const buf = await keyed
       .png() // intermediate: trim needs a real alpha channel
       .toBuffer()
@@ -280,6 +346,12 @@ async function build() {
         .resize(BOX_W, BOX_H, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .webp({ quality: QUALITY, alphaQuality: 90 })
         .toBuffer());
+
+    /** Below this, the render has a painted backdrop and needs regenerating. */
+    const SUSPECT_CLEAR = 0.55;
+    if (clearRatio < SUSPECT_CLEAR) {
+      suspect.push({ key: fig.key, pct: (clearRatio * 100).toFixed(0) });
+    }
 
     rows.push({ ...fig, width, height, kib: buf.length / 1024, uri: `data:image/webp;base64,${buf.toString('base64')}` });
     console.log(
@@ -305,6 +377,20 @@ export function hasFigure(key: string): boolean {
 }
 `;
   writeFileSync(outPath, module, 'utf8');
+  if (suspect.length > 0) {
+    const lines = suspect.map((x) => `    ${x.key.padEnd(20)} only ${x.pct}% of the frame keyed out`);
+    console.warn([
+      '',
+      `[build-figures] ⚠ ${suspect.length} figure(s) look like a PAINTED BACKDROP,`,
+      '  not a figure on a flat field:',
+      ...lines,
+      '  These ship with a grey slab behind them. Regenerate them with a plainer',
+      '  background rather than raising FIELD_TOLERANCE — a higher tolerance eats',
+      '  the figure long before it clears a painted scene.',
+      '',
+    ].join('\n'));
+  }
+
   console.log(`[build-figures] wrote ${rows.length} figure(s), ${total.toFixed(1)} KiB total → ${outPath}`);
 }
 

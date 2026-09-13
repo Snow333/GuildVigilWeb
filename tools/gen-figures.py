@@ -36,8 +36,14 @@ STYLE = (
     "full body standing straight facing viewer, arms relaxed at sides, "
     "complete figure head to feet, "
     "painterly digital painting, muted desaturated earthy palette, "
-    "soft diffuse lighting, plain flat pale grey background, "
-    "detailed but restrained fantasy illustration"
+    # ⚠ SAY THE BACKGROUND THREE WAYS. One mention is not enough: four of the
+    # first eight renders came back with a painted backdrop (a vignette disc,
+    # a suggestion of a wall) that NO keying tolerance can remove, because it
+    # is a picture rather than a flat field with a figure on it. Those ship a
+    # grey slab behind the paperdoll. build-figures.mjs now names them.
+    "isolated on a solid uniform light grey background, "
+    "empty flat background, no scenery, no shadow on the ground, "
+    "soft even lighting, detailed but restrained fantasy illustration"
 )
 NEG = (
     # the turnaround problem, first and loudest
@@ -48,6 +54,8 @@ NEG = (
     "cropped, cut off, close-up, portrait crop, bust, headshot, "
     # background
     "busy background, scenery, landscape, interior, text, watermark, signature, "
+    "vignette, gradient background, painted backdrop, ground shadow, cast shadow, "
+    "stone wall, floor, horizon, framed border, "
     # rendering
     "weapon pointing at viewer, dramatic perspective, "
     "neon, oversaturated, glowing, lens flare, blurry, deformed hands"
@@ -57,6 +65,17 @@ NEG = (
 # reads at paperdoll size. 'gnome' alone returns a generic small human; the
 # build words are what make them distinguishable at 300px tall.
 SUBJECTS = {
+    # ⚠ The three ORIGINAL hand-made figures render barefoot in pale cream
+    # linen against a light field. That combination keys badly no matter the
+    # tolerance: the cloth edge and the field are the same value, so the
+    # silhouette frays. Regenerated with darker clothing and boots.
+    "halforc-f": "a tall muscular female half-orc fighter, green-grey skin, dark braided hair, dark leather and mail, sturdy boots",
+    "human-f": "a female human cleric, dark red and brown robes over mail, short hair, sturdy boots",
+    "human-m": "a male human fighter, dark blue tunic over chain mail, short hair, sturdy boots",
+    # ⚠ The two hand-made half-orcs and humans render barefoot in pale linen,
+    # which keys badly: bare feet on a light field leave almost nothing at
+    # ankle height. Boots give the silhouette something solid to end on.
+    "halforc-m": "a tall muscular male half-orc rogue, green-grey skin, dark hair, dark leather armour and sturdy boots",
     "dwarf-m": "a stout broad-shouldered male dwarf warrior, thick braided beard, heavy build, mail hauberk",
     "dwarf-f": "a stout sturdy female dwarf warrior, braided hair, broad build, mail hauberk and leather",
     "elf-m": "a tall slender male elf ranger, long pale hair, pointed ears, layered leather travelling gear",

@@ -63,7 +63,13 @@ describe('the paperdoll figures', () => {
       return { data, w: info.width, h: info.height, c: info.channels };
     }
 
-    const SAMPLES = ['hero-dwarf-m', 'hero-halfling-f', 'hero-human-m', 'hero-gnome-f'];
+    /**
+     * ⚠ EVERY FIGURE, NOT A HAND-PICKED SAMPLE. The first version listed four
+     * keys by hand and hero-halforc-m was not among them — so the suite stayed
+     * green while his legs were reduced to 6 opaque pixels. A sample list only
+     * ever tests the figures you already thought about.
+     */
+    const SAMPLES = Object.keys(figures);
 
     it.each(SAMPLES)('%s has transparent corners', async (key) => {
       const { data, w, h, c } = await decode(key);
@@ -104,17 +110,29 @@ describe('the paperdoll figures', () => {
      * of reasonable width, which is the property that actually distinguishes
      * damage from drapery.
      */
-    it.each(SAMPLES)('%s keeps a continuous silhouette (no punched holes)', async (key) => {
+    it.each(SAMPLES)('%s keeps its lower body (no dissolved legs)', async (key) => {
       const { data, w, h, c } = await decode(key);
-      for (const frac of [0.25, 0.4, 0.55]) {
+      /**
+       * ⚠ MEASURE TOTAL COVERAGE, NOT THE LONGEST RUN, AND SAMPLE THE LEGS.
+       *
+       * Two earlier versions of this test were decoration:
+       *   1. It sampled 25/40/55% height, and stayed GREEN through a
+       *      regression that dissolved four figures from the waist DOWN.
+       *   2. Extended to 82%, it then failed a HEALTHY figure, because at
+       *      ankle height a standing figure is two separate narrow shapes —
+       *      a 26px longest-run is two ankles, not damage.
+       *
+       * Total opaque width across the row is the measure that distinguishes
+       * them: measured on the healthy set, ankles give 41-506px while the
+       * damaged half-orc gave 6. The floor sits well below every good figure
+       * and well above the broken one.
+       */
+      for (const frac of [0.55, 0.7, 0.82]) {
         const y = Math.round(h * frac);
-        let longest = 0;
-        let run = 0;
-        for (let x = 0; x < w; x++) {
-          if (data[(y * w + x) * c + 3]! > 128) { run++; longest = Math.max(longest, run); } else run = 0;
-        }
-        expect(longest, `${key} at ${frac * 100}% height: longest opaque run only ${longest}px`)
-          .toBeGreaterThan(w * 0.08);
+        let total = 0;
+        for (let x = 0; x < w; x++) if (data[(y * w + x) * c + 3]! > 128) total++;
+        expect(total, `${key} at ${frac * 100}% height: only ${total}px of figure remains`)
+          .toBeGreaterThan(w * 0.04);
       }
     });
   });
