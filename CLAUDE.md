@@ -60,7 +60,7 @@ Conflicts resolve toward these, in this order:
 - `output/core-loop.md` — what the game IS: the four nesting levels and the four pillars.
 - `output/design-law.md` — the settled player-facing rules. Changing one needs a brief.
 - `output/future-work.md` — the stack-ranked backlog: next, blocked, held, not built.
-- `output/guild-vigil-migration-plan.md` — phases, scaffolding, risks (Part IV = this repo's layout).
+- `output/archive/` — **historical planning artifacts. Not authority.** The 2026-08-10 migration plan lives here; its live content was harvested into `future-work.md`. Read it only for *why* the architecture is shaped this way (Part V) or what was deliberately removed (Part II).
 - `output/briefs/INDEX.md` — every brief's status and what it settled. **Start here, not in the directory.**
 - `output/art-style-bible.md` — art law.
 - ⚠ **A brief with a `-findings.md` companion has been CORRECTED by it.** The findings doc is the

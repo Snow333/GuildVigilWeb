@@ -61,6 +61,16 @@ are expected to get harder as enemies gain abilities; tuning before that measure
 Red Dragon, L12) cannot spawn at d1–d5, so the "size is free" finding rests on six Large rows, not
 eight, and does not transfer to d6+.
 
+**⚠ The re-tune's named failure mode was predicted in advance (migration plan, risk R2).** The
+PF2E→real-time translation has no precedent in the tuned data: MAP became flurry decay, the 3-action
+economy became cooldowns, initiative became engagement speed. Because this is an auto-battler, **no
+player skill masks an imbalance** — the failure mode is bimodal, steamroll-or-wipe. The mitigations
+specified then, and still correct:
+
+- **Tune to histograms, never to averages.** A mean hides a bimodal distribution completely.
+- **Translation knobs — decay rates, cooldown curves, engagement radii — live in DATA, never in code.**
+- Hand-check golden scenarios against playtest memory rather than trusting aggregate rates.
+
 ### 4. The shop sells no armour
 
 `session.shopStock()` hard-skips every row with `required_building_level > 1` — **53 of 105 rows**,
@@ -89,6 +99,52 @@ Known-inert content, queued rather than rediscovered. Full inventory in
 - **The ambush ladder is dead by arithmetic** — `detectDc = 12 + difficulty × 2` needs 32 at d5, so
   surprise fires 5.3% at d1 and **0% at d3 and d5**.
 - `item_level` is read by nothing.
+
+### 6b. ⚠ THE CONTENT LONG POLE — the largest unbuilt thing in the game
+
+The 2026-08-10 migration plan named this as risk **R4**: combat/build data would arrive ~90%
+complete because it converts from Godot, while the layer the loop actually *lives on* is solo-authored
+and starts near zero. **Measured 2026-09-13, it called this correctly:**
+
+| Content | Built | Target | Of target |
+|---|---|---|---|
+| **Enemy bases** | **45** | 300–500 | **12%** |
+| **Quests** | **22** | 300–400 | **6%** |
+| Items | 183 | 300–500 bases | ~46% |
+| Spells | 218 | 205 + 12 | ✓ complete |
+| Feats | 227 | 227 | ✓ complete |
+| Class progression | 230 | 230 | ✓ complete |
+
+⚠ **Brief #26 does NOT address this.** It makes the 45 existing enemies fight differently; it does not
+author the missing 255–455. Both are needed and they are separate pieces of work.
+
+**The mitigations the plan specified, still valid:**
+
+- A **vertical slice proves the pipeline before batch production** — brief #6 did this for content;
+  do it again per content type rather than authoring 300 quests against an unproven format.
+- **Machine gates so volume never outruns integrity** — count gates, schema validation, and the
+  content-reachability tests in item 5 above. ⚠ Volume without reachability tests is how this repo
+  produced five separate cases of content with no consumer.
+- **The quest scheduler is designed to degrade gracefully with a small pool**, so the game stays
+  playable at every content level. Do not let a large authoring push become a prerequisite for play.
+
+### 6c. ⚠ NO CI EXISTS — and the bundle-size gate was specified and never built
+
+There is **no `.github/` directory and no CI of any kind**. `pnpm check` runs only when someone
+remembers to run it.
+
+The migration plan specified a bundle-size gate: **warn at 8 MB, fail at 12 MB uncompressed.** It was
+never built. Consequence, measured: the bundle went **1,239.30 kB → 2,377.54 kB — +92% in a single
+brief** (#24's paperdoll figures), and that was caught by eye rather than by a gate.
+
+**Minimum useful CI**, in the order it earns its keep:
+
+1. `pnpm check` (typecheck + lint + test) on every push.
+2. The bundle-size gate the plan already specified.
+3. `pnpm e2e` — it catches a whole class of failure unit tests structurally cannot.
+
+⚠ **Green tests still would not prove the app runs** — sessions verify on Linux, Steven plays on
+Windows. CI reduces the manual burden; it does not replace the `pnpm dev` check.
 
 ### 7. Audio
 
@@ -141,6 +197,28 @@ dismissing anything.**
 
 ---
 
-## Then
+## Then — Phase 4, and what it will cost
 
-Phase 4 — gated behind audio and the visual baselines above.
+Phase 4 (platform wrap and packaging) is gated behind audio and the visual baselines above.
+
+**Scope:** Tauri 2 desktop shells (Win/macOS/Linux) · `SaveStore` FS backend · the *same* single-file
+artifact browser-playable on itch with the localStorage backend as a capped demo · Steam/GOG
+packaging · mobile layout passes · iOS/Android via Tauri 2 mobile.
+
+⚠ **Unbought toolchain cost — budget this as schedule, not as a surprise.** Phases 1–3 need only the
+JavaScript toolchain, which is why none of it is installed yet.
+
+| Target | Needs | Size |
+|---|---|---|
+| Desktop (Tauri 2) | Rust MSVC (`rustup default stable-msvc`) + VS 2022 Build Tools with the **Desktop development with C++** workload. WebView2 already ships with Windows. | **~8 GB** |
+| Android | Android Studio (SDK + NDK + platform tools), JDK 17, `rustup target add aarch64-linux-android`. Env: `JAVA_HOME` / `ANDROID_HOME` / `NDK_HOME`. | **~10 GB** |
+| **iOS** | ⚠ **REQUIRES A MAC.** Xcode does not run on Windows. | **Mac hardware or macOS CI runners** |
+
+macOS and Linux desktop builds are produced on those platforms, or on GitHub Actions runners — which
+is the recommended route and the same workflow that would later do Steam depot uploads.
+
+**Exit criterion:** an identical campaign playable on the desktop app, in the browser, and on one
+mobile target, from one artifact differing only in its persistence backend.
+
+⚠ **Trouble signals:** platform-conditional code outside `src/platform` · mobile WebView performance
+forcing sim changes (it must only ever force *presentation* changes).

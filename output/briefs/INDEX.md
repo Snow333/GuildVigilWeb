@@ -62,5 +62,5 @@
 
 - `output/core-loop.md` — the settled game loop. **Conflicts resolve toward this file.**
 - `output/decision-ledger.md` — per-feature Keep/Change/Remove verdicts.
-- `output/guild-vigil-migration-plan.md` — phases, scaffolding, risks (Part IV = repo layout).
+- `output/archive/guild-vigil-migration-plan.md` — phases, scaffolding, risks (Part IV = repo layout).
 - `output/reference/*.md` — the domain deep-references split out of CLAUDE.md.

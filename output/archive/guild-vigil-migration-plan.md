@@ -1,8 +1,35 @@
 # Guild Vigil — Stack Migration Plan
 
+> ## ARCHIVED 2026-09-13 — historical, not a plan
+>
+> This is the **2026-08-10 migration plan**. Phases 1–3 are built, so Parts I–IV and VI describe work
+> that is finished, tooling that is installed, and skills that no longer exist. **Do not follow its
+> instructions.**
+>
+> Everything still live was harvested into **`output/future-work.md`** before archiving:
+> the R4 content long pole (measured at 12% of enemy target, 6% of quest target), the never-built
+> bundle-size CI gate, R2's bimodal steamroll-or-wipe mitigations for the re-tune, and Phase 4's
+> unbought toolchain cost (~8 GB desktop, ~10 GB Android, **iOS requires a Mac**).
+>
+> ### Why this file is kept rather than deleted
+>
+> **Part V is the only record of WHY the architecture is shaped the way it is.** That reasoning is
+> not recoverable from the code:
+>
+> - **R1** — why the event schema was frozen so early, and why it is additive-only.
+> - **R3** — why the stalemate detector is a *sim invariant* rather than a UI concern.
+> - **R5** — why there is no `async` anywhere in `src/sim`, and why `Math.random`/`Date.now` are
+>   lint-banned rather than merely discouraged. The failure it prevents is *"the forecast lied"*,
+>   discovered months later.
+>
+> **Part II** is also the only place recording what was deliberately **Removed** and why — manual
+> turn control, initiative, the 3-action structure, the buyback ledger.
+>
+> Current authority: `output/core-loop.md` · `output/design-law.md` · `output/future-work.md` ·
+> `output/reference/*.md` · `output/briefs/INDEX.md`.
+
 **Produced:** 2026-08-10 · Steps 4–6 of the migration planning brief
-**Companion documents (living authorities):** `core-loop.md` (loop + divergences + constraint weights), `decision-ledger.md` (per-feature verdicts, all 8 areas confirmed)
-**Target stack:** TypeScript (strict) · React 19 · Vite (single-file artifact) · Tauri 2 · Vitest · Playwright
+**Target stack (as planned then):** TypeScript (strict) · React 19 · Vite (single-file artifact) · Tauri 2 · Vitest · Playwright
 
 ---
 
