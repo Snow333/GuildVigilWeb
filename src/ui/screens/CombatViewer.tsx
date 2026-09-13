@@ -19,6 +19,7 @@ import { interpretStream } from '../beats/interpret';
 import { nameResolver } from '../beats/names';
 import { EventStream } from '@sim/core/events/stream';
 import { CombatField } from './CombatField';
+import { RecordFeed } from '../components/RecordFeed';
 import { useGame, type CombatSpeed } from '../state/GameProvider';
 import {
   fieldGauges, fieldMarginalia, fieldStateAt, hpStep, isThrashing, spawnsFromEvents,
@@ -106,12 +107,19 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
    * name-resolved by `interpretStream`, so the id never appears in it — an
    * id-based filter silently matches nothing. Found by exactly that bug.
    */
-  const visibleLines = useMemo(() => {
-    const upToTick = feed.lines.filter((l) => l.tick <= tick);
-    if (focusId === null) return upToTick;
-    const label = names.get(focusId) ?? focusId;
-    return upToTick.filter((l) => l.text.includes(label));
-  }, [feed.lines, tick, focusId, names]);
+  /**
+   * ⚠ ONLY THE TICK WINDOW IS APPLIED HERE. Name filtering moved into
+   * RecordFeed, because the record now groups a blow and its damage sub-line
+   * into one ENTRY: filtering the flat list strips the damage off a hero's hit
+   * and leaves the blow standing with no outcome.
+   */
+  const visibleLines = useMemo(
+    () => feed.lines.filter((l) => l.tick <= tick),
+    [feed.lines, tick],
+  );
+  const focusName = focusId === null ? null : (names.get(focusId) ?? focusId);
+  /** Stable identity so RecordFeed's useMemo can actually cache. */
+  const resolveName = useMemo(() => nameResolver(names), [names]);
   const done = tick >= segment.ticks;
 
   /**
@@ -325,11 +333,7 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
         {visibleLines.length === 0 && (
           <div className="gv-beat" data-tone="inert"><em>Nothing for this filter yet.</em></div>
         )}
-        {visibleLines.map((l, i) => (
-          <div key={i} className="gv-beat" data-tone={l.tone}>
-            <small>{String(l.tick).padStart(4, ' ')}</small> {l.text}
-          </div>
-        ))}
+        <RecordFeed lines={visibleLines} spawns={spawns} nameFor={resolveName} focusName={focusName} />
       </div>
     </div>
   );

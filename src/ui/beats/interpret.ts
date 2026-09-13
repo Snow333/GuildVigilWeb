@@ -38,10 +38,54 @@ export type BeatTone =
   | 'defence' | 'harm' | 'magic' | 'resource' | 'exceptional' | 'inert' | 'slain'
   | 'good' | 'bad' | 'loot' | 'travel' | 'system' | 'neutral';
 
+/**
+ * The structured shape of a combat beat, for the record's layout.
+ *
+ * ⚠ ADDITIVE, NEVER A REPLACEMENT FOR `text`. The pinned contract snapshot
+ * asserts the prose form, the harness reads it, and non-combat events have no
+ * actor/target grammar at all. So `parts` is optional: a renderer that has it
+ * lays out columns, and everything else keeps reading the sentence.
+ *
+ * The fields mirror the approved mockup's grammar exactly — WHO did it, a
+ * PILL naming the outcome, the verb phrase, the TARGET, the dice MATH, and a
+ * damage line with an hp bar — because the layout is the thing being
+ * reproduced, not just the colours.
+ */
+export interface BeatParts {
+  /** The acting unit, when one line has a single clear actor. */
+  who?: string;
+  /** Which side the actor is on, so the record can indent and colour it. */
+  side?: 'heroes' | 'enemies';
+  /** Short outcome label: 'hit' | 'crit' | 'miss' | 'spell' | 'slain' | ... */
+  pill?: string;
+  /** The pill's semantic channel; defaults to the line's own tone. */
+  pillTone?: BeatTone;
+  /** 'strikes' / 'casts' / 'reacts' — the verb, without actor or target. */
+  verb?: string;
+  /** The spell or ability name, emphasised in the layout. */
+  subject?: string;
+  target?: string;
+  /** '17 + 2 = 19 vs 15' — set apart in a lighter face. */
+  math?: string;
+  /** Tags like 'sneak attack 3d' or 'flanked'. */
+  tags?: string[];
+  /** The damage/healing sub-line, with an hp bar when hp is known. */
+  effect?: {
+    amount: number;
+    kind: string;
+    target: string;
+    hpAfter?: number;
+    hpMax?: number;
+    tone: BeatTone;
+  };
+}
+
 export interface BeatLine {
   tick: number;
   text: string;
   tone: BeatTone;
+  /** Structured fields for the record's column layout; absent for prose beats. */
+  parts?: BeatParts;
 }
 
 export interface BeatFeed {
@@ -96,7 +140,8 @@ function spellName(spellId: number): string {
 
 /** One event → one line, or null to drop it silently (structural noise). */
 export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id): BeatLine | null {
-  const t = (text: string, tone: BeatTone = 'neutral'): BeatLine => ({ tick: ev.tick, text, tone });
+  const t = (text: string, tone: BeatTone = 'neutral', parts?: BeatParts): BeatLine =>
+    (parts ? { tick: ev.tick, text, tone, parts } : { tick: ev.tick, text, tone });
   switch (ev.type) {
     // ── dispatch.* ──
     case 'dispatch.started':
@@ -189,16 +234,65 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
         d.roll.degree === 'critSuccess' ? 'exceptional'
           : d.roll.degree === 'success' ? 'harm'
             : 'inert';
-      return t(`${nameFor(d.attackerId)} → ${nameFor(d.targetId)}: ${DEGREE_WORD[d.roll.degree]} (${fmtRoll(d.roll)})${suffix}`, tone);
+      const PILL: Record<RollBreakdown['degree'], string> = {
+        critFailure: 'crit miss', failure: 'miss', success: 'hit', critSuccess: 'critical',
+      };
+      return t(
+        `${nameFor(d.attackerId)} → ${nameFor(d.targetId)}: ${DEGREE_WORD[d.roll.degree]} (${fmtRoll(d.roll)})${suffix}`,
+        tone,
+        {
+          who: nameFor(d.attackerId),
+          pill: PILL[d.roll.degree],
+          pillTone: tone,
+          verb: 'strikes',
+          target: nameFor(d.targetId),
+          math: fmtRoll(d.roll),
+          tags: extras,
+        },
+      );
     }
     case 'combat.spell_cast':
-      return t(`${nameFor(ev.data.casterId)} casts ${spellName(Number(ev.data.spellId))}.`, 'magic');
+      return t(
+        `${nameFor(ev.data.casterId)} casts ${spellName(Number(ev.data.spellId))}.`,
+        'magic',
+        {
+          who: nameFor(ev.data.casterId),
+          pill: 'spell',
+          pillTone: 'magic',
+          verb: 'casts',
+          subject: spellName(Number(ev.data.spellId)),
+        },
+      );
     case 'combat.aoe_resolved':
       return t(`The ${ev.data.shape} catches ${ev.data.targets.length} target(s).`, 'system');
     case 'combat.damage_applied':
-      return t(`${nameFor(ev.data.targetId)} takes ${ev.data.amount} ${ev.data.kind} (${ev.data.hpAfter} hp left).`, 'harm');
+      return t(
+        `${nameFor(ev.data.targetId)} takes ${ev.data.amount} ${ev.data.kind} (${ev.data.hpAfter} hp left).`,
+        'harm',
+        {
+          effect: {
+            amount: ev.data.amount,
+            kind: ev.data.kind,
+            target: nameFor(ev.data.targetId),
+            hpAfter: ev.data.hpAfter,
+            tone: 'harm',
+          },
+        },
+      );
     case 'combat.healing_applied':
-      return t(`${nameFor(ev.data.targetId)} is healed ${ev.data.amount} (${ev.data.hpAfter} hp).`, 'resource');
+      return t(
+        `${nameFor(ev.data.targetId)} is healed ${ev.data.amount} (${ev.data.hpAfter} hp).`,
+        'resource',
+        {
+          effect: {
+            amount: ev.data.amount,
+            kind: 'healing',
+            target: nameFor(ev.data.targetId),
+            hpAfter: ev.data.hpAfter,
+            tone: 'resource',
+          },
+        },
+      );
     case 'combat.condition_applied':
       return t(`${nameFor(ev.data.targetId)} is ${ev.data.conditionId}${ev.data.value ? ` ${ev.data.value}` : ''}.`, 'magic');
     case 'combat.condition_save_resolved':
@@ -216,7 +310,9 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
       return t(`${nameFor(ev.data.unitId)} ${CHECK_WORD[ev.data.roll.degree]} a death save (dying ${ev.data.dyingAfter}).`,
         ev.data.dyingAfter === 0 ? 'good' : 'bad');
     case 'combat.unit_died':
-      return t(`${nameFor(ev.data.unitId)} is slain.`, 'slain');
+      return t(`${nameFor(ev.data.unitId)} is slain.`, 'slain', {
+        who: nameFor(ev.data.unitId), pill: 'slain', pillTone: 'slain',
+      });
     case 'combat.unit_fled':
       return t(`${nameFor(ev.data.unitId)} flees.`, 'neutral');
     case 'combat.stance_changed':

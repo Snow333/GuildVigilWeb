@@ -98,11 +98,20 @@ test('the field mounts on a real fight, names its units, and skims and flattens 
   await transport.locator('button:has-text("½×")').click();
   await expect(field.locator('.gv-field-held')).toHaveCount(0);
 
-  // ── the record is the same feed, and it names its enemies too ──
-  const beats = page.locator('.gv-feed .gv-beat').first();
+  /**
+   * ── the record is the same feed, and it names its enemies too ──
+   *
+   * ⚠ TARGETS `.gv-ex`, THE STRUCTURED ROW. This used to read `.gv-beat`, the
+   * flat one-sentence row, and broke when the record gained the mockup's
+   * round/actor/pill layout. The CLAIM is unchanged and still worth holding:
+   * no raw instance id may reach the player.
+   */
+  const beats = page.locator('.gv-feed .gv-ex').first();
   await transport.locator('button:has-text("beat ▸")').click();
   await expect(beats).toBeVisible();
-  for (const line of await page.locator('.gv-feed .gv-beat').allTextContents()) {
+  const rows = await page.locator('.gv-feed .gv-ex, .gv-feed .gv-dmg').allTextContents();
+  expect(rows.length, 'the record rendered no rows at all').toBeGreaterThan(0);
+  for (const line of rows) {
     expect(line, `"${line}" leaks a raw instance id`).not.toMatch(/disp_\d+:/);
   }
 
