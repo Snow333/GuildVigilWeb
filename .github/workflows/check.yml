@@ -1,0 +1,112 @@
+# The checks that must pass before anything merges.
+#
+# ⚠ CI PASSING IS NOT PROOF THE GAME RUNS. These run on Linux; Steven plays on Windows.
+# The bug class that has actually shipped a blank page — two modules differing only by case —
+# passes every Linux test. The `pnpm dev` check on Windows remains required after any change
+# that adds files or moves module wiring.
+
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # A newer push to the same branch cancels the older run — no point burning minutes
+  # on a commit that has already been superseded.
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · lint · test · bundle size
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # .nvmrc pins a concrete major (24, matching the dev machine); package.json's
+          # engines field is a ">=22" RANGE, which is a reproducibility hazard here —
+          # CI silently drifting to a different major from Steven's is exactly the
+          # "works on the other machine" failure the two-machine workflow must avoid.
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # better-sqlite3 / esbuild / sharp are the only native deps, and only the content
+      # converter needs them — src and the tests never do. If the native build ever 403s
+      # on node headers (it has before), this is the step that will say so plainly.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build the single-file artifact
+        run: pnpm build
+
+      # The gate the 2026-08-10 migration plan specified and that was never built.
+      # Brief #24 took the bundle 1,239.30 -> 2,377.54 kB (+92%) in one brief, caught by
+      # eye rather than by a gate. warn 8 MB / fail 12 MB, uncompressed.
+      - name: Bundle size gate
+        run: pnpm size
+
+      - name: Upload the artifact
+        # `always()` so a failing size gate still uploads the oversized file for inspection —
+        # otherwise the one run you most want to look at is the one with nothing attached.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guild-vigil-single-file
+          path: dist/index.html
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e:
+    name: playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Runs alongside `check` rather than after it: the e2e catches a class of failure the
+    # unit tests structurally cannot (the level-up wizard's required feat step hangs the
+    # spec rather than failing it), so waiting on unit tests would only delay that signal.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # `pnpm e2e` builds first, then runs Playwright against the BUILT artifact via
+      # vite preview — the artifact is the product, so that is what gets tested.
+      - name: E2E
+        run: pnpm e2e
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

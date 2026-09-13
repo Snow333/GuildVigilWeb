@@ -28,6 +28,7 @@
     "class-chart": "node tools/build-class-chart.mjs",
     "db:apply": "node tools/apply-seed.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "size": "node tools/check-bundle-size.mjs",
     "figures": "node tools/build-figures.mjs"
   },
   "dependencies": {

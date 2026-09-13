@@ -128,23 +128,36 @@ author the missing 255–455. Both are needed and they are separate pieces of wo
 - **The quest scheduler is designed to degrade gracefully with a small pool**, so the game stays
   playable at every content level. Do not let a large authoring push become a prerequisite for play.
 
-### 6c. ⚠ NO CI EXISTS — and the bundle-size gate was specified and never built
+### 6c. CI and the bundle-size gate — ✅ BUILT 2026-09-13
 
-There is **no `.github/` directory and no CI of any kind**. `pnpm check` runs only when someone
-remembers to run it.
+`.github/workflows/check.yml` runs on every push to `main`, every PR, and on demand:
 
-The migration plan specified a bundle-size gate: **warn at 8 MB, fail at 12 MB uncompressed.** It was
-never built. Consequence, measured: the bundle went **1,239.30 kB → 2,377.54 kB — +92% in a single
-brief** (#24's paperdoll figures), and that was caught by eye rather than by a gate.
+| Job | Steps |
+|---|---|
+| **check** | typecheck · lint · 880 unit tests · build · **bundle-size gate** · uploads the artifact |
+| **e2e** | installs Chromium · `pnpm e2e` (builds, then Playwright against the BUILT artifact) · uploads the report on failure |
 
-**Minimum useful CI**, in the order it earns its keep:
+**The size gate** is `tools/check-bundle-size.mjs`, wired as `pnpm size`. Thresholds are the ones the
+migration plan specified in August: **warn at 8 MB, fail at 12 MB**, uncompressed. Today's artifact is
+2,377.54 kB — **19.8% of the fail ceiling**.
 
-1. `pnpm check` (typecheck + lint + test) on every push.
-2. The bundle-size gate the plan already specified.
-3. `pnpm e2e` — it catches a whole class of failure unit tests structurally cannot.
+⚠ **The gate reports in 1000-byte kB, matching Vite and every size written down in this repo.** Using
+1024 makes it read ~2.4% smaller than `vite build` and starts an argument about which number is real.
 
-⚠ **Green tests still would not prove the app runs** — sessions verify on Linux, Steven plays on
-Windows. CI reduces the manual burden; it does not replace the `pnpm dev` check.
+⚠ **`--json` exists for tooling. Do not raise the ceiling to make a build pass** — the ceiling is the
+player's download. Lazy-load `src/content/generated/figures.ts` before dropping any art.
+
+**Verified by negative control** (2026-09-13): padded the artifact to 9.4 MB → warns, exits 0; padded
+to 13.4 MB → fails, exits 1; restored → passes. A size gate that has never been seen to fail is
+decoration.
+
+⚠ **CI PASSING IS STILL NOT PROOF THE GAME RUNS.** These jobs run on Linux; Steven plays on Windows,
+and the one bug class that has actually shipped a blank page — two modules differing only by case —
+passes every Linux test. **The `pnpm dev` check on Windows remains required** after any change that
+adds files or moves module wiring.
+
+**Not yet done, deliberately:** no branch protection is configured, so CI reports but does not block.
+Turn that on in the GitHub repo settings when the red X has proven itself trustworthy.
 
 ### 7. Audio
 

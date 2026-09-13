@@ -111,7 +111,7 @@ tools/          content converter + seed applier (Node scripts); distribution
 tests/          Vitest (unit, fixtures, property); e2e/ Playwright
 ```
 
-Aliases: `@sim/*`, `@content/*`, `@platform/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to point at a preinstalled Chromium if needed) · `pnpm convert` · `pnpm portraits` (rebuild the bust module from `art/`) · `pnpm figures` (rebuild the paperdoll figure module from `art/heroes/*-figure-*.png`) · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
+Aliases: `@sim/*`, `@content/*`, `@platform/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm size` (bundle gate: warn 8 MB / fail 12 MB — **never raise the ceiling to pass**) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to point at a preinstalled Chromium if needed) · `pnpm convert` · `pnpm portraits` (rebuild the bust module from `art/`) · `pnpm figures` (rebuild the paperdoll figure module from `art/heroes/*-figure-*.png`) · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
 
 ## The desk grammar (UI law — brief #8)
 
@@ -176,7 +176,7 @@ traps live in the `output/reference/` files named above.
 - `CampaignSession.deserialize` runs the backfill chain (`@sim/save/backfills`) over a
   clone before anything reads state. Add stages there, append-only.
 - **No two modules under `src/` may differ only by case.** `tests/ui/module-casing.test.ts` enforces it. Vite resolves `.ts` before `.tsx`, so `CombatField.tsx` beside `combatField.ts` made Windows import the wrong module and render a blank page while every Linux test stayed green. A helper beside a screen gets its OWN stem (`worldChart.ts`, `afterActionXp.ts`, `fieldReading.ts`) — never a case variant.
-- **Sessions verify on Linux; Steven develops on Windows. Green tests are not proof the app runs.** After any change that adds files or moves module wiring, ask Steven to run `pnpm dev` and confirm.
+- **Sessions verify on Linux; Steven develops on Windows. Green tests are not proof the app runs — and neither is green CI.** `.github/workflows/check.yml` runs typecheck/lint/test/build/size and the e2e on every push, all on Linux. After any change that adds files or moves module wiring, ask Steven to run `pnpm dev` and confirm.
 - ⚠ **The gear bracket lives in `tests/harness/gearBrackets.ts`, NOT `src/` — that placement IS the decision.** The autopilot never equips; gearing is a player pleasure Steven declined to automate. A gear-scoring helper in `src/` is the first step toward a declined feature (`output/design-law.md` §3).
 - **Every regression test gets a negative control.** Revert the fix, watch the test fail, restore, and report the observed failures. A test that passes both ways is decoration.
 - Prefer a **return-value field to a new event** where it will do — brief #13's `sealedRoutes`/`bossRoomSealed` on `DungeonDispatchResult` are the precedent. The event schema is additive-only and the manifest snapshot must always grow.
