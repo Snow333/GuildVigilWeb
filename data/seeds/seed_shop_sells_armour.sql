@@ -1,0 +1,58 @@
+-- ============================================================================
+-- SEED: the shop sells armour (2026-09-13, Steven's call — future-work item 4)
+--
+-- ⚠ THE SHOP HAS NEVER SOLD A SINGLE PIECE OF ARMOUR. `session.shopStock()`
+-- skips every row with `required_building_level > 1`, and ALL EIGHT armour rows
+-- were authored at level 2 or 3. In player terms: you cannot buy armour at all,
+-- in a game whose central pleasure is kitting out each hero by hand.
+--
+-- ⚠ THIS WAS NOT A BUG. The filter is honest about a system that does not
+-- exist: there is no building-level state anywhere in the save, the session or
+-- the campaign, and the code comment says so — "building levels arrive with
+-- the town systems". The authored levels were a progression gate written
+-- against a system that was never built.
+--
+-- DECISION (Steven, 2026-09-13): move armour to level 1 so the shop works NOW,
+-- rather than block a core-loop verb behind the unbuilt town-systems brief.
+--
+-- ⚠ THE PROGRESSION GATE IS DEFERRED, NOT DELETED. When building levels land,
+-- armour tiering is a deliberate design pass — and it should be re-authored
+-- against the real economy, not restored blindly from these old values. The
+-- originals are recorded here so nothing is lost:
+--
+--   id 30  Padded Armor      5g    was level 2
+--   id 31  Leather Armor     10g   was level 2
+--   id 32  Studded Leather   25g   was level 2
+--   id 33  Chain Shirt       50g   was level 2
+--   id 34  Chain Mail        55g   was level 2
+--   id 35  Scale Mail        75g   was level 2
+--   id 42  Half Plate        150g  was level 3
+--   id 43  Full Plate        300g  was level 3
+--
+-- WHY ALL EIGHT, INCLUDING THE PLATE:
+--
+-- Price is already a gate — Full Plate at 300g is a real expense early — and
+-- brief #23 built a SECOND, better gate: armour proficiency. A Wizard who buys
+-- Full Plate takes the non-proficiency penalty and is worse off, so the content
+-- polices itself by class rather than by an unbuilt building level. Leaving the
+-- plate behind would also leave the heavy band unpurchasable for the Fighter
+-- and Cleric, which is precisely the hole this seed exists to close.
+--
+-- ⚠ THIS CHANGES NO ROW COUNTS. `shop_stock` stays at 105 rows and `items` at
+-- 183, so neither count gate moves. This seed only edits a column on eight
+-- existing rows — exactly the kind of change the seed workflow exists for.
+--
+-- ⚠ ROTATION, NOT A GUARANTEE. `SHOP.rotationSlots` is 6 and building 3 (the
+-- armoury) will now hold 22 level-1 rows, so a given week shows 6 of 22. Armour
+-- appears often but not every week, which is the intended shop feel — the thing
+-- you have been eyeing finally being in stock. If it turns out a player can go
+-- many weeks with no armour at all, the fix is the rotation design, NOT putting
+-- the building-level gate back.
+-- ============================================================================
+
+UPDATE shop_stock SET required_building_level = 1 WHERE id IN (30, 31, 32, 33, 34, 35, 42, 43);
+
+-- Guard: all eight armour rows must now be purchasable at level 1. If this
+-- SELECT returns any row, the seed did not do what it claims and the
+-- transaction should be treated as suspect.
+-- SELECT id, item_id, required_building_level FROM shop_stock WHERE id IN (30,31,32,33,34,35,42,43) AND required_building_level <> 1;
