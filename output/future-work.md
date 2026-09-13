@@ -16,8 +16,12 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 
 ## Waiting on Steven
 
-*Nothing is currently blocked on a decision.* Brief #26 M1+M2 is approved and shipped
-(2026-09-13); brief #17 is closed. The next item needing your call will be listed here.
+**Brief #27 — enemy taxonomy — is FOR APPROVAL.** Five questions in §9, of which Q1 is the
+one that shapes the work: Brackets IV/V (L13–20) are **unreachable today** because no quest
+exceeds difficulty 10, so the highest enemy level a player can meet is 11. Authoring them
+would be unverifiable work.
+
+Brief #26 M1+M2+M3 is shipped (2026-09-13); brief #17 is closed.
 
 ---
 
@@ -104,17 +108,15 @@ keeps re-earning its place.
 - ⚠ **`trip` currently applies `prone` WITHOUT an opposed athletics check** — the rider channel has
   no place to hang a contest. Revisit with M3/M4, where the contest machinery is in scope.
 
-### 2. Arena / room geometry
+### 2. Arena / room geometry — ⛔ DROPPED 2026-09-13 (Steven's call)
 
-⚠ **MUST be settled BEFORE the re-tune.** Room geometry is a first-order balance parameter — brief
-#19 §0 measured a corridor at **11–13 points of completion** at d3–d5. Re-tuning against a geometry
-that is about to change means doing the work twice and shipping neither version tuned.
+**Dropped as a feature.** A player cannot perceive room shape: the arena is one room, no collision,
+no cover, no line of sight. It was only ever ranked high because it must precede the re-tune — and
+the re-tune is itself held (#3). It is a **balance lever worth 11–13 completion points**, not
+something a player would notice as content.
 
-The arena today is one 20×20 room: no second layout, no cover, no reach, no difficult terrain, and
-**no unit-unit collision at any size**. Collision is its own brief — it changes closure times for
-every unit in the game.
+Costing is preserved in `output/briefs/arena-costing.md` if it is ever revived.
 
-Costing already exists: `output/briefs/arena-costing.md`.
 
 ### 3. THE RE-TUNE
 
@@ -138,14 +140,20 @@ specified then, and still correct:
 - **Translation knobs — decay rates, cooldown curves, engagement radii — live in DATA, never in code.**
 - Hand-check golden scenarios against playtest memory rather than trusting aggregate rates.
 
-### 4. The shop sells no armour
+### 4. The shop sells armour — ✅ SHIPPED 2026-09-13 (commit `a422c50`)
 
-`session.shopStock()` hard-skips every row with `required_building_level > 1` — **53 of 105 rows**,
-including **every armour row** and the +2/+4 wondrous items the backstab loop wants.
+All 8 armour rows moved to `required_building_level: 1` via `data/seeds/seed_shop_sells_armour.sql`
+(Option A). **In player terms: you can now buy armour.**
 
-**In player terms: you cannot buy armour at all.** Those items are lootable but not purchasable.
+⚠ **The gate is DEFERRED, not deleted.** `session.shopStock()` still skips `required_building_level
+> 1`, and **building levels do not exist anywhere** in save, session or campaign state. The seed
+preserves each row's original intended level in a comment so the gate can be restored when town
+systems land. 45 non-armour rows remain gated behind levels 2–3.
 
-⚠ Do not design any gear solution that assumes the shop can supply it until this is fixed.
+Evidence: `tests/campaign/shopArmour.test.ts`, 4 tests asserting the **consumer** (armour reaching a
+player through 20–40 weeks of real shop rotation), not the content table. Negative control: putting
+the rows back behind levels 2/3 fails 3 of the 4.
+
 
 ### 5. Content-reachability tests
 
@@ -174,33 +182,48 @@ full corrected inventory in `output/reference/content.md`. Headlines:
   Dexterity +2 is not in `shop_stock` at any level**, so it was never a valid example of it.
 
 
-### 6b. ⚠ THE CONTENT LONG POLE — the largest unbuilt thing in the game
+### 6b. ⚠ THE CONTENT LONG POLE — brief #27 FOR APPROVAL
 
-The 2026-08-10 migration plan named this as risk **R4**: combat/build data would arrive ~90%
-complete because it converts from Godot, while the layer the loop actually *lives on* is solo-authored
-and starts near zero. **Measured 2026-09-13, it called this correctly:**
+The 2026-08-10 migration plan named this risk **R4**: combat/build data arrives ~90% complete
+because it converts from Godot, while the layer the loop *lives on* is solo-authored and starts near
+zero. It called that correctly. **What it got wrong was the axis.**
 
-| Content | Built | Target | Of target |
-|---|---|---|---|
-| **Enemy bases** | **45** | 300–500 | **12%** |
-| **Quests** | **22** | 300–400 | **6%** |
-| Items | 183 | 300–500 bases | ~46% |
-| Spells | 218 | 205 + 12 | ✓ complete |
-| Feats | 227 | 227 | ✓ complete |
-| Class progression | 230 | 230 | ✓ complete |
+⚠ **THE ROW-COUNT TARGET (300–500 enemies / 300–400 quests) IS SUPERSEDED** by Steven's 2026-09-13
+instruction and by brief #27: specify the **taxonomy**, not the count.
 
-⚠ **Brief #26 does NOT address this.** It makes the 45 existing enemies fight differently; it does not
-author the missing 255–455. Both are needed and they are separate pieces of work.
+**The measurement that settles it:** the last enemy batch this project authored — the 21-row
+Vanguard's Shadow set, ids 100–120 — wrote an **EMPTY `abilities` string on 21 of 21 rows**. Three
+distinguish at all, and all three by accident, via derived undead immunity. Fingerprinting real
+fights over 31 rows × 6 seeds yields **8 behavioural signatures, with 17 rows sharing one**. Reaching
+300 rows that way produces 300 statblocks that fight identically.
 
-**The mitigations the plan specified, still valid:**
+**The engine has exactly six behavioural channels** (rider · damage modifier · sneak dice · stealth ·
+AoO · size radius, plus `speed` as a borderline seventh). Everything else is a number, and two rows
+differing only in numbers fight identically. That is the binding constraint on all content volume.
 
-- A **vertical slice proves the pipeline before batch production** — brief #6 did this for content;
-  do it again per content type rather than authoring 300 quests against an unproven format.
-- **Machine gates so volume never outruns integrity** — count gates, schema validation, and the
-  content-reachability tests in item 5 above. ⚠ Volume without reachability tests is how this repo
-  produced five separate cases of content with no consumer.
-- **The quest scheduler is designed to degrade gracefully with a small pool**, so the game stays
-  playable at every content level. Do not let a large authoring push become a prerequisite for play.
+**Brief #27 proposes 7 families × 5 brackets × 6 roles**, absorbing 39 of the 45 existing rows.
+
+⚠ **BRACKETS IV AND V (L13–20) ARE UNREACHABLE.** No quest exceeds difficulty 10, and with
+`levelBand: 1` the highest enemy level a player can meet is **11**. Authoring them would be
+unverifiable — the same anti-goal that deferred #26's 16 L7+ abilities. The existing L12 Adult Red
+Dragon is already past the ceiling.
+
+⚠ **The Archer role is BLOCKED.** `build.ts:50–52` hardcodes `weaponRange: 1` / `engageRange: 1` —
+**every enemy in the game is melee.** Ranged enemies change every closure time in the game and need
+their own brief.
+
+⚠ **Zero legal-but-unused vocabulary.** All 14 live ability words (9 + M3's 5) are already in use, so
+new distinguishing rows need new abilities, not recombination.
+
+Remaining content state, for reference — but **do not read these as targets**:
+
+| Content | Built | Note |
+|---|---|---|
+| Enemy bases | 45 | 42.2% distinguishing after #26 M3 |
+| Quests | 22 | ceiling is difficulty 10 |
+| Items | 183 | `loot_tier` still dead on all of them |
+| Spells / Feats / Class progression | 218 / 227 / 230 | ✓ complete |
+
 
 ### 6c. CI and the bundle-size gate — ✅ BUILT 2026-09-13
 
@@ -242,9 +265,62 @@ This is a **Phase 3 exit criterion**, which is why Phase 4 is not next. The desi
 migration (4-domain event tree, category presets, Web Audio + a build-time manifest) — see
 `output/decision-ledger.md` Area 8. Sorting the raw audio remains a content task.
 
-### 8. Playwright visual baselines
+### 8. Playwright visual baselines — ⏸ DEFERRED 2026-09-13 (Steven's call)
 
-The other **Phase 3 exit criterion**. Unmet.
+A Phase 3 exit criterion, unmet, and **deliberately staying unmet for now.**
+
+**Player-facing value when it lands:** it catches the game *looking* broken while working — an
+invisible button, overlapping text, a collapsed panel. Unit tests structurally cannot see any of
+that.
+
+⚠ **Why deferred:** baselines against a UI that is still moving generate constant false failures,
+and a gate that cries wolf gets ignored — which is worse than not having it. Revisit when the UI
+settles.
+
+
+### 8b. A repeatable doc→visual pipeline (`pnpm viz`)
+
+**Why this is on the backlog:** Steven is dyslexic and asks for a visual every time a dense read-out
+appears. Today each one is hand-built as a throwaway HTML file in `$LOCALAPPDATA/Temp`, which means
+the same layout work is redone every session and **none of it is version-controlled or regenerable**
+when the underlying numbers move.
+
+**In player-facing terms this ships nothing** — it is pure workflow. It earns its place by making
+every future design review faster and by killing a recurring failure mode.
+
+**The precedent already exists and works:** `tools/build-class-chart.mjs` (`pnpm class-chart`) parses
+`output/reference/class-progression-sheets.md` into a tabbed HTML chart, and **asserts 13 classes /
+230 rows with `process.exit(1)` if the parse loses data**. That validate-or-die rule is the whole
+value: a reformatted source fails loudly instead of silently emitting a half-empty chart.
+
+**Proposed scope:**
+
+- `tools/build-viz.mjs`, wired as `pnpm viz`, emitting into `output/reference/*.html`.
+- **Generators read the repo's own data** (`src/content/generated/*.ts`, the harness snapshots, the
+  markdown docs) — never retyped numbers. Retyping is how a visual drifts from the game.
+- Every generator **asserts its input shape and exits non-zero on a mismatch**, following the
+  class-chart precedent.
+- Shared theme header so output matches the desk grammar and the app's injected CSS vars
+  (`var(--foreground)`, `var(--border)`, …) rather than hardcoded colours.
+- First three generators, chosen because each already had to be hand-built once:
+  **the enemy taxonomy matrix** (brief #27), **the content-reachability status board**, and
+  **the dungeon curve vs the ±8 bar**.
+
+⚠ **Three environment traps this must route around** — all three were hit on 2026-09-13 and all
+three are already documented in the `guild-vigil` skill:
+
+| Trap | What happens | The working path |
+|---|---|---|
+| `file://` in the automated browser | `ERR_BLOCKED_BY_ADMINISTRATOR` | render inline with `::preview{file="..."}` |
+| localhost in the automated browser | "URL targets a private or internal address" | same — `::preview` needs no server |
+| `python -m http.server` from `terminal` | refused as a long-lived process; needs `background=true` | avoid entirely; `::preview` is the supported path |
+
+⚠ **`::preview{file="C:/abs/path.html"}` is the ONLY verified way to show Steven an HTML artifact on
+this box.** Both browser paths are blocked by policy. The generator should therefore emit a file
+path and let the chat surface render it — never try to screenshot its own output.
+
+**Estimated effort:** half a session for the harness plus the first generator; each additional
+generator is small once the theme header and the assert helper exist.
 
 ### 9. Art pass
 
@@ -256,12 +332,21 @@ The other **Phase 3 exit criterion**. Unmet.
 Pipeline and its hard-won traps: `output/reference/ui-and-art.md`. Style law:
 `output/art-style-bible.md`.
 
-### 10. Restore `career-distribution`'s signal
+### 10. `career-distribution` — ⛔ DROPPED FROM THE PLAN 2026-09-13 (Steven's call)
 
-⚠ **The harness is currently DEGENERATE and cannot report it** — `completionRate 1.0 · wipeRate 0 ·
-failRate 0 · idleWeekRate 0 · ambushDeaths 0`, and every assertion is a one-sided floor, so nothing
-can fire. **A green `career-distribution` is presently worth nothing as evidence about the surface
-game.** Part of the re-tune, not a follow-up to it.
+**Removed from the roadmap. Something more robust will replace it later.**
+
+The harness is DEGENERATE and cannot report anything: `completionRate 1.0 · wipeRate 0 · failRate 0
+· idleWeekRate 0 · ambushDeaths 0`, with every assertion a one-sided floor, so nothing can fire.
+⚠ **A green `career-distribution` is worth nothing as evidence** — do not cite it.
+
+It was the only harness that answered "is a 20-week campaign actually fun?" (snowball, gold
+relevance, hero death). That question still matters; this instrument is not the answer, and fixing
+it now would measure a game that is about to change.
+
+⚠ **The snapshot file stays** (`tests/harness/__snapshots__/career-distribution.test.ts.snap`) —
+deleting the test would silently drop coverage of the campaign loop's *shape*, degenerate or not.
+
 
 ---
 

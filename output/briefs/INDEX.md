@@ -41,6 +41,7 @@
 | #24 | [`magic-items-and-scrolls.md`](magic-items-and-scrolls.md) | APPROVED · IMPLEMENTED | Strike riders, `stat_bonus`, the Arcana/Religion scroll ladder, the Variant G sheet. ⚠ the brief is WRONG about `stat_bonus` — see §6. |
 | #25 | *(no brief file)* | shipped | Buff/debuff resolvers — ran as a parallel session off #24's findings. Record = commits `1a96ade`, `755d4a3` + `tests/combat/buffDebuff.test.ts`. |
 | #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2+M3 IMPLEMENTED** | Making the 45 existing statblocks fight differently. 16 of 19 reachable abilities live. ⚠ M4 DEFERRED (the brief flags it as the one to cut), and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
+| #27 | [`enemy-taxonomy.md`](enemy-taxonomy.md) | ⏳ **FOR APPROVAL** | Enemy taxonomy: 7 families × 5 brackets × 6 roles, L1–20. **Supersedes the 300–500 row-count target.** ⚠ Brackets IV/V (L13–20) are UNREACHABLE — no quest exceeds difficulty 10, so max enemy level is 11. ⚠ The Archer role is BLOCKED — `build.ts` hardcodes every enemy melee. 5 questions in §9. |
 
 ## Findings companions — these WIN over their briefs
 

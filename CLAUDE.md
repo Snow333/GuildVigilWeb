@@ -11,7 +11,7 @@ auto-battler combat) being rebuilt from Godot in TypeScript.
   rather than dropping the art).
 - **Phase:** 3 substantially complete but **NOT to its exit criteria** (audio and the Playwright
   visual baselines). **Phase 4 is not next.**
-- **Shipped:** briefs #8–#26 (M1+M2+M3). Status per brief, and which findings file corrects which, is in
+- **Shipped:** briefs #8–#26 (M1+M2+M3). **#27 (enemy taxonomy) is FOR APPROVAL.** Status per brief, and which findings file corrects which, is in
   **`output/briefs/INDEX.md`** — read that, not the directory.
 - **What is next, what is blocked, what is held, and what is not built yet:
   `output/future-work.md`.** It is stack-ranked. Do not re-derive the roadmap from this file.
