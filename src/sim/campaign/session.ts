@@ -798,19 +798,72 @@ export class CampaignSession {
   }
 
   /**
-   * Stash → hero slot. Slot-compatibility is enforced HERE (brief §1) — the
-   * base's slot field is the law; an occupied slot swaps its item back to stash.
+   * Stash → the hero. ONE VERB FOR EVERYTHING THE HERO CAN CARRY.
+   *
+   * ⚠ CONSUMABLES ROUTE THEMSELVES TO THE POUCH. A potion has no gear slot,
+   * so an earlier version threw "not equippable" and the UI grew a SECOND,
+   * differently-named control for stocking one. Steven called that out: the
+   * player does not care that the engine models a pouch differently from a
+   * scabbard, and breaking the convention for one item type is just a thing
+   * to re-learn. Same button, same verb, the sim works out where it goes.
+   *
+   * The gear/pouch DISTINCTION still exists where it matters — D3 still keeps
+   * longswords out of quick-slots — it is only the player's vocabulary that
+   * collapses to one word.
    */
   equip(heroId: string, stashIndex: number): void {
     const kit = this.kitFor(heroId);
     const instance = this.stash[stashIndex];
     if (!instance) throw new Error(`equip: no stash item at index ${stashIndex}`);
+
+    if (isQuickSlottable(instance.baseId)) {
+      const free = normalizeQuickSlots(kit.quickSlots).findIndex((q) => q === null);
+      if (free < 0) throw new Error('equip: every pouch slot is full');
+      this.setQuickSlot(heroId, free, stashIndex);
+      return;
+    }
+
     const slot = itemBasesById.get(instance.baseId)?.slot as string | null | undefined;
     if (!slot) throw new Error(`equip: ${instance.baseId} is not equippable (no slot)`);
     this.stash.splice(stashIndex, 1);
     const displaced = kit.equipped.findIndex((e) => (itemBasesById.get(e.baseId)?.slot as string | null) === slot);
     if (displaced >= 0) this.stash.push(...kit.equipped.splice(displaced, 1));
     kit.equipped.push(instance);
+  }
+
+  /**
+   * What a STASH item would do for this hero, for the tooltip.
+   *
+   * ⚠ HERO-RELATIVE, because the same item is not worth the same to everyone:
+   * a greatsword names its −4 for a wizard and not for a fighter. Computing it
+   * against the hero who is looking at it is the whole point.
+   */
+  itemContributionsFor(heroId: string, stashIndex: number): ItemContribution[] {
+    const instance = this.stash[stashIndex];
+    if (!instance) return [];
+    return itemContributions(this.kitFor(heroId).hero, instance);
+  }
+
+  /**
+   * Can this stash item go anywhere on this hero right now?
+   *
+   * ⚠ THE UI ASKS THE SIM, IT DOES NOT RE-DERIVE THE RULE. A disabled button
+   * whose reasoning lives in the component drifts from the verb it calls.
+   */
+  equipTarget(heroId: string, stashIndex: number): { kind: 'gear' | 'pouch' | 'none'; reason: string } {
+    const instance = this.stash[stashIndex];
+    if (!instance) return { kind: 'none', reason: 'no such item' };
+    if (isQuickSlottable(instance.baseId)) {
+      const kit = this.kitFor(heroId);
+      const free = normalizeQuickSlots(kit.quickSlots).some((q) => q === null);
+      return free
+        ? { kind: 'pouch', reason: 'into the pouch' }
+        : { kind: 'none', reason: 'the pouch is full' };
+    }
+    const slot = itemBasesById.get(instance.baseId)?.slot as string | null | undefined;
+    return slot
+      ? { kind: 'gear', reason: `into the ${slot.replace('_', ' ')} slot` }
+      : { kind: 'none', reason: 'cannot be carried' };
   }
 
   /**

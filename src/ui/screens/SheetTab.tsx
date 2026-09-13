@@ -27,6 +27,7 @@ import { useGame } from '../state/GameProvider';
 import { Portrait, hasPortrait } from '../portrait';
 import { figures, hasFigure } from '@content/generated/figures';
 import type { StatLedger, AttributionSlot } from '@sim/campaign/session';
+import { ItemTooltip } from '../components/ItemTooltip';
 
 /** Slot → the doll position, as percentages of the figure box. */
 /**
@@ -87,8 +88,15 @@ function SlotBox({
   const pos = SLOT_POS[slot.slot] ?? { left: '50%', top: '50%' };
   const contribution = slot.contributions.find((c) => c.kind === 'ac' || c.kind === 'attack');
   return (
-    <button
-      type="button"
+    <ItemTooltip
+      data={slot.name ? {
+        name: slot.name,
+        slot: slot.slot,
+        category: 'worn',
+        contributions: slot.contributions,
+        warnings: slot.state === 'underserved'
+          ? ['This slot is not pulling its weight.'] : [],
+      } : null}
       className="gv-dslot"
       data-state={slot.state}
       data-slot={slot.slot}
@@ -111,7 +119,7 @@ function SlotBox({
       {slot.state === 'empty' && slot.stashOptions > 0 && (
         <span className="gv-dwarn gv-dwarn--gap" title={`${slot.stashOptions} in the stash`}>+</span>
       )}
-    </button>
+    </ItemTooltip>
   );
 }
 
@@ -262,26 +270,6 @@ export function SheetTab({ heroId }: { heroId: string }) {
               </div>
             ))}
           </div>
-          {a.pouchOptions.length > 0 && (
-            <div className="gv-pouchpick">
-              <span className="gv-choice-label">add to pouch</span>
-              {a.pouchOptions.slice(0, 6).map((o) => {
-                const free = a.quickSlots.find((q) => !q.name);
-                return (
-                  <button
-                    key={o.stashIndex}
-                    className="gv-btn gv-btn--tiny"
-                    disabled={!free}
-                    title={o.usable ? '' : 'the engine cannot use this yet'}
-                    data-pouch-option={o.stashIndex}
-                    onClick={() => free && exec((sess) => sess.setQuickSlot(heroId, free.index, o.stashIndex))}
-                  >
-                    {o.name}{o.usable ? '' : ' (inert)'}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* inspector */}
@@ -366,27 +354,59 @@ export function SheetTab({ heroId }: { heroId: string }) {
   );
 }
 
-/** The stash, with each row's slot so the player can see where it would go. */
+/**
+ * THE GUILD STORES.
+ *
+ * ⚠ ONE VERB. Potions used to need a separate 'add to pouch' control while
+ * everything else used 'Equip', which meant the player had to know that the
+ * engine keeps a pouch and a scabbard in different places. It now routes
+ * itself: `session.equip` sends a consumable to the pouch and gear to its
+ * slot, and `equipTarget` tells the UI where a row WOULD go so the button can
+ * say so without re-deriving the rule.
+ */
 function StashRows({ heroId }: { heroId: string }) {
   const { session, exec } = useGame();
   const stash = session!.stashView();
   if (stash.length === 0) return <p className="gv-insp-none">The stores are empty.</p>;
+
   return (
     <table className="gv-stash">
       <tbody>
-        {stash.map((row, i) => (
-          <tr key={i}>
-            <td className="gv-stash-nm">{row.derived.displayName}</td>
-            <td className="gv-stash-slot">{row.derived.slot ?? 'not equippable'}</td>
-            <td className="gv-stash-act">
-              {row.derived.slot && (
-                <button className="gv-btn gv-btn--tiny" onClick={() => exec((s) => s.equip(heroId, i))}>
+        {stash.map((row) => {
+          const target = session!.equipTarget(heroId, row.index);
+          const contributions = session!.itemContributionsFor(heroId, row.index);
+          return (
+            <tr key={row.index}>
+              <td className="gv-stash-nm">
+                <ItemTooltip
+                  className="gv-stash-trigger"
+                  data={{
+                    name: row.derived.displayName,
+                    slot: row.derived.slot,
+                    category: row.derived.itemType,
+                    damage: row.derived.damageDice ?? null,
+                    price: row.sellPrice,
+                    contributions,
+                  }}
+                >
+                  {row.derived.displayName}
+                </ItemTooltip>
+              </td>
+              <td className="gv-stash-slot">{target.reason}</td>
+              <td className="gv-stash-act">
+                <button
+                  className="gv-btn gv-btn--tiny"
+                  disabled={target.kind === 'none'}
+                  title={target.reason}
+                  data-equip={row.index}
+                  onClick={() => exec((s) => s.equip(heroId, row.index))}
+                >
                   ◂ Equip
                 </button>
-              )}
-            </td>
-          </tr>
-        ))}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
