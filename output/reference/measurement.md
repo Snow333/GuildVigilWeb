@@ -33,3 +33,26 @@ them with legal equal-or-better gear.
 ⚠ **Older briefs still contain those void numbers and read as authoritative.** Before citing any
 completion rate, wipe rate or delta from a brief, check its date. If it predates 2026-09-12, it was
 measured against gear the class cannot legally wear — re-measure rather than quote it.
+
+## ⚠ An immunity/resistance test must assert the DAMAGE, never the table
+
+Brief #26 M2 shipped an exposure test reading `skeleton.damageModifiers.immune.has('poison')`. A
+sabotage run gutted `applyDamage` of its modifier lookup — **and that test stayed green**, because
+it read the table the builder had just populated rather than the effect the engine produces.
+
+Same family as brief #22's tautological gate and brief #24's assert-the-aggregator-against-itself.
+The replacement drives a venomous weapon into a Skeleton and asserts **zero poison damage with the
+damage event still emitted**, plus a Giant Spider control proving the weapon fires at all.
+
+**Generalise it:** for any "X reduces/blocks Y" feature, the test must run Y through the real path
+and compare against a subject without X. A field lookup proves only that a builder ran.
+
+## Reading a curve move that is inside the noise bar
+
+Brief #26 M1+M2 moved at-level completion by −0.3 / −1.0 / −0.3 / −3.6 / −1.3 at d1–d5. **Every one
+of those is inside the ±8 bar**, so the curve neither confirms nor denies that the feature works.
+
+⚠ **That is not a reason to skip re-baselining, and not a reason to claim the feature is free.** The
+snapshot moved because the sim genuinely changed; it was re-taken deliberately with the reason in the
+commit. The EVIDENCE the feature works is the exposure suite and its three negative controls — the
+curve is a regression gate, not an instrument for measuring a change this size.

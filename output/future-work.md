@@ -25,17 +25,58 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 
 ## The ranked backlog
 
-### 1. Enemy abilities — brief #26
+### 1. Enemy abilities — brief #26 — ✅ M1+M2 SHIPPED 2026-09-13
 
-**The measured hole:** 21 of 45 enemy rows name 35 distinct abilities (`undead_immunities`,
-`pack_tactics`, `ferocity`, `breath_weapon_6d6`, `frightful_presence`, `paralysis`,
-`regeneration_10`, `spellcasting_5/9`…) and `buildEnemy` reads hp/ac/attack/damage/speed/size and
-nothing else.
+**M1 (riders) and M2 (resistance/weakness/immunity) are built.** `enemies.abilities` now reaches the
+engine: `src/sim/combat/enemyAbilities.ts`, wired through `buildEnemy` and `applyDamage`.
 
-**In player terms: every monster in the game fights identically.** A dragon and a goblin use the same
-behaviour and differ only in how tough they are and how hard they hit.
+Shipped: poison, disease, trip, gore, energy_drain, dark_bolt, sneak_attack_1d6, stealth,
+undead_immunities (derived), fire_weakness. **11 of the 19 reachable abilities.**
 
-This is the single largest gap in the game and it blocks any meaningful balance work.
+Decisions taken (Steven, 2026-09-13):
+
+- **Q1 scope — M1+M2 only.** M3/M4 deferred below.
+- **Q2 — `undead_immunities` covers poison and disease ONLY**, not the full PF2E bundle. Authoring
+  immunity to systems that do not exist would repeat the very defect this brief fixed.
+- **Q3 — immunity DERIVES from `enemy_type`, not from the ability string.** ⚠ Measured consequence:
+  10 rows are `enemy_type: 'undead'` but only 7 name the ability, so at playable depths the count of
+  immune enemies went **4 → 7** — Bone Conscript, Grave-Whisperer and Barrow Wight gained immunity
+  they never had. Intended: they are undead.
+- **Q4 — `slow` not built.** It lives in M4, which is deferred; the zombie-differentiation question
+  is deferred with it.
+- **Q5 — the 16 L7+ abilities deferred** to the 7+ band brief. Nothing can meet them at d1–d5.
+
+**Measured effect on the curve** (n=300/cell, baselines re-taken):
+
+| | d1 | d2 | d3 | d4 | d5 |
+|---|---|---|---|---|---|
+| completion before | 95.0 | 92.7 | 89.3 | 61.3 | 71.0 |
+| completion after | 94.7 | 91.7 | 89.0 | **57.7** | 69.7 |
+| wipes before | 1.3 | 1.3 | 4.0 | 10.3 | 4.0 |
+| wipes after | 1.7 | 2.3 | 3.7 | **14.3** | — |
+
+⚠ **EVERY COMPLETION DELTA IS INSIDE THE ±8 NOISE BAR, so the curve is NOT evidence that this
+works.** The direction is right (harder, as predicted) and d4 moved most, but −3.6 at d4 cannot be
+distinguished from noise at n=300. **The exposure tests are the evidence** —
+`tests/combat/enemyAbilities.test.ts`, 12 tests, verified by three separate negative controls:
+stripping the rider wiring fails 3 tests, stripping the damage-modifier lookup fails 2, and
+switching immunity back to reading the ability string fails 1.
+
+⚠ **One exposure test was rewritten because a sabotage run proved it worthless.** It asserted
+`skeleton.damageModifiers.immune.has('poison')` — reading the TABLE — and stayed green with
+`applyDamage` gutted. It now drives a venomous weapon into a Skeleton and asserts zero poison
+damage **with the event still emitted**. Same family as brief #22's tautological gate; the lesson
+keeps re-earning its place.
+
+**Still deferred here — M3 and M4:**
+
+- **M3 (positional/conditional):** `pack_tactics`, `formation_bonus`, `charge`, `ferocity`,
+  `regeneration_10`. 5 more abilities, no new engine systems.
+- **M4 (save-gated control):** `paralysis`, `web`, `slow`, `trap_expertise`. ⚠ **The brief itself
+  flags M4 as the one to cut** — enemy control effects applied to the party are the sharpest balance
+  lever in the game, and the curve still overshoots at d1–d3.
+- ⚠ **`trip` currently applies `prone` WITHOUT an opposed athletics check** — the rider channel has
+  no place to hang a contest. Revisit with M3/M4, where the contest machinery is in scope.
 
 ### 2. Arena / room geometry
 

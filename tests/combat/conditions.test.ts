@@ -24,6 +24,10 @@ export function combatant(over: Partial<Combatant> = {}): Combatant {
     saves: { fort: 5, ref: 5, will: 3 }, tempHp: 0, casting: null, loadout: [], reactions: [],
     lastReactionTick: -100, conditions: new Map(), flurrySwings: 0, lastSwingTick: 0, nextActionTick: 0,
     abilityUses: new Map(), abilityReadyAt: new Map(), pendingPoisonDice: null, quickSlots: [], weaponRiders: [],
+    // Brief #26 M2: no resistances by default, so every pre-existing assertion
+    // in this suite measures exactly what it measured before. Pass a populated
+    // `damageModifiers` to build a resistant or immune body.
+    damageModifiers: { immune: new Set(), resist: new Map(), weak: new Map() },
     ...over,
   };
 }

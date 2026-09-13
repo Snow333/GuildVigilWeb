@@ -7,6 +7,7 @@
 import { abilityMod } from '@sim/heroes/types';
 import { SIZE_RADIUS } from '@content/combat';
 import { enemiesById } from '@sim/registry';
+import { parseAbilities, resolveEnemyAbilities } from './enemyAbilities';
 import type { Combatant } from './types';
 
 /**
@@ -21,6 +22,16 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
   const row = enemiesById.get(enemyId);
   if (!row) throw new Error(`buildEnemy: unknown enemy ${enemyId}`);
   const level = row.base_level as number;
+  /**
+   * BRIEF #26 — the statblock's authored abilities finally reach the engine.
+   * Riders flow through brief #24's channel; undead immunity DERIVES from
+   * `enemy_type` rather than from the ability string, so a new undead row is
+   * immune the day it is authored. See enemyAbilities.ts for both decisions.
+   */
+  const abilities = resolveEnemyAbilities(
+    parseAbilities(row.abilities),
+    (row.enemy_type as string | null) ?? null,
+  );
   return {
     id: instanceId,
     name: row.name,
@@ -42,12 +53,17 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     weaponPenalty: 0,
     weaponSpecBonus: 0,
     isWeaponProficient: true,
-    sneakAttackDice: '',
+    // Brief #26: `sneak_attack_1d6` on the Bugbear. The field and strike.ts's
+    // reader already existed — this was pure wiring, as the brief predicted.
+    sneakAttackDice: abilities.sneakAttackDice,
     speed: row.speed as number,
     wounded: 0,
     level,
     initiativeBonus: level + 2, // ported enemy initiative: d20 + level + 2
-    stealth: enemySkill(level, row.dex as number),
+    // Brief #26: an authored `stealth` ability adds to the derived total. This
+    // feeds the backstab conceal check in BOTH directions — the defender uses
+    // the higher of Stealth or Perception (design-law §4).
+    stealth: enemySkill(level, row.dex as number) + abilities.stealthBonus,
     perception: enemySkill(level, row.wis as number),
     // Brief #22: enemies resist trips on the same level + mod curve heroes
     // attack them on — an enemy with no athletics term would be tripped by
@@ -56,8 +72,14 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
     pendingPoisonDice: null,
-    // Enemies wield no magic weapons yet — enemy damage is authored flat.
-    weaponRiders: [],
+    /**
+     * ⚠ THIS LINE USED TO READ `weaponRiders: []` with the comment "enemies
+     * wield no magic weapons yet" — true about ITEMS, and it quietly hid the
+     * fact that `enemies.abilities` had no consumer at all. Enemy riders do
+     * not come from equipment; they come from the statblock (brief #26 M1).
+     */
+    weaponRiders: abilities.riders,
+    damageModifiers: abilities.damage,
     // Enemies carry no pouch — consumables are a player-planning verb.
     quickSlots: [],
     isCaster: false,

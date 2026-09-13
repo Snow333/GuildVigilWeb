@@ -5,6 +5,7 @@
 
 import type { CombatQuickSlot } from '@sim/heroes/quickSlots';
 import type { DerivedItem } from '@sim/heroes/equipment';
+import type { DamageModifiers } from './enemyAbilities';
 
 export interface Vec2 {
   x: number;
@@ -163,13 +164,33 @@ export interface Combatant {
    * THE EQUIPPED WEAPON'S RIDER EFFECTS (brief #24 M1) — flaming, wounding,
    * venom and the rest, as parsed by `deriveItem`.
    *
-   * ⚠ EMPTY FOR ENEMIES AND FOR MUNDANE WEAPONS, which is the common case;
-   * `resolveWeaponRiders` short-circuits on an empty list so the hot path pays
-   * nothing. Carried on the Combatant rather than re-derived per swing because
-   * `deriveItem` parses JSON, and a strike happens many times a second.
+   * ⚠ NO LONGER EMPTY FOR ENEMIES (brief #26 M1). An enemy's authored
+   * `abilities` — poison, disease, gore, energy_drain, dark_bolt, trip — are
+   * compiled into this same list by `resolveEnemyAbilities`, because the
+   * encounter loop reads `weaponRiders` for WHOEVER is swinging and was
+   * already side-agnostic. Mundane-weapon heroes and ability-less enemies
+   * still carry an empty list, and `resolveWeaponRiders` short-circuits on it
+   * so the hot path pays nothing. Carried on the Combatant rather than
+   * re-derived per swing because parsing JSON per strike would be absurd.
    */
   weaponRiders: DerivedItem['onHitEffects'];
-
+
+  /**
+   * DAMAGE RESISTANCE / WEAKNESS / IMMUNITY (brief #26 M2) — the one genuinely
+   * new system in that brief.
+   *
+   * ⚠ APPLIED IN `applyDamage`, WHICH IS THE ONLY PLACE DAMAGE LANDS. Putting
+   * it anywhere else would let a path bypass it silently; every damage source
+   * in the game — strike, rider, spell, AoO, trap — flows through that one
+   * function, which is why riders were built to emit their own TYPED event in
+   * the first place (see weaponRiders.ts: "resistances must see the type").
+   *
+   * Empty for every hero and for most enemies; `hasDamageModifiers` lets the
+   * hot path skip the lookup entirely.
+   */
+  damageModifiers: DamageModifiers;
+
+
   /** Poison Weapon's rider, consumed by the next strike. Null = none pending. */
   pendingPoisonDice: string | null;
 

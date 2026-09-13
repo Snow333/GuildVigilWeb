@@ -31,7 +31,7 @@
 | #14 | [`dungeon-level-wall.md`](dungeon-level-wall.md) | APPROVED · shipped (halves) | The dungeon_level 5+ wall. Decision record §9. Approved halves shipped with #15. |
 | #15 | [`party-ai.md`](party-ai.md) | APPROVED · shipped | Party AI and the Caution Dial. Implementation record §12. Source of the engageRange split. |
 | #16 | [`dungeon-harness.md`](dungeon-harness.md) | APPROVED · shipped | The dungeon regression harness. §3 is the origin of the ±8-point precision rule. |
-| #17 | [`melee-interdiction.md`](melee-interdiction.md) | ⚠ **FOR DECISION — no code shipped** | Melee interdiction. §12's four questions are OPEN. Committed for decision only. |
+| #17 | [`melee-interdiction.md`](melee-interdiction.md) | ⚠ **FOR DECISION — and its NUMBERS ARE VOID** | Melee interdiction. §12's four questions are open, but it was measured 2026-08-12, before the illegal-armour fix — its baseline is up to 21.6 points off today's. §§1–8 survive; **the option table must be re-measured before deciding.** |
 | #18 | [`playtest-pass.md`](playtest-pass.md) | APPROVED · shipped (findings 2+4) | The playtest pass. |
 | #19 | [`combat-room.md`](combat-room.md) | APPROVED · shipped | The Combat Room — walls, AoO from content, the backstab. ⚠ corrected by its findings file. |
 | #20 | [`creature-size.md`](creature-size.md) | APPROVED · IMPLEMENTED | Creature size. ⚠ `creature-size-findings.md` OVERRIDES §9.4 — convention B is measured. |
@@ -40,7 +40,7 @@
 | #23 | [`class-itemization.md`](class-itemization.md) | APPROVED · IMPLEMENTED | Weapon/armour proficiency, consumables + quick-slots, scroll `spell_id` repair. Corrected the illegal-armour brackets. |
 | #24 | [`magic-items-and-scrolls.md`](magic-items-and-scrolls.md) | APPROVED · IMPLEMENTED | Strike riders, `stat_bonus`, the Arcana/Religion scroll ladder, the Variant G sheet. ⚠ the brief is WRONG about `stat_bonus` — see §6. |
 | #25 | *(no brief file)* | shipped | Buff/debuff resolvers — ran as a parallel session off #24's findings. Record = commits `1a96ade`, `755d4a3` + `tests/combat/buffDebuff.test.ts`. |
-| #26 | [`enemy-abilities.md`](enemy-abilities.md) | ⚠ **FOR APPROVAL — not yet approved** | Making 45 statblocks fight differently. This is the live one. |
+| #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2 IMPLEMENTED** | Making the 45 existing statblocks fight differently. ⚠ M3/M4 DEFERRED, and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
 
 ## Findings companions — these WIN over their briefs
 

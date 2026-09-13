@@ -6,17 +6,22 @@ auto-battler combat) being rebuilt from Godot in TypeScript.
 
 ## Where things stand
 
-- **Suite:** 880 unit + 14 e2e green. Bundle **2,377.54 kB** (brief #24's 12 paperdoll figures ship
+- **Suite:** 892 unit + 14 e2e green. Bundle **2,379.24 kB** (brief #24's 12 paperdoll figures ship
   as inline data URIs — if load time ever bites, lazy-load `src/content/generated/figures.ts`
   rather than dropping the art).
 - **Phase:** 3 substantially complete but **NOT to its exit criteria** (audio and the Playwright
   visual baselines). **Phase 4 is not next.**
-- **Shipped:** briefs #8–#25. Status per brief, and which findings file corrects which, is in
+- **Shipped:** briefs #8–#26 (M1+M2). Status per brief, and which findings file corrects which, is in
   **`output/briefs/INDEX.md`** — read that, not the directory.
 - **What is next, what is blocked, what is held, and what is not built yet:
   `output/future-work.md`.** It is stack-ranked. Do not re-derive the roadmap from this file.
-- ⚠ **Two items are waiting on STEVEN, not on you:** brief #26 (enemy abilities) needs approval,
-  brief #17 (melee interdiction) needs a decision. Neither proceeds without him.
+- ⚠ **#26 M1+M2 made the existing 45 statblocks fight differently; it did NOT author new ones.**
+  The remaining gap is VOLUME: 45 of 300–500 enemy bases (12%) and 22 of 300–400 quests (6%), against
+  spells/feats/progression at 100%. That is the campaign-content long pole, in `future-work.md`.
+- ⚠ **#17 MELEE INTERDICTION IS UNDECIDABLE AS WRITTEN — every number in it is VOID.** Measured
+  2026-08-12, a month before the illegal-armour fix; its own stated baseline (91.3/85.8/77.3/41.1/49.4)
+  sits up to 21.6 points from today's, against a ±8 bar. §§1–8 survive, the option table does not.
+  **Re-measure before putting it to Steven.**
 
 ### Three standing prohibitions
 

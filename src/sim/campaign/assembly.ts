@@ -17,6 +17,7 @@
 import type { ItemInstance } from '@sim/core/events/types';
 import { NON_PROFICIENCY_PENALTY } from '@content/combat';
 import type { LoadoutEntry } from '@sim/combat/loadout';
+import { NO_DAMAGE_MODIFIERS } from '@sim/combat/enemyAbilities';
 import { defaultCantripFor, spellRange } from '@sim/combat/spells';
 import type { Combatant } from '@sim/combat/types';
 import type { DispatchHero } from '@sim/dungeon/checks';
@@ -407,6 +408,15 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     quickSlots: toCombatQuickSlots(normalizeQuickSlots(kit.quickSlots)),
     // Brief #24 M1: the magic on the weapon, parsed once per assembly.
     weaponRiders: weapon?.derived.onHitEffects ?? [],
+    /**
+     * ⚠ HEROES HAVE NO DAMAGE MODIFIERS (brief #26 M2). Resistance, weakness
+     * and immunity are enemy-side only today: nothing in the hero content
+     * authors them, and inventing a hero channel with no content behind it
+     * would repeat the defect #26 exists to fix. `NO_DAMAGE_MODIFIERS` is a
+     * shared frozen-empty value, so `hasDamageModifiers` short-circuits and
+     * the hero hot path pays nothing.
+     */
+    damageModifiers: NO_DAMAGE_MODIFIERS,
     isCaster: casting !== null,
     saves,
     tempHp: 0,

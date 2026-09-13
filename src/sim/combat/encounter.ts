@@ -22,6 +22,7 @@ import { featEffectsById } from '@sim/heroes/featEffects';
 import { pickAction } from './loadout';
 import { applyConditionFromCast, resolveCast, spellRange } from './spells';
 import { resolveWeaponRiders, totalRiderDamage } from './weaponRiders';
+import { applyDamageModifiers, hasDamageModifiers } from './enemyAbilities';
 import { spellsById } from '@sim/registry';
 import { resolveStrike, rollConceal } from './strike';
 import { dist, type Combatant } from './types';
@@ -126,8 +127,25 @@ export function runEncounter(
   let result: EncounterResult['result'] | null = null;
   let hitMaxTicks = false;
 
-  /** Shared damage path: temp HP absorbs first; dying/downed/died all flow through here. */
-  const applyDamage = (target: Combatant, amount: number, kind: string, s: EventStream, t: number, cause: number): void => {
+  /**
+   * Shared damage path: temp HP absorbs first; dying/downed/died all flow through here.
+   *
+   * ⚠ RESISTANCE / WEAKNESS / IMMUNITY IS APPLIED HERE AND NOWHERE ELSE (brief
+   * #26 M2). This is the ONLY function through which damage lands — strike,
+   * rider, spell, AoO and trap all arrive here — so a modifier applied here
+   * cannot be bypassed. That is also why riders emit their own TYPED damage
+   * rather than folding into the weapon total (weaponRiders.ts): a lump
+   * labelled `weapon` cannot be resisted.
+   *
+   * ⚠ THE EVENT IS STILL EMITTED WHEN IMMUNITY ZEROES THE DAMAGE. "0 poison"
+   * in the record is a fact the player can read; silence is indistinguishable
+   * from a rider that never fired, which is precisely how this content stayed
+   * dead for months.
+   */
+  const applyDamage = (target: Combatant, rawAmount: number, kind: string, s: EventStream, t: number, cause: number): void => {
+    const amount = hasDamageModifiers(target)
+      ? applyDamageModifiers(target.damageModifiers, rawAmount, kind)
+      : rawAmount;
     lastProgressTick = t;
     if (hasCondition(target, 'dying')) {
       const newVal = damageWhileDying(target);
