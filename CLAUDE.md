@@ -18,10 +18,6 @@ auto-battler combat) being rebuilt from Godot in TypeScript.
 - ⚠ **#26 M1+M2 made the existing 45 statblocks fight differently; it did NOT author new ones.**
   The remaining gap is VOLUME: 45 of 300–500 enemy bases (12%) and 22 of 300–400 quests (6%), against
   spells/feats/progression at 100%. That is the campaign-content long pole, in `future-work.md`.
-- ⚠ **#17 MELEE INTERDICTION IS UNDECIDABLE AS WRITTEN — every number in it is VOID.** Measured
-  2026-08-12, a month before the illegal-armour fix; its own stated baseline (91.3/85.8/77.3/41.1/49.4)
-  sits up to 21.6 points from today's, against a ±8 bar. §§1–8 survive, the option table does not.
-  **Re-measure before putting it to Steven.**
 
 ### Three standing prohibitions
 

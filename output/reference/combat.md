@@ -20,3 +20,25 @@ real bug; none of it is re-derivable from the code alone.
 - **THE BACKSTAB is an opposed conceal check and the defender uses the HIGHER of Stealth or Perception.** ⚠ **That is a deliberate divergence from PF2E** (which is Stealth vs Perception DC only) — **do not "fix" it back.** It is also *why* the pass rate is **flat at ~50% across depth** rather than falling: enemy Stealth scales with level exactly as the rogue's does. `rollConceal()` (`combat/strike.ts`) is called **once per ACTION** by the encounter loop and **emits no event** — `attack_resolved` already carries `sneakDice` on any swing the check bought. Bending the depth curve is a re-tune lever, not a bug.
 - **Stealth is trained at the MUSTER only — and the rogue was never untrained past L1.** `buildAutoLevelUpPlan` spills past its priority trio into the rest of the registry and Stealth is third, so Shade's ranks are **0 / 1 / 2 / 4 / 6** at L1/2/3/5/7. Adding `'stealth'` to the global priority list would spend the **fighter's and cleric's** points on a skill neither can ever use (no hero or enemy in the registry has sneak dice, so hero Stealth is never a defensive term). `Combatant` carries `stealth`/`perception` totals; `armor_check_penalty` is folded into Stealth and is read here for the first time.
 - ⚠ **FLANKING AND CONCEALMENT DISAGREE, deliberately logged and NOT fixed.** `isFlatFooted` returns true when flanked, but `acMod` only reads `isFlatFootedByCondition` — so flanking grants **sneak damage but no −2 AC**, while a passed conceal check applies the **full** off-guard (−2 AC *and* sneak). Fixing flanking rebalances every fight in the game; it is a decision for the re-tune, not a drive-by.
+
+## ⚠ POSITION CONFERS NOTHING IN THIS SIMULATION
+
+Measured by brief #17 (2026-08-12) and **re-verified against the code 2026-09-13**:
+
+- `resolveStrike` reads **distance and flanking geometry, and nothing else**.
+- `stepToward` has **no collision** — units pass through one another at any size.
+- There is **no facing, no line of sight, no cover** anywhere in `src/sim/combat/`.
+
+**"Standing between" is mechanically inert.** A screening formation, a bodyguard, a chokepoint or a
+cover rule cannot be built as positioning — each has to be a RULE ATTACHED TO ADJACENCY, or it does
+nothing at all.
+
+⚠ **Brief #17 measured the screen ON ITS OWN as WORSE THAN NOTHING** (§6). A feature that looks like
+it should work because the units end up in the right places will measure as free — the same trap
+briefs #20 and #21 both hit.
+
+**This is load-bearing for the arena/geometry brief.** Any proposal involving cover, chokepoints,
+formations or "blocking" must start from this fact rather than discover it.
+
+⚠ This finding is STRUCTURAL, not numeric, which is why it survives even though every completion
+number in brief #17 is void (measured before the 2026-09-12 illegal-armour fix).

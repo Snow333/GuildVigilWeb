@@ -14,12 +14,10 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 
 ---
 
-## Waiting on Steven — nothing proceeds past these
+## Waiting on Steven
 
-| # | Item | State |
-|---|---|---|
-| 1 | **Enemy abilities (brief #26)** | ⚠ **AWAITING APPROVAL.** Brief written and committed. |
-| 2 | **Melee interdiction (brief #17)** | ⚠ **AWAITING DECISION.** Code committed FOR DECISION only; §12's four questions are open and none of it has shipped. |
+*Nothing is currently blocked on a decision.* Brief #26 M1+M2 is approved and shipped
+(2026-09-13); brief #17 is closed. The next item needing your call will be listed here.
 
 ---
 
@@ -237,11 +235,26 @@ game.** Part of the re-tune, not a follow-up to it.
 | Item | State | Note |
 |---|---|---|
 | **Threat / taunt mechanic** | ⚠ **HELD BY MEASUREMENT** | Measured **−3.5 completion, +8.5 wipes**. It made the game worse. Revisit only after tank survivability improves. |
+| **Melee interdiction — the PIN form** | ⚠ **HELD BY MEASUREMENT** (brief #17 §4) | Enemy engaged by a melee hero cannot walk past him. **Measured −5.3 to −8.3 completion, wipes up 3.7 to 9.5.** It redistributed damage roughly TWICE as hard as threat did (back-line share of incoming 61.2% → 12.2%) and lost for the same reason. |
 | **R4 — the 7+ level band** | HELD | |
 | **Multi-team play (up to 4)** | NOT BUILT | Core loop L3. One team today; the 4-team Tavern-gated structure is the target, not the code. |
 | **Authored story spine** | NOT BUILT | Core loop L4. No storyline packs, no authored ending. |
 | **Tauri desktop wrap (brief #7)** | PARKED | Parked by decision, not cancelled. |
 | **Dialogue trees** | DEFERRED | Post-launch (decision ledger Area 7). |
+
+### ⚠ The rule both held combat mechanics share
+
+Threat/taunt and the interdiction pin were designed on different axes — threat changes target
+SELECTION, the pin changes REACHABILITY — and brief #17 was written specifically to test whether
+that difference mattered. It does not:
+
+> **Any mechanic that MOVES the party's incoming damage onto the fighter loses. Any mechanic that
+> DELETES the attack wins. Where the damage is aimed is not the variable — whether it lands at all is.**
+
+The cause is the same in both cases: **the fighter has no mitigation**, so concentrating damage on
+him converts spread chip damage into a dead front line. ⚠ **Do not propose a third
+damage-redistribution mechanic before tank survivability exists** — it has now been independently
+measured twice, and the second test was designed to escape the first's verdict and did not.
 
 ⚠ **A HOLD FOR SCOPE IS NOT A HOLD BY MEASUREMENT.** The table above says which kind each one is,
 because the two have been conflated here before: the `combat_action` loadout verb was logged as

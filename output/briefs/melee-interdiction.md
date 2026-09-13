@@ -1,3 +1,28 @@
+> ## ⛔ CLOSED — NOT PURSUED. NUMBERS VOID. DO NOT ACT ON THIS BRIEF.
+>
+> **Closed 2026-09-13.** No interdiction code was ever written — the commit that added this file
+> (`2dc466e`) is **docs-only**, 262 lines of markdown and nothing else. Nothing was left half-shipped.
+>
+> ### ⚠ Every completion number below is VOID
+>
+> Measured **2026-08-12**, a month before brief #23 fixed the harness that had been arming the Rogue
+> in medium armour and the Cleric in heavy — gear neither class may legally wear. This brief's own
+> stated baseline (`91.3 / 85.8 / 77.3 / 41.1 / 49.4`) sits up to **21.6 points** from the measured
+> curve today, against a ±8 noise bar. **The option table in §10 cannot be used to choose anything.**
+>
+> ### The two findings that SURVIVED, and where they now live
+>
+> Both are structural rather than numeric, which is why the armour correction did not touch them:
+>
+> 1. **"Position confers nothing in this simulation"** (§0) — re-verified against the code on
+>    2026-09-13 and moved to **`output/reference/combat.md`**. Load-bearing for the arena brief.
+> 2. **The pin's HELD verdict** (§4) — moved to **`output/future-work.md`**, beside threat/taunt,
+>    with the shared rule both measurements produced: *any mechanic that moves incoming damage onto
+>    the fighter loses; any mechanic that deletes the attack wins.*
+>
+> Kept on disk because §§1–8 are a session's worth of real measurement and the *method* is reusable.
+> If interdiction is ever revisited, **re-measure from scratch** — do not inherit a number from here.
+
 # Design Brief #17 — Melee Interdiction
 
 **Status:** FOR DECISION — nothing implemented. `src/`, `tests/`, `tools/` and `e2e/` verified byte-identical after every measurement below. No gameplay code before Steven approves.
