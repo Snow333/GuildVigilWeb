@@ -1,6 +1,22 @@
 # Guild Vigil — Migration Decision Ledger
 
-**Step 3 of migration planning.** Every feature judged against the core loop in `core-loop.md`, not against its original purpose.
+> ## ⚠ THIS FILE IS HISTORICAL, NOT AUTHORITATIVE
+>
+> It is the **frozen 2026-08-10 migration triage** — it answers *"did we carry this Godot feature
+> over, and in what form?"* It is **not** a statement of current design, and parts of it have since
+> been overtaken by shipped briefs.
+>
+> **Known contradiction:** Area 2 says *"AoE templates … friendly fire stays."* Brief #21
+> **structurally rejected** friendly-fire-by-default. `output/design-law.md` wins.
+>
+> **Read this file for:** original intent, and especially for what was deliberately **Removed** —
+> that reasoning is not recorded anywhere else.
+> **Do not read it for:** how any system currently behaves.
+>
+> Current authority: `output/core-loop.md` · `output/design-law.md` · `output/reference/*.md` ·
+> `output/briefs/INDEX.md`.
+
+**Step 3 of migration planning (2026-08-10).** Every feature was judged against the core loop, not against its original purpose.
 Verdicts: **Keep** = rebuild fresh in TS from the design · **Change** = concept survives, implementation redesigned (needs its own brief) · **Remove** = not carried forward.
 
 ---
