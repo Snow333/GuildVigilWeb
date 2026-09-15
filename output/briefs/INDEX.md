@@ -41,7 +41,7 @@
 | #24 | [`magic-items-and-scrolls.md`](magic-items-and-scrolls.md) | APPROVED · IMPLEMENTED | Strike riders, `stat_bonus`, the Arcana/Religion scroll ladder, the Variant G sheet. ⚠ the brief is WRONG about `stat_bonus` — see §6. |
 | #25 | *(no brief file)* | shipped | Buff/debuff resolvers — ran as a parallel session off #24's findings. Record = commits `1a96ade`, `755d4a3` + `tests/combat/buffDebuff.test.ts`. |
 | #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2+M3 IMPLEMENTED** | Making the 45 existing statblocks fight differently. 16 of 19 reachable abilities live. ⚠ M4 DEFERRED (the brief flags it as the one to cut), and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
-| #27 | [`enemy-taxonomy.md`](enemy-taxonomy.md) | ⏳ **FOR APPROVAL** | Enemy taxonomy: 7 families × 5 brackets × 6 roles, L1–20. **Supersedes the 300–500 row-count target.** ⚠ Brackets IV/V (L13–20) are UNREACHABLE — no quest exceeds difficulty 10, so max enemy level is 11. ⚠ The Archer role is BLOCKED — `build.ts` hardcodes every enemy melee. 5 questions in §9. |
+| #27 | [`enemy-taxonomy.md`](enemy-taxonomy.md) | ⚠ **APPROVED WITH AMENDMENTS** | Enemy taxonomy: 7 families × 5 brackets, L1–20. **Supersedes the 300–500 row-count target.** §9 holds Steven's answers: Brackets IV/V gate on a **playtested L10** (not quest difficulty); the six roles are **superseded by four classifications** (Fodder 40–50% / Melee / Ranged / Magic); ranged split to #28; enemy races+classes and the feat audit split to their own sessions. |
 
 ## Findings companions — these WIN over their briefs
 
@@ -51,6 +51,16 @@
 | [`combat-room-findings.md`](combat-room-findings.md) | overrides brief #19 §§12.1 and 13.4 in three places |
 | [`creature-size-findings.md`](creature-size-findings.md) | overrides brief #20 §9.4 — the radius convention is measured, not assumed |
 | [`character-advancement-findings.md`](character-advancement-findings.md) | corrects brief #22 in three places; §4 holds the founding four's measured statblocks |
+
+## Session setups — ready to start, each file IS its session prompt
+
+| File | Becomes | Why it is its own session |
+|---|---|---|
+| [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | brief #29 | ⚠ **144 of 227 feats are inert (63%) and 5 of 13 classes have zero feats.** The specialization system Steven wants already exists and mostly does nothing. **Phase 1 is an audit; design nothing until its numbers exist.** |
+| [`SESSION-enemy-specification.md`](SESSION-enemy-specification.md) | brief #30 | Enemy races × classes instead of static statblocks. ⚠ `pickAction` is already unit-agnostic — this is largely WIRING, but verify that first. ⚠ Surfaces that the "keep it low" composition target is a **3× move**. |
+| [`SESSION-ranged-enemies.md`](SESSION-ranged-enemies.md) | brief #28 | ⚠ **A BALANCE brief, not a wiring task.** Three hardcoded lines in `build.ts` make every enemy melee; unblocking them changes every closure time in the game. |
+
+⚠ **`build.ts` is contested between #28 and #30** — assign it to exactly one session or sequence them.
 
 ## Pre-brief scoping notes (context, not contract)
 

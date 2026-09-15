@@ -16,12 +16,18 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 
 ## Waiting on Steven
 
-**Brief #27 — enemy taxonomy — is FOR APPROVAL.** Five questions in §9, of which Q1 is the
-one that shapes the work: Brackets IV/V (L13–20) are **unreachable today** because no quest
-exceeds difficulty 10, so the highest enemy level a player can meet is 11. Authoring them
-would be unverifiable work.
+**Brief #27 is APPROVED WITH AMENDMENTS (2026-09-13).** Steven's five answers are recorded in its
+§9. Three follow-on sessions are set up and ready to start — see `output/briefs/INDEX.md`:
 
-Brief #26 M1+M2+M3 is shipped (2026-09-13); brief #17 is closed.
+| Session file | Becomes | First thing it must do |
+|---|---|---|
+| `SESSION-class-abilities.md` | #29 | **Audit the 144 inert feats** before designing anything |
+| `SESSION-enemy-specification.md` | #30 | Verify `pickAction` works for non-heroes |
+| `SESSION-ranged-enemies.md` | #28 | Write the balance brief; no code first |
+
+⚠ **`src/sim/combat/build.ts` is contested between #28 and #30.** Assign it to one or sequence them.
+
+*Nothing else is blocked on a decision.*
 
 ---
 
@@ -107,6 +113,33 @@ keeps re-earning its place.
   (slow-but-tough zombie, or one that ignores speed penalties) deferred with it.
 - ⚠ **`trip` currently applies `prone` WITHOUT an opposed athletics check** — the rider channel has
   no place to hang a contest. Revisit with M3/M4, where the contest machinery is in scope.
+
+### 1b. ⚠ THE FEAT SYSTEM IS 63% INERT — the largest instance of the recurring defect
+
+**Measured 2026-09-13 via `isEffectReady`** (the repo's own predicate, not a text search):
+
+| | count |
+|---|---|
+| Feats authored | **227** |
+| Feats that reach the engine | **83** |
+| **Feats that do NOTHING** | **144 (63%)** |
+| Classes with ZERO feats authored | **5 of 13** — Ranger, Bard, Arcane Trickster, Eldritch Knight, Mystic Theurge |
+
+Per class (live / authored): general+skill 26/43 · Fighter 9/23 · Rogue 9/23 · Cleric 9/23 ·
+Monk 7/21 · Wizard 7/24 · Sorcerer 6/24 · Warlock 6/23 · **Barbarian 4/23**.
+
+**In player terms: you pick a feat at level-up and, 63% of the time, nothing changes in the fight.**
+
+⚠ **This is the EIGHTH occurrence of content authored against a contract with no consumer**, after
+`class_weapon_proficiency`, `items.onHitEffects`, `items.stat_bonus`, the 96 buff/debuff spell rows,
+`enemies.abilities`, `items.loot_tier` and `quests.prerequisites`. It is the largest by a wide
+margin.
+
+⚠ **It also blocks the specialization design Steven asked for.** The "Barbarian who deals more damage
+the lower their health" is his own example, and the Barbarian is the worst class in the table at
+**4 of 23**. You cannot design 7 paths × 13 classes on a system that cannot express them.
+
+**Next step:** `output/briefs/SESSION-class-abilities.md` — Phase 1 is the audit, design comes after.
 
 ### 2. Arena / room geometry — ⛔ DROPPED 2026-09-13 (Steven's call)
 

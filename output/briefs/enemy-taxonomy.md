@@ -1,6 +1,7 @@
 # Brief #27 — Enemy taxonomy: families, brackets and roles from L1 to L20
 
-**Status:** FOR APPROVAL
+**Status:** ⚠ **APPROVED WITH AMENDMENTS 2026-09-13** — see §9 for Steven's answers.
+The §3.1 role set and §5 milestones are SUPERSEDED by §9.5's four classifications.
 **Author:** session of 2026-09-13
 **Depends on:** #26 (the ability vocabulary and the six behavioural channels), #13 (the
 level band), #20 (creature size), #23 (the illegal-armour correction that voids older
@@ -74,6 +75,11 @@ all already in use.
 ## 3. The proposal: 7 families × 5 brackets × 6 roles
 
 ### 3.1 The six roles — deliberately mirroring the player classes
+
+⚠ **SUPERSEDED FOR AUTHORING PURPOSES BY §9.5.** Steven replaced the role framework with four
+classifications (Fodder / Melee / Ranged / Magic) plus a composition target. The six roles below
+remain useful as *flavour vocabulary* — a "Skirmisher" is a recognisable thing to author — but
+**the gate counts the four classifications, not these six roles.**
 
 Steven's instruction included "characters that match player character classes (Bandit
 Warrior, Bandit Archer, etc)". Each role is defined by the channel it moves, not by its
@@ -172,28 +178,35 @@ That means:
   and the same anti-goal.
 - The existing L12 Adult Red Dragon is *already* past the reachable ceiling.
 
-⚠ **Therefore this brief proposes authoring Brackets I–III only.** Brackets IV and V are
-specified here so the shape is agreed and the ID blocks reserved, but **no row in them may
-be authored until quests exist that reach those depths.** Q1 below asks how to sequence
-that.
+⚠ **Therefore this brief authors Brackets I–III only.** Brackets IV and V are specified here so the
+shape is agreed and the ID blocks reserved, but no row in them may be authored yet.
+
+⚠ **THE GATE IS NOT QUEST DIFFICULTY — see §9.1.** Steven's correction: quest difficulty is a
+symptom of thin content, not the blocker. **The real gate is progression built to L10 AND playtested
+to L10.** That is stricter: it requires the game to have been *played* to its ceiling, not merely to
+have a quest row that reaches it.
 
 ---
 
 ## 5. Proposed milestones
 
-### M1 — The distinguishing ratio gate (no new content)
+### M1 — The composition gate (no new content)
 
-Before any authoring, make inert content fail the build. A row is distinguishing if it
-moves ≥1 of the six channels in §2.
+Before any authoring, make inert content fail the build. ⚠ **Amended per §9.5: the gate checks the
+four-way composition, not a single ratio.**
 
 - `tools/check-enemy-taxonomy.mjs`, wired into `pnpm check` and CI.
-- Asserts: every enemy row declares a family and a role; the **ratio of distinguishing
-  rows may never decrease**; no row names a vocabulary word outside the 14 live + 26
-  deferred; every authored `family` × `bracket` pair is one this brief sanctions.
-- ⚠ Per the repo's gate law, **prove it can fail**: strip `abilities` from a distinguishing
-  row and confirm the ratio check trips; restore; confirm `src/` is byte-identical.
+- Asserts: every enemy row declares a **family** and a **classification** (Fodder / Melee / Ranged /
+  Magic); **fodder share stays within 40–50%** of the pool; no row names a vocabulary word outside
+  the live + deferred sets; every `family` × `bracket` pair is one this brief sanctions.
+- ⚠ **Fodder is a legitimate authored choice, not a failure** — but it must be *declared*. The
+  Vanguard batch's 21 empty rows were not a decision; they were an accident no check caught.
+  Declaring a row as fodder is fine. Leaving its classification blank is not.
+- ⚠ Per the repo's gate law, **prove it can fail**: push the fodder share above 50% and confirm the
+  gate trips; restore; confirm `src/` is byte-identical.
 
 **Estimated effort:** half a session. **This is the milestone that makes the rest safe.**
+
 
 ### M2 — Bracket I completion (L1–4)
 
@@ -277,17 +290,113 @@ is a tripwire for authoring errors, not a balance target.
 
 ---
 
-## 9. Questions for Steven
+## 9. Steven's answers (2026-09-13) — APPROVED WITH AMENDMENTS
 
-| # | Question | Option A | Option B | Notes |
-|---|---|---|---|---|
-| **Q1** | **Brackets IV/V are unreachable (§4).** How do we sequence? | **Author I–III only**; revisit IV/V when quests reach d13+ | Author IV/V now so the content exists when quests arrive | A is the repo's established anti-goal position (#26 deferred 16 abilities for exactly this reason). B risks 30+ rows nobody can verify. |
-| **Q2** | **Zero unused vocabulary (§2.1).** 14 live words, all in use. Do new rows get new abilities? | **Yes — each bracket adds ~4 words**, budgeted per milestone | No — recombine the existing 14 | A is more work per milestone but is the only way "fights differently" keeps meaning something at 89 rows. B hits a ceiling fast. |
-| **Q3** | **The Archer role is blocked (§3.2).** | **Leave blocked**; author archers as melee-with-a-bow later | Unblock ranged enemies as its own brief before M2 | ⚠ Ranged changes every closure time in the game. B is a real balance brief, not a wiring task. |
-| **Q4** | The Minotaur is `enemy_type: 'beast'` (§6). | **Re-file under Orc & Ogrekin** | Leave as beast | Cosmetic today — `enemy_type` only derives undead immunity — but it decides which family owns it. |
-| **Q5** | What distinguishing ratio must new batches hit? | **≥60%** for every new seed | Match today's 42.2% | The M1 gate needs a number. 60% is a real authoring cost per row; the Vanguard batch scored 14%. |
+### 9.1 Q1 — sequencing: **A, with a better gate**
 
----
+Author Brackets I–III only. ⚠ **But the gate is not quest difficulty.** Steven's correction:
+
+> *"The problem isn't the quests as much as it's the lack of content. What we will do is build out
+> progression to level 10 and playtest through to that point. Then build out content from 11 to 20."*
+
+**The gate on Brackets IV/V is therefore: progression built to L10 AND playtested to L10.** Quest
+difficulty is a symptom, not the blocker. This is a stricter and more honest gate than §4 proposed —
+it requires the game to have been *played* to the ceiling, not merely to have a quest row that
+reaches it.
+
+### 9.2 Q2 — vocabulary: **NEITHER OPTION. The question was wrong.**
+
+Steven's reframing, which the measurement supports:
+
+> *"Abilities [should be] a series of choices that augment flavors of a class as the player's
+> characters level up."*
+
+**The specialization system already exists — it is the feat system — and it is 63% inert.**
+Measured 2026-09-13 via `isEffectReady`:
+
+| | count |
+|---|---|
+| Feats authored | **227** |
+| Feats that reach the engine | **83** |
+| **Feats that do nothing** | **144 (63%)** |
+| Classes with ZERO feats authored | **5 of 13** — Ranger, Bard, Arcane Trickster, Eldritch Knight, Mystic Theurge |
+| Barbarian (Steven's own example) | **4 of 23 live** |
+
+⚠ **This is the EIGHTH occurrence of this project's recurring defect and by far the largest.**
+A player picks a feat at level-up and, 63% of the time, nothing changes in the fight.
+
+**Deferred to its own session** (see `output/briefs/SESSION-class-abilities.md`). ⚠ **The feat audit
+must precede the specialization design** — you cannot design 7 paths × 13 classes on top of a system
+that cannot express them.
+
+### 9.3 Q3 — the Archer role: **B. Unblock it, as its own brief.**
+
+Approved as a separate brief (#28), runnable in parallel with taxonomy work.
+See `output/briefs/SESSION-ranged-enemies.md`.
+
+### 9.4 Q4 — the Minotaur / enemy structure: **NEITHER. Restructure instead.**
+
+> *"I think we should setup races for enemies and then apply classes to them? … We probably want to
+> hand craft custom blocks for bosses and elites but I think we want to make races/ancestries as DLC."*
+
+**Approved in principle.** Three findings that shape it:
+
+1. ⚠ **The legacy repo planned exactly this and never built it.** `C:\GuildVigil\.claude\memory\arch_enemy_classes.md`
+   describes the `source_id` → `unit_id` refactor needed "when enemies get class-based abilities",
+   and explicitly says to tackle it "during the enemy AI/abilities pass".
+2. ⚠ **The machinery already exists and enemies are opted out by a hardcoded line.**
+   `build.ts` sets `isCaster: false`, `casting: null`, `loadout: []` for every enemy. The
+   loadout-priority layer (`pickAction`) is unit-agnostic — it walks `u.loadout` for heroes and
+   enemies alike. **Enemy classes are largely a wiring problem, not a new system.**
+3. ⚠ **The DLC model already exists and is STORYLINE-shaped, not ancestry-shaped.** Game bible §10
+   defines DLC as quest chains + story heroes + enemies + items in separate SQLite files attached at
+   runtime. **Ancestries-as-DLC would be a second model alongside it** — a deliberate decision, not
+   a default.
+
+Deferred to the enemy-specification session.
+
+### 9.5 Q5 — ⚠ REPLACED BY A BETTER INSTRUMENT: the four classifications
+
+Steven rejected the single-ratio gate and replaced it with a **composition target**:
+
+| Class | Share of pool | What it does | Buildable today |
+|---|---|---|---|
+| **Fodder** | **40–50%** | Nothing mechanical. Differentiated by **name and art** — a kobold that reads differently from a goblin is a legitimate use of a row. | ✅ |
+| **Melee** | — | charge, power attack, shield wall, large HP pools | ✅ |
+| **Ranged** | — | rapid fire, aimed shot | ⛔ **blocked on #28** |
+| **Magic** | — | buff allies, debuff enemies, ranged damage spells | ⚠ partial |
+
+**This is a better instrument than the ratio I proposed**, for a reason worth recording: a single
+threshold says only *how many* rows must do something. A composition target says *what kind*, which
+is what actually makes a fight feel different. It also legitimises fodder — flavour differentiation
+by name and art is real content, not a failure.
+
+⚠ **BUT IT IS NOT THE LOW BAR IT SOUNDS LIKE.** Steven's instruction was "let's keep this low."
+Measured against today's registry:
+
+| | Fodder | Non-fodder |
+|---|---|---|
+| **Today (45 rows)** | **80.0%** | **20.0%** |
+| **Steven's target** | 40–50% | **50–60%** |
+| *(my rejected Q5 proposal)* | *≤40%* | *≥60%* |
+
+**The four-classification target lands at the bottom edge of the 60% it replaced, and requires
+roughly TRIPLING today's distinguishing share.** Per bracket that is ~8 of 14 rows, ~9 of 16, ~11 of
+20 that must do something mechanical.
+
+⚠ **Ranged is 0% today and not buildable.** Until #28 lands, **Melee and Magic must carry the entire
+50–60% non-fodder share.**
+
+⚠ **Magic is only partially buildable.** `build.ts` hardcodes `isCaster: false` and `casting: null`,
+so "buffs allies / debuffs enemies / casts ranged damage spells" reaches the engine today ONLY as
+on-hit riders (`dark_bolt_1d6`, `energy_drain`) — i.e. melee-range magic. **True enemy casting is
+blocked by the same wiring as Q4.**
+
+### 9.6 Amended milestone order
+
+M1 (the gate) is **rewritten** to check the four-way composition rather than a single ratio. M2–M4
+stand, with the fodder share authored deliberately rather than by accident.
+
 
 ## 10. Anti-goals
 
