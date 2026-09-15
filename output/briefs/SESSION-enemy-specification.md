@@ -1,6 +1,9 @@
 # SESSION SETUP — Enemy specification: races, classes, and the four classifications
 
-**Status:** READY TO START — this file IS the session prompt.
+**Status:** ✅ **DONE 2026-09-15 — produced [`enemy-specification.md`](enemy-specification.md) (#30),
+awaiting Steven's approval.** Phase 1 is COMPLETE: §3.1 is **TRUE** (`pickAction` works for non-heroes;
+6 witnesses with negative controls), §3.2's legacy collision is **designed out**, §3.3's DLC model is
+**confirmed storyline-shaped**. ⚠ **Do not re-run Phase 1** — see #30 §1.
 **Created:** 2026-09-13, from brief #27 Q4 and Q5.
 **Run in:** a NEW session. See §6 for collision rules.
 
