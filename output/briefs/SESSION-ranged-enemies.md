@@ -2,7 +2,8 @@
 
 **Status:** READY TO START — this file IS the session prompt.
 **Created:** 2026-09-13, from brief #27 Q3 (Steven approved unblocking).
-**Run in:** a NEW session, in parallel with the taxonomy work. See §5.
+**Run in:** a NEW session. ⚠ **THIRD IN SEQUENCE** — start only after #29 (class abilities)
+and #30 (enemy specification) are done. See §5.
 
 ---
 
@@ -12,6 +13,26 @@
 > wiring task — write the brief and get approval before changing `build.ts`.
 
 ---
+
+---
+
+## 0. ⚠ WORKING RULE — build, don't theorycraft
+
+Steven, 2026-09-13: *"Lets not over think this… get to work rather than keep theory crafting against
+old goals."*
+
+**The targets and structure in this file are SETTLED. Do not re-derive them.** Specifically:
+
+- ⛔ **Do not benchmark new work against superseded goals** — the 300–500 row count, the ≥60%
+  distinguishing ratio, the migration plan's targets. They are dead. Citing them to justify or
+  question current work is the exact time-sink this rule exists to stop.
+- ⛔ **Do not re-open a decision Steven has already made** unless *measurement contradicts it* — in
+  which case say so in one line, with the number, and proceed.
+- ✅ **Measure to decide what to build. Not to re-litigate what to build.**
+- ✅ **When a question is genuinely open, ask it as numbered options and keep working** on the parts
+  that do not depend on the answer.
+
+**The deliverable is a brief Steven can approve, not an analysis of the problem space.**
 
 ## 2. The finding
 
@@ -29,9 +50,13 @@ weaponAgile: false,
 fight is "walk up and trade blows" — there is no enemy archer to close distance on, no reason to
 prioritise a back line, no cost to a slow approach.
 
-⚠ **Brief #27's Archer role is blocked by this**, and so is one of the four enemy classifications
-(Ranged). Authoring "Bandit Archer" today produces a melee creature wearing a bow — the
-content-with-no-consumer defect this repo has now hit eight times.
+⚠ **Brief #27's Archer role is blocked by this**, and so are two of the four enemy classifications:
+**Ranged** entirely, and **Magic** in practice (with `isCaster: false` hardcoded, enemy "magic"
+reaches the engine only as on-hit riders — melee-range magic). Authoring "Bandit Archer" today
+produces a melee creature wearing a bow — the content-with-no-consumer defect this repo has hit
+eight times.
+
+**This session unblocks both.**
 
 ---
 
@@ -68,18 +93,19 @@ the consequences are not.
 
 ---
 
-## 5. Collision rules
+## 5. Sequencing — this session runs THIRD
 
-⚠ **This session edits `src/sim/combat/build.ts`.** The enemy-specification session may also want
-that file (`SESSION-enemy-specification.md` §3.1).
+Steven, 2026-09-13: *"Lets just tackle ranged and magic after we finish the abilities and
+monster/enemy scoping work. That's a fine order of approach."*
 
-- **Sequence them, or assign `build.ts` to exactly one.** Two agents in one file is how this repo
-  got probe artifacts committed twice.
-- **Never `git add -A`.** Stage by explicit path.
-- This session is otherwise independent of the taxonomy and class-ability work and can run in
-  parallel with either.
+**Order: #29 (class abilities) → #30 (enemy specification) → #28 (this).**
 
----
+✅ **Because this runs last, there is no `build.ts` collision** — #30 will have finished with it.
+Read #30's delivered brief before starting: it may have already restructured how an enemy's
+statblock reaches `Combatant`, which changes where `weaponRange` should come from.
+
+⚠ **Never `git add -A`.** Stage by explicit path.
+
 
 ## 6. Deliverable
 

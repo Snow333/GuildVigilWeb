@@ -13,7 +13,8 @@ auto-battler combat) being rebuilt from Godot in TypeScript.
   visual baselines). **Phase 4 is not next.**
 - **Shipped:** briefs #8–#26 (M1+M2+M3). **#27 (enemy taxonomy) APPROVED WITH AMENDMENTS — see its §9.**
 - ⚠ **THE FEAT SYSTEM IS 63% INERT: 144 of 227 feats reach nothing, and 5 of 13 classes have no feats at all.** Eighth instance of content-with-no-consumer, and the largest. Do not design class specializations against it before auditing — `output/briefs/SESSION-class-abilities.md`.
-- **Three sessions are set up and ready:** `output/briefs/SESSION-{class-abilities,enemy-specification,ranged-enemies}.md`. ⚠ `src/sim/combat/build.ts` is contested between the latter two. Status per brief, and which findings file corrects which, is in
+- **Three sessions are set up and ready — prompts in `output/briefs/SESSION-PROMPTS.md`.** Order: #29 class abilities → #30 enemy specification → #28 ranged (last). #29 and #30 may run concurrently; #30 owns `build.ts`.
+- ⚠ **BUILD, DON'T THEORYCRAFT.** Settled targets (40–50% fodder) are not to be re-derived, and superseded goals (the 300–500 row count, the ≥60% ratio, the migration plan's numbers) are not to be benchmarked against. Measure to decide what to build, not to re-litigate it. Status per brief, and which findings file corrects which, is in
   **`output/briefs/INDEX.md`** — read that, not the directory.
 - **What is next, what is blocked, what is held, and what is not built yet:
   `output/future-work.md`.** It is stack-ranked. Do not re-derive the roadmap from this file.

@@ -13,6 +13,26 @@
 
 ---
 
+---
+
+## 0. ⚠ WORKING RULE — build, don't theorycraft
+
+Steven, 2026-09-13: *"Lets not over think this… get to work rather than keep theory crafting against
+old goals."*
+
+**The targets and structure in this file are SETTLED. Do not re-derive them.** Specifically:
+
+- ⛔ **Do not benchmark new work against superseded goals** — the 300–500 row count, the ≥60%
+  distinguishing ratio, the migration plan's targets. They are dead. Citing them to justify or
+  question current work is the exact time-sink this rule exists to stop.
+- ⛔ **Do not re-open a decision Steven has already made** unless *measurement contradicts it* — in
+  which case say so in one line, with the number, and proceed.
+- ✅ **Measure to decide what to build. Not to re-litigate what to build.**
+- ✅ **When a question is genuinely open, ask it as numbered options and keep working** on the parts
+  that do not depend on the answer.
+
+**The deliverable is a brief Steven can approve, not an analysis of the problem space.**
+
 ## 2. What Steven asked for
 
 **On structure (Q4):**
@@ -83,55 +103,49 @@ is a deliberate architectural decision and must be recorded as one — not arriv
    report that.
 2. **Measure today's composition** against Steven's four classifications. Current state, measured
    2026-09-13: **Fodder 80.0% · Melee 11.1% · Magic 8.9% · Ranged 0%.**
-3. ⚠ **Tell Steven the number in §5** — his instruction was "keep this low", and the target he gave
-   is not low.
+3. **Report the current split as a fact, in one line, then move on.** It is context for authoring,
+   not a debate to open. ⚠ See §5 — the target is settled.
 
 ---
 
-## 5. ⚠ The number this session must surface early
+## 5. The composition target — SETTLED, do not relitigate
 
-Steven said *"lets keep this low"*, and the four-classification target sounds modest. It is not:
+**Fodder 40–50% of the pool. The rest split across Melee / Ranged / Magic.** That is the number.
+Steven set it on 2026-09-13 and closed the discussion:
 
-| | Fodder | Non-fodder |
-|---|---|---|
-| **Today (45 rows)** | **80.0%** | **20.0%** |
-| **Steven's target** | 40–50% | **50–60%** |
-| *(the ≥60% ratio it replaced)* | *≤40%* | *≥60%* |
+> *"Lets not over think this. We can make it whatever we want. Lets just use the 40%/50% and offset
+> with the specialist roles and get to work rather than keep theory crafting against old goals."*
 
-**The four-classification target lands at the bottom edge of the ratio it replaced and requires
-roughly TRIPLING today's distinguishing share** — ~8 of 14 rows in Bracket I, ~9 of 16 in II, ~11 of
-20 in III.
+⚠ **DO NOT re-derive, re-justify, or benchmark this against the old ≥60% ratio, the current 80%
+fodder share, or the migration plan's row-count targets.** Those are superseded. Comparing new work
+to a dead goal is how the last two sessions burned time. **Author to 40–50% and move on.**
 
-That is not an argument against it. The four-way split is a **better instrument** than the single
-ratio: it says *what kind* of different, not just *how many*, and it legitimises fodder as a real
-authoring choice rather than a failure. But Steven should know it is a 3× move, not a relaxation.
+⚠ **Ranged and Magic are blocked until brief #28 (see §5.1).** Until then, author the non-fodder
+share as **Melee**, and leave room in the plan for Ranged/Magic rows to land later. Do not stall on
+this — a pool that is 45% fodder and 55% melee today is fine and correct.
 
-⚠ **Two of the four classifications are blocked today:**
+### 5.1 Sequencing — settled
 
-- **Ranged: 0%, not buildable.** `weaponRange: 1` is hardcoded. Blocked on brief #28 (see
-  `SESSION-ranged-enemies.md`).
-- **Magic: partial.** With `isCaster: false` and `casting: null`, "buffs allies / debuffs enemies /
-  casts ranged damage spells" reaches the engine ONLY as on-hit riders — i.e. **melee-range magic**.
-  True enemy casting is blocked by the same wiring as §3.1.
+**#29 (class abilities) and #30 (this session) come FIRST. #28 (ranged) comes after both.**
+Steven, 2026-09-13: *"Lets just tackle ranged and magic after we finish the abilities and
+monster/enemy scoping work."*
 
-**Until both unblock, Melee + Fodder must carry the entire pool**, and the 50–60% non-fodder target
-cannot be met. Sequencing this is the session's first design question for Steven.
+✅ **This removes the `build.ts` collision.** #28 no longer runs in parallel — **this session owns
+`src/sim/combat/build.ts`.**
 
----
 
 ## 6. Collision rules
 
-⚠ **Two agents must never share a working directory.** If the class-abilities session runs
-concurrently:
+⚠ **Two agents must never share a working directory.** The class-abilities session (#29) may run
+concurrently with this one:
 
-- This session owns `src/sim/combat/**`, `src/content/generated/enemies.ts`, `data/seeds/**`.
-- That session owns `src/sim/heroes/**`, `output/briefs/class-*.md`.
+- **This session owns** `src/sim/combat/**` (including `build.ts`), `src/content/generated/enemies.ts`,
+  `data/seeds/**`, `tools/check-enemy-taxonomy.mjs`.
+- **#29 owns** `src/sim/heroes/**` and `output/briefs/class-*.md`.
 - **Never `git add -A`.** Stage by explicit path — probe artifacts have been committed twice by
   exactly that mistake.
-- ⚠ **Brief #28 (ranged enemies) also edits `src/sim/combat/build.ts`.** If #28 is running, this
-  session must NOT touch `build.ts` — coordinate or sequence them.
+- ✅ **#28 (ranged) is sequenced AFTER this session**, so `build.ts` is uncontested. See §5.1.
 
----
 
 ## 7. Deliverable
 

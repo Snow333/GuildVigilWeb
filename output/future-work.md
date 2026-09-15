@@ -19,13 +19,15 @@ harnesses are the record: `tests/harness/dungeon-curve.test.ts` and friends.
 **Brief #27 is APPROVED WITH AMENDMENTS (2026-09-13).** Steven's five answers are recorded in its
 §9. Three follow-on sessions are set up and ready to start — see `output/briefs/INDEX.md`:
 
-| Session file | Becomes | First thing it must do |
-|---|---|---|
-| `SESSION-class-abilities.md` | #29 | **Audit the 144 inert feats** before designing anything |
-| `SESSION-enemy-specification.md` | #30 | Verify `pickAction` works for non-heroes |
-| `SESSION-ranged-enemies.md` | #28 | Write the balance brief; no code first |
+| Order | Session file | Becomes | First thing it must do |
+|---|---|---|---|
+| 1 | `SESSION-class-abilities.md` | #29 | **Audit the 144 inert feats** before designing anything |
+| 1 | `SESSION-enemy-specification.md` | #30 | Verify `pickAction` works for non-heroes |
+| 2 | `SESSION-ranged-enemies.md` | #28 | Write the balance brief; no code first |
 
-⚠ **`src/sim/combat/build.ts` is contested between #28 and #30.** Assign it to one or sequence them.
+⚠ **Copy-paste prompts: `output/briefs/SESSION-PROMPTS.md`.**
+
+✅ **`build.ts` collision resolved by sequencing** — #30 owns it; #28 runs after #30, not in parallel (Steven, 2026-09-13).
 
 *Nothing else is blocked on a decision.*
 

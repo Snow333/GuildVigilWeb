@@ -2,8 +2,8 @@
 
 **Status:** READY TO START — this file IS the session prompt.
 **Created:** 2026-09-13, from brief #27 Q2.
-**Run in:** a NEW session. ⚠ **Do not run in parallel with the enemy-specification session
-if both would write `src/sim/heroes/**`** — see §6.
+**Run in:** a NEW session. ⚠ **FIRST IN SEQUENCE** — #29 → #30 → #28. May run in parallel with
+#30 (enemy specification); the two own different directories. See §6.
 
 ---
 
@@ -13,6 +13,26 @@ if both would write `src/sim/heroes/**`** — see §6.
 > do not design anything until the audit numbers are on the table.
 
 ---
+
+---
+
+## 0. ⚠ WORKING RULE — build, don't theorycraft
+
+Steven, 2026-09-13: *"Lets not over think this… get to work rather than keep theory crafting against
+old goals."*
+
+**The targets and structure in this file are SETTLED. Do not re-derive them.** Specifically:
+
+- ⛔ **Do not benchmark new work against superseded goals** — the 300–500 row count, the ≥60%
+  distinguishing ratio, the migration plan's targets. They are dead. Citing them to justify or
+  question current work is the exact time-sink this rule exists to stop.
+- ⛔ **Do not re-open a decision Steven has already made** unless *measurement contradicts it* — in
+  which case say so in one line, with the number, and proceed.
+- ✅ **Measure to decide what to build. Not to re-litigate what to build.**
+- ✅ **When a question is genuinely open, ask it as numbered options and keep working** on the parts
+  that do not depend on the answer.
+
+**The deliverable is a brief Steven can approve, not an analysis of the problem space.**
 
 ## 2. What Steven asked for
 
@@ -75,6 +95,9 @@ contract with no consumer — and by far the largest. Precedents: `class_weapon_
 
 ## 4. Phase 1 — THE AUDIT (do this first, design nothing yet)
 
+✅ **Steven approved this ordering explicitly** (2026-09-13): *"Agreed on putting the feat audit
+before the session-class-abilities.md work."* The audit is not optional and not a formality.
+
 **Goal: a table of the 144 inert feats, grouped by what they need in order to work.**
 
 The instrument already exists — `src/sim/heroes/featEffects.ts` exposes `isEffectReady(featId)`,
@@ -120,17 +143,17 @@ and the config afterwards and confirm `git status` is clean.
 
 ## 6. Collision rules
 
-⚠ **Two agents must never share a working directory.** If the enemy-specification session is running
-at the same time:
+⚠ **Two agents must never share a working directory.** The enemy-specification session (#30) may run
+concurrently:
 
-- This session owns `src/sim/heroes/**`, `output/briefs/class-*.md`.
-- That session owns `src/sim/combat/**`, `src/content/generated/enemies.ts`, `data/seeds/**`.
+- **This session owns** `src/sim/heroes/**`, `output/briefs/class-*.md`, `output/briefs/SESSION-class-abilities.md`.
+- **#30 owns** `src/sim/combat/**` (including `build.ts`), `src/content/generated/enemies.ts`,
+  `data/seeds/**`.
 - **Never `git add -A`.** Stage by explicit path. This repo has had probe artifacts committed twice
   by exactly that mistake.
-- Expect `npx tsc -p` to show failures in the other session's mid-edit files. Check
-  `git status --porcelain` for ownership before assuming a red suite is yours.
+- Expect `npx tsc -p` and the full suite to show failures in the other session's mid-edit files.
+  Check `git status --porcelain` for ownership before assuming a red suite is yours.
 
----
 
 ## 7. Deliverable
 

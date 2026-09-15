@@ -52,15 +52,25 @@
 | [`creature-size-findings.md`](creature-size-findings.md) | overrides brief #20 §9.4 — the radius convention is measured, not assumed |
 | [`character-advancement-findings.md`](character-advancement-findings.md) | corrects brief #22 in three places; §4 holds the founding four's measured statblocks |
 
-## Session setups — ready to start, each file IS its session prompt
+## Session setups — ready to start
 
-| File | Becomes | Why it is its own session |
-|---|---|---|
-| [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | brief #29 | ⚠ **144 of 227 feats are inert (63%) and 5 of 13 classes have zero feats.** The specialization system Steven wants already exists and mostly does nothing. **Phase 1 is an audit; design nothing until its numbers exist.** |
-| [`SESSION-enemy-specification.md`](SESSION-enemy-specification.md) | brief #30 | Enemy races × classes instead of static statblocks. ⚠ `pickAction` is already unit-agnostic — this is largely WIRING, but verify that first. ⚠ Surfaces that the "keep it low" composition target is a **3× move**. |
-| [`SESSION-ranged-enemies.md`](SESSION-ranged-enemies.md) | brief #28 | ⚠ **A BALANCE brief, not a wiring task.** Three hardcoded lines in `build.ts` make every enemy melee; unblocking them changes every closure time in the game. |
+⚠ **START HERE: [`SESSION-PROMPTS.md`](SESSION-PROMPTS.md)** holds the copy-paste opening message for
+each session. The files below are what those prompts point at.
 
-⚠ **`build.ts` is contested between #28 and #30** — assign it to exactly one session or sequence them.
+**Order: #29 → #30 → #28.** #29 and #30 may run concurrently (different directories); #28 runs last.
+
+| Order | File | Becomes | First action |
+|---|---|---|---|
+| 1 | [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | #29 | ⚠ **Audit the 144 inert feats** (63% of 227; 5 of 13 classes have none). Design nothing first. |
+| 1 | [`SESSION-enemy-specification.md`](SESSION-enemy-specification.md) | #30 | Verify `pickAction` works for non-heroes — the races×classes plan rests on it being wiring. |
+| 2 | [`SESSION-ranged-enemies.md`](SESSION-ranged-enemies.md) | #28 | ⚠ **A BALANCE brief, not a wiring task.** Unblocks Ranged *and* real enemy Magic. |
+
+✅ **No `build.ts` collision** — #30 owns it, and #28 is sequenced after #30 rather than parallel.
+
+⚠ **Every session file opens with a §0 working rule: build, don't theorycraft.** Settled targets
+(40–50% fodder) are not to be re-derived, and superseded goals (the 300–500 row count, the ≥60%
+ratio) are not to be benchmarked against.
+
 
 ## Pre-brief scoping notes (context, not contract)
 
