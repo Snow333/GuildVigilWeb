@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Feat audit</title>
+<style>
+  .wrap { max-width: 900px; }
+  h2 { font-size: 15px; margin: 22px 0 8px; letter-spacing: .02em; }
+  h2:first-child { margin-top: 0; }
+  .sub { color: var(--muted-foreground); font-size: 12px; margin: 0 0 14px; }
+  .funnel { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .frow { display: grid; grid-template-columns: 210px 1fr 86px; align-items: center; gap: 10px; font-size: 12px; }
+  .flab { color: var(--muted-foreground); }
+  .ftrack { height: 22px; background: color-mix(in srgb, var(--border) 45%, transparent); border-radius: 3px; overflow: hidden; }
+  .fbar { height: 100%; border-radius: 3px; }
+  .fnum { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .c1 { background: var(--muted-foreground); opacity:.55 }
+  .c2 { background: #d2a24c; }
+  .c3 { background: #c4544d; }
+  .c4 { background: #8c3f3a; }
+  .callout { border-left: 3px solid #c4544d; padding: 10px 14px; margin: 14px 0;
+             background: color-mix(in srgb, #c4544d 9%, transparent); border-radius: 0 4px 4px 0; font-size: 13px; }
+  .big { font-size: 26px; font-weight: 700; color: #c4544d; }
+  table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  th { text-align: left; font-weight: 600; color: var(--muted-foreground); padding: 5px 8px;
+       border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  td { padding: 4px 8px; border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent); }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .minibar { display:inline-block; height: 9px; border-radius: 2px; vertical-align: middle; }
+  .hookrow { display: grid; grid-template-columns: 290px 1fr 34px; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 3px; }
+  .hooklab { color: var(--foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hooklab.new { color: #b06a4a; }
+  .pill { font-size: 10px; padding: 1px 6px; border-radius: 9px; border: 1px solid var(--border); color: var(--muted-foreground); margin-left: 6px; }
+  .note { font-size: 11px; color: var(--muted-foreground); margin-top: 6px; }
+</style></head>
+<body><div class="wrap">
+
+<h2>The gate overstates what works by 2.8×</h2>
+<p class="sub">227 authored feats, narrowing at each honest test</p>
+<div class="funnel">
+  <div class="frow"><span class="flab">Authored in content</span>
+    <span class="ftrack"><span class="fbar c1" style="width:100%"></span></span><span class="fnum">227</span></div>
+  <div class="frow"><span class="flab">Passes <code>isEffectReady</code></span>
+    <span class="ftrack"><span class="fbar c2" style="width:36.6%"></span></span><span class="fnum">83</span></div>
+  <div class="frow"><span class="flab"><b>Reaches a real consumer</b></span>
+    <span class="ftrack"><span class="fbar c3" style="width:13.2%"></span></span><span class="fnum">30</span></div>
+  <div class="frow"><span class="flab">Changed 10 real fights</span>
+    <span class="ftrack"><span class="fbar c4" style="width:8.8%"></span></span><span class="fnum">20</span></div>
+</div>
+<p class="note">The gate checks the effect <i>type</i> has a consumer. Real consumers match a specific
+payload shape — and twice, the feat's <b>name</b>. <code>passive_modifier</code> is marked ready and
+covers 119 feats; it reaches <b>one</b>.</p>
+
+<div class="callout">
+  <div class="big">63%</div>
+  <div>of the feats the level-up picker lets a player take <b>do nothing at all</b>.
+  It offers 67 feats as selectable; 42 of them reach no engine code.</div>
+</div>
+
+<h2>Share of selectable feats that are inert, per class</h2>
+<table>
+<tr><th>Class</th><th>Selectable</th><th>Inert</th><th style="width:250px">Share inert</th></tr>
+<tr><td>Sorcerer</td><td class="n">22</td><td class="n">13</td><td><span class="minibar c3" style="width:59%"></span> 59%</td></tr>
+<tr><td>Wizard</td><td class="n">23</td><td class="n">13</td><td><span class="minibar c3" style="width:57%"></span> 57%</td></tr>
+<tr><td>Cleric</td><td class="n">25</td><td class="n">14</td><td><span class="minibar c3" style="width:56%"></span> 56%</td></tr>
+<tr><td>Warlock</td><td class="n">20</td><td class="n">11</td><td><span class="minibar c3" style="width:55%"></span> 55%</td></tr>
+<tr><td>Rogue</td><td class="n">25</td><td class="n">12</td><td><span class="minibar c2" style="width:48%"></span> 48%</td></tr>
+<tr><td>Barbarian</td><td class="n">19</td><td class="n">9</td><td><span class="minibar c2" style="width:47%"></span> 47%</td></tr>
+<tr><td>Monk</td><td class="n">22</td><td class="n">10</td><td><span class="minibar c2" style="width:45%"></span> 45%</td></tr>
+<tr><td>Ranger · Bard · 3 hybrids</td><td class="n">16</td><td class="n">7</td><td><span class="minibar c2" style="width:44%"></span> 44%</td></tr>
+<tr><td>Fighter</td><td class="n">23</td><td class="n">9</td><td><span class="minibar c2" style="width:39%"></span> 39%</td></tr>
+</table>
+<p class="note">Ranger, Bard and the hybrids have <b>zero class feats authored</b> — their 16 selectable
+rows are the shared general/skill pools only.</p>
+
+<h2>What the 197 non-reaching feats are waiting on</h2>
+<p class="sub">Clustered by engine hook — one hook revives the whole group. This is the build order.</p>
+<div>
+  <div class="hookrow"><span class="hooklab">spells.ts · spell damage/effect layer</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:100%"></span></span><span class="fnum">21</span></div>
+  <div class="hookrow"><span class="hooklab">abilities.ts · new active verb</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:81%"></span></span><span class="fnum">17</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · out-of-combat / exploration</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:62%"></span></span><span class="fnum">13</span></div>
+  <div class="hookrow"><span class="hooklab">conditions.ts · stance/rage layer <span class="pill">all Barbarian</span></span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:57%"></span></span><span class="fnum">12</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · resource/focus pool</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:57%"></span></span><span class="fnum">12</span></div>
+  <div class="hookrow"><span class="hooklab">spells.ts · healing modifier layer</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:52%"></span></span><span class="fnum">11</span></div>
+  <div class="hookrow"><span class="hooklab">saves · conditional save modifier</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:48%"></span></span><span class="fnum">10</span></div>
+  <div class="hookrow"><span class="hooklab">strike.ts · flat-footed/sneak layer <span class="pill">all Rogue</span></span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:43%"></span></span><span class="fnum">9</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · focus points</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:38%"></span></span><span class="fnum">8</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · long-rest persistence</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:33%"></span></span><span class="fnum">7</span></div>
+  <div class="hookrow"><span class="hooklab">conditions.ts · conditional AC</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:29%"></span></span><span class="fnum">6</span></div>
+  <div class="hookrow"><span class="hooklab">encounter.ts · reaction vocabulary</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:29%"></span></span><span class="fnum">6</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · character-build layer</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:29%"></span></span><span class="fnum">6</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · spell-slot manipulation</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:29%"></span></span><span class="fnum">6</span></div>
+  <div class="hookrow"><span class="hooklab">strike.ts · conditional damage</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:24%"></span></span><span class="fnum">5</span></div>
+  <div class="hookrow"><span class="hooklab">strike.ts · critical-hit rider</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:24%"></span></span><span class="fnum">5</span></div>
+  <div class="hookrow"><span class="hooklab">conditions.ts · condition application</span><span class="ftrack" style="height:14px"><span class="fbar c3" style="width:14%"></span></span><span class="fnum">3</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · spell geometry</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:14%"></span></span><span class="fnum">3</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · metamagic</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:10%"></span></span><span class="fnum">2</span></div>
+  <div class="hookrow"><span class="hooklab new">NEW · summons/pets</span><span class="ftrack" style="height:14px"><span class="fbar c2" style="width:5%"></span></span><span class="fnum">1</span></div>
+  <div class="hookrow"><span class="hooklab" style="opacity:.6">(miscellaneous one-offs)</span><span class="ftrack" style="height:14px"><span class="fbar c1" style="width:100%"></span></span><span class="fnum">34</span></div>
+</div>
+<p class="note"><span style="color:#b06a4a">Orange</span> = a system that does not exist yet.
+Red = a hook that exists and must learn another verb. <b>42 feats sit behind just the top three
+red layers</b>, and each maps to one class's core fantasy.</p>
+
+<h2>Ranger and Bard: authoring gap, not engine gap</h2>
+<table>
+<tr><th>Class</th><th>Class-feat slots granted</th><th>Class feats authored</th><th>Picker offers</th></tr>
+<tr><td>Ranger</td><td class="n">10</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>Bard</td><td class="n">10</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>Arcane Trickster</td><td class="n">5</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>Eldritch Knight</td><td class="n">5</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>Mystic Theurge</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td style="opacity:.6">Fighter (for contrast)</td><td class="n" style="opacity:.6">30</td><td class="n" style="opacity:.6">23</td><td class="n" style="opacity:.6">23</td></tr>
+</table>
+<p class="note">The slot machinery works and the picker runs — the pool is simply empty. Authoring rows
+fixes Ranger and Bard with no engine work. <b>Mystic Theurge is granted zero class slots</b>, so it
+needs a progression decision before it needs content.</p>
+
+</div></body></html>
