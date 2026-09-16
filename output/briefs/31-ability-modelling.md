@@ -15,9 +15,10 @@ active is strictly better than striking and the loadout choice is fake.
 
 | | |
 |---|---|
-| **Implementation half** | 🔴 **BLOCKED.** Brief #30 is mid-flight and holds 5 of the 6 hooks. |
+| **Implementation half** | ✅ **UNBLOCKED** — #30 landed at `afd3635`. The worktree is clean and the suite is green. |
 | **Design half (this brief)** | ✅ Done — touches no source. |
-| **The one safe code task** | ✅ **SHIPPED** this session, commit `b8d41c1`. See §6. |
+| **The safe code task** | ✅ **SHIPPED** `b8d41c1`. See §6. |
+| **D2, the long-rest tier** | ✅ **APPROVED AND BUILT** `78614f5`. See §1 D2 and §5. |
 
 **The 33 paths are settled and are not re-argued here.** Two measurements below contradict a stated
 assumption. Per the working rule each gets one line with a number, and then the brief carries on:
@@ -50,18 +51,28 @@ Everything else in this brief is authoring. These five are yours.
 — hooks worth 30 revived feats, **none of which belong to Ranger or Bard**. So building their hooks
 pays Fighter, Monk and Rogue first regardless of which option you pick.
 
-### D2 — Once-per-long-rest is NOT built. Cleric Field Medic needs it.
+### D2 — Once-per-long-rest ✅ **APPROVED AND BUILT** (commit `78614f5`)
 
-Three limiter tiers, **only two exist**: cooldown-in-ticks and once-per-combat both live on
-`Combatant` and die with the encounter. Once-per-long-rest needs `HeroState` plus a save backfill.
+Steven's call, 2026-09-16: **build the system now.** Option 1 taken; the tier exists.
 
-| option | cost | effect |
-|---|---|---|
-| **1. Build the tier** | `HeroState` field + save migration + reset-on-rest | Unlocks **7 authored feats** immediately (findings §4) and Field Medic as designed. |
-| **2. Re-tier Field Medic to once-per-combat** | 0 | Path ships now, but a per-combat emergency heal is a *much* stronger effect — it is the difference between one save per expedition and one per fight. |
-| **3. Cut Field Medic to 2 abilities** | 0 | Drops below the 3–5 band the selection commits to. |
+Three limiter tiers, and all three now exist. Cooldown-in-ticks and once-per-combat live on
+`Combatant` and die with the encounter; once-per-long-rest lives on `HeroState.longRestUses` and
+survives it, with `backfillLongRestUses` registered in the save chain.
 
-⚠ **Do not collapse the tiers silently.** Option 2 is a real balance change, not a bookkeeping one.
+⚠ **THE BOUNDARY IS THE DISPATCH, NOT THE DUNGEON ROOM.** `dungeon/dispatch.ts` already had a rest
+and it declares itself SHORT (`explore.rested`, `package: 'short'`) — it heals a fraction of max HP
+and is rationed by `PROFILES.roomsPerRestCharge`. Refreshing long-rest charges there would collapse
+the third tier into the second. The long rest fires in `launchDispatch`, at the same moment the
+wounded ratchet clears.
+
+⚠ **Measured: the tier holds 10 authored feats, not the 8 counted by hand here.** Membership is
+derived from the content payloads — both authored shapes (`condition: "per_rest"` and `per_rest: N`)
+— so `#91 Arcane Bond` and `#103 Linked Focus` join the eight below. A new seed row joins with no
+code change. **Absent map means fully rested**, so every existing save loads as a rested party.
+
+The eight paths this unblocks are unchanged: Cleric Field Medic (`#140`, `#153`), Wizard
+Metamagician (`#96`), Sorcerer Bloodline Focus (`#113`) and Crossblooded (`#119`), Warlock Pact of
+the Tome (`#162` — note that one is a *short* rest and correctly stays outside the tier).
 
 ### D3 — Threat/taunt and aura revive nothing. They carry two of your three examples.
 
@@ -525,11 +536,17 @@ All three ride `#155 Pact Boon` (`special`, authored with blade/tome/chain optio
 |---|---|---|---|
 | cooldown in ticks | ✅ | `Combatant.abilityReadyAt` | Fighter Bulwark (Taunt), Rogue Poisoner (#71) |
 | once per combat | ✅ | `Combatant.abilityUses` | Rogue Debilitator (#88), Monk Stunning Fist (#66), Barbarian Wounded Fury (#44), Cleric Field Medic (#154), Warlock Blade (#171), Sorcerer Bloodline (#128) |
-| **once per long rest** | 🔴 **NOT BUILT** | needs `HeroState` + save backfill | **Cleric Field Medic (#140, #153)**, Wizard Metamagician (#96), Sorcerer Bloodline (#113) + Crossblooded (#119), Warlock Tome (#162) |
+| **once per long rest** | ✅ **BUILT** `78614f5` | `HeroState.longRestUses` | **Cleric Field Medic (#140, #153)**, Wizard Metamagician (#96), Sorcerer Bloodline Focus (#113) + Crossblooded (#119) |
 
-⚠ **Five paths across four classes touch the missing tier, not one.** The session brief named Field
-Medic; measured, it is Field Medic **plus** Metamagician, Bloodline Focus, Crossblooded and Pact of
-the Tome. That raises D2's stakes — one line, with the number, and carrying on.
+⚠ **Five paths across four classes touch the third tier, not one.** The session brief named Field
+Medic; measured, it is Field Medic **plus** Metamagician, Bloodline Focus and Crossblooded. Warlock
+Pact of the Tome (#162) recovers on a *short* rest — a different rule, correctly outside the tier.
+
+⚠ **Content-derived membership is 10 feats.** `#91 Arcane Bond` and `#103 Linked Focus` also carry
+per-rest payloads and joined the tier automatically, because membership reads the payload rather
+than a hardcoded list. Two of the ten (`#173`, `#176`) are Warlock rows still flagged
+`implemented: false` — they are in the tier and will be rationed correctly the moment their verbs
+are wired.
 
 ---
 
@@ -587,7 +604,7 @@ costs and a named hook. **79% of it was already written** — 108 of the 137 abi
 which turned out to exist with complete tier tables under four different ids.
 
 - **The feat id being revived for the touch wizard is `#220 Touch Damage Specialization`** (with `#219` beside it, duplicated for Sorcerer as `#222`/`#223`) — that path needs no design, just one matcher on the spell-effect layer.
-- **Implementation is BLOCKED** — #30 holds 5 of 6 hooks and has uncommitted edits in `combat/`. The design half is done; the one safe code task shipped as `b8d41c1`.
-- **Five decisions are yours (§1):** Ranger/Bard authoring order, the missing long-rest tier, how a taunt works, which hook goes first, and two feats that work despite being flagged dead.
-- **Two measured corrections, one line each:** seven paths revive almost nothing (not four — Ranger and Bard hold 25 of the 29 new rows between them), and **five paths need the unbuilt long-rest tier, not one**.
-- **The picker fix is player-visible and needs your sign-off:** same 743 rows shown, selectable drops 378 → 131. Greyed, never hidden, per your standing decision.
+- **Implementation is UNBLOCKED** — #30 landed at `afd3635`. Two code tasks shipped: the picker fix (`b8d41c1`) and the long-rest tier (`78614f5`).
+- **Four decisions still open (§1):** Ranger/Bard authoring order, how a taunt works, which hook goes first, and two feats that work despite being flagged dead. **D2 is settled and built.**
+- **Two measured corrections, one line each:** seven paths revive almost nothing (Ranger and Bard hold 25 of the 29 new rows), and **five paths need the long-rest tier, not one** — now built, holding 10 authored feats.
+- **The picker fix is player-visible and approved:** same 743 rows shown, selectable drops 378 → 131. Greyed, never hidden.
