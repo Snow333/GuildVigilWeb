@@ -153,16 +153,51 @@ for (const c of classes) {
   }
 }
 
-// ── Advisory: Ranged is thin, and it is worth saying so out loud ───────────
-if (counts.Ranged === 0) {
-  warnings.push('no Ranged rows exist — the player never meets an enemy that attacks from range.');
-} else {
-  const reachable = enemies.filter((e) => e.classification === 'Ranged' && e.base_level <= 6).length;
-  if (reachable === 0) {
-    warnings.push(
-      `all ${counts.Ranged} Ranged rows are above level 6, so no player at d1-d5 can meet one. ` +
-      'Ranged is authored but unreachable.',
-    );
+// ── Advisory: which rows can a player actually MEET? ──────────────────────
+//
+// ⚠ DERIVED FROM QUEST CONTENT, NEVER HARDCODED. The first version of this
+// check asked `base_level <= 6` — a number with no source, which then got
+// reported as "both Ranged rows are unreachable" when in fact one of them is
+// reachable at d7 and three quests go that deep. A gate that invents its own
+// threshold produces confident wrong answers.
+//
+// `ENCOUNTERS.levelBand` is 1, so a difficulty-d room draws [d-1, d+1]: the
+// deepest quest in the game sets the highest enemy level anyone can meet.
+const quests = table('quests');
+const LEVEL_BAND = 1;
+const questDepths = quests.map((q) => q.dungeon_level).filter((d) => typeof d === 'number');
+const deepestQuest = questDepths.length > 0 ? Math.max(...questDepths) : 0;
+const levelCeiling = deepestQuest + LEVEL_BAND;
+
+const unreachable = enemies.filter((e) => e.base_level > levelCeiling);
+if (unreachable.length > 0) {
+  warnings.push(
+    `${unreachable.length} row(s) sit above the level ceiling of L${levelCeiling} ` +
+    `(deepest quest is d${deepestQuest}) and can never be met: ` +
+    unreachable.map((e) => `${e.name} L${e.base_level}`).join(', '),
+  );
+}
+
+// Per-classification reachability: a classification nobody can meet is, from
+// the player's side, a classification that does not exist.
+for (const c of CLASSIFICATIONS) {
+  if (c === 'Fodder' || counts[c] === 0) continue;
+  const rows = enemies.filter((e) => e.classification === c);
+  const meetable = rows.filter((e) => e.base_level <= levelCeiling);
+  const shallowest = Math.min(...rows.map((e) => e.base_level));
+  const firstDifficulty = Math.max(1, shallowest - LEVEL_BAND);
+  if (meetable.length === 0) {
+    warnings.push(`${c}: all ${rows.length} row(s) are above the L${levelCeiling} ceiling — the player never meets one.`);
+  } else {
+    // How much of the campaign passes before this classification first appears?
+    const questsBefore = questDepths.filter((d) => d < firstDifficulty).length;
+    if (questsBefore > 0 && meetable.length <= 2) {
+      warnings.push(
+        `${c}: only ${meetable.length} meetable row(s), the first at d${firstDifficulty} — ` +
+        `${questsBefore} of ${questDepths.length} quests are shallower than that, so most of the ` +
+        'campaign contains no enemy of this kind.',
+      );
+    }
   }
 }
 
