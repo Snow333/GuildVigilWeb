@@ -51,6 +51,14 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Brief #27 M1 / #30. Makes inert enemy content fail the build: every row
+      # must declare a race and a classification, the Fodder share must stay in
+      # the settled 40-50% band, and no race may name a vocabulary word the
+      # engine cannot read. The Vanguard batch — 21 rows with empty abilities —
+      # is why this exists; that was an accident no check caught.
+      - name: Enemy taxonomy gate
+        run: pnpm taxonomy
+
       - name: Unit tests
         run: pnpm test
 

@@ -1,7 +1,8 @@
 # Brief #30 — Enemy races × classes: the specification
 
-**Status:** ⚠ **AWAITING STEVEN'S APPROVAL** — no code written. Phase 1 verification is complete
-and is reported in §1.
+**Status:** ✅ **IMPLEMENTED 2026-09-15** — Steven ratified the row-by-row classification and
+answered §9's questions (see §12). Phase 1 verification is in §1; what measurement changed during
+implementation is in §13.
 **Author:** session of 2026-09-15
 **Session file:** `output/briefs/SESSION-enemy-specification.md`
 **Depends on:** #27 (the taxonomy and the four classifications), #26 (the ability vocabulary),
@@ -280,3 +281,119 @@ probes outside `tests/`, removed afterwards; working tree verified clean.
 - Leveled spell resource gate: 0 casts without slots, 60 with.
 - 45 rows, highest id 120. 36 fodder → 22 needed for 50%; **14 rows to reclassify.**
 - 9 abilities in `ACTIVE_WIRED`.
+
+---
+
+## 12. Steven's answers (2026-09-15) — RATIFIED
+
+| Q | Answer |
+|---|---|
+| **Q1 — ancestries as DLC** | ✅ **No separate model.** *"Lets not over think this too much as we will probably bundle new ancestries with the bigger beat storyline points."* Races ship base-game; a DLC adds race rows exactly as it adds enemy rows. §6 stands as written. |
+| **Q2 — how many classes** | **Six** — Warrior, Brute, Skirmisher, Caster, Zealot, Archer. Ranged is in scope now, so #28 is a dependency of this work rather than a follow-on. |
+| **Q3 — the rows to class** | Steven ratified the full 45-row proposal after reviewing it row by row. |
+| **Q4 — sequencing** | *"Lets just do the work needed. We are slowing ourselves down being overly sensitive on order of operations."* The #30a/b/c staging in §7 is **dropped**; it shipped as one body of work. |
+
+---
+
+## 13. ⚠ What measurement changed during implementation
+
+§8 predicted completion would **fall** and said a rise is a bug signal. It rose — d4 **57.7 → 67.3**,
+wipes **14 → 3.7**. The tripwire fired, and it was right.
+
+### 13.1 The defect: an ability is a DOWNGRADE for a unit that cannot choose its moment
+
+`ENCOUNTER.swingsPerAction` is **2**, so a normal action is a two-swing burst. An ability strike is
+**one** swing, and `abilityInterval` multiplied the next interval by the ability's `actions` cost.
+A player absorbs that because they *pick the moment*; `pickAction` takes the top matching entry
+**every action**, so for an enemy the same ability became a permanent 2–4× swing-rate cut.
+
+Measured on an Orc Warrior against a plain-strike control:
+
+| Loadout | Damage vs plain |
+|---|---|
+| Power Attack every action | **−41%** |
+| Brutish Shove every action | **−36%** |
+| Intimidating Strike every action | **−69%** |
+| Knockdown every action | **−68%** |
+
+And the decisive one, in a real fight: **the hero took LESS damage from the classed enemy than the
+unclassed one — 1,862 → 694.** Classes made enemies weaker. That is the whole brief inverted.
+
+⚠ **Checked for the brief #25 confound before acting:** fight length was near-constant across arms
+(~21–26k ticks), so the damage figures are not a fight-length artifact. Confirmed on metrics with no
+run-length term — enemy win rate and hero HP remaining.
+
+### 13.2 The fix, in two parts
+
+1. **`Combatant.abilityCadenceTicks`** — a minimum gap between a unit's ability *strikes*, set from
+   `enemy_classes.ability_cooldown_ticks` (200 ticks ≈ every fifth action). It rations the **verb**,
+   not the feat, so a two-ability class cannot alternate around it.
+2. **`abilityInterval(..., cadenced)`** — a unit with a cadence does **not** also pay the `actions`
+   multiplier, because that is charging twice for the same rationing.
+
+⚠ **Heroes keep `abilityCadenceTicks: 0` and the full multiplier.** Hero pacing is balanced around
+player choice and belongs to brief #29; imposing a cadence there would re-tune every class in the
+game from an enemy-content brief. The type system enforces that both construction sites state it.
+
+### 13.3 Two abilities were dropped from classes, and the reason generalises
+
+> **An ability that costs an action but adds no swing is a loss for an AI.**
+
+- **Poison Weapon** on Skirmisher: enemy wins **19 → 1**. A whole action, forever, for a 1d4 rider.
+  Knockdown alone measured **19 → 20**.
+- **Divine Lance** on Zealot: a 1d4 cantrip replacing a two-swing weapon burst on a **melee**
+  statblock measured **11 wins → 0**. The same cantrip on a **caster** statblock measured **1 → 9** —
+  which is why Caster keeps one and Zealot does not.
+
+⚠ **A cantrip is a strong enemy action only where the statblock is bad at melee.** That is the
+authoring rule this produced, and it is now the Caster/Zealot split.
+
+### 13.4 Result
+
+| | d1 | d2 | d3 | d4 | d5 |
+|---|---|---|---|---|---|
+| completion Δ | 0 | +1.3 | 0 | **+2.3** | **+4.3** |
+
+All inside the ±8 noise bar, versus **+9.6 at d4** before the fix. Snapshots re-baselined
+deliberately; the exposure tests carry the proof, per the repo's standing rule.
+
+---
+
+## 14. What shipped
+
+| File | What |
+|---|---|
+| `data/seeds/seed_enemy_races_classes.sql` | 22 races, 6 classes, all 45 rows assigned. ⚠ **Verified by replay:** applying it to a pristine `HEAD` db and re-converting reproduces today's content **byte-identically** (md5 match), so it is a real reviewable artifact, not a post-hoc dump. |
+| `src/sim/combat/build.ts` | Reads race + class. The three hardcoded lines are gone. |
+| `src/sim/combat/loadout.ts` | `parseLoadout` — **validates** authored JSON rather than casting it. |
+| `src/sim/combat/abilities.ts` | The cadence limiter and the no-double-charge rule. |
+| `src/sim/combat/types.ts` | `abilityCadenceTicks`, `lastAbilityTick`. |
+| `tools/check-enemy-taxonomy.mjs` | The composition gate, wired into `pnpm check` and CI. |
+| `tests/combat/enemyRacesClasses.test.ts` | 19 tests, exposure-first. |
+
+### 14.1 The gate was proven able to fail
+
+Per repo law, three sabotages, each restored with content verified byte-identical afterwards:
+
+| Sabotage | Result |
+|---|---|
+| Blank one row's `classification` | ✅ 2 violations named |
+| Strip 6 classes → fodder 53.3% | ✅ composition violation |
+| A race naming `invented_word` | ✅ vocabulary violation |
+
+### 14.2 The exposure tests were proven able to fail
+
+⚠ **The first draft of the test file passed all 19 with `build.ts` sabotaged to `loadout: []`** —
+because its helper re-implemented the wiring it was meant to prove. That is the fourth instance of
+this repo's assert-against-yourself family (#22's gate, #24's aggregator, #26's immunity table). The
+helper now builds strictly through `buildEnemy`, and the three sabotages fail **4**, **1** and **2**
+tests respectively.
+
+### 14.3 Still open
+
+- ⚠ **Ranged is 4.4% and both rows are unreachable** (L8 and L12, above the level ceiling). The gate
+  emits an **advisory** saying so on every run. Real ranged enemies need new rank-and-file rows —
+  authoring work, not reclassification.
+- **Fodder sits at exactly 40.0%**, the bottom edge of the band. Any new specialist needs fodder
+  authored alongside it.
+- **Leveled enemy spellcasting** remains deliberately shut (§7).

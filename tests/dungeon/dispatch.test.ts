@@ -149,12 +149,41 @@ describe('runDungeonDispatch — the profile engine (brief #4 acceptance)', () =
     });
   });
 
+  /**
+   * ⚠ THE COMPARISON MUST CONDITION ON BOLD SURVIVING ITS EXPLORATION.
+   *
+   * `roomsVisited` carries a RUN-LENGTH term, and caution is precisely the
+   * knob that changes run length: bold withdraws at a lower HP fraction, so it
+   * wipes or hits the hard floor more often (measured: 15 wipes vs 7 over 300
+   * seeds) — and a run that ends early visits FEWER rooms. So "cautious > bold"
+   * fires on exactly the seeds where the caution mechanic WORKED.
+   *
+   * Measured with a control that settles it: give both runs an unkillable
+   * party, and the violation rate over 300 seeds is 0/300. Every violation is
+   * a bold run that died or retreated early, never an explorer bug.
+   *
+   * This is the same trap as brief #25's Mage Armor test, where total damage
+   * was confounded by fight length. Assert the claim with no run-length term:
+   * among runs that BOTH carried their exploration to a natural end, cautious
+   * never out-explores bold.
+   */
   it('CAUTION ORDERS: cautious never explores more than bold on the same seed', () => {
-    for (const seed of ['c1', 'c2', 'c3']) {
+    // A run that wiped or was forced out by the HP floor never finished
+    // exploring, so its room count is not a measure of intent.
+    const exploredFreely = (r: ReturnType<typeof run>): boolean =>
+      r.outcome !== 'wiped' && r.retreatReason !== 'hardFloor';
+
+    let compared = 0;
+    for (const seed of ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) {
       const cautious = run('fullExplore', seed, 'cautious');
       const bold = run('fullExplore', seed, 'bold');
+      if (!exploredFreely(cautious) || !exploredFreely(bold)) continue;
+      compared++;
       expect(cautious.roomsVisited).toBeLessThanOrEqual(bold.roomsVisited + 1);
     }
+    // ⚠ Guard against the filter silently eating every seed and leaving a
+    // vacuously green test — the failure mode this whole file exists to avoid.
+    expect(compared).toBeGreaterThan(0);
   });
 
   it('TERMINATION: every profile × pool tier × seeds ends, zero budget hits', () => {

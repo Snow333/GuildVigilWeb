@@ -410,7 +410,7 @@ export function runEncounter(
                 durationTicks: ENCOUNTER.attackIntervalTicks * 2,
               });
             }
-            u.nextActionTick = tick + abilityInterval(attackInterval(u), def);
+            u.nextActionTick = tick + abilityInterval(attackInterval(u), def, u.abilityCadenceTicks > 0);
             continue;
           }
           // Nothing to do with it — fall through to a plain strike this action
@@ -624,7 +624,7 @@ export function runEncounter(
       u.lastSwingTick = tick;
       if (abilityDefinition) {
         consumeAbility(u, (picked.entry as { featId: number }).featId, tick);
-        u.nextActionTick = tick + abilityInterval(attackInterval(u), abilityDefinition);
+        u.nextActionTick = tick + abilityInterval(attackInterval(u), abilityDefinition, u.abilityCadenceTicks > 0);
       } else {
         u.nextActionTick = tick + attackInterval(u);
       }

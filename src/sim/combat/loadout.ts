@@ -43,6 +43,71 @@ export type LoadoutEntry =
 
 export const DEFAULT_STRIKE: LoadoutEntry = { action: 'strike', condition: { kind: 'always' }, target: 'scoredEnemy' };
 
+/**
+ * Parse an AUTHORED loadout (brief #30) — `enemy_classes.loadout` is JSON in
+ * the content db, and this is the only door it comes through.
+ *
+ * ⚠ VALIDATES RATHER THAN CASTS. A bare `JSON.parse(...) as LoadoutEntry[]`
+ * would let a typo'd verb or a missing `featId` reach `pickAction`, where it
+ * would silently never match and the class would simply do nothing — which is
+ * exactly this repo's recurring defect (content authored against a contract
+ * with no consumer, eight occurrences and counting). A malformed entry is
+ * DROPPED here and `tools/check-enemy-taxonomy.mjs` fails the build naming the
+ * class, so the failure is loud at author time instead of invisible at runtime.
+ */
+export function parseLoadout(raw: unknown): LoadoutEntry[] {
+  if (typeof raw !== 'string' || raw.length === 0) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(isLoadoutEntry);
+}
+
+const TARGET_SPECS: ReadonlySet<string> = new Set(['scoredEnemy', 'nearestEnemy', 'lowestAlly', 'self']);
+
+function isCondition(c: unknown): c is LoadoutCondition {
+  if (typeof c !== 'object' || c === null) return false;
+  const kind = (c as { kind?: unknown }).kind;
+  switch (kind) {
+    case 'always':
+      return true;
+    case 'selfHpBelow':
+    case 'allyHpBelow':
+      return typeof (c as { pct?: unknown }).pct === 'number';
+    case 'enemyWithin':
+      return typeof (c as { range?: unknown }).range === 'number';
+    case 'notActive':
+      return typeof (c as { conditionId?: unknown }).conditionId === 'string';
+    default:
+      return false;
+  }
+}
+
+/** Structural validation only — whether the feat/spell EXISTS is the gate's job. */
+function isLoadoutEntry(e: unknown): e is LoadoutEntry {
+  if (typeof e !== 'object' || e === null) return false;
+  const { action, condition, target } = e as Record<string, unknown>;
+  if (!isCondition(condition)) return false;
+  switch (action) {
+    case 'strike':
+      return target === 'scoredEnemy' || target === 'nearestEnemy';
+    case 'cast':
+      return typeof (e as { spellId?: unknown }).spellId === 'number' && TARGET_SPECS.has(String(target));
+    case 'ability':
+      return typeof (e as { featId?: unknown }).featId === 'number' && TARGET_SPECS.has(String(target));
+    case 'toggle':
+      return typeof (e as { featId?: unknown }).featId === 'number';
+    case 'consume':
+      return typeof (e as { slotIndex?: unknown }).slotIndex === 'number' && TARGET_SPECS.has(String(target));
+    default:
+      return false;
+  }
+}
+
 export interface ResolvedAction {
   entry: LoadoutEntry;
   target: Combatant | null; // null only for toggles

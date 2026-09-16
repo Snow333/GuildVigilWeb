@@ -6,8 +6,9 @@
 
 import { abilityMod } from '@sim/heroes/types';
 import { SIZE_RADIUS } from '@content/combat';
-import { enemiesById } from '@sim/registry';
+import { enemiesById, enemyClassesById, enemyRacesById } from '@sim/registry';
 import { parseAbilities, resolveEnemyAbilities } from './enemyAbilities';
+import { parseLoadout } from './loadout';
 import type { Combatant } from './types';
 
 /**
@@ -23,13 +24,29 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
   if (!row) throw new Error(`buildEnemy: unknown enemy ${enemyId}`);
   const level = row.base_level as number;
   /**
-   * BRIEF #26 — the statblock's authored abilities finally reach the engine.
-   * Riders flow through brief #24's channel; undead immunity DERIVES from
-   * `enemy_type` rather than from the ability string, so a new undead row is
-   * immune the day it is authored. See enemyAbilities.ts for both decisions.
+   * BRIEF #30 — the race and the class.
+   *
+   * ⚠ BOTH ARE OPTIONAL AND BOTH DEFAULT TO TODAY'S BEHAVIOUR. A row with no
+   * race_id and no class_id builds byte-identically to pre-#30: empty loadout,
+   * melee ranges, abilities from its own column alone. That is what lets the
+   * 45 rows migrate row-by-row instead of in one jump, and it is what keeps
+   * every existing test meaningful.
    */
+  const race = row.race_id === null ? undefined : enemyRacesById.get(row.race_id as number);
+  const cls = row.class_id === null ? undefined : enemyClassesById.get(row.class_id as number);
+  /**
+   * ⚠ THE RACE'S ABILITIES MERGE WITH THE ROW'S, RACE FIRST, DEDUPED. This is
+   * the whole point of a race being mechanical rather than a label: the
+   * Vanguard batch's 21 rows authored an EMPTY abilities string (brief #27 §1),
+   * and they now inherit from what they ARE — a Hobgoblin Vanguard fights in
+   * formation because Hobgoblins do, without anyone re-authoring 21 rows.
+   *
+   * Row-authored wins on ORDER but duplicates collapse, so a row naming an
+   * ability its race already grants is a no-op rather than a double-application.
+   */
+  const raceAbilities = parseAbilities(race?.intrinsic_abilities);
   const abilities = resolveEnemyAbilities(
-    parseAbilities(row.abilities),
+    [...new Set([...raceAbilities, ...parseAbilities(row.abilities)])],
     (row.enemy_type as string | null) ?? null,
   );
   return {
@@ -41,14 +58,29 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     pos: { x: 0, y: 0 },
     // Brief #20: the CONTENT says 'large'; the radius derives here so the knob
     // stays in one place (SIZE_RADIUS, beside ARENA). Unknown/absent → Medium.
-    radius: SIZE_RADIUS[(row.size as string | null) ?? 'medium'] ?? 0,
+    // ⚠ Brief #30: the ROW still wins over its race. A race states the default
+    // body for its kind; a row that authored its own size did so on purpose,
+    // and silently overriding hand-tuned content from a template is how a
+    // generated system starts lying about what the player fights.
+    radius: SIZE_RADIUS[(row.size as string | null) ?? (race?.size as string | undefined) ?? 'medium'] ?? 0,
     maxHp: row.hp,
     hp: row.hp,
     ac: row.ac,
     attackBonus: row.attack_bonus,
     damageDice: row.damage_dice,
-    weaponRange: 1,
-    engageRange: 1, // enemy statblocks are melee until the registry grows ranged rows
+    /**
+     * ⚠ RANGES COME FROM THE CLASS NOW (brief #30). These two lines used to read
+     * `weaponRange: 1, engageRange: 1` with the comment "enemy statblocks are
+     * melee until the registry grows ranged rows". The registry has grown them.
+     *
+     * ⚠ `engageRange` MUST track the class, not stay at 1. Measured before this
+     * changed: an enemy with a 6-range attack and `engageRange: 1` produced 0
+     * standoff moves and 20 engage moves over 20 seeds — it walks into melee to
+     * use a ranged attack. That is brief #15's wizard bug, enemy-side, and it is
+     * why these are two independent terms rather than one.
+     */
+    weaponRange: (cls?.weapon_range as number | undefined) ?? 1,
+    engageRange: (cls?.engage_range as number | undefined) ?? 1,
     weaponAgile: false,
     weaponPenalty: 0,
     weaponSpecBonus: 0,
@@ -71,6 +103,15 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     athletics: enemySkill(level, row.str as number),
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
+    /**
+     * ⚠ THE CADENCE COMES FROM THE CLASS (brief #30). Without it a classed
+     * enemy is strictly WEAKER than an unclassed one — measured at -41% to
+     * -69% damage, because the AI spends a 2-action ability every action while
+     * a plain action is a two-swing burst. See `Combatant.abilityCadenceTicks`.
+     * Unclassed rows get 0 and behave exactly as they did before this brief.
+     */
+    abilityCadenceTicks: (cls?.ability_cooldown_ticks as number | undefined) ?? 0,
+    lastAbilityTick: -Infinity,
     pendingPoisonDice: null,
     /**
      * ⚠ THIS LINE USED TO READ `weaponRiders: []` with the comment "enemies
@@ -91,7 +132,21 @@ export function buildEnemy(enemyId: number, instanceId: string): Combatant {
     saves: { fort: 2 + level, ref: 2 + level, will: 1 + level },
     tempHp: 0,
     casting: null,
-    loadout: [],
+    /**
+     * ⚠ THE LINE THAT OPTED EVERY ENEMY OUT OF THE GAME'S TACTICAL LAYER
+     * (brief #30). This read `loadout: []` for every enemy in the registry,
+     * while `pickAction` walked `u.loadout` for heroes and enemies alike — so
+     * the machinery to make enemies fight differently existed and was reachable
+     * by nobody. Verified before changing it: §1's six witnesses, each with a
+     * negative control returning zero.
+     *
+     * ⚠ `isCaster`/`casting` STAY as they are, and that is not an oversight.
+     * A cantrip needs no casting resources — `canAfford` short-circuits at
+     * `spell_level <= 0` — so the Caster and Zealot classes work with
+     * `casting: null` (measured: 2,796 casts over 20 fights). Enemy spell SLOTS
+     * are a resource-economy question this brief deliberately leaves shut.
+     */
+    loadout: parseLoadout(cls?.loadout),
     /**
      * ⚠ AoO NOW COMES FROM CONTENT (brief #19 §10.2). This line used to read
      * `reactions: []` with the comment "enemies have intrinsic AoO in the

@@ -402,6 +402,17 @@ export function assembleHero(kit: HeroKit): DispatchHero {
     athletics: skill('athletics'),
     abilityUses: new Map(),
     abilityReadyAt: new Map(),
+    /**
+     * ⚠ HEROES HAVE NO ABILITY CADENCE, AND THAT IS DELIBERATE (brief #30).
+     * The cadence exists because an AI cannot choose its moment: the enemy
+     * loadout walk spends a 2-action ability every action, turning it into a
+     * permanent swing-rate cut. A player picks the moment, which is the whole
+     * design of the action-cost model. Imposing a cadence here would re-tune
+     * every class in the game from an enemy-content brief — hero ability pacing
+     * belongs to brief #29.
+     */
+    abilityCadenceTicks: 0,
+    lastAbilityTick: -Infinity,
     pendingPoisonDice: null,
     // The per-dispatch mirror of the kit's pouch (brief #23 M3). Index-aligned
     // with kit.quickSlots so consumption reconciles positionally afterwards.

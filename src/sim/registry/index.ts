@@ -5,7 +5,8 @@
  */
 
 import {
-  ancestries, buildings, class_progression, classes, enemies, npcs, quests, shop_stock, skills, spells,
+  ancestries, buildings, class_progression, classes, enemies, enemy_classes, enemy_races,
+  npcs, quests, shop_stock, skills, spells,
   story_dialogue, storyline_quests, storylines, warlock_spell_costs, world_regions,
 } from '@content/generated';
 import type { XpSourceResolver } from '@sim/heroes/xp';
@@ -13,6 +14,24 @@ import type { XpSourceResolver } from '@sim/heroes/xp';
 // Key types widened to number: the generated `as const` tables produce literal
 // ID unions, but lookups arrive as plain numbers from sim state.
 export const enemiesById = new Map<number, (typeof enemies)[number]>(enemies.map((e) => [e.id, e]));
+
+/**
+ * ENEMY RACES AND CLASSES (brief #30). A race is what a creature IS; a class is
+ * what it DOES.
+ *
+ * ⚠ These are looked up by `buildEnemy` and by nothing else. The race's
+ * `intrinsic_abilities` MERGE into the row's own `abilities` there, which is
+ * what makes a race mechanical rather than a label — fix the race and every row
+ * of that race is fixed. The class carries the `loadout` that `pickAction` has
+ * always walked unit-agnostically (verified: brief #30 §1, six witnesses).
+ */
+export const enemyRacesById = new Map<number, (typeof enemy_races)[number]>(enemy_races.map((r) => [r.id, r]));
+export const enemyClassesById = new Map<number, (typeof enemy_classes)[number]>(enemy_classes.map((c) => [c.id, c]));
+export const enemyRacesByName = new Map<string, (typeof enemy_races)[number]>(enemy_races.map((r) => [r.name, r]));
+export const enemyClassesByName = new Map<string, (typeof enemy_classes)[number]>(enemy_classes.map((c) => [c.name, c]));
+/** The four classifications, as the composition gate counts them. */
+export const ENEMY_CLASSIFICATIONS = ['Fodder', 'Melee', 'Ranged', 'Magic'] as const;
+export type EnemyClassification = (typeof ENEMY_CLASSIFICATIONS)[number];
 export const questsById = new Map<number, (typeof quests)[number]>(quests.map((q) => [q.id, q]));
 export const classesById = new Map<number, (typeof classes)[number]>(classes.map((c) => [c.id, c]));
 export const spellsById = new Map<number, (typeof spells)[number]>(spells.map((s) => [s.id, s]));

@@ -27,7 +27,8 @@
     "portraits": "node tools/build-portraits.mjs",
     "class-chart": "node tools/build-class-chart.mjs",
     "db:apply": "node tools/apply-seed.mjs",
-    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "taxonomy": "node tools/check-enemy-taxonomy.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm taxonomy && pnpm test",
     "size": "node tools/check-bundle-size.mjs",
     "figures": "node tools/build-figures.mjs"
   },

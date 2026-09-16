@@ -11,6 +11,8 @@ export { class_weapon_proficiency } from './class_weapon_proficiency';
 export { classes } from './classes';
 export { eight_pillars } from './eight_pillars';
 export { enemies } from './enemies';
+export { enemy_classes } from './enemy_classes';
+export { enemy_races } from './enemy_races';
 export { factions } from './factions';
 export { feats } from './feats';
 export { item_properties } from './item_properties';

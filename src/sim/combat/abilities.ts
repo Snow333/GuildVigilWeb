@@ -132,6 +132,19 @@ export function abilityReady(u: Combatant, featId: number, tick: number): boolea
   if (def.oncePerCombat && (u.abilityUses.get(featId) ?? 0) >= 1) return false;
   const readyAt = u.abilityReadyAt.get(featId);
   if (readyAt !== undefined && tick < readyAt) return false;
+  /**
+   * ⚠ THE PER-UNIT CADENCE (brief #30) — rations the VERB, not the feat.
+   *
+   * Applies only to ABILITY STRIKES, and only to units that declare a cadence
+   * (every hero and every unclassed enemy has 0, so this is a no-op for them).
+   *
+   * Non-strike abilities are exempt on purpose: Determination clears a
+   * condition and Defensive Ward buffs an ally, and neither trades away a
+   * swing — they cost one action and are already gated by `abilityWorthUsing`
+   * plus their own cooldowns. The damage arithmetic this cadence corrects is
+   * specific to replacing a two-swing burst with one swing.
+   */
+  if (def.isStrike && u.abilityCadenceTicks > 0 && tick - u.lastAbilityTick < u.abilityCadenceTicks) return false;
   return true;
 }
 
@@ -141,14 +154,30 @@ export function consumeAbility(u: Combatant, featId: number, tick: number): void
   if (!def) return;
   u.abilityUses.set(featId, (u.abilityUses.get(featId) ?? 0) + 1);
   if (def.cooldownTicks > 0) u.abilityReadyAt.set(featId, tick + def.cooldownTicks);
+  // Only a strike starts the cadence — see `abilityReady` for why.
+  if (def.isStrike) u.lastAbilityTick = tick;
 }
 
 /**
  * The interval this ability imposes on the NEXT action — the time cost.
  * `actions: 2` means the swing occupies two actions' worth of the clock.
+ *
+ * ⚠ A UNIT WITH A CADENCE DOES NOT PAY THE MULTIPLIER (brief #30), because it
+ * would be charged TWICE for the same thing. The `actions` cost is PF2E's
+ * three-actions-per-turn economy, and it works for a player because the player
+ * CHOOSES the moment. An AI takes the top matching loadout entry every action,
+ * so for it the rationing is done by `abilityCadenceTicks` — charging the
+ * multiplier on top turns one swing per interval into one swing per two, and
+ * a 2-action ability lands at a quarter of a plain action's swing rate.
+ *
+ * Measured with the multiplier applied to enemies: every melee class was a
+ * strict DOWNGRADE (-35% to -69% damage, and the hero finished with MORE hp
+ * against a classed enemy than an unclassed one). Heroes keep the multiplier
+ * — `abilityCadenceTicks` is 0 for every hero, so this branch never fires for
+ * them and brief #29's balance is untouched.
  */
-export function abilityInterval(baseInterval: number, def: AbilityDef): number {
-  return baseInterval * def.actions;
+export function abilityInterval(baseInterval: number, def: AbilityDef, cadenced = false): number {
+  return cadenced ? baseInterval : baseInterval * def.actions;
 }
 
 // ── Riders on a strike ──────────────────────────────────────────────────────

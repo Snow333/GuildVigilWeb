@@ -26,7 +26,10 @@ export const enemies = [
   "description": "A small, vicious creature with a rusty blade.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 1,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 2,
@@ -53,7 +56,10 @@ export const enemies = [
   "description": "An animated pile of bones.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 15,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 3,
@@ -80,7 +86,10 @@ export const enemies = [
   "description": "A fierce wild wolf.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 7,
+  "class_id": 3,
+  "classification": "Melee"
  },
  {
   "id": 4,
@@ -107,7 +116,10 @@ export const enemies = [
   "description": "An oversized, diseased rodent.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 9,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 5,
@@ -134,7 +146,10 @@ export const enemies = [
   "description": "A cunning reptilian trap-maker.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 2,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 6,
@@ -161,7 +176,10 @@ export const enemies = [
   "description": "A common highway robber.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 7,
@@ -188,7 +206,10 @@ export const enemies = [
   "description": "A shambling corpse.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 16,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 8,
@@ -215,7 +236,10 @@ export const enemies = [
   "description": "A massive venomous spider.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 10,
+  "class_id": 3,
+  "classification": "Melee"
  },
  {
   "id": 9,
@@ -242,7 +266,10 @@ export const enemies = [
   "description": "A dark cult follower with minor magic.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 10,
@@ -269,7 +296,10 @@ export const enemies = [
   "description": "A disciplined goblinoid warrior.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 4,
+  "class_id": 1,
+  "classification": "Melee"
  },
  {
   "id": 11,
@@ -296,7 +326,10 @@ export const enemies = [
   "description": "A battle-hardened orc.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 5,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 12,
@@ -323,7 +356,10 @@ export const enemies = [
   "description": "A ravenous undead with paralyzing claws.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 17,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 13,
@@ -350,7 +386,10 @@ export const enemies = [
   "description": "A massive, stealthy goblinoid brute.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 6,
+  "class_id": 3,
+  "classification": "Melee"
  },
  {
   "id": 14,
@@ -377,7 +416,10 @@ export const enemies = [
   "description": "A bull-headed monster that charges ferociously.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 11,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 15,
@@ -404,7 +446,10 @@ export const enemies = [
   "description": "An intelligent undead that drains life.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 18,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 16,
@@ -431,7 +476,10 @@ export const enemies = [
   "description": "A massive, brutish giant.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 12,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 17,
@@ -458,7 +506,10 @@ export const enemies = [
   "description": "A towering green brute that regenerates.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 13,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 18,
@@ -485,7 +536,10 @@ export const enemies = [
   "description": "A dreadful incorporeal spirit.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 19,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 19,
@@ -512,7 +566,10 @@ export const enemies = [
   "description": "A powerful dark magic wielder.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 4,
+  "classification": "Magic"
  },
  {
   "id": 20,
@@ -539,7 +596,10 @@ export const enemies = [
   "description": "A young but deadly dragon.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 22,
+  "class_id": 4,
+  "classification": "Magic"
  },
  {
   "id": 21,
@@ -566,7 +626,10 @@ export const enemies = [
   "description": "An ancient vampire of terrifying power.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 20,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 22,
@@ -593,7 +656,10 @@ export const enemies = [
   "description": "The mightiest of hill giant warriors.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 14,
+  "class_id": 6,
+  "classification": "Ranged"
  },
  {
   "id": 23,
@@ -620,7 +686,10 @@ export const enemies = [
   "description": "An undead archmage of immense power.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 21,
+  "class_id": 4,
+  "classification": "Magic"
  },
  {
   "id": 24,
@@ -647,7 +716,10 @@ export const enemies = [
   "description": "A terrible wyrm of fire and ruin.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "huge"
+  "size": "huge",
+  "race_id": 22,
+  "class_id": 6,
+  "classification": "Ranged"
  },
  {
   "id": 100,
@@ -674,7 +746,10 @@ export const enemies = [
   "description": "Carries more oil than sense. The burned granaries are its work.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 1,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 101,
@@ -701,7 +776,10 @@ export const enemies = [
   "description": "A torch in each hand and orders in its head — goblins do not usually take orders.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 1,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 102,
@@ -728,7 +806,10 @@ export const enemies = [
   "description": "Bred for war, not scavenging. Wargs do not wander this far south on their own.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 8,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 103,
@@ -755,7 +836,10 @@ export const enemies = [
   "description": "Runs for the horn before it runs for cover. Discipline, of a kind.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 1,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 104,
@@ -782,7 +866,10 @@ export const enemies = [
   "description": "A farmer six months ago, by the hands. The Dominion arms whoever it swallows.",
   "has_manufactured_armor": 1,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 105,
@@ -809,7 +896,10 @@ export const enemies = [
   "description": "Vanguard muscle. Takes what the legion will need before the legion arrives.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 5,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 106,
@@ -836,7 +926,10 @@ export const enemies = [
   "description": "A dead soldier still in Dominion issue. Somebody filed a requisition for this.",
   "has_manufactured_armor": 1,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 15,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 107,
@@ -863,7 +956,10 @@ export const enemies = [
   "description": "First in, maps everything, burns nothing. The dangerous kind of scout.",
   "has_manufactured_armor": 1,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 4,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 108,
@@ -890,7 +986,10 @@ export const enemies = [
   "description": "Doors, walls, shield lines. The Breaker does not distinguish.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 5,
+  "class_id": 2,
+  "classification": "Melee"
  },
  {
   "id": 109,
@@ -917,7 +1016,10 @@ export const enemies = [
   "description": "It remembers being a Krathite field-chirurgeon. Its patients still report for duty.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 18,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 110,
@@ -944,7 +1046,10 @@ export const enemies = [
   "description": "Line infantry of the Iron Fist. Fights in formation even when alone.",
   "has_manufactured_armor": 1,
   "aoo_count": 1,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 4,
+  "class_id": 1,
+  "classification": "Melee"
  },
  {
   "id": 111,
@@ -971,7 +1076,10 @@ export const enemies = [
   "description": "The pack answers it; it answers a whistle only two Krathites know.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "large"
+  "size": "large",
+  "race_id": 8,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 112,
@@ -998,7 +1106,10 @@ export const enemies = [
   "description": "Knows Vel's fortification manuals by rote. Assembly is a kind of violence.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 5,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 113,
@@ -1025,7 +1136,10 @@ export const enemies = [
   "description": "The Silent Office denies the necromantic auxiliary exists. The graves disagree.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 4,
+  "classification": "Magic"
  },
  {
   "id": 114,
@@ -1052,7 +1166,10 @@ export const enemies = [
   "description": "Sees the battle three moves out. Kill it first or fight its plan forever.",
   "has_manufactured_armor": 1,
   "aoo_count": 1,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 4,
+  "class_id": 1,
+  "classification": "Melee"
  },
  {
   "id": 115,
@@ -1079,7 +1196,10 @@ export const enemies = [
   "description": "Raised from a frontier barrow the Dominion had no right to open.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 18,
+  "class_id": 5,
+  "classification": "Magic"
  },
  {
   "id": 116,
@@ -1106,7 +1226,10 @@ export const enemies = [
   "description": "Three Krathites and a machine that outranges everything Haven owns.",
   "has_manufactured_armor": 1,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": null,
+  "classification": "Fodder"
  },
  {
   "id": 117,
@@ -1133,7 +1256,10 @@ export const enemies = [
   "description": "Splitfang's decorations on Koss's leash. The vanguard's hard answer.",
   "has_manufactured_armor": 1,
   "aoo_count": 1,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 1,
+  "classification": "Melee"
  },
  {
   "id": 118,
@@ -1160,7 +1286,10 @@ export const enemies = [
   "description": "No insignia, no orders in writing, no face anyone remembers.",
   "has_manufactured_armor": 0,
   "aoo_count": 1,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 3,
+  "classification": "Melee"
  },
  {
   "id": 119,
@@ -1187,7 +1316,10 @@ export const enemies = [
   "description": "Career officer of the Iron Fist. His foothold was to be a province; Haven is the itemized obstacle.",
   "has_manufactured_armor": 1,
   "aoo_count": 2,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": 1,
+  "classification": "Melee"
  },
  {
   "id": 120,
@@ -1214,6 +1346,9 @@ export const enemies = [
   "description": "Mirrors, horns, and coded flags. The Whisper reads every report first.",
   "has_manufactured_armor": 0,
   "aoo_count": 0,
-  "size": "medium"
+  "size": "medium",
+  "race_id": 3,
+  "class_id": null,
+  "classification": "Fodder"
  }
 ] as const;

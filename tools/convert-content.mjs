@@ -29,6 +29,12 @@ const EXPECTED_COUNTS = {
   items: 183,
   item_properties: 33,
   enemies: 45, // 24 originals + 21 "Vanguard's Shadow" order of battle (brief #6)
+  // Brief #30 — enemy races x classes. A race is what a creature IS (it merges
+  // intrinsic abilities into every row of that race); a class is what it DOES
+  // (it carries the loadout pickAction walks). Both gated because both are
+  // hand-authored and irreplaceable.
+  enemy_races: 22,
+  enemy_classes: 6,
   classes: 13,
   ancestries: 6,
   skills: 15,

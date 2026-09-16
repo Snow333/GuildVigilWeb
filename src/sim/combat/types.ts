@@ -161,6 +161,33 @@ export interface Combatant {
   /** featId -> tick the ability comes off cooldown. */
   abilityReadyAt: Map<number, number>;
   /**
+   * MINIMUM TICKS BETWEEN *ANY* TWO ABILITY STRIKES BY THIS UNIT (brief #30).
+   * 0 = no cadence, which is every hero and every unclassed enemy.
+   *
+   * ⚠ THIS EXISTS BECAUSE AN AI DOES NOT CHOOSE WHEN TO SPEND AN ACTION.
+   * `swingsPerAction` is 2, so a normal action is a two-swing burst while an
+   * ability strike is ONE swing costing `actions` intervals. A player spends
+   * Power Attack at a moment worth 4x a swing; the loadout walk takes the top
+   * matching entry EVERY action, so the same ability becomes a permanent 2-4x
+   * swing-rate cut. Measured before this field existed: an Orc Warrior given
+   * Power Attack every action dealt -41% damage, Intimidating Strike -69%, and
+   * the hero took LESS damage from the classed enemy than the plain one
+   * (1,862 -> 694). Classes made enemies strictly weaker — the opposite of the
+   * intent, and the reason d4 completion ROSE 57.7 -> 67.3 instead of falling.
+   *
+   * ⚠ IT IS PER-UNIT, NOT PER-FEAT, and that is the point: it rations the
+   * VERB, so a two-ability class cannot sidestep it by alternating. The
+   * existing `abilityReadyAt` cooldown is per-feat and answers a different
+   * question ("is THIS ability recovered?").
+   *
+   * ⚠ HEROES MUST KEEP 0. Hero ability pacing is brief #29's territory and is
+   * balanced around player choice; imposing a cadence there would silently
+   * re-tune every class in the game from an enemy-content brief.
+   */
+  abilityCadenceTicks: number;
+  /** Tick of this unit's last ability strike; -Infinity until the first. */
+  lastAbilityTick: number;
+  /**
    * THE EQUIPPED WEAPON'S RIDER EFFECTS (brief #24 M1) — flaming, wounding,
    * venom and the rest, as parsed by `deriveItem`.
    *

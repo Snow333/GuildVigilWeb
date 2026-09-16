@@ -12,6 +12,8 @@ export const CONTENT_MANIFEST = {
   "classes": 13,
   "eight_pillars": 8,
   "enemies": 45,
+  "enemy_classes": 6,
+  "enemy_races": 22,
   "factions": 0,
   "feats": 227,
   "item_properties": 33,
