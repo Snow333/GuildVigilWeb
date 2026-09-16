@@ -65,6 +65,7 @@ each session. The files below are what those prompts point at.
 
 | Order | File | Becomes | First action |
 |---|---|---|---|
+| 1 | [`SESSION-ability-modelling.md`](SESSION-ability-modelling.md) | #31 | ⬅ **NEXT.** Model 3–5 abilities for each of #29's 33 approved paths. ⚠ Design half is safe now; implementation needs `src/sim/combat/**` and collides with #30 — the file's §6 says how to check. §7 holds one safe code task (grey the 42 dead feats out of the picker). |
 | 1 | [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | #29 | ✅ **DONE.** Audit → `class-abilities-phase1-findings.md` (87% inert, not 63%); design → `29-approved-selection.md` (33 paths). Next: model the abilities. |
 | 1 | [`SESSION-enemy-specification.md`](SESSION-enemy-specification.md) | #30 | Verify `pickAction` works for non-heroes — the races×classes plan rests on it being wiring. |
 | 2 | [`SESSION-ranged-enemies.md`](SESSION-ranged-enemies.md) | #28 | ⚠ **A BALANCE brief, not a wiring task.** Unblocks Ranged *and* real enemy Magic. |

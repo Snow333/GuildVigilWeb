@@ -1,16 +1,20 @@
 # Session start prompts — copy and paste
 
-Three sessions, in this order. Each block below is the **entire** opening message — paste it into a
+Four sessions. Each block below is the **entire** opening message — paste it into a
 new session and nothing else is needed.
 
-**Order: #29 → #30 → #28.** #29 and #30 may run at the same time (they own different directories).
-#28 runs last.
+**Order: #29 ✅ done → #30 (running) → #31 next → #28 last.** #31's design half may start now; its
+implementation half needs `src/sim/combat/**` and must wait for #30.
 
 ---
 
 ## 1️⃣ SESSION #29 — Class abilities and specialization paths
 
-*Run this first. May run in parallel with #30.*
+✅ **DONE, 2026-09-15.** Audit → `class-abilities-phase1-findings.md` (the feat system is **87%
+inert — 30 of 227 reach a consumer**, not the 63% this prompt assumed). Design → `29-approved-selection.md`
+(**33 paths**, pared from 79). Its successor is session #31 below.
+
+<details><summary>original prompt, for the record</summary>
 
 ```
 Read output/briefs/SESSION-class-abilities.md in C:\GuildVigilWeb and follow it.
@@ -24,6 +28,36 @@ Read §0 before anything else — do not benchmark against superseded goals or
 re-open settled decisions. Build, don't theorycraft.
 
 You own src/sim/heroes/** for this session. A parallel session may own
+src/sim/combat/**. Never `git add -A`; stage by explicit path.
+```
+</details>
+
+---
+
+## 4️⃣ SESSION #31 — Model the abilities for the 33 approved paths
+
+*⬅ **NEXT.** The design half may start immediately. The implementation half collides with #30 —
+the session file's §6 says how to check.*
+
+```
+Read output/briefs/SESSION-ability-modelling.md in C:\GuildVigilWeb and follow it.
+
+Start with §6 and tell me in one line whether the implementation half is blocked
+before you do anything else.
+
+This is step three of a settled sequence: list 7 paths per class -> pare to 3-5 ->
+model the abilities. The first two are done. The 33 approved paths are in
+output/briefs/29-approved-selection.md and they are NOT to be re-opened, re-priced
+or re-derived. The feat audit is done too — cite class-abilities-phase1-findings.md,
+do not re-measure it.
+
+Reuse authored feats over inventing new ones: 89 of the 197 dead feats sit under
+hooks this selection already buys, and Steven's own touch-damage wizard turned out
+to be authored twice over already. Name the feat id you are reviving.
+
+Read §0 before anything else. Build, don't theorycraft.
+
+You own src/sim/heroes/** for this session. A parallel session owns
 src/sim/combat/**. Never `git add -A`; stage by explicit path.
 ```
 
