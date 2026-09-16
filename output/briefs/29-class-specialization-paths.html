@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Brief 29 — specialization paths</title>
+<style>
+  .wrap { max-width: 940px; }
+  h2 { font-size: 15px; margin: 20px 0 4px; }
+  h2:first-child { margin-top: 0; }
+  .sub { color: var(--muted-foreground); font-size: 12px; margin: 0 0 12px; }
+  .legend { display:flex; gap:16px; font-size:11px; color:var(--muted-foreground); margin-bottom:16px; flex-wrap:wrap }
+  .legend b { color: var(--foreground); font-weight:600 }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; vertical-align:middle; margin-right:4px }
+  .g { background:#5a8f5a } .y { background:#d2a24c } .r { background:#b0524a }
+  .cls { border:1px solid var(--border); border-radius:6px; margin-bottom:10px; overflow:hidden }
+  .chead { display:flex; align-items:baseline; gap:10px; padding:7px 12px;
+           background: color-mix(in srgb, var(--border) 25%, transparent); font-size:13px; font-weight:600 }
+  .cmeta { font-size:11px; color:var(--muted-foreground); font-weight:400 }
+  .warn { color:#b0524a; font-size:11px; font-weight:600 }
+  .path { display:grid; grid-template-columns:18px 150px 1fr 74px; gap:9px; align-items:center;
+          padding:5px 12px; font-size:12px; border-top:1px solid color-mix(in srgb,var(--border) 35%,transparent) }
+  .pnum { color:var(--muted-foreground); font-size:11px; text-align:right }
+  .pname { font-weight:600 }
+  .pitch { color:var(--muted-foreground) }
+  .mark { font-size:10px; text-align:right; white-space:nowrap }
+  .hooktab { border-collapse:collapse; width:100%; font-size:12px; margin-top:4px }
+  .hooktab th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.04em;
+                color:var(--muted-foreground); padding:5px 8px; border-bottom:1px solid var(--border) }
+  .hooktab td { padding:5px 8px; border-bottom:1px solid color-mix(in srgb,var(--border) 35%,transparent) }
+  .hooktab td.n { text-align:right; font-variant-numeric:tabular-nums }
+  .bar { display:inline-block; height:9px; border-radius:2px; background:#b0524a; vertical-align:middle }
+  .callout { border-left:3px solid #d2a24c; padding:9px 13px; margin:14px 0; font-size:12px;
+             background: color-mix(in srgb,#d2a24c 9%,transparent); border-radius:0 4px 4px 0 }
+</style></head><body><div class="wrap">
+
+<h2>79 paths — strike four to six per class</h2>
+<p class="sub">Seven per full class, three per prestige class. The engine mark is mine to worry about; pick on the pitch.</p>
+<div class="legend">
+  <span><span class="dot g"></span><b>Buildable now</b> — content authoring only</span>
+  <span><span class="dot y"></span><b>One existing hook</b> — a consumer learns another verb</span>
+  <span><span class="dot r"></span><b>New system</b> — engine has no model for it</span>
+</div>
+
+<div class="cls"><div class="chead">Fighter <span class="cmeta">STR · martial · 7 working feats — best supported</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Brawler</span><span class="pitch">Shove, trip and knock foes down; control where the fight happens.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Weapon Master</span><span class="pitch">Pick a weapon family and become frightening with it specifically.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Bulwark</span><span class="pitch">Enemies that swing at your allies find you in the way instead.</span><span class="mark"><span class="dot r"></span>taunt</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Shield Wall</span><span class="pitch">Your shield covers the man beside you, not just you.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Executioner</span><span class="pitch">You finish hurt things. Critical hits bite far deeper.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Vanguard</span><span class="pitch">Close the gap fast and land the first blow of every fight.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Warlord</span><span class="pitch">Allies near you fight steadier; you shout them back into line.</span><span class="mark"><span class="dot r"></span>aura</span></div></div>
+
+<div class="cls"><div class="chead">Barbarian <span class="cmeta">STR · martial · 1 working feat (Rage)</span><span class="warn">one hook revives all 12</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Wounded Fury</span><span class="pitch">The closer to death you are, the harder you hit. <b>← your example</b></span><span class="mark"><span class="dot y"></span>rage</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Reckless</span><span class="pitch">Trade defence for offence while raging; AC drops, damage soars.</span><span class="mark"><span class="dot y"></span>rage</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Totem: Dragon</span><span class="pitch">Your rage carries elemental fire into every swing.</span><span class="mark"><span class="dot y"></span>rage</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Come and Get Me</span><span class="pitch">Invite the whole room to hit you, and punish each one that does.</span><span class="mark"><span class="dot r"></span>taunt</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Titan</span><span class="pitch">Grow in size and reach; sweep several foes at once.</span><span class="mark"><span class="dot y"></span>rage</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Unbreakable</span><span class="pitch">Refuse to fall — survive the blow that should have killed you.</span><span class="mark"><span class="dot y"></span>rage</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Terrifying</span><span class="pitch">Your howl breaks nerve; frightened foes fight worse.</span><span class="mark"><span class="dot y"></span>hook</span></div></div>
+
+<div class="cls"><div class="chead">Rogue <span class="cmeta">DEX · skirmisher · 4 working feats</span><span class="warn">one hook revives all 9</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Assassin</span><span class="pitch">Enormous opening strike; if they had not noticed you, they are finished.</span><span class="mark"><span class="dot y"></span>sneak</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Debilitator</span><span class="pitch">Every sneak attack leaves the target slowed, weakened or bleeding.</span><span class="mark"><span class="dot y"></span>sneak</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Poisoner</span><span class="pitch">Coat blades in venom that works long after the cut.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Duellist</span><span class="pitch">Slip attacks, counter, and never be where the blow lands.</span><span class="mark"><span class="dot y"></span>part</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Gang Fighter</span><span class="pitch">Deadly when flanking; you and an ally carve foes apart.</span><span class="mark"><span class="dot y"></span>sneak</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Scout</span><span class="pitch">Find the traps, read the room, open the dungeon safely.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Shadow</span><span class="pitch">Vanish mid-fight and reappear behind them.</span><span class="mark"><span class="dot r"></span>new</span></div></div>
+
+<div class="cls"><div class="chead">Monk <span class="cmeta">DEX/WIS · martial · 3 working feats (the stances)</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Tiger</span><span class="pitch">Fast, bleeding claw strikes.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Crane</span><span class="pitch">Defensive flow — harder to hit, counter on the turn.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Mountain</span><span class="pitch">Immovable; you trade speed for armour you do not wear.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Stunning Fist</span><span class="pitch">Strikes that rattle the brain and cost foes their turn.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Flurry</span><span class="pitch">A blur of strikes rather than one heavy blow.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Ki Channeler</span><span class="pitch">Spend inner focus for bursts of the impossible.</span><span class="mark"><span class="dot r"></span>focus</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Wind Walker</span><span class="pitch">Run walls, cross the room, strike and be gone.</span><span class="mark"><span class="dot r"></span>new</span></div></div>
+
+<div class="cls"><div class="chead">Cleric <span class="cmeta">WIS · caster · 2 working feats</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Battle Priest</span><span class="pitch">Channel divine power through your weapon.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Guardian</span><span class="pitch">Ward allies with shields of force before the blow lands.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Life Domain</span><span class="pitch">Heals land harder and spill over to everyone nearby.</span><span class="mark"><span class="dot y"></span>heal</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Undead Hunter</span><span class="pitch">Your healing burns undead; they flee from you.</span><span class="mark"><span class="dot y"></span>heal</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Field Medic</span><span class="pitch">Patch wounds between fights, not just during them.</span><span class="mark"><span class="dot r"></span>rest</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Domain Caster</span><span class="pitch">Pick a god's domain and gain its signature spells.</span><span class="mark"><span class="dot r"></span>focus</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Warpriest</span><span class="pitch">Heavy armour, real weapons, spells as support not centrepiece.</span><span class="mark"><span class="dot r"></span>build</span></div></div>
+
+<div class="cls"><div class="chead">Wizard <span class="cmeta">INT · prepared caster · 1 working feat</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Touch Specialist</span><span class="pitch">Close to melee and discharge spells by hand. <b>← your example, 2 feats already authored</b></span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Evoker</span><span class="pitch">Raw damage; your fire and lightning ignore resistance.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Controller</span><span class="pitch">Shape the floor — walls, slows, terrain that fights for you.</span><span class="mark"><span class="dot r"></span>geom</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Spell Penetrator</span><span class="pitch">Beat resistant foes; your spells punch through wards.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Safe Caster</span><span class="pitch">Cast in melee without being punished for it.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Bonded Scholar</span><span class="pitch">An arcane bond lets you recall a spent spell once a day.</span><span class="mark"><span class="dot r"></span>slots</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Metamagician</span><span class="pitch">Bend spells — wider, further, quicker.</span><span class="mark"><span class="dot r"></span>meta</span></div></div>
+
+<div class="cls"><div class="chead">Sorcerer <span class="cmeta">CHA · innate caster</span><span class="warn">0 working feats</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Touch Specialist</span><span class="pitch">The same melee-discharge fantasy, on a CHA chassis.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Draconic Bloodline</span><span class="pitch">Your heritage shows: elemental damage and scaled hide.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Empowered Evoker</span><span class="pitch">Damage spells roll better; ones become something else.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Dangerous Sorcery</span><span class="pitch">Bigger spells hit harder simply for being bigger.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Bloodline Focus</span><span class="pitch">A wellspring of innate power you spend and refill.</span><span class="mark"><span class="dot r"></span>focus</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Crossblooded</span><span class="pitch">Two heritages, blended — off-list spells others cannot reach.</span><span class="mark"><span class="dot r"></span>build</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Presence</span><span class="pitch">Overwhelming force of personality; foes save worse against you.</span><span class="mark"><span class="dot y"></span>hook</span></div></div>
+
+<div class="cls"><div class="chead">Warlock <span class="cmeta">CHA · pact caster · spine lifted from legacy Pact Boon</span><span class="warn">0 working feats</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Pact of the Blade</span><span class="pitch">A summoned weapon; you fight in melee and drink life from kills.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Pact of the Tome</span><span class="pitch">Borrowed cantrips from any tradition; breadth over depth.</span><span class="mark"><span class="dot r"></span>build</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Pact of the Chain</span><span class="pitch">A familiar that flanks for you and fetches trouble.</span><span class="mark"><span class="dot r"></span>pets</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Blast Shaper</span><span class="pitch">Eldritch Blast becomes yours — harder, and it shoves.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Hexer</span><span class="pitch">Curse one enemy and everything you do to them lands worse.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Shadow Walker</span><span class="pitch">Step through darkness; see in it, move through it.</span><span class="mark"><span class="dot r"></span>new</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Patron's Favour</span><span class="pitch">Pact energy regenerates mid-fight; sustained pressure.</span><span class="mark"><span class="dot r"></span>pool</span></div></div>
+
+<div class="cls"><div class="chead">Ranger <span class="cmeta">DEX/WIS · 10 class slots granted</span><span class="warn">0 feats authored — engine ready</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Hunter</span><span class="pitch">Mark one quarry; hit it more often than anything else.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Archer</span><span class="pitch">Ranged specialist — volleys, and no penalty firing into melee.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Two-Blade</span><span class="pitch">Twin weapons, fast paired strikes.</span><span class="mark"><span class="dot y"></span>hook</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Trapper</span><span class="pitch">Set snares before the fight; the room works for you.</span><span class="mark"><span class="dot r"></span>new</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Pathfinder</span><span class="pitch">Travel faster, spot ambushes, read the wilderness.</span><span class="mark"><span class="dot r"></span>new</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Beast Companion</span><span class="pitch">An animal that fights beside you.</span><span class="mark"><span class="dot r"></span>pets</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Skirmisher</span><span class="pitch">Strike and withdraw before they can answer.</span><span class="mark"><span class="dot y"></span>hook</span></div></div>
+
+<div class="cls"><div class="chead">Bard <span class="cmeta">CHA · 10 class slots granted</span><span class="warn">0 feats authored — engine ready</span></div>
+<div class="path"><span class="pnum">1</span><span class="pname">Inspirer</span><span class="pitch">Your song makes the whole party hit harder.</span><span class="mark"><span class="dot r"></span>aura</span></div>
+<div class="path"><span class="pnum">2</span><span class="pname">Dirge</span><span class="pitch">A song of despair; enemies near you fight worse.</span><span class="mark"><span class="dot r"></span>aura</span></div>
+<div class="path"><span class="pnum">3</span><span class="pname">Loremaster</span><span class="pitch">Know things — better skills, and identify what you are facing.</span><span class="mark"><span class="dot g"></span>now</span></div>
+<div class="path"><span class="pnum">4</span><span class="pname">Battle Chanter</span><span class="pitch">Fight in the line while keeping the song going.</span><span class="mark"><span class="dot y"></span>spell</span></div>
+<div class="path"><span class="pnum">5</span><span class="pname">Charmer</span><span class="pitch">Talk foes out of fighting; turn one against the rest.</span><span class="mark"><span class="dot r"></span>new</span></div>
+<div class="path"><span class="pnum">6</span><span class="pname">Healer's Refrain</span><span class="pitch">Restorative music that patches the party between rooms.</span><span class="mark"><span class="dot y"></span>heal</span></div>
+<div class="path"><span class="pnum">7</span><span class="pname">Duellist-Poet</span><span class="pitch">Rapier and wit; finesse fighting with a CHA flavour.</span><span class="mark"><span class="dot g"></span>now</span></div></div>
+
+<div class="cls"><div class="chead">The three prestige classes <span class="cmeta">level 10 cap · 5 class slots</span><span class="warn">3 paths each, not 7</span></div>
+<div class="path"><span class="pnum">AT</span><span class="pname">Arcane Trickster</span><span class="pitch">Spell-Thief · Arcane Ambusher · Trapmaster</span><span class="mark"><span class="dot y"></span>shared</span></div>
+<div class="path"><span class="pnum">EK</span><span class="pname">Eldritch Knight</span><span class="pitch">Spellblade · Warded Warrior · Counter-Mage</span><span class="mark"><span class="dot y"></span>shared</span></div>
+<div class="path"><span class="pnum">MT</span><span class="pname">Mystic Theurge</span><span class="pitch">Dual Channel · Greater Healer · Anathema — <b>granted ZERO class slots today</b></span><span class="mark"><span class="dot r"></span>blocked</span></div></div>
+
+<div class="callout"><b>Mystic Theurge needs a progression fix before any path list means anything.</b>
+It is granted zero class-feat slots, so content for it would have nowhere to land. Grant it slots, or cut it.</div>
+
+<h2>Six hooks carry 48 of the 79 paths</h2>
+<p class="sub">Choosing paths effectively chooses a build order — these are shared across classes.</p>
+<table class="hooktab">
+<tr><th>Hook</th><th>Paths</th><th>Classes touched</th><th>Feats revived</th><th style="width:150px"></th></tr>
+<tr><td>spell-effect modifier layer</td><td class="n">14</td><td>Wizard, Sorcerer, Warlock, Bard, 2 prestige</td><td class="n">21</td><td><span class="bar" style="width:100%"></span></td></tr>
+<tr><td>new active verbs</td><td class="n">5</td><td>Fighter, Monk, Rogue, Ranger</td><td class="n">17</td><td><span class="bar" style="width:81%"></span></td></tr>
+<tr><td>stance/rage modifier layer</td><td class="n">5</td><td><b>Barbarian only</b></td><td class="n">12</td><td><span class="bar" style="width:57%"></span></td></tr>
+<tr><td>healing modifier layer</td><td class="n">3</td><td>Cleric, Bard</td><td class="n">11</td><td><span class="bar" style="width:52%"></span></td></tr>
+<tr><td>flat-footed/sneak layer</td><td class="n">4</td><td><b>Rogue only</b> (+ Arcane Trickster)</td><td class="n">9</td><td><span class="bar" style="width:43%"></span></td></tr>
+<tr><td>threat/taunt <b>(new system)</b></td><td class="n">3</td><td>Fighter, Barbarian</td><td class="n">0</td><td><span style="font-size:10px;color:#b0524a">no authored content</span></td></tr>
+</table>
+<p class="sub" style="margin-top:8px">Every hook but the last pays for itself by reviving feats already written.
+Threat/taunt is pure new system — and two of your three examples need it.</p>
+
+</div></body></html>
