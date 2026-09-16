@@ -37,6 +37,7 @@ import {
   activeFeats, autoGrantsForLevel, featsById, offersForSlot, slotsForLevel, FEAT_SLOT_KINDS,
   type FeatOffer, type FeatSlotKind,
 } from '@sim/heroes/feats';
+import { takeLongRestParty } from '@sim/heroes/longRest';
 import { castableSpells } from '@sim/heroes/knownSpells';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
@@ -589,6 +590,18 @@ export class CampaignSession {
     let minute = this.minute;
 
     for (const h of this.heroes) h.wounded = 0;
+    /**
+     * ⚠ THE LONG REST HAPPENS HERE, AT THE HAVEN — NOT IN THE DUNGEON.
+     * `dungeon/dispatch.ts` already has a rest and it declares itself SHORT
+     * (`explore.rested` with `package: 'short'`): it heals a fraction of max HP
+     * and is rationed by `PROFILES.roomsPerRestCharge`. If that path refreshed
+     * long-rest charges too, the third limiter tier would collapse into the
+     * second and a once-per-expedition ability would fire every few rooms.
+     *
+     * So the boundary is the dispatch: the party rests between expeditions,
+     * at the same moment the wounded ratchet clears above.
+     */
+    takeLongRestParty(this.heroes);
     /**
      * ⚠ THE MASK IS TAKEN BEFORE THE DISPATCH, AND THAT ORDER IS LOAD-BEARING.
      * `toCombatQuickSlots` mirrors only the items the ENGINE can execute, so a

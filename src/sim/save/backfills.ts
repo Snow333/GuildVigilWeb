@@ -32,6 +32,11 @@ interface SpellBearing {
   }[];
 }
 
+/** Long-rest charges (brief #31 D2) — absent is the valid "rested" state. */
+interface RestBearing {
+  party?: { hero?: { longRestUses?: unknown } | null }[];
+}
+
 /**
  * Hero identity (brief #10): saves written before the founding muster carry no
  * ancestry/gender. Assign both from the hero's id, once, and persist on the
@@ -129,7 +134,58 @@ export const backfillQuickSlots: BackfillStage = (state) => {
   return touched ? s : state;
 };
 
+/**
+ * Long-rest charges (brief #31 D2): saves predate the third limiter tier.
+ *
+ * ⚠ INVENTS NOTHING, AND THAT IS THE WHOLE DESIGN. An absent map already means
+ * "fully rested" to `longRest.ts`, so this stage only NORMALISES the shape —
+ * it never guesses how many charges a veteran hero has spent. A veteran party
+ * therefore loads rested, which is the generous and predictable reading; the
+ * alternative (guessing spent charges) would silently disarm an ability the
+ * player was counting on.
+ *
+ * ⚠ REPAIRS a hand-edited or future-build save rather than letting a resolver
+ * trip later: non-object maps are replaced, and entries that are not positive
+ * integers are dropped. Same posture as `backfillQuickSlots`.
+ */
+export const backfillLongRestUses: BackfillStage = (state) => {
+  const s = state as RestBearing | null;
+  if (!s || !Array.isArray(s.party)) return state;
+
+  let touched = false;
+  for (const kit of s.party) {
+    const hero = kit?.hero;
+    if (!hero || typeof hero !== 'object') continue;
+
+    const uses = hero.longRestUses;
+    if (uses === undefined) continue; // absent == fully rested; nothing to do
+
+    if (uses === null || typeof uses !== 'object' || Array.isArray(uses)) {
+      delete hero.longRestUses;
+      touched = true;
+      continue;
+    }
+
+    const clean: Record<number, number> = {};
+    let changed = false;
+    for (const [key, value] of Object.entries(uses as Record<string, unknown>)) {
+      const featId = Number(key);
+      if (!Number.isInteger(featId) || featId <= 0 || typeof value !== 'number'
+        || !Number.isInteger(value) || value <= 0) {
+        changed = true;
+        continue;
+      }
+      clean[featId] = value;
+    }
+    if (changed) {
+      hero.longRestUses = clean;
+      touched = true;
+    }
+  }
+  return touched ? s : state;
+};
+
 /** Stages run in order. Append only — a stage's position is part of its contract. */
 export const SAVE_BACKFILLS: readonly BackfillStage[] = [
-  backfillHeroIdentity, backfillKnownSpells, backfillQuickSlots,
+  backfillHeroIdentity, backfillKnownSpells, backfillQuickSlots, backfillLongRestUses,
 ];

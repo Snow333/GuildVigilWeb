@@ -46,6 +46,20 @@ export interface HeroState {
   /** PF2E wounded ratchet value (persists between fights until treated). */
   wounded: number;
   /**
+   * THE THIRD LIMITER TIER — featId -> uses spent since the last long rest
+   * (brief #31 D2). See `heroes/longRest.ts` for the rules.
+   *
+   * ⚠ THIS LIVES ON THE SHEET BECAUSE IT MUST OUTLIVE THE ENCOUNTER. The other
+   * two limiters (`Combatant.abilityUses`, `abilityReadyAt`) are rebuilt from
+   * the sheet every dispatch and so needed no migration; this one cannot be,
+   * or a charge spent in room 2 would return in room 3.
+   *
+   * ⚠ Optional because saves predate it, and ABSENT MEANS FULLY RESTED — an
+   * old save loads as a rested party rather than one with unknown charges.
+   * `backfillLongRestUses` normalises the shape without inventing a number.
+   */
+  longRestUses?: Record<number, number>;
+  /**
    * Player-chosen at the founding muster; deterministically backfilled on old
    * saves (heroes/ancestry). COSMETIC — identity + portrait only, zero stat
    * effect, until a systems brief says otherwise. Nothing in assembly.ts,
