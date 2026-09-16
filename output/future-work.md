@@ -116,32 +116,54 @@ keeps re-earning its place.
 - ⚠ **`trip` currently applies `prone` WITHOUT an opposed athletics check** — the rider channel has
   no place to hang a contest. Revisit with M3/M4, where the contest machinery is in scope.
 
-### 1b. ⚠ THE FEAT SYSTEM IS 63% INERT — the largest instance of the recurring defect
+### 1b. ⚠ THE FEAT SYSTEM IS 87% INERT — the largest instance of the recurring defect
 
-**Measured 2026-09-13 via `isEffectReady`** (the repo's own predicate, not a text search):
+**AUDITED 2026-09-15** — `output/briefs/class-abilities-phase1-findings.md` supersedes the numbers
+that were here. The 2026-09-13 figures below the line were the readiness *predicate's* answer and
+were too optimistic by 2.8×.
 
 | | count |
 |---|---|
 | Feats authored | **227** |
-| Feats that reach the engine | **83** |
-| **Feats that do NOTHING** | **144 (63%)** |
+| Passes `isEffectReady` (the repo's own gate) | 83 |
+| **Feats that actually reach a consumer** | **30 (13%)** |
+| **Feats that do NOTHING** | **197 (87%)** |
 | Classes with ZERO feats authored | **5 of 13** — Ranger, Bard, Arcane Trickster, Eldritch Knight, Mystic Theurge |
 
-Per class (live / authored): general+skill 26/43 · Fighter 9/23 · Rogue 9/23 · Cleric 9/23 ·
-Monk 7/21 · Wizard 7/24 · Sorcerer 6/24 · Warlock 6/23 · **Barbarian 4/23**.
+⚠ **THE GATE ITSELF IS INACCURATE.** `isEffectReady` checks that an effect *type* has a consumer,
+but every real consumer matches a narrower payload shape — and two match the feat's **name**.
+`EFFECT_HAS_CONSUMER.passive_modifier = true` covers 119 authored feats and reaches **one**.
 
-**In player terms: you pick a feat at level-up and, 63% of the time, nothing changes in the fight.**
+**In player terms: `offersForSlot` greys a feat only when that gate says no, so the level-up picker
+offers 67 selectable feats of which 42 do nothing — a player picking at random gets a dead feat 63%
+of the time.** Worst on the casters (Sorcerer 59%, Wizard 57%, Cleric 56%); even Fighter is 39%.
+
+**Only 18 feats in the whole game express a class identity** (Fighter 7, Rogue 4, Monk 3, Cleric 2,
+Barbarian 1, Wizard 1 — zero for Sorcerer, Warlock, Ranger, Bard).
 
 ⚠ **This is the EIGHTH occurrence of content authored against a contract with no consumer**, after
 `class_weapon_proficiency`, `items.onHitEffects`, `items.stat_bonus`, the 96 buff/debuff spell rows,
 `enemies.abilities`, `items.loot_tier` and `quests.prerequisites`. It is the largest by a wide
 margin.
 
-⚠ **It also blocks the specialization design Steven asked for.** The "Barbarian who deals more damage
-the lower their health" is his own example, and the Barbarian is the worst class in the table at
-**4 of 23**. You cannot design 7 paths × 13 classes on a system that cannot express them.
+**Ranger and Bard are a pure AUTHORING gap, not an engine gap** — each is granted 10 class-feat
+slots across a career and offered 0 feats. The picker runs; the pool is empty.
 
-**Next step:** `output/briefs/SESSION-class-abilities.md` — Phase 1 is the audit, design comes after.
+**THE SMALL FIX, worth doing on its own:** make the picker grey on real reach rather than on the
+gate. It is independent of every design decision below and it stops players spending choices on
+nothing.
+
+**Design status:** brief #29 proposed 79 paths; Steven pared to **33** on 2026-09-15
+(`output/briefs/29-approved-selection.md`). That selection's hooks would revive **89 of the 197**
+dead feats. Ability modelling is the next session.
+
+⚠ **DEFERRED, NOT FIXED — `Mystic Theurge` is granted ZERO class-feat slots** by
+`class_progression` (all other classes get 5–30). Any content authored for it today would have
+nowhere to land. Prestige classes were dropped from the #29 selection as post-launch, so this is
+parked — but it must be settled before that class is ever built.
+
+⚠ **Ancestry feats: 5 slots per career against a pool of 0 rows** — no feat carries an
+`ancestry_id`, for any of the 13 classes. Documented at `feats.ts:97`; re-confirmed by the audit.
 
 ### 2. Arena / room geometry — ⛔ DROPPED 2026-09-13 (Steven's call)
 

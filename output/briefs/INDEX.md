@@ -42,6 +42,8 @@
 | #25 | *(no brief file)* | shipped | Buff/debuff resolvers — ran as a parallel session off #24's findings. Record = commits `1a96ade`, `755d4a3` + `tests/combat/buffDebuff.test.ts`. |
 | #26 | [`enemy-abilities.md`](enemy-abilities.md) | **APPROVED · M1+M2+M3 IMPLEMENTED** | Making the 45 existing statblocks fight differently. 16 of 19 reachable abilities live. ⚠ M4 DEFERRED (the brief flags it as the one to cut), and the 16 L7+ abilities deferred to the 7+ band. Decisions + measured effect in `output/future-work.md` §1. |
 | #27 | [`enemy-taxonomy.md`](enemy-taxonomy.md) | ⚠ **APPROVED WITH AMENDMENTS** | Enemy taxonomy: 7 families × 5 brackets, L1–20. **Supersedes the 300–500 row-count target.** §9 holds Steven's answers: Brackets IV/V gate on a **playtested L10** (not quest difficulty); the six roles are **superseded by four classifications** (Fodder 40–50% / Melee / Ranged / Magic); ranged split to #28; enemy races+classes and the feat audit split to their own sessions. |
+| #29 | [`29-approved-selection.md`](29-approved-selection.md) | ✅ **APPROVED — 33 paths** | **The current plan for class specialization.** Steven pared #29's 79 paths to 33 across 10 classes (prestige dropped to post-launch). Its hooks would revive **89 of the 197 dead feats**. §3 flags the cost outliers, §4 records the 23 near-free paths left on the table, §5 suggests a build order. ⚠ Mystic Theurge's zero-slot bug is DEFERRED, not fixed. |
+| #29 | [`29-class-specialization-paths.md`](29-class-specialization-paths.md) | superseded by its selection | The full 79 paths with per-path engine marks, kept for the reasoning. **Not the current plan** — read the approved selection above. Mined legacy for two designs: the touch-damage wizard is authored twice over and inert, and Pact Boon (Blade/Tome/Chain) is the Warlock spine. |
 | #30 | [`enemy-specification.md`](enemy-specification.md) | ⚠ **AWAITING APPROVAL** | Enemy races × classes. ✅ **Verified: `pickAction` works for non-heroes — enemy classes are WIRING, not a new system** (6 witnesses, all with negative controls). The legacy `source_id` collision is designed out. ⚠ **Classification cannot be inferred** (two honest readings differ by 51.1 pts) — the gate must read a declared column. ⚠ **Enemy cantrip magic already works with `casting: null`**; #28's Ranged positioning is also unit-agnostic. §9 holds three open questions. |
 
 ## Findings companions — these WIN over their briefs
@@ -52,6 +54,7 @@
 | [`combat-room-findings.md`](combat-room-findings.md) | overrides brief #19 §§12.1 and 13.4 in three places |
 | [`creature-size-findings.md`](creature-size-findings.md) | overrides brief #20 §9.4 — the radius convention is measured, not assumed |
 | [`character-advancement-findings.md`](character-advancement-findings.md) | corrects brief #22 in three places; §4 holds the founding four's measured statblocks |
+| [`class-abilities-phase1-findings.md`](class-abilities-phase1-findings.md) | **overrides `SESSION-class-abilities.md` §3 and `future-work.md` §1b.** The feat system is **87% inert (30 of 227 reach a consumer), not 63%** — `isEffectReady` overstates by 2.8× because it gates on effect TYPE while real consumers match payload shape (twice, the feat's NAME). The picker offers 42 feats that do nothing. Ranger/Bard are an AUTHORING gap only. |
 
 ## Session setups — ready to start
 
@@ -62,7 +65,7 @@ each session. The files below are what those prompts point at.
 
 | Order | File | Becomes | First action |
 |---|---|---|---|
-| 1 | [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | #29 | ⚠ **Audit the 144 inert feats** (63% of 227; 5 of 13 classes have none). Design nothing first. |
+| 1 | [`SESSION-class-abilities.md`](SESSION-class-abilities.md) | #29 | ✅ **DONE.** Audit → `class-abilities-phase1-findings.md` (87% inert, not 63%); design → `29-approved-selection.md` (33 paths). Next: model the abilities. |
 | 1 | [`SESSION-enemy-specification.md`](SESSION-enemy-specification.md) | #30 | Verify `pickAction` works for non-heroes — the races×classes plan rests on it being wiring. |
 | 2 | [`SESSION-ranged-enemies.md`](SESSION-ranged-enemies.md) | #28 | ⚠ **A BALANCE brief, not a wiring task.** Unblocks Ranged *and* real enemy Magic. |
 

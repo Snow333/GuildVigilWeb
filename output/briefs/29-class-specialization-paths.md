@@ -1,6 +1,8 @@
 # Brief #29 — Class specialization paths
 
-**Status:** FOR APPROVAL — 7 paths per class, to be pared to 3–5.
+**Status:** ✅ **SUPERSEDED BY ITS SELECTION** — Steven pared this to 33 paths on 2026-09-15.
+**Read `29-approved-selection.md` for what was chosen and what it commits to.** This file is kept
+for the full 79 and the per-path engine reasoning; it is NOT the current plan.
 **Created:** 2026-09-15, from `SESSION-class-abilities.md` Phase 2.
 **Depends on:** `class-abilities-phase1-findings.md` (the audit). Every ✅/🔸/🔴 below traces to it.
 
