@@ -19,7 +19,7 @@
 
 import { feats } from '@content/generated';
 import { progressionFor } from '@sim/registry';
-import { featEffectsById, isEffectReady, type UnreadyReason } from './featEffects';
+import { featEffectsById, reachesConsumer, type UnreadyReason } from './featEffects';
 import { characterLevel, type HeroFeat, type HeroState } from './types';
 
 export type FeatSlotKind = 'class' | 'general' | 'ancestry' | 'skill';
@@ -207,7 +207,11 @@ export function offersForSlot(
       offer.selectable = false;
       offer.reason = 'level_unmet';
       offer.detail = `Requires level ${levelReq}`;
-    } else if (!isEffectReady(row.id)) {
+    } else if (!reachesConsumer(row.id)) {
+      // ⚠ REACH, NOT THE TYPE GATE. `isEffectReady` alone left 42 of the 67
+      // selectable rows reaching no engine code — a 63% chance of picking a
+      // dead feat (findings §1). Greying on real reach is what makes the
+      // "Not yet available" label true.
       offer.selectable = false;
       offer.reason = 'not_yet_implemented';
     } else {
@@ -281,7 +285,12 @@ export function activeFeats(heroFeats: readonly HeroFeat[]): number[] {
   return heroFeats
     .filter((hf) => {
       const fx = featEffectsById.get(hf.featId);
-      return fx?.effectType === 'combat_action' && isEffectReady(hf.featId);
+      // ⚠ `reachesConsumer`, not `isEffectReady` — the two agree on actives
+      // today (ACTIVE_WIRED's 9 rows all carry a KNOWN_EFFECTS effect), but
+      // only the reach form stays true if ACTIVE_WIRED gains a row before
+      // `abilities.ts` learns its verb. Offering an ability that does nothing
+      // is the loadout-editor version of the picker bug fixed above.
+      return fx?.effectType === 'combat_action' && reachesConsumer(hf.featId);
     })
     .map((hf) => hf.featId);
 }

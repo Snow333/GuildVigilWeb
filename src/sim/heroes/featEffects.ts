@@ -112,6 +112,10 @@ export type UnreadyReason = 'not_yet_implemented' | 'prereq_unmet' | 'already_ta
  * Is this feat's effect something the ENGINE can act on today? Content-spec
  * completeness AND an engine consumer AND (for actives) a wired row.
  * Selection eligibility adds prereqs/level/duplication on top — see `feats.ts`.
+ *
+ * ⚠ TYPE-LEVEL ONLY, AND THAT IS NOT ENOUGH TO GREY A PICKER ROW. This asks
+ * whether the feat's effect *type* has a consumer. Every real consumer matches
+ * something NARROWER — see `featConsumer` below, which is what the picker uses.
  */
 export function isEffectReady(featId: number): boolean {
   const fx = featEffectsById.get(featId);
@@ -120,6 +124,135 @@ export function isEffectReady(featId: number): boolean {
   if (!EFFECT_HAS_CONSUMER[fx.effectType]) return false;
   if (fx.effectType === 'combat_action' && !ACTIVE_WIRED.has(featId)) return false;
   return true;
+}
+
+// ── Real reach: which consumer, if any, actually picks this feat up ──────────
+
+/**
+ * ⚠ WHY THIS EXISTS: `isEffectReady` OVERSTATES WHAT WORKS BY 2.8×.
+ *
+ * Measured in `class-abilities-phase1-findings.md` §1 (2026-09-15) and
+ * reproduced here: 227 authored, **83 pass `isEffectReady`, 30 reach a
+ * consumer**. The gate asks whether the effect TYPE has a consumer, but every
+ * real consumer matches a narrower payload shape — and two of them match the
+ * feat's NAME. `EFFECT_HAS_CONSUMER.passive_modifier = true` alone covers 119
+ * feats and reaches exactly ONE (Sneak Attack).
+ *
+ * `offersForSlot` greyed on the type gate, so it offered 67 selectable feats of
+ * which 42 reached no engine code: a player picking at random got a dead feat
+ * **63% of the time** (findings §1).
+ *
+ * ⚠ THIS TABLE IS A TRANSCRIPTION OF CALL SITES, NOT A DESIGN. Each entry names
+ * the file:line it mirrors. It is the same liar-in-waiting risk as
+ * `EFFECT_HAS_CONSUMER` — narrowed, not eliminated — so
+ * `tests/heroes/featReach.test.ts` drives a hero through `assembleHero` /
+ * `runEncounter` per entry and proves the effect LANDS. A test that asks this
+ * predicate whether a feat is ready is worthless; assert the consumer.
+ *
+ * ⚠ WHEN YOU WIRE A NEW HOOK, ADD ITS MATCHER HERE AND ITS WITNESS THERE.
+ * Wiring a consumer without extending this table leaves the feat greyed out —
+ * silently invisible content, the mirror of the bug this fixes.
+ */
+export interface ConsumerMatcher {
+  /** The consumer function's name, for diagnostics and the witness table. */
+  readonly site: string;
+  /** Where it lives — kept so a moved consumer is findable. */
+  readonly where: string;
+  readonly matches: (fx: ParsedFeatEffect) => boolean;
+}
+
+/** Names matched literally by `encounter.ts` TOGGLE_CONDITIONS. */
+const TOGGLE_FEAT_NAMES: ReadonlySet<string> = new Set([
+  'Rage', 'Tiger Stance', 'Crane Stance', 'Mountain Stance',
+]);
+
+/** Names matched literally by `assembly.ts` reactionIds. */
+const REACTION_FEAT_NAMES: ReadonlySet<string> = new Set(['Reactive Strike', 'Nimble Dodge']);
+
+/** Effects `abilities.ts` KNOWN_EFFECTS can actually execute. */
+const WIRED_ACTIVE_EFFECTS: ReadonlySet<string> = new Set([
+  'strike_with_bonus', 'strike_plus_condition', 'strike_plus_shove',
+  'strike_plus_trip', 'strike_plus_channel',
+  'remove_condition', 'grant_ally_ac', 'apply_weapon_poison',
+]);
+
+export const CONSUMER_MATCHERS: readonly ConsumerMatcher[] = [
+  {
+    site: 'resolveStatMods',
+    where: 'heroes/featEffects.ts',
+    matches: (fx) =>
+      fx.effectType === 'stat_mod' &&
+      (typeof fx.raw['stat'] === 'string' ||
+        typeof (fx.raw['additional'] as { stat?: unknown } | undefined)?.stat === 'string'),
+  },
+  {
+    site: 'resolveSkillMods',
+    where: 'heroes/featEffects.ts',
+    matches: (fx) => fx.effectType === 'skill_mod' && typeof fx.raw['skill'] === 'string',
+  },
+  {
+    site: 'abilityDef',
+    where: 'combat/abilities.ts',
+    matches: (fx) =>
+      fx.effectType === 'combat_action' && WIRED_ACTIVE_EFFECTS.has(fx.raw['effect'] as string),
+  },
+  {
+    site: 'executeToggle',
+    where: 'combat/encounter.ts — BY NAME',
+    matches: (fx) =>
+      (fx.effectType === 'toggle' || fx.effectType === 'stance') && TOGGLE_FEAT_NAMES.has(fx.featName),
+  },
+  {
+    site: 'reactionIds',
+    where: 'campaign/assembly.ts — BY NAME',
+    matches: (fx) => fx.effectType === 'reaction' && REACTION_FEAT_NAMES.has(fx.featName),
+  },
+  {
+    site: 'weaponSpecBonus',
+    where: 'campaign/assembly.ts',
+    matches: (fx) => fx.effectType === 'weapon_spec' && fx.raw['tier_bonus'] !== undefined,
+  },
+  {
+    site: 'sneakDice',
+    where: 'campaign/assembly.ts — one payload shape',
+    matches: (fx) =>
+      fx.effectType === 'passive_modifier' &&
+      fx.raw['trigger'] === 'strike_vs_flat_footed' &&
+      fx.raw['effect'] === 'bonus_damage',
+  },
+  {
+    site: 'partyDungeonBonus',
+    where: 'heroes/featEffects.ts',
+    matches: (fx) => typeof fx.raw['dungeon_bonus'] === 'string',
+  },
+];
+
+const consumerCache = new Map<number, string | null>();
+
+/** Which consumer reads this feat today? Null when nothing in `src/` does. */
+export function featConsumer(featId: number): string | null {
+  const cached = consumerCache.get(featId);
+  if (cached !== undefined) return cached;
+  const fx = featEffectsById.get(featId);
+  let site: string | null = null;
+  if (fx) site = CONSUMER_MATCHERS.find((m) => m.matches(fx))?.site ?? null;
+  consumerCache.set(featId, site);
+  return site;
+}
+
+/**
+ * Does picking this feat change ANYTHING in the engine today? This is the
+ * honest question the level-up picker must ask.
+ *
+ * ⚠ CONJUNCTION WITH `isEffectReady` ON PURPOSE — it only ever NARROWS. Two
+ * feats (#192 Courtly Graces, #193 Experienced Smuggler) are flagged
+ * `implemented: false` yet ARE read by `resolveSkillMods` (findings §3, "the
+ * reverse error"). Dropping the conjunction would un-grey them. Whether
+ * spec-incomplete-but-working content should be offered is Steven's call, not
+ * this module's, so the conservative form ships and the question is flagged.
+ */
+export function reachesConsumer(featId: number): boolean {
+  return isEffectReady(featId) && featConsumer(featId) !== null;
 }
 
 export type Scaling = 'flat' | 'per_level' | 'per_class_level';
