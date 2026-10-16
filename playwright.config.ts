@@ -7,17 +7,21 @@ import { defineConfig } from '@playwright/test';
  * GV_CHROMIUM overrides the browser binary where a preinstalled Chromium must
  * be used instead (e.g. the cloud workspace pins an older revision).
  */
+// GV_PORT lets parallel worktrees run e2e at once without one reusing the
+// other's preview server (reuseExistingServer would silently test the wrong build).
+const PORT = Number(process.env['GV_PORT'] ?? 4173);
+
 export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
   fullyParallel: false,
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: `http://localhost:${PORT}`,
     ...(process.env['GV_CHROMIUM'] ? { launchOptions: { executablePath: process.env['GV_CHROMIUM'] } } : {}),
   },
   webServer: {
-    command: 'pnpm preview --port 4173 --strictPort',
-    port: 4173,
+    command: `node node_modules/vite/bin/vite.js preview --port ${PORT} --strictPort`,
+    port: PORT,
     reuseExistingServer: true,
   },
 });
