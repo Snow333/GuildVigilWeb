@@ -20,11 +20,12 @@ describe('heroSheet — assembly on a plate', () => {
     const sheet = s.heroSheet('hero_1');
     expect(sheet.name).toBe('Torvald');
     expect(sheet.level).toBe(1);
-    expect(sheet.maxHp).toBe(20); // ancestry 8 + max(1, 10 + con 2)
-    expect(sheet.abilities.str).toEqual({ score: 16, mod: 3 });
+    // Human Fighter: template STR 16 / CON 14, Human's two free boosts → STR 18, CON 16.
+    expect(sheet.maxHp).toBe(21); // ancestry 8 + max(1, 10 + con 3)
+    expect(sheet.abilities.str).toEqual({ score: 18, mod: 4 });
     expect(sheet.classes).toEqual([{ classId: 1, name: 'Fighter', level: 1 }]);
     expect(sheet.equipped.map((e) => e.slot).sort()).toEqual(['armor', 'main_hand']);
-    expect(sheet.damageDice).toMatch(/\+3$/); // STR to damage
+    expect(sheet.damageDice).toMatch(/\+4$/); // STR to damage
     expect(sheet.canLevelUp).toBe(false);
     expect(sheet.skills.find((sk) => sk.name === 'athletics')?.ranks).toBe(1); // cap-legal L1 wedge
   });

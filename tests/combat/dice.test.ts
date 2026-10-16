@@ -23,6 +23,20 @@ describe('dice parsing (ported from combat_dice.gd)', () => {
     expect(v).toBeLessThanOrEqual(8);
   });
 
+  it('negative modifiers roll real numbers ("1d6-1" was NaN — every weak-STR hit)', () => {
+    const r = new Rng('dice_neg');
+    for (let i = 0; i < 300; i++) {
+      const v = rollDice(r, '1d6-1');
+      expect(Number.isNaN(v)).toBe(false);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(5);
+    }
+    // Floor 0: a 1d4-2 can roll 0 but never below.
+    const lows = Array.from({ length: 300 }, () => rollDice(r, '1d4-2'));
+    expect(Math.min(...lows)).toBe(0);
+    expect(Math.max(...lows)).toBe(2);
+  });
+
   it('countDice: "1d10+1d4" → 2, "2d10" → 2, "3" → 1 (floor)', () => {
     expect(countDice('1d10+1d4')).toBe(2);
     expect(countDice('2d10')).toBe(2);

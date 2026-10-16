@@ -5,7 +5,8 @@
  * the entire tactical game). Ordering IS the strategy.
  */
 
-import { spellsById, warlockCostByLevel } from '@sim/registry';
+import { spellsById } from '@sim/registry';
+import { pactCost } from './spells';
 import { abilityDef, abilityReady, type AbilityDef } from './abilities';
 import { chooseTarget, gap } from './ai';
 import type { Combatant } from './types';
@@ -168,7 +169,7 @@ export function canAfford(u: Combatant, spellId: number): boolean {
   const level = (spell.spell_level as number | null) ?? 0;
   if (level <= 0) return true; // cantrip / at-will
   if (!u.casting) return false;
-  if (u.casting.kind === 'pact') return u.casting.pactEnergy >= (warlockCostByLevel.get(level) ?? Infinity);
+  if (u.casting.kind === 'pact') return u.casting.pactEnergy >= pactCost(spell);
   return (u.casting.slots[level] ?? 0) > 0;
 }
 

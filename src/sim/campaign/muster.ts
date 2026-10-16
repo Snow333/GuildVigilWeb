@@ -1,27 +1,27 @@
 /**
- * The founding muster (brief #10, decision 2): the player creates the starting
- * party — name, ancestry, gender, and class per hero. Stats, gear, and
- * everything downstream still roll from the sim exactly as they did.
+ * The founding muster: the player creates the starting party — name, ancestry,
+ * gender and class per hero. Everything else derives from the class template
+ * plus the ancestry.
  *
- * SCOPE NOTE (deliberate, recorded at implementation): class is chosen from the
- * four archetypes the sim can already outfit at level 1. There is no
- * starting-gear-by-class table in the registry — starterParty hand-picked item
- * ids — so offering all 13 classes would mean authoring new content, which
- * brief #10 puts out of scope. The templates below ARE the v1 starter party,
- * lifted verbatim so the career-harness baseline does not move; widening the
- * roster is a content decision, not a code one.
- *
- * Ancestry and gender are pure identity here (see heroes/ancestry) — they touch
- * no stat on this path and must not start.
+ * M1 (output/decisions.md):
+ *  - All TEN base classes are offered. The three prestige classes (Arcane
+ *    Trickster, Eldritch Knight, Mystic Theurge) are reached by multiclassing.
+ *  - ANCESTRY NOW MATTERS. Each ancestry row's two boosts (+2) and flaw (−2)
+ *    apply to the template, and its `hp` replaces the flat 8. A "free" boost
+ *    goes to the class's best ability not already boosted. Scores stay EVEN,
+ *    so every boost moves a modifier — see the +1-boost trap in CLAUDE.md.
  */
 
 import type { ItemInstance } from '@sim/core/events/types';
 import { emptyQuickSlots } from '@sim/heroes/quickSlots';
 import { Ids } from '@sim/core/ids';
 import { deriveHeroIdentity, type AncestryId, type Gender } from '@sim/heroes/ancestry';
-import { freshHeroMaxHp } from '@sim/heroes/levelUp';
-import type { Abilities, HeroState } from '@sim/heroes/types';
-import { ancestryIds, ancestryNameById, classesById, spellsByName } from '@sim/registry';
+import { ANCESTRY_BASE_HP } from '@sim/heroes/levelUp';
+import { abilityMod, type Abilities, type AbilityKey, type HeroState } from '@sim/heroes/types';
+import {
+  ancestriesById, ancestryIds, ancestryNameById, classesById, progressionFor, spellsByName,
+} from '@sim/registry';
+import { CLASS_BOOST_PRIORITY, DEFAULT_BOOST_ORDER } from '@content/autopilot';
 import type { LoadoutEntry } from '@sim/combat/loadout';
 import type { HeroKit } from './assembly';
 
@@ -31,6 +31,12 @@ export const FOUNDING_PARTY_SIZE = 4;
 const inst = (baseId: number): ItemInstance => ({
   baseId: String(baseId), tier: 'mundane', propertyIds: [], seed: `fix_${baseId}`,
 });
+
+const spell = (name: string): number => {
+  const row = spellsByName.get(name);
+  if (!row) throw new Error(`muster: unknown spell "${name}"`);
+  return row.id;
+};
 
 export function mkHero(
   id: string,
@@ -54,97 +60,158 @@ export function mkHero(
 /** One level-1 archetype: everything about a founding hero the player does NOT author. */
 interface FoundingTemplate {
   classId: number;
-  /** The name this archetype has carried since Phase 1 — the muster's suggestion. */
+  /** The muster's name suggestion for this class. */
   defaultName: string;
-  /**
-   * The identity the muster opens on. AUTHORED, not hashed: these four are the
-   * faces a player meets before they touch anything, so they should read as
-   * people (Torvald a man, Mira a woman) rather than as hash output. Elandra is
-   * an Elf on purpose — no elf art exists after batch 1, so the default party
-   * puts the sketch-pending silhouette on screen in every campaign and every
-   * e2e run. The fallback is a first-class path; it should be seen.
-   */
   defaultAncestry: string;
   defaultGender: Gender;
+  /** Class + background scores, BEFORE ancestry. All even. */
   abilities: Abilities;
-  maxHp: number;
   skills: Record<string, number>;
   feats: { featId: number; choices?: { skill?: string } }[];
   equipped: ItemInstance[];
   loadout: () => LoadoutEntry[];
+  /** One line for the muster: how this class fights. */
+  style: string;
 }
 
 /**
- * Fighter / Rogue / Cleric / Wizard — the classic wedge, level 1. Re-statted
- * 2026-08-10 for the SKILL RANK CAP (finding #4): ranks ≤ character level.
- * Spell ids resolve by NAME at call time, never hardcoded.
+ * The first four are the original founding wedge (Fighter / Rogue / Cleric /
+ * Wizard) and remain the default party. Item ids: 3 Longsword · 25 Chain Mail ·
+ * 9 Rapier · 22 Leather · 7 Mace · 26 Scale Mail · 16 Staff · 14 Longbow ·
+ * 6 Greataxe · 24 Chain Shirt · 1 Dagger.
  */
 const TEMPLATES: readonly FoundingTemplate[] = [
   {
-    // Longsword + Chain Mail; AoO arrives via the fighter class feature.
     classId: 1,
     defaultName: 'Torvald',
     defaultAncestry: 'Human',
     defaultGender: 'm',
     abilities: { str: 16, dex: 12, con: 14, int: 10, wis: 12, cha: 8 },
-    maxHp: freshHeroMaxHp(10, 2),
     skills: { athletics: 1, perception: 1 },
     feats: [],
     equipped: [inst(3), inst(25)],
     loadout: () => [],
+    style: 'Armoured front line. Punishes enemies that move past him.',
   },
   {
-    // Rapier (finesse) + Leather; Sneak Attack #68, Nimble Dodge #69, Trap Finder #70.
     classId: 4,
     defaultName: 'Shade',
     defaultAncestry: 'Half-Orc',
     defaultGender: 'm',
     abilities: { str: 12, dex: 16, con: 12, int: 12, wis: 12, cha: 10 },
-    maxHp: freshHeroMaxHp(8, 1),
-    // ⚠ Stealth is trained HERE and nowhere else (brief #19 edit #2, Steven
-    // 2026-08-13: "muster only, no priority change"). The autopilot ALREADY
-    // raises Stealth from level 2 on — `buildAutoLevelUpPlan` spills past the
-    // priority trio into the rest of the skill registry in order and Stealth is
-    // third, so Shade's ranks measure 0/1/2/4/6 at L1/2/3/5/7. Brief #19 §12.1
-    // and §13.4 both say it is never trained at all; that is WRONG, and only L1
-    // was ever actually 0. Adding 'stealth' to the global priority list would
-    // also spend Torvald's and Mira's points on a skill neither can ever use —
-    // no sneak dice, and no enemy has sneak dice either, so hero Stealth is
-    // never a defensive term. So: one rank at the muster, nothing else.
     skills: { thievery: 1, perception: 1, athletics: 1, stealth: 1 },
+    // Sneak Attack #68, Nimble Dodge #69, Trap Finder #70.
     feats: [{ featId: 68 }, { featId: 69 }, { featId: 70 }],
     equipped: [inst(9), inst(22)],
     loadout: () => [],
+    style: 'Sneak attacks enemies an ally is already fighting. Disarms traps.',
   },
   {
-    // Mace + Scale Mail; heals the wedge when someone drops low.
     classId: 3,
     defaultName: 'Mira',
     defaultAncestry: 'Human',
     defaultGender: 'f',
     abilities: { str: 12, dex: 10, con: 14, int: 10, wis: 16, cha: 12 },
-    maxHp: freshHeroMaxHp(8, 2),
-    skills: { perception: 1, athletics: 1 },
+    skills: { perception: 1, athletics: 1, religion: 1 },
     feats: [],
     equipped: [inst(7), inst(26)],
     loadout: () => [
-      { action: 'cast', spellId: spellsByName.get('Heal')!.id, condition: { kind: 'allyHpBelow', pct: 0.4 }, target: 'lowestAlly' },
+      { action: 'cast', spellId: spell('Heal'), condition: { kind: 'allyHpBelow', pct: 0.4 }, target: 'lowestAlly' },
     ],
+    style: 'Heals whoever drops low; strikes with divine magic otherwise.',
   },
   {
-    // Staff; Magic Missile until the slots run dry, then pokes with the stick.
     classId: 2,
     defaultName: 'Elandra',
     defaultAncestry: 'Elf',
     defaultGender: 'f',
     abilities: { str: 8, dex: 14, con: 12, int: 16, wis: 12, cha: 10 },
-    maxHp: freshHeroMaxHp(6, 1),
-    skills: { perception: 1 },
+    skills: { perception: 1, arcana: 1 },
     feats: [],
     equipped: [inst(16)],
     loadout: () => [
-      { action: 'cast', spellId: spellsByName.get('Magic Missile')!.id, condition: { kind: 'always' }, target: 'scoredEnemy' },
+      { action: 'cast', spellId: spell('Magic Missile'), condition: { kind: 'always' }, target: 'scoredEnemy' },
     ],
+    style: 'Blasts from range with spells; fragile up close.',
+  },
+  {
+    classId: 5,
+    defaultName: 'Wren',
+    defaultAncestry: 'Elf',
+    defaultGender: 'f',
+    abilities: { str: 12, dex: 16, con: 14, int: 10, wis: 12, cha: 8 },
+    skills: { survival: 1, perception: 1, nature: 1 },
+    feats: [],
+    equipped: [inst(14), inst(22)],
+    loadout: () => [],
+    style: 'Shoots from the back line with a longbow.',
+  },
+  {
+    classId: 6,
+    defaultName: 'Grusha',
+    defaultAncestry: 'Half-Orc',
+    defaultGender: 'f',
+    abilities: { str: 16, dex: 12, con: 14, int: 8, wis: 12, cha: 10 },
+    skills: { athletics: 1, intimidation: 1 },
+    feats: [],
+    equipped: [inst(6), inst(24)],
+    // Rage is auto-granted by the class feature; the loadout switches it on each fight.
+    loadout: () => [{ action: 'toggle', featId: 24, condition: { kind: 'notActive', conditionId: 'raging' } }],
+    style: 'Rages: big two-handed hits and extra hit points, but easier to hit.',
+  },
+  {
+    classId: 7,
+    defaultName: 'Kesh',
+    defaultAncestry: 'Human',
+    defaultGender: 'm',
+    abilities: { str: 12, dex: 16, con: 12, int: 10, wis: 14, cha: 8 },
+    skills: { acrobatics: 1, athletics: 1, perception: 1 },
+    feats: [],
+    equipped: [],
+    loadout: () => [],
+    style: 'Fights barehanded: fast and nimble, no armour needed.',
+  },
+  {
+    classId: 8,
+    defaultName: 'Lute',
+    defaultAncestry: 'Halfling',
+    defaultGender: 'm',
+    abilities: { str: 8, dex: 14, con: 12, int: 12, wis: 10, cha: 16 },
+    skills: { performance: 1, diplomacy: 1, perception: 1 },
+    feats: [],
+    equipped: [inst(9), inst(22)],
+    loadout: () => [
+      { action: 'cast', spellId: spell('Bless'), condition: { kind: 'notActive', conditionId: 'emboldened' }, target: 'self' },
+    ],
+    style: 'Blesses the party so everyone hits more often; casts occult magic.',
+  },
+  {
+    classId: 9,
+    defaultName: 'Ashra',
+    defaultAncestry: 'Human',
+    defaultGender: 'f',
+    abilities: { str: 8, dex: 12, con: 14, int: 10, wis: 12, cha: 16 },
+    skills: { arcana: 1, deception: 1 },
+    feats: [],
+    equipped: [inst(16)],
+    loadout: () => [
+      { action: 'cast', spellId: spell('Draconic Ray'), condition: { kind: 'always' }, target: 'scoredEnemy' },
+    ],
+    style: 'Born with magic: more spell slots than a wizard, draconic rays.',
+  },
+  {
+    classId: 13,
+    defaultName: 'Morrow',
+    defaultAncestry: 'Gnome',
+    defaultGender: 'm',
+    abilities: { str: 10, dex: 12, con: 14, int: 10, wis: 12, cha: 16 },
+    skills: { arcana: 1, intimidation: 1 },
+    feats: [],
+    equipped: [inst(1), inst(22)],
+    loadout: () => [
+      { action: 'cast', spellId: spell('Eldritch Blast'), condition: { kind: 'always' }, target: 'scoredEnemy' },
+    ],
+    style: 'Pact magic: Eldritch Blast at will, bigger spells from pact energy.',
   },
 ];
 
@@ -154,11 +221,13 @@ const templateByClassId = new Map<number, FoundingTemplate>(TEMPLATES.map((t) =>
 export interface FoundingClassOption {
   classId: number;
   name: string;
+  style: string;
 }
 
 export const FOUNDING_CLASSES: readonly FoundingClassOption[] = TEMPLATES.map((t) => ({
   classId: t.classId,
   name: classesById.get(t.classId)?.name ?? `class_${t.classId}`,
+  style: t.style,
 }));
 
 /** What the player authors at the muster. Everything else derives. */
@@ -167,6 +236,60 @@ export interface MusterChoice {
   ancestry: AncestryId;
   gender: Gender;
   classId: number;
+}
+
+const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
+const parseKeys = (raw: unknown): string[] => {
+  if (typeof raw !== 'string') return [];
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+
+export interface AncestryEffect {
+  hp: number;
+  boosts: AbilityKey[];
+  flaws: AbilityKey[];
+}
+
+/**
+ * What an ancestry does for THIS class: its two boosts with "free" resolved to
+ * the class's best ability not already boosted, its flaw, and its base HP.
+ */
+export function ancestryEffect(ancestry: AncestryId, classId: number): AncestryEffect {
+  const row = ancestriesById.get(ancestry);
+  const isKey = (k: string): k is AbilityKey => (ABILITY_KEYS as readonly string[]).includes(k);
+  const raw = parseKeys(row?.ability_boosts);
+  const fixed = raw.filter(isKey);
+  const frees = raw.filter((k) => k === 'free').length;
+  const flaws = parseKeys(row?.ability_flaws).filter(isKey);
+  const keyAbility = classesById.get(classId)?.key_ability as AbilityKey | undefined;
+  const order: AbilityKey[] = [
+    ...(keyAbility ? [keyAbility] : []),
+    ...(CLASS_BOOST_PRIORITY[classId] ?? []),
+    ...DEFAULT_BOOST_ORDER,
+  ];
+  const boosts: AbilityKey[] = [...fixed];
+  for (let i = 0; i < frees; i++) {
+    const pick = order.find((a) => !boosts.includes(a) && !flaws.includes(a));
+    if (pick) boosts.push(pick);
+  }
+  return { hp: (row?.hp as number | undefined) ?? ANCESTRY_BASE_HP, boosts, flaws };
+}
+
+/** Template scores with the ancestry applied. */
+export function foundingAbilities(classId: number, ancestry: AncestryId): Abilities {
+  const template = templateByClassId.get(classId);
+  if (!template) throw new Error(`foundingAbilities: no founding template for class ${classId}`);
+  const fx = ancestryEffect(ancestry, classId);
+  const out = { ...template.abilities };
+  for (const b of fx.boosts) out[b] += 2;
+  for (const f of fx.flaws) out[f] -= 2;
+  return out;
 }
 
 /**
@@ -185,55 +308,53 @@ export function suggestedName(classId: number, taken: readonly string[]): string
   return `${base} ${taken.length + 1}`;
 }
 
-/**
- * The party `starterParty()` produces — the muster's opening state, and what
- * signing without touching anything gives you. Ancestry resolves by NAME
- * against the registry so this never hardcodes a content id.
- */
-export const DEFAULT_MUSTER: readonly MusterChoice[] = TEMPLATES.map((t) => ({
+const defaultChoice = (t: FoundingTemplate): MusterChoice => ({
   name: t.defaultName,
   ancestry: ancestryIds.find((id) => ancestryNameById.get(id) === t.defaultAncestry) ?? ancestryIds[0]!,
   gender: t.defaultGender,
   classId: t.classId,
-}));
+});
 
-/**
- * Build the founding party. Hero ids are positional (`hero_1`…`hero_4`), so a
- * given set of choices always produces the same campaign — the determinism the
- * brief's acceptance criterion asks for.
- */
+/** The muster's opening party: the original wedge, Fighter / Rogue / Cleric / Wizard. */
+export const DEFAULT_MUSTER: readonly MusterChoice[] = TEMPLATES.slice(0, FOUNDING_PARTY_SIZE).map(defaultChoice);
+
+/** A recruit's default identity for any founding class. */
+export function defaultChoiceFor(classId: number): MusterChoice {
+  const t = templateByClassId.get(classId);
+  if (!t) throw new Error(`defaultChoiceFor: no founding template for class ${classId}`);
+  return defaultChoice(t);
+}
+
+/** One founding hero. Ids are positional, so identical choices reproduce the campaign. */
+export function musterHero(choice: MusterChoice, index: number): HeroKit {
+  const template = templateByClassId.get(choice.classId);
+  if (!template) throw new Error(`musterParty: no founding template for class ${choice.classId}`);
+  const id = Ids.hero(index + 1);
+  const name = choice.name.trim() === '' ? template.defaultName : choice.name.trim();
+  const abilities = foundingAbilities(choice.classId, choice.ancestry);
+  const hpPerLevel = (progressionFor(choice.classId, 1)?.hp_per_level as number | undefined) ?? 8;
+  const maxHp = ancestryEffect(choice.ancestry, choice.classId).hp + Math.max(1, hpPerLevel + abilityMod(abilities.con));
+  const loadout = template.loadout();
+  // The known-spells pool starts as whatever the loadout casts.
+  const knownSpells = [
+    ...new Set(loadout.filter((e) => e.action === 'cast').map((e) => e.spellId)),
+  ].sort((a, b) => a - b);
+  return {
+    hero: mkHero(
+      id, name, template.classId, abilities, maxHp,
+      { ...template.skills }, template.feats.map((f) => ({ ...f })),
+      { ancestry: choice.ancestry, gender: choice.gender },
+      knownSpells,
+    ),
+    equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),
+    loadout,
+    // Muster and the save backfill must agree, or save → load → save won't round-trip.
+    quickSlots: emptyQuickSlots(),
+    altWeaponSet: [],
+  };
+}
+
+/** Build the founding party. A given set of choices always produces the same campaign. */
 export function musterParty(choices: readonly MusterChoice[]): HeroKit[] {
-  return choices.map((choice, i) => {
-    const template = templateByClassId.get(choice.classId);
-    if (!template) throw new Error(`musterParty: no founding template for class ${choice.classId}`);
-    const id = Ids.hero(i + 1);
-    const name = choice.name.trim() === '' ? template.defaultName : choice.name.trim();
-    const loadout = template.loadout();
-    // Brief #22 M3: the founding pool IS what the template hard-coded, so the
-    // muster and the backfill agree by construction — a new campaign and a
-    // migrated save produce the same known-spells list for the same hero.
-    const knownSpells = [
-      ...new Set(loadout.filter((e) => e.action === 'cast').map((e) => e.spellId)),
-    ].sort((a, b) => a - b);
-    return {
-      hero: mkHero(
-        id, name, template.classId, { ...template.abilities }, template.maxHp,
-        { ...template.skills }, template.feats.map((f) => ({ ...f })),
-        { ancestry: choice.ancestry, gender: choice.gender },
-        knownSpells,
-      ),
-      equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),
-      loadout,
-      /**
-       * ⚠ MUSTER AND THE BACKFILL MUST AGREE BY CONSTRUCTION, same rule as
-       * knownSpells above. If a new campaign omitted these, `serialize` would
-       * write a kit without them while `deserialize` ran the backfill and
-       * added them — so save → load → save would not round-trip, and the
-       * determinism tests would fail for a reason that has nothing to do with
-       * determinism. Found exactly that way.
-       */
-      quickSlots: emptyQuickSlots(),
-      altWeaponSet: [],
-    };
-  });
+  return choices.map((choice, i) => musterHero(choice, i));
 }

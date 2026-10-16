@@ -120,12 +120,24 @@ export function defaultCantripFor(spellList: string | null): SpellRow | null {
   return best;
 }
 
+/**
+ * Pact-energy cost of a spell. The row's own `pact_energy_cost` wins when set —
+ * Eldritch Blast authors 0, which makes it the warlock's at-will attack —
+ * otherwise the per-level curve (`warlock_spell_costs`).
+ */
+export function pactCost(spell: SpellRow): number {
+  const own = spell.pact_energy_cost as number | null | undefined;
+  if (typeof own === 'number') return own;
+  const level = (spell.spell_level as number | null) ?? 0;
+  return warlockCostByLevel.get(level) ?? Infinity;
+}
+
 /** Spend the cost; caller must have verified affordability. */
 export function spendCost(caster: Combatant, spell: SpellRow): { resource: CastResult['resource']; cost: number } {
   const level = (spell.spell_level as number | null) ?? 0;
   if (level <= 0 || !caster.casting) return { resource: 'atWill', cost: 0 };
   if (caster.casting.kind === 'pact') {
-    const cost = warlockCostByLevel.get(level) ?? 0;
+    const cost = pactCost(spell);
     caster.casting.pactEnergy -= cost;
     return { resource: 'pact', cost };
   }

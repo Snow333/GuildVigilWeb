@@ -33,7 +33,7 @@ import { isProficientWithArmor, isProficientWithWeapon } from '@sim/heroes/gearP
 import { normalizeQuickSlots, toCombatQuickSlots, type QuickSlots } from '@sim/heroes/quickSlots';
 import { bestTier, totalProficiency } from '@sim/heroes/proficiency';
 import { abilityMod, characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
-import { classesById, progressionFor, warlockCostByLevel } from '@sim/registry';
+import { classesById, progressionFor } from '@sim/registry';
 
 export interface HeroKit {
   hero: HeroState;
@@ -206,6 +206,34 @@ function weaponSpecBonus(hero: HeroState): number {
   return 0;
 }
 
+/** The class's pact energy pool: the highest `pact_energy_max_N` feature up to this level. */
+function pactEnergyMax(classId: number, classLevel: number): number {
+  let best = 0;
+  for (let lvl = 1; lvl <= classLevel; lvl++) {
+    for (const f of parseFeatures(progressionFor(classId, lvl)?.features)) {
+      const m = /^pact_energy_max_(\d+)$/.exec(f);
+      if (m) best = Math.max(best, Number(m[1]));
+    }
+  }
+  return best;
+}
+
+/** Unarmed damage die from the `unarmed_XdY` class feature (Monk), or null. */
+function unarmedDie(features: Set<string>): string | null {
+  let best: string | null = null;
+  let bestAvg = 0;
+  for (const f of features) {
+    const m = /^unarmed_(\d+)d(\d+)$/.exec(f);
+    if (!m) continue;
+    const avg = (Number(m[1]) * (Number(m[2]) + 1)) / 2;
+    if (avg > bestAvg) {
+      bestAvg = avg;
+      best = `${m[1]}d${m[2]}`;
+    }
+  }
+  return best;
+}
+
 interface CastingClass {
   classId: number;
   level: number;
@@ -255,11 +283,10 @@ function castingBlock(
 
   const castMod = mods[best.stat];
   const isPact = best.name === 'Warlock';
-  // Pact casters convert their listed slots into energy via the hand-set curve —
-  // derived from data, not invented (warlock content deepens in Phase 3).
-  const pactEnergy = isPact
-    ? slots.reduce((sum, n, lvl) => sum + n * (warlockCostByLevel.get(lvl) ?? 0), 0)
-    : 0;
+  // M1: pact energy comes from the `pact_energy_max_N` class feature (12 at
+  // L1 → 50 at L20). The Warlock has NO spell slots in the data, so deriving
+  // energy from slots (the old rule) gave every warlock 0 energy.
+  const pactEnergy = isPact ? pactEnergyMax(best.classId, best.level) : 0;
 
   return {
     attackBonus: totalProficiency(hero, 'spell_attack') + castMod + (featStat['spell_attack'] ?? 0),
@@ -288,13 +315,16 @@ export function assembleHero(kit: HeroKit): DispatchHero {
 
   // ── Weapon math ──
   const weapon = gear.weapon;
-  const traits = weapon?.derived.weaponTraits ?? [];
+  // Unarmed strikes are finesse + agile (PF2E fist), so a Monk hits with DEX.
+  const traits = weapon?.derived.weaponTraits ?? (unarmedDie(features) ? ['finesse', 'agile'] : []);
   const finesse = traits.includes('finesse');
   const atkMod = finesse ? Math.max(mods.str, mods.dex) : mods.str;
   const attackBonus =
     totalProficiency(hero, 'weapon_attack') + atkMod + (weapon?.derived.attackBonus ?? 0);
   const dmgBonus = mods.str;
-  const baseDice = weapon?.derived.damageDice ?? '1d4'; // unarmed fallback
+  // M1: a Monk with no weapon strikes with the class's unarmed die (1d6 at L1,
+  // growing to 2d8), not the generic 1d4 fist.
+  const baseDice = weapon?.derived.damageDice ?? unarmedDie(features) ?? '1d4';
   const damageDice =
     dmgBonus > 0 ? `${baseDice}+${dmgBonus}` : dmgBonus < 0 ? `${baseDice}${dmgBonus}` : baseDice;
   const weaponRange = weapon

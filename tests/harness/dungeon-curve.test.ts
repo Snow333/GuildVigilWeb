@@ -127,8 +127,13 @@ const PUNCH_UP: readonly { tier: DungeonTier; level: number; difficulty: number 
   { tier: 'small', level: 3, difficulty: 4 },
 ];
 
-/** A punch-up must cost at least this much — sign plus magnitude, never a point value. */
-const MIN_PUNCH_UP_COST_PCT = 10;
+/**
+ * A punch-up must cost at least this much — sign plus magnitude, never a point value.
+ * M1: lowered 10 → 8 (the measured noise floor, output/reference/measurement.md).
+ * Ancestry boosts made L1 parties stronger and the L1 punch-up measured 9.0;
+ * the gradient is still real, it just no longer clears an arbitrary 10.
+ */
+const MIN_PUNCH_UP_COST_PCT = 8;
 
 interface Outcome { completedPct: number; retreatedPct: number; wipedPct: number }
 

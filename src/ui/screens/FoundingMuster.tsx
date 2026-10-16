@@ -1,8 +1,8 @@
 /**
  * Screen 0 — The founding muster (brief #10, decision 2). A new campaign now
  * opens with the player creating the four founding heroes: name, ancestry,
- * gender, class. Stats, gear, and everything downstream still roll from the
- * sim exactly as before — this screen authors identity, nothing else.
+ * gender, class. M1: ten classes, each with a one-line play style, and the
+ * ancestry's boosts/flaw/hp shown on its tile because they now change the hero.
  *
  * Desk grammar: the muster sheet is PINNED (actionable now — this is the one
  * thing the desk wants from you); the roll is the standing record it writes
@@ -18,7 +18,7 @@
 
 import { useState } from 'react';
 import {
-  DEFAULT_MUSTER, FOUNDING_CLASSES, FOUNDING_PARTY_SIZE, suggestedName,
+  ancestryEffect, DEFAULT_MUSTER, FOUNDING_CLASSES, FOUNDING_PARTY_SIZE, foundingAbilities, suggestedName,
   type MusterChoice,
 } from '@sim/campaign/muster';
 import { GENDERS, portraitKey, type Gender } from '@sim/heroes/ancestry';
@@ -27,6 +27,18 @@ import { Portrait, hasPortrait } from '../portrait';
 import { useGame } from '../state/GameProvider';
 
 const GENDER_WORD: Record<Gender, string> = { f: 'woman', m: 'man' };
+
+const ABILITY_ORDER = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
+
+/** "+2 STR · +2 CON · −2 CHA · 10 hp" — what this ancestry does for this class. */
+function ancestrySummary(ancestry: number, classId: number): string {
+  const fx = ancestryEffect(ancestry, classId);
+  return [
+    ...fx.boosts.map((b) => `+2 ${b.toUpperCase()}`),
+    ...fx.flaws.map((f) => `−2 ${f.toUpperCase()}`),
+    `${fx.hp} hp`,
+  ].join(' · ');
+}
 
 /** Names may ellipsize; numbers never do (brief #8 grammar). */
 const NAME_MAX = 28;
@@ -137,6 +149,7 @@ export function FoundingMuster({ slotId, campaignName }: { slotId: string; campa
               <button
                 key={f.classId}
                 className="gv-btn"
+                data-class-option={f.classId}
                 disabled={current.classId === f.classId}
                 onClick={() => patch(focus, { classId: f.classId })}
               >
@@ -144,9 +157,19 @@ export function FoundingMuster({ slotId, campaignName }: { slotId: string; campa
               </button>
             ))}
           </div>
+          <p data-class-style="" style={{ margin: '4px 0 10px', fontSize: 14 }}>
+            <b>{FOUNDING_CLASSES.find((f) => f.classId === current.classId)?.name}:</b>{' '}
+            {FOUNDING_CLASSES.find((f) => f.classId === current.classId)?.style}
+          </p>
+          <p data-founding-stats="" style={{ margin: '0 0 10px', fontSize: 13.5 }}>
+            {(() => {
+              const a = foundingAbilities(current.classId, current.ancestry);
+              return ABILITY_ORDER.map((k) => `${k.toUpperCase()} ${a[k]}`).join(' · ');
+            })()}
+          </p>
 
           <h3 className="gv-head" style={{ marginTop: 16 }}>
-            Ancestry <span className="gv-sub">identity and likeness — no bearing on the numbers</span>
+            Ancestry <span className="gv-sub">likeness, plus two ability boosts, a flaw and base hit points</span>
           </h3>
           <div className="gv-mustergrid">
             {ancestryIds.map((id) => {
@@ -162,6 +185,7 @@ export function FoundingMuster({ slotId, campaignName }: { slotId: string; campa
                 >
                   <Portrait portraitKey={key} alt="" />
                   <span className="gv-mname">{ancestryNameById.get(id)}</span>
+                  <span className="gv-mavail" data-ancestry-effect="">{ancestrySummary(id, current.classId)}</span>
                   <span className="gv-mavail">{drawn ? 'sketch on file' : 'awaiting field sketch'}</span>
                 </button>
               );

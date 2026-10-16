@@ -8,16 +8,23 @@ import { FLURRY } from '@content/combat';
 import type { Rng } from '@sim/core/rng';
 import type { Degree } from '@sim/core/events/types';
 
-/** Parse + roll composite dice strings: "1d8+3", "2d6+1d4+2". Floor 0. */
+/** Parse + roll composite dice strings: "1d8+3", "2d6+1d4+2", "1d6-1". Floor 0. */
 export function rollDice(rng: Rng, diceStr: string): number {
   if (!diceStr) return 0;
   let total = 0;
-  for (const part of diceStr.replace(/\s/g, '').split('+')) {
+  // ⚠ Split on '+' AFTER turning '-' into '+-'. Splitting on '+' alone left
+  // "1d6-1" as one part, so the die size parsed as Number("6-1") = NaN and
+  // every weak-STR melee hit (wizard staff, bard rapier) dealt NaN damage.
+  for (const part of diceStr.replace(/\s/g, '').replace(/-/g, '+-').split('+')) {
+    if (part === '') continue;
     if (part.includes('d')) {
-      const [countStr, sidesStr] = part.split('d');
+      const negative = part.startsWith('-');
+      const [countStr, sidesStr] = (negative ? part.slice(1) : part).split('d');
       const count = countStr ? Number(countStr) : 1;
       const sides = Number(sidesStr);
-      for (let i = 0; i < count; i++) total += rng.die(sides);
+      let sum = 0;
+      for (let i = 0; i < count; i++) sum += rng.die(sides);
+      total += negative ? -sum : sum;
     } else {
       total += Number(part) || 0;
     }

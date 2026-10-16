@@ -12,17 +12,21 @@ describe('hero → combatant assembly (the sheet becomes a fighter)', () => {
     ReturnType<typeof assembleHero>, ReturnType<typeof assembleHero>,
   ];
 
+  const mod = (i: number, k: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'): number => abilityMod(kits[i]!.hero.abilities[k]);
+
   it('weapon math: proficiency + ability + potency; STR damage rides the dice', () => {
-    // Torvald: Longsword 1d8, STR 16 (+3), mundane (no potency).
-    expect(fighter.c.attackBonus).toBe(totalProficiency(kits[0]!.hero, 'weapon_attack') + 3);
-    expect(fighter.c.damageDice).toBe('1d8+3');
+    // Torvald: Longsword 1d8, mundane (no potency). Scores include ancestry (M1).
+    expect(fighter.c.attackBonus).toBe(totalProficiency(kits[0]!.hero, 'weapon_attack') + mod(0, 'str'));
+    expect(fighter.c.damageDice).toBe(`1d8+${mod(0, 'str')}`);
     expect(fighter.c.weaponAgile).toBe(false);
   });
 
   it('finesse attacks with DEX, damages with STR; agile flows from traits', () => {
-    // Shade: Rapier (finesse, NOT agile per registry), DEX 16 (+3), STR 12 (+1).
-    expect(rogue.c.attackBonus).toBe(totalProficiency(kits[1]!.hero, 'weapon_attack') + 3);
-    expect(rogue.c.damageDice).toBe('1d6+1');
+    // Shade: Rapier (finesse, NOT agile per registry): attacks with the better of STR/DEX.
+    expect(rogue.c.attackBonus).toBe(
+      totalProficiency(kits[1]!.hero, 'weapon_attack') + Math.max(mod(1, 'str'), mod(1, 'dex')),
+    );
+    expect(rogue.c.damageDice).toBe(`1d6+${mod(1, 'str')}`);
     expect(rogue.c.weaponAgile).toBe(false); // rapier is finesse+deadly, not agile
   });
 
@@ -32,12 +36,9 @@ describe('hero → combatant assembly (the sheet becomes a fighter)', () => {
   });
 
   it('AC = 10 + armor + capped DEX', () => {
-    // Torvald: Chain Mail +5, DEX +1 (cap permitting) → within [15, 16].
-    expect(fighter.c.ac).toBeGreaterThanOrEqual(15);
-    expect(fighter.c.ac).toBeLessThanOrEqual(16);
-    // Shade: Leather +2, DEX +3 → 15 unless leather caps lower.
-    expect(rogue.c.ac).toBeGreaterThanOrEqual(14);
-    expect(rogue.c.ac).toBeLessThanOrEqual(15);
+    // Chain Mail: +5 AC, max DEX +2. Leather: +2 AC, max DEX +4.
+    expect(fighter.c.ac).toBe(10 + 5 + Math.min(mod(0, 'dex'), 2));
+    expect(rogue.c.ac).toBe(10 + 2 + Math.min(mod(1, 'dex'), 4));
   });
 
   it('saves = proficiency + governing mod', () => {
@@ -58,16 +59,16 @@ describe('hero → combatant assembly (the sheet becomes a fighter)', () => {
     expect(wizard.c.isCaster).toBe(true);
     expect(wizard.c.casting!.kind).toBe('slots');
     expect(wizard.c.casting!.slots[1]).toBeGreaterThan(0); // L1 wizard has L1 slots
-    expect(wizard.c.casting!.dc).toBe(10 + totalProficiency(kits[3]!.hero, 'spell_dc') + 3); // INT 16
+    expect(wizard.c.casting!.dc).toBe(10 + totalProficiency(kits[3]!.hero, 'spell_dc') + mod(3, 'int'));
     expect(wizard.c.casting!.casterLevel).toBe(1);
   });
 
   it('dispatch skills: rank + governing ability + feat skill mods (Trap Finder +1 thievery)', () => {
     // Shade after the rank-cap re-stat (finding #4: ranks ≤ level, so 1 at L1):
-    // thievery 1 rank + DEX 3 + Trap Finder 1 = 5.
-    expect(rogue.skills.thievery).toBe(5);
+    // thievery 1 rank + DEX mod + Trap Finder 1.
+    expect(rogue.skills.thievery).toBe(1 + mod(1, 'dex') + 1);
     // Trap Finder's additional perception +1 applies unconditionally (documented completion).
-    expect(rogue.skills.perception).toBe(1 + 1 + 1);
+    expect(rogue.skills.perception).toBe(1 + mod(1, 'wis') + 1);
   });
 
   it('the party carries the Trap Finder dungeon bonus for dispatch wiring', () => {
@@ -87,7 +88,8 @@ describe('hero → combatant assembly (the sheet becomes a fighter)', () => {
     const before = JSON.stringify(kits[0]!.hero);
     assembleHero(kits[0]!);
     expect(JSON.stringify(kits[0]!.hero)).toBe(before);
-    expect(fighter.c.maxHp).toBe(20); // freshHeroMaxHp(10, +2) = 8 ancestry + 12
-    expect(fighter.c.hp).toBe(20);
+    // Human ancestry hp 8 + Fighter 10 + CON mod.
+    expect(fighter.c.maxHp).toBe(8 + 10 + mod(0, 'con'));
+    expect(fighter.c.hp).toBe(fighter.c.maxHp);
   });
 });
