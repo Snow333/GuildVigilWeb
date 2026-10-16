@@ -1,6 +1,22 @@
 # Handoff
 
-**Last session:** 2026-10-16 — **M1 built**, waiting on Steven's playtest.
+**Last session:** 2026-10-16 — **M1 built**, waiting on Steven's playtest. **M2 feedback round in flight.**
+
+## M2 feedback round (in flight, 2026-10-16)
+
+Steven's 8 requests, split by file ownership:
+
+| Track | Who | Where | Status |
+|---|---|---|---|
+| Spells: Cleric whole list + Spells tab | main session (Opus) | `main` | ✅ `62b64e8` |
+| Q: board capacity 10 / 4–6 a week, easy weeks 1–4, Marshal commission | Opus subagent | `C:\GuildVigilWeb-quests` `m2-quests` | running |
+| I: itemization pass | Opus subagent | `C:\GuildVigilWeb-items` `m2-items` | running |
+| P: Edge scrolling performance | Sonnet subagent | `C:\GuildVigilWeb-perf` `m2-perf` | running |
+| Portraits (8 busts) | Steven in ChatGPT | `output/art/bust-prompts-batch2.md` | waiting on Steven |
+
+Briefs: `output/briefs-m2/`. When each track reports: review its diff, check screenshots, merge `--no-ff`,
+full gate (use `GV_PORT`), then remove the worktree (delete the node_modules junction first).
+`delegation.model` is already back to "" (unset).
 
 ## State
 
