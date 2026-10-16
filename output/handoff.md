@@ -1,25 +1,32 @@
 # Handoff
 
-**Last session:** 2026-10-16 — M1 in progress (M0 done, commit `70fb25e`).
+**Last session:** 2026-10-16 — **M1 built**, waiting on Steven's playtest.
 
-## M1 plan (work top to bottom; commit after each chunk)
+## State
 
-1. ✅ **XP pacing** (commit `5443881`).
-2. ✅ **Muster: 10 base classes + ancestry stats** (commit `fb0906b`).
-3. ✅ **Warlock fix + Monk unarmed + dice NaN bug** (commit `fb0906b`).
+- `main` has all of M1, pushed. Playtest note: `output/playtest/2026-10-16-M1.md`.
+- Every design call is in `output/decisions.md` (M1 rows).
+- The rest of M1 ran as two parallel tracks: Track A (level-up and spells) on Opus in the main
+  checkout, and Track B (mission report) on a Sonnet subagent in a worktree, merged after review. The
+  Track B brief is kept as an example of a good subagent brief: `output/briefs-m1/trackB.md`.
 
-> **Parallel run in progress (2026-10-16):** Track A (chunks 4, 5 + auto button on the hero tab) is
-> DONE in commit `5d30186` on `main` (not pushed). Track B (chunks 6, 7: town/after-action auto-level
-> buttons, mission summary, quest names) is a Sonnet subagent in worktree `C:\GuildVigilWeb-trackB`,
-> branch `m1-trackB`, brief `output/briefs-m1/trackB.md`. When it reports: review its diff, merge
-> `m1-trackB` into `main`, run the full gate, then do chunk 8. Afterwards: `git worktree remove
-> C:/GuildVigilWeb-trackB` (delete the node_modules junction first — it points at main's node_modules)
-> and `hermes config set delegation.model ""` to put subagents back on the main model.
-4. **Level-up teaches spells** (`spellsLearnedAtLevel` exists, nothing calls it) and **new spells/active
-   feats auto-join the loadout**. Auto level-up picks spells too.
-5. **Picker hides dead feats/spells** and empty ancestry-feat tracks.
-6. **Auto level up button** (hero panel, town roster, after-action) via `autoLevelHero`.
-7. **Readable mission summary** on After-action; real quest names (DispatchSetup passes `#id`).
-8. Playtest note `output/playtest/2026-10-16-M1.md`, decisions log, roadmap status, e2e, commit, push.
+## Next session
 
-Throwaway files to delete before commit: `probeM1/`, `vitest.probeM1.config.ts`, `e2e/zz-survey.spec.ts`.
+1. **If Steven has played:** run `pnpm notes` (moves Downloads `gv-note-*.json` into `playtest/inbox/`).
+   Read the feedback section of the M1 playtest note, triage it into the "Hermes triage" table there,
+   and fix anything blocking before M2.
+2. **Then M2** (see `roadmap.md`).
+3. **Known M2 seeds:**
+   - When should abilities like Power Attack fire? Measured: using them every turn loses badly.
+   - Placing debuffs automatically needs a "target lacks condition" loadout check.
+   - Ranger and Bard have no class feats.
+   - The playback heading still says "quest <name>".
+
+## Parallel-work recipe (worked well)
+
+- Split tracks by **file ownership**, not by feature.
+- `git worktree add C:/GuildVigilWeb-<track> -b <branch>`, then link `node_modules` with a
+  PowerShell `New-Item -ItemType Junction` (cmd `mklink` fails from git-bash).
+- Set the subagent model with `hermes config set delegation.model <id>`; unset it afterwards.
+- Review the diff, check the new screens yourself in a screenshot, then merge `--no-ff`.
+- A subagent's e2e screenshots can land in `shots/` in the main checkout; delete them, never commit them.
