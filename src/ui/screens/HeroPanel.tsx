@@ -124,10 +124,12 @@ function LevelUpTab({ heroId }: { heroId: string }) {
   // M1: the picker lists only what WORKS. Feats/spells the engine cannot run
   // yet, and empty slot tracks (ancestry feats), are hidden rather than greyed.
   const slots = (chosen ? session!.featSlotsFor(heroId, chosen.classId) : [])
-    .map((slot) => ({ ...slot, offers: slot.offers.filter((o) => o.reason !== 'not_yet_implemented') }))
-    .filter((slot) => slot.offers.some((o) => o.selectable));
+    .map((slot) => ({ ...slot, offers: slot.offers.filter((o) => o.selectable) }))
+    .filter((slot) => slot.offers.length > 0);
   const spellPick = chosen ? session!.spellPicksFor(heroId, chosen.classId) : { count: 0, offers: [] };
-  const spellOffersShown = spellPick.offers.filter((o) => o.reason !== 'not_yet_implemented' && o.reason !== 'already_taken');
+  // Only what can be picked NOW. Listing every future spell greyed out made the
+  // tab ~5700px tall (measured, wizard L2) and buried the real choices.
+  const spellOffersShown = spellPick.offers.filter((o) => o.selectable);
   const spellsOk = spellPicks.length === spellPick.count;
   const autoLevel = (): void => {
     exec((s) => autoLevelHero(s, heroId));

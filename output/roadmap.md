@@ -30,7 +30,7 @@
 | Milestone | Status |
 |---|---|
 | M0 — Reset and playtest tooling | ✅ done 2026-10-16 |
-| M1 — The whole loop, thin | ⬅ next |
+| M1 — The whole loop, thin | ✅ built 2026-10-16 — awaiting Steven's playtest (`playtest/2026-10-16-M1.md`) |
 | M2 – M9 | not started |
 
 ### M0 — Reset and playtest tooling *(small)*
