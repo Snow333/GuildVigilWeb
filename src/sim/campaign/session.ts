@@ -63,7 +63,9 @@ import {
   shopStockRows, skillNames, spellsById, storyDialogueRows, storylineByQuestId, storylinesById,
   worldRegionsById,
 } from '@sim/registry';
-import { quests as questRows } from '@content/generated';
+import {
+  COMMISSION_QUEST_IDS, COMMISSIONS, EARLY_EASY_QUEST_IDS, EARLY_ONLY_QUEST_IDS, type QuestRow,
+} from '@content/earlyQuests';
 import { generateWorld, type WorldMap } from '@sim/world/terrain';
 import { planTravel, type TravelPlan } from '@sim/world/travel';
 import { EscalationLedger, type EscalationFact } from '@sim/world/escalation';
@@ -114,6 +116,15 @@ export interface QuestRecord {
   fights?: SurfaceFight[];
 }
 
+/** The board's plain difficulty word (M2). */
+export type Ease = 'easy' | 'fair' | 'hard';
+
+export function easeFor(band: DifficultyBand): Ease {
+  if (band.id === 'routine' || band.id === 'measured') return 'easy';
+  if (band.id === 'dangerous') return 'fair';
+  return 'hard';
+}
+
 export interface BoardEntry {
   questId: number;
   name: string;
@@ -125,6 +136,14 @@ export interface BoardEntry {
    * (brief #11). Derived here so the UI renders a judgement it never computes.
    */
   difficulty: DifficultyBand;
+  /**
+   * M2: the ONE plain word the board leads with — "easy", "fair" or "hard".
+   * Collapses the four bands above (routine/measured → easy, dangerous →
+   * fair, beyond us → hard), so it can never disagree with them.
+   */
+  ease: Ease;
+  /** A Marshal's commission (answered letter): red seal, bonus pay, longer expiry. */
+  commission: boolean;
   regionId: string;
   postedWeek: number;
   expiresWeek: number;
@@ -349,6 +368,8 @@ export interface SessionSaveState {
   escalation: { facts: EscalationFact[]; lastTier: [string, number][] };
   /** Shop purchases this rotation week (2.2+; absent in 2.0 saves — backfills empty). */
   shopSold?: { week: number; counts: [number, number][] };
+  /** Marshal letters the player answered (M2; absent in older saves — backfills empty). */
+  answered?: number[];
 }
 
 /** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
@@ -469,6 +490,8 @@ export class CampaignSession {
    */
   private expired = new Map<number, number>();
   private active: ActiveQuest | null = null;
+  /** Marshal letters (story_dialogue ids) the player has answered — they stop showing. */
+  private answered = new Set<number>();
   private dispatchN = 0;
   private profile: MissionProfile = 'fullExplore';
   private caution: Caution = 'standard';
@@ -506,7 +529,7 @@ export class CampaignSession {
     // ── Expiry sweep ──
     for (let i = this.open.length - 1; i >= 0; i--) {
       const q = this.open[i]!;
-      if (week - q.postedWeek >= SCHEDULER.expiryWeeks) {
+      if (week - q.postedWeek >= this.expiryWeeksFor(q.questId)) {
         this.open.splice(i, 1);
         this.expired.set(q.questId, week);
         this.world.emit(this.minute, 'world.quest_expired', { questId: String(q.questId), regionId: q.regionId });
@@ -515,35 +538,113 @@ export class CampaignSession {
     }
 
     // ── Posting: authored pool, level band, region drift widens the top ──
-    // Storyline quests scan FIRST (brief #6): the board is how the arc reaches
-    // the player, and four filler slots must not drown the opener. Within each
-    // group, table order — deterministic.
+    // M2 (Steven): "expand the board to support more than 4, target 10, but
+    // don't populate it fully each week — offering 4 to 6 a week". So the
+    // board CAN hold 10, but each week a seeded draw picks how many regular
+    // notices the guild sees (4–6) and new ones go up until the board reaches
+    // that size. Fewer only when too few quests are eligible (a thin level
+    // band). The draw uses its own child stream, so the campaign Rng (ambush
+    // rolls) never moves because of the board.
+    // Who gets a spot, in order:
+    //   1. the storyline quest — even past this week's size, never past 10
+    //      (brief #6: the arc must not wait behind filler),
+    //   2. weeks 1–4: easy quests until at least 2 are up — same rule
+    //      (a fresh guild needs wins),
+    //   3. everything else eligible, in a seeded shuffle, up to this week's size.
+    // Marshal's commissions never post here and never count toward either cap.
     const pl = this.partyLevel();
-    const postingOrder = [...questRows].sort((a, b) => {
-      const arcA = storylineByQuestId.has(a.id) && !this.completed.has(a.id) ? 0 : 1;
-      const arcB = storylineByQuestId.has(b.id) && !this.completed.has(b.id) ? 0 : 1;
-      return arcA - arcB || a.id - b.id;
-    });
-    for (const row of postingOrder) {
-      if (this.open.length >= SCHEDULER.maxOpenQuests) break;
-      const doneWeek = this.completed.get(row.id);
-      if (doneWeek !== undefined && week - doneWeek < SCHEDULER.expiryWeeks) continue;
-      const expiredWeek = this.expired.get(row.id);
-      if (expiredWeek !== undefined && week - expiredWeek < SCHEDULER.expiryWeeks) continue;
-      if (this.open.some((o) => o.questId === row.id)) continue;
-      if (!this.storylineUnlocked(row.id)) continue; // arc quests post in sequence (brief #6)
-      if (doneWeek !== undefined && storylineByQuestId.has(row.id)) continue; // arc beats happen ONCE
-      if (this.active?.questId === row.id) continue; // live play: an accepted quest is off the board
+    const boardRng = Rng.child(Seeds.campaign(this.campaignId), 'board', week);
+    const target = Math.min(
+      boardRng.int(SCHEDULER.postingsPerWeek.min, SCHEDULER.postingsPerWeek.max),
+      SCHEDULER.maxOpenQuests,
+    );
+    const regularOpen = (): number => this.open.filter((o) => !COMMISSION_QUEST_IDS.has(o.questId)).length;
+    const candidates = [...questsById.values()]
+      .filter((row) => this.postable(row, week, pl))
+      .sort((a, b) => a.id - b.id);
+    const isOpen = (id: number): boolean => this.open.some((o) => o.questId === id);
+    const post = (row: QuestRow): void => {
+      if (isOpen(row.id)) return;
       const pos = this.questPos(row);
       const regionId = regionFor(pos);
-      const drift = this.ledger.effectsFor(regionId).questLevelDrift;
-      if ((row.min_level as number) < pl - SCHEDULER.levelBandBelow) continue;
-      if ((row.min_level as number) > pl + SCHEDULER.levelBandAbove + drift) continue;
       this.open.push({ questId: row.id, postedWeek: week, regionId, pos });
       this.world.emit(this.minute, 'world.quest_posted', {
         questId: String(row.id), regionId, kind: 'story', expiresWeek: week + SCHEDULER.expiryWeeks,
       });
+    };
+
+    for (const row of candidates) {
+      if (regularOpen() < SCHEDULER.maxOpenQuests && storylineByQuestId.has(row.id)) post(row);
     }
+    const early = week <= SCHEDULER.earlyWeeks;
+    if (early) {
+      for (const row of boardRng.shuffle(candidates.filter((r) => EARLY_EASY_QUEST_IDS.has(r.id)))) {
+        const easyUp = this.open.filter((o) => EARLY_EASY_QUEST_IDS.has(o.questId)).length;
+        if (easyUp >= SCHEDULER.earlyEasyMin || regularOpen() >= SCHEDULER.maxOpenQuests) break;
+        post(row);
+      }
+    }
+    // In weeks 1–4 the easy pool is spent ONLY by the guarantee above, two at
+    // a time — if the shuffle could post five of them in week 1, they would
+    // all expire together in week 3 and leave the guarantee nothing to post.
+    for (const row of boardRng.shuffle(candidates)) {
+      if (regularOpen() >= target) break;
+      if (early && EARLY_EASY_QUEST_IDS.has(row.id)) continue;
+      post(row);
+    }
+  }
+
+  /**
+   * May this row go up on the board this week? Cooldowns, arc gating, the
+   * level band, and the early-weeks window for hand-authored easy quests.
+   * Commissions never post through the weekly scan — only a letter posts them.
+   */
+  private postable(row: QuestRow, week: number, pl: number): boolean {
+    if (COMMISSION_QUEST_IDS.has(row.id)) return false;
+    if (EARLY_ONLY_QUEST_IDS.has(row.id) && week > SCHEDULER.earlyWeeks) return false;
+    const doneWeek = this.completed.get(row.id);
+    if (doneWeek !== undefined && week - doneWeek < SCHEDULER.expiryWeeks) return false;
+    const expiredWeek = this.expired.get(row.id);
+    if (expiredWeek !== undefined && week - expiredWeek < SCHEDULER.expiryWeeks) return false;
+    if (this.open.some((o) => o.questId === row.id)) return false;
+    if (!this.storylineUnlocked(row.id)) return false; // arc quests post in sequence (brief #6)
+    if (doneWeek !== undefined && storylineByQuestId.has(row.id)) return false; // arc beats happen ONCE
+    if (this.active?.questId === row.id) return false; // live play: an accepted quest is off the board
+    const regionId = regionFor(this.questPos(row));
+    const drift = this.ledger.effectsFor(regionId).questLevelDrift;
+    if (row.min_level < pl - SCHEDULER.levelBandBelow) return false;
+    if (row.min_level > pl + SCHEDULER.levelBandAbove + drift) return false;
+    return true;
+  }
+
+  /** Weeks a posting stays up: commissions linger longer than normal notices. */
+  private expiryWeeksFor(questId: number): number {
+    return COMMISSION_QUEST_IDS.has(questId) ? SCHEDULER.commissionExpiryWeeks : SCHEDULER.expiryWeeks;
+  }
+
+  /**
+   * The player answers a Marshal letter (any of its choices). The letter is
+   * marked answered — it stops showing, and that persists in the save — and
+   * the letter's commission goes up on the board: a real quest with a bonus
+   * reward and a longer expiry. One commission per letter, ever.
+   */
+  answerLetter(dialogueId: number, choiceIndex = 0): void {
+    const letter = this.pendingDialogue().find((d) => d.id === dialogueId);
+    if (!letter) throw new Error(`answerLetter: letter ${dialogueId} is not waiting for an answer`);
+    if (letter.choices.length > 0 && (choiceIndex < 0 || choiceIndex >= letter.choices.length)) {
+      throw new Error(`answerLetter: letter ${dialogueId} has no choice ${choiceIndex}`);
+    }
+    this.answered.add(dialogueId);
+    const commission = COMMISSIONS.find((c) => c.dialogueId === dialogueId);
+    if (!commission) return;
+    const id = commission.quest.id;
+    if (this.completed.has(id) || this.open.some((o) => o.questId === id) || this.active?.questId === id) return;
+    const pos = this.questPos(commission.quest);
+    const regionId = regionFor(pos);
+    this.open.push({ questId: id, postedWeek: this.week, regionId, pos });
+    this.world.emit(this.minute, 'world.quest_posted', {
+      questId: String(id), regionId, kind: 'story', expiresWeek: this.week + SCHEDULER.commissionExpiryWeeks,
+    });
   }
 
   /** Moves board → active; does NOT launch. One active quest at a time (v1). */
@@ -572,7 +673,7 @@ export class CampaignSession {
     this.open.push({ questId: q.questId, postedWeek: q.postedWeek, regionId: q.regionId, pos: q.pos });
     this.world.emit(this.minute, 'world.quest_posted', {
       questId: String(q.questId), regionId: q.regionId, kind: 'story',
-      expiresWeek: q.postedWeek + SCHEDULER.expiryWeeks,
+      expiresWeek: q.postedWeek + this.expiryWeeksFor(q.questId),
     });
   }
 
@@ -1371,18 +1472,20 @@ export class CampaignSession {
     const partyLevel = this.partyLevel();
     return this.open.map((o) => {
       const row = questsById.get(o.questId)!;
-      const challenge = Math.max((row.dungeon_level as number | null) ?? (row.min_level as number), 1);
+      const challenge = Math.max(row.dungeon_level ?? row.min_level, 1);
       return {
         questId: o.questId,
-        name: row.name as string,
-        minLevel: row.min_level as number,
+        name: row.name,
+        minLevel: row.min_level,
         challenge,
         difficulty: difficultyFor(challenge, partyLevel),
+        ease: easeFor(difficultyFor(challenge, partyLevel)),
+        commission: COMMISSION_QUEST_IDS.has(o.questId),
         regionId: o.regionId,
         postedWeek: o.postedWeek,
-        expiresWeek: o.postedWeek + SCHEDULER.expiryWeeks,
-        rewardGold: row.reward_gold as number,
-        rewardXp: row.reward_xp as number,
+        expiresWeek: o.postedWeek + this.expiryWeeksFor(o.questId),
+        rewardGold: row.reward_gold,
+        rewardXp: row.reward_xp,
         pressureTier: this.ledger.pressureFor(o.regionId).tier,
         pos: { ...o.pos },
         discovered: this.poiSurveyed(row),
@@ -1440,6 +1543,7 @@ export class CampaignSession {
         ? storyline?.trigger_type === 'game_start'
         : this.completed.has(Number(value));
       if (!fired) continue;
+      if (this.answered.has(row.id)) continue; // the player answered this letter
       let choices: { label: string }[] = [];
       try {
         choices = row.choices ? (JSON.parse(row.choices as string) as { label: string }[]) : [];
@@ -1497,6 +1601,7 @@ export class CampaignSession {
         : null,
       escalation: this.ledger.serialize(),
       shopSold: { week: this.shopSoldWeek, counts: [...this.shopSoldCounts.entries()] },
+      answered: [...this.answered].sort((a, b) => a - b),
     });
   }
 
@@ -1533,6 +1638,8 @@ export class CampaignSession {
     // Backfill (constraint 8 spirit): 2.0 saves predate the shop — empty ledger.
     session.shopSoldWeek = data.shopSold?.week ?? 0;
     session.shopSoldCounts = new Map(data.shopSold?.counts ?? []);
+    // M2: pre-commission saves have no answered letters — every letter shows again.
+    session.answered = new Set(Array.isArray(data.answered) ? data.answered : []);
     return session;
   }
 

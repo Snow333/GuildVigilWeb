@@ -39,7 +39,7 @@ function collectRecords(
   return { session, records };
 }
 
-const dungeonRuns = ['mission_a', 'mission_b', 'mission_c'].map((n) => collectRecords(n, true));
+const dungeonRuns = ['mission_a', 'mission_b', 'mission_d'].map((n) => collectRecords(n, true));
 const campRuns = [collectRecords('mission_a', false)];
 const pool = [...dungeonRuns, ...campRuns].flatMap((r) => r.records);
 const withDispatch = pool.filter((r) => r.dispatch);
@@ -58,7 +58,11 @@ describe('buildMissionSummary — real launches', () => {
       // Surface fights add to these tallies, so only compare records with none.
       if (record.fights) continue;
       for (const row of out.rows) {
-        const tally = expected.heroes[row.heroId]!;
+        // A hero who stood in the line but never struck, healed or got hit
+        // (a dead hero is still mustered) has NO tally entry: that is all zeros.
+        const tally = expected.heroes[row.heroId] ?? {
+          damageDealt: 0, damageTaken: 0, healingDone: 0, kills: 0, timesDowned: 0, died: false,
+        };
         expect(row.name).toBe(roster.find((r) => r.id === row.heroId)!.name);
         expect(row.name).not.toMatch(/^hero_/);
         expect(row.damageDealt).toBe(tally.damageDealt);

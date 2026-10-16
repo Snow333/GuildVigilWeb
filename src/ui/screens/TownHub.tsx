@@ -61,6 +61,13 @@ export function TownHub() {
     void saveGame(); // autosave point (brief §2)
   };
 
+  // Answering a Marshal letter posts his commission on the board (M2), and
+  // the letter is put away. Autosave: the answer is a commitment.
+  const answer = (dialogueId: number, choiceIndex: number): void => {
+    exec((s) => s.answerLetter(dialogueId, choiceIndex));
+    void saveGame();
+  };
+
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-town">
@@ -104,8 +111,16 @@ export function TownHub() {
                     </blockquote>
                     {d.choices.length > 0 && (
                       <p style={{ margin: '8px 0 10px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {/* M2: answering posts the Marshal's commission on the board */}
                         {d.choices.map((c, i) => (
-                          <button key={i} className={i === 0 ? 'gv-btn gv-btn--seal' : 'gv-btn'}>{c.label}</button>
+                          <button
+                            key={i}
+                            className={i === 0 ? 'gv-btn gv-btn--seal' : 'gv-btn'}
+                            data-letter-choice={d.id}
+                            onClick={() => answer(d.id, i)}
+                          >
+                            {c.label}
+                          </button>
                         ))}
                       </p>
                     )}

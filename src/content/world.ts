@@ -63,10 +63,22 @@ export const ESCALATION = {
   baseAmbushChance: 0.05,
 } as const;
 
-/** Scheduler v1: the authored pool (12 quests today), posted by level band. */
+/**
+ * Scheduler: the authored pool (generated + `earlyQuests.ts`), posted by level
+ * band. M2 (Steven): the board holds up to 10, but each week only 4–6 NEW
+ * postings go up (seeded count) — the board should not fill every week.
+ */
 export const SCHEDULER = {
-  maxOpenQuests: 4,
+  /** Regular postings on the board at once. Marshal's commissions pin beside these. */
+  maxOpenQuests: 10,
+  /** New regular postings per week: a seeded draw in [min, max]. */
+  postingsPerWeek: { min: 4, max: 6 },
   expiryWeeks: 2,
+  /** A Marshal's commission stays up longer than a normal posting. */
+  commissionExpiryWeeks: 4,
+  /** Weeks 1..earlyWeeks: the board always carries at least `earlyEasyMin` easy quests. */
+  earlyWeeks: 4,
+  earlyEasyMin: 2,
   /** Post quests within [partyLevel − 1, partyLevel + 2 + pressure drift]. */
   levelBandBelow: 1,
   levelBandAbove: 2,
