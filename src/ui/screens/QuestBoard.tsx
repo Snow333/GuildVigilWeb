@@ -1,35 +1,50 @@
 /**
- * Screen 3 — Quest board (brief #5 §3): board() rows with the pressure badge;
- * accepting moves board → active and hands off to dispatch setup. Declining has
- * consequences the screen must show: expiry feeds escalation.
+ * Screen 3 — Quest board (brief #5 §3): board() rows; accepting moves board →
+ * active and hands off to dispatch setup. Declining has consequences the
+ * screen must show: expiry feeds escalation.
  *
- * Brief #8 rollout step 3: postings are pinned notices with torn lower edges;
- * Accept is the wax seal (irreversible commitment); stamps carry red-ink
- * urgency — GUILD WORK for storyline postings, EXPIRES when this is the last
- * week (one stamp per sheet, arc wins). Empty slots read as bare leather
- * (SCHEDULER.maxOpenQuests is content data, not a UI-computed rule). The e2e
- * accept policy reads data-quest-id / data-challenge off each notice.
- *
- * Brief #11 hierarchy: name loudest, then the guild's DIFFICULTY judgement as
- * the headline, then level/travel/reward as equal blocks in priority order,
- * then a muted footer for what you only check occasionally. The regional
- * pressure chip left this card deliberately — it describes the REGION, not the
- * job, it was the loudest thing here, and it already lives on the town hub's
- * watch report and the chart. The difficulty band is a session query
- * (BoardEntry.difficulty); this screen computes nothing.
+ * M2 (Track Q): the board holds up to 10 postings, so the old 300px pinned
+ * notices became a wall. Now it is ONE pinned sheet with compact rows:
+ *   - the Marshal's commission first (red wax seal + "Marshal's commission"),
+ *   - then every posting, easiest first (challenge, then quest id),
+ *   - each row leads with ONE plain word — easy / fair / hard — which is
+ *     `BoardEntry.ease`, a session query. This screen computes no rule.
+ * Stamps keep their meaning: GUILD WORK for the storyline, EXPIRES on the last
+ * week. The e2e accept policy still reads data-posting / data-quest-id /
+ * data-challenge off each row.
  */
 
+import type { CSSProperties } from 'react';
 import { SCHEDULER } from '@content/world';
+import type { BoardEntry, Ease } from '@sim/campaign/session';
 import { storylineByQuestId } from '@sim/registry';
 import { useGame } from '../state/GameProvider';
+
+/** The plain word's colour, from the frozen status set. The word always ships with it. */
+const EASE_TIER: Record<Ease, 0 | 2 | 3> = { easy: 0, fair: 2, hard: 3 };
+
+/** One grid for the header and every row, so the columns can never drift apart. */
+const ROW_GRID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '74px minmax(0, 1fr) 54px 76px 70px 68px 150px',
+  alignItems: 'center',
+  gap: 10,
+};
+
+const cell: CSSProperties = { fontSize: 14, fontWeight: 700, textAlign: 'center' };
+
+/** Commissions first; then easiest first, ties by quest id. */
+function boardOrder(a: BoardEntry, b: BoardEntry): number {
+  return Number(b.commission) - Number(a.commission) || a.challenge - b.challenge || a.questId - b.questId;
+}
 
 export function QuestBoard() {
   const { session, exec, nav } = useGame();
   if (!session) return null;
-  const board = session.board();
+  const board = [...session.board()].sort(boardOrder);
   const active = session.activeQuest();
   const week = session.currentWeek();
-  const emptySlots = Math.max(0, SCHEDULER.maxOpenQuests - board.length);
+  const regularCount = board.filter((b) => !b.commission).length;
 
   const accept = (questId: number): void => {
     const ok = exec((s) => {
@@ -48,7 +63,7 @@ export function QuestBoard() {
         </p>
         {active && (
           <p className="gv-marg" style={{ margin: '0 0 14px' }}>
-            Quest #{active.questId} is already accepted —{' '}
+            {session.questName(active.questId)} is already accepted —{' '}
             <button className="gv-btn" onClick={() => nav({ kind: 'dispatch' })}>go to dispatch setup ▸</button>
           </p>
         )}
@@ -58,73 +73,104 @@ export function QuestBoard() {
             <p style={{ margin: 0 }}><em>The board is bare. Advance the week — trouble restocks.</em></p>
           </div>
         ) : (
-          <div className="gv-notices">
+          <div className="gv-sheet" data-board-list="" style={{ ['--gv-tilt' as never]: '-0.2deg', padding: '18px 20px 14px' }}>
+            <span className="gv-pin" />
+            <div
+              style={{ ...ROW_GRID, fontFamily: 'var(--gv-sans)', fontSize: 10, letterSpacing: 1.5, color: 'var(--gv-ink-muted)', paddingBottom: 6, borderBottom: '1px solid #a8905e' }}
+            >
+              <span>how hard</span>
+              <span>job</span>
+              <span style={{ textAlign: 'center' }}>level</span>
+              <span style={{ textAlign: 'center' }}>travel</span>
+              <span style={{ textAlign: 'center' }}>reward</span>
+              <span style={{ textAlign: 'center' }}>ends</span>
+              <span />
+            </div>
+
             {board.map((b) => {
               const travel = session.travelPreview(b.questId);
               const isArc = storylineByQuestId.has(b.questId);
               const lastWeek = b.expiresWeek <= week + 1;
-              const stamp = isArc ? 'GUILD WORK' : lastWeek ? 'EXPIRES' : null;
+              const stamp = b.commission ? null : isArc ? 'GUILD WORK' : lastWeek ? 'EXPIRES' : null;
               return (
                 <div
                   key={b.questId}
-                  className={`gv-sheet gv-sheet--notice${stamp ? ' gv-notice--stamped' : ''}`}
                   data-posting=""
                   data-quest-id={b.questId}
                   data-challenge={b.challenge}
+                  data-ease={b.ease}
+                  {...(b.commission ? { 'data-commission': '' } : {})}
+                  style={{
+                    ...ROW_GRID,
+                    padding: '9px 6px',
+                    borderBottom: '1px dashed #a8905e88',
+                    background: b.commission ? '#9c342814' : undefined,
+                  }}
                 >
-                  <span className="gv-pin" />
-                  {/* a stamped notice reserves the stamp's column (see screens.css)
-                      so red ink never lands across the posting's name */}
-                  {stamp && <span className="gv-stamp">{stamp}</span>}
+                  <span
+                    className={`gv-difficulty gv-difficulty--s${EASE_TIER[b.ease]}`}
+                    data-difficulty={b.difficulty.id}
+                    title={b.difficulty.reason}
+                    style={{ margin: 0, fontSize: 14 }}
+                  >
+                    <i />{b.ease}
+                  </span>
 
-                  <div className="gv-notice-id">posting {b.questId}</div>
-                  <h3 className="gv-notice-name">{b.name}</h3>
-
-                  {/* the headline judgement: colour and word are inseparable */}
-                  <p className={`gv-difficulty gv-difficulty--s${b.difficulty.tier}`} data-difficulty={b.difficulty.id}>
-                    <i />{b.difficulty.label}
-                    <span className="gv-italic">— {b.difficulty.reason}</span>
-                  </p>
-
-                  {/* level · travel · reward, equal weight, in priority order */}
-                  <div className="gv-notice-stats">
-                    <span className="gv-nstat">
-                      <b>level</b>
-                      <span>{b.minLevel}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {b.commission && (
+                        <span
+                          className="gv-seal"
+                          aria-hidden="true"
+                          style={{ width: 26, height: 26, fontSize: 11, flex: 'none' }}
+                        >
+                          V
+                        </span>
+                      )}
+                      <b style={{ fontSize: 16 }}>{b.name}</b>
+                      {stamp && (
+                        <span
+                          style={{
+                            fontFamily: 'var(--gv-sans)', fontSize: 10, fontWeight: 800, letterSpacing: 1.6,
+                            color: 'var(--gv-red-ink)', border: '1.5px solid var(--gv-red-ink)', borderRadius: 3,
+                            padding: '1px 6px', opacity: 0.8,
+                          }}
+                        >
+                          {stamp}
+                        </span>
+                      )}
                     </span>
-                    <span className="gv-nstat">
-                      <b>travel</b>
-                      <span>{travel ? <>{travel.etaMinutes}<small> min</small></> : '—'}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--gv-ink-muted)', marginTop: 2 }}>
+                      {b.commission
+                        ? <span style={{ color: 'var(--gv-red-ink)', fontStyle: 'italic' }}>Marshal&apos;s commission · bonus pay</span>
+                        : session.regionName(b.regionId)}
+                      {!travel && <span className="gv-marg"> · no road reaches it</span>}
                     </span>
-                    <span className="gv-nstat">
-                      <b>reward</b>
-                      <span>{b.rewardGold}<small>g</small></span>
-                    </span>
-                  </div>
+                  </span>
 
-                  {!travel && <p className="gv-marg" style={{ margin: '8px 0 0' }}>no road reaches it</p>}
+                  <span style={cell}>{b.minLevel}</span>
+                  <span style={cell}>{travel ? <>{travel.etaMinutes}<small style={{ fontWeight: 400 }}> min</small></> : '—'}</span>
+                  <span style={cell}>{b.rewardGold}<small style={{ fontWeight: 400 }}>g</small></span>
+                  <span style={{ ...cell, fontWeight: 400, fontSize: 12.5 }}>wk {b.expiresWeek}</span>
 
-                  <p className="gv-notice-foot">
-                    {session.regionName(b.regionId)} · {b.rewardXp} xp · expires wk {b.expiresWeek}
-                  </p>
-
-                  <p className="gv-notice-acts">
+                  <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                     <button className="gv-btn gv-btn--seal" disabled={active !== null} onClick={() => accept(b.questId)}>
                       Accept
-                    </button>{' '}
+                    </button>
                     <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: b.questId })}>Map</button>
-                  </p>
+                  </span>
                 </div>
               );
             })}
-            {Array.from({ length: emptySlots }, (_, i) => (
-              <div className="gv-slot-empty" key={`empty-${i}`}>empty slot</div>
-            ))}
+
+            <p className="gv-notice-foot" style={{ margin: '10px 0 0' }}>
+              {regularCount} of {SCHEDULER.maxOpenQuests} spots used · new jobs come each week
+            </p>
           </div>
         )}
 
         <p className="gv-marg" style={{ marginTop: 18 }}>
-          Postings left to expire feed regional escalation — declining is also a choice.
+          Jobs left to expire make the region more dangerous. Saying no is also a choice.
         </p>
       </div>
     </div>
