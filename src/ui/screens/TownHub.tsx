@@ -10,6 +10,7 @@
  * label-paired status chips. Behavior and queries are unchanged from Phase 2.
  */
 
+import { autoLevelHero } from '@sim/campaign/campaign';
 import { REGION_IDS } from '@sim/campaign/session';
 import type { HeroStatus } from '@sim/heroes/types';
 import { InkwellQuill, LetterKnife, PouncePot } from '../accessories';
@@ -46,6 +47,14 @@ export function TownHub() {
   // twins; the accessory never carries a fact alone.
   const inputPending =
     dialogue.length > 0 || active !== null || roster.some((h) => session.heroSheet(h.id).canLevelUp);
+
+  const levelReady = roster.filter((h) => session.heroSheet(h.id).canLevelUp);
+
+  // One click = every level the hero has earned, class-template picks.
+  const autoLevel = (heroIds: readonly string[]): void => {
+    exec((s) => { for (const id of heroIds) autoLevelHero(s, id); });
+    void saveGame();
+  };
 
   const advance = (): void => {
     exec((s) => s.advanceWeek());
@@ -144,6 +153,14 @@ export function TownHub() {
                       <button className="gv-btn" onClick={() => nav({ kind: 'hero', heroId: h.id })}>
                         Open{session.heroSheet(h.id).canLevelUp ? ' ● level up!' : ''}
                       </button>
+                      {session.heroSheet(h.id).canLevelUp && (
+                        <>
+                          {' '}
+                          <button className="gv-btn" data-auto-level={h.id} onClick={() => autoLevel([h.id])}>
+                            Auto level up
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -166,7 +183,12 @@ export function TownHub() {
               <button className="gv-btn" onClick={() => nav({ kind: 'board' })}>Quest board ({board.length})</button>
               {active && (
                 <button className="gv-btn" onClick={() => nav({ kind: 'dispatch' })}>
-                  Dispatch: quest #{active.questId} ▸
+                  Dispatch: {session.questName(active.questId)} ▸
+                </button>
+              )}
+              {levelReady.length > 0 && (
+                <button className="gv-btn" data-auto-level="all" onClick={() => autoLevel(levelReady.map((h) => h.id))}>
+                  Auto level up all
                 </button>
               )}
               <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: null })}>World map</button>

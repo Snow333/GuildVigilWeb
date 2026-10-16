@@ -1385,6 +1385,11 @@ export class CampaignSession {
     return worldRegionsById.get(regionId)?.name ?? regionId;
   }
 
+  /** Authored quest name (quests table), falling back to "Quest #id". */
+  questName(questId: number): string {
+    return (questsById.get(questId)?.name as string | undefined) ?? `Quest #${questId}`;
+  }
+
   /**
    * Dialogue beats whose triggers have fired, in sequence (brief #6). Pure
    * derivation from the completed map: trigger_value '' fires at arc start;

@@ -11,10 +11,12 @@
  * record/orders grammar split clean.
  */
 
+import { autoLevelHero } from '@sim/campaign/campaign';
 import { deriveItem } from '@sim/heroes/equipment';
 import { Portrait, conditionFor } from '../portrait';
 import { useGame } from '../state/GameProvider';
 import { groupXpByHero, type XpAward } from './afterActionXp';
+import { buildMissionSummary } from './missionSummary';
 
 const OUTCOME_WORD: Record<string, string> = {
   completed: 'MISSION COMPLETE',
@@ -32,7 +34,7 @@ const OUTCOME_CHIP: Record<string, string> = {
 };
 
 export function AfterActionScreen() {
-  const { session, lastLaunch, nav, saveGame } = useGame();
+  const { session, lastLaunch, nav, saveGame, exec } = useGame();
   if (!session || !lastLaunch) {
     return (
       <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
@@ -77,6 +79,15 @@ export function AfterActionScreen() {
   const items = record.outcome === 'wiped' ? [] : (record.dispatch?.items ?? []);
   const pendingLevelUps = session.roster().filter((r) => session.heroSheet(r.id).canLevelUp);
 
+  const mission = buildMissionSummary(record, roster);
+
+  // One click = every level each hero has earned, class-template picks.
+  const autoLevelAll = (): void => {
+    const ids = pendingLevelUps.map((r) => r.id);
+    exec((s) => { for (const id of ids) autoLevelHero(s, id); });
+    void saveGame();
+  };
+
   const finish = (): void => {
     void saveGame(); // autosave point
     nav({ kind: 'town' });
@@ -85,7 +96,7 @@ export function AfterActionScreen() {
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-aar">
-        <h1>After-action — quest {lastLaunch.questName}, week {record.week}</h1>
+        <h1>After-action — {lastLaunch.questName}, week {record.week}</h1>
 
         {/* the report: old vellum, taped — filed the moment it's written */}
         <div className="gv-sheet gv-sheet--old gv-sheet--stained" style={{ ['--gv-tilt' as never]: '0.35deg' }}>
@@ -96,6 +107,41 @@ export function AfterActionScreen() {
               <i />{OUTCOME_WORD[record.outcome] ?? record.outcome}
             </span>
           </h3>
+
+          {/* what happened, who did what — plain words first, numbers beside them */}
+          <p className="gv-statline" style={{ marginBottom: 4 }} data-mission-summary=""><b>What happened.</b>{' '}
+            {mission.sentence}
+          </p>
+          {mission.rows.length > 0 && (
+            <div className="gv-xptable" data-mission-table="">
+              <table>
+                <thead>
+                  <tr>
+                    <th>hero</th>
+                    <th className="gv-n">damage dealt</th>
+                    <th className="gv-n">damage taken</th>
+                    <th className="gv-n">healing</th>
+                    <th className="gv-n">kills</th>
+                    <th className="gv-n">times downed</th>
+                    <th>died?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mission.rows.map((r) => (
+                    <tr key={r.heroId}>
+                      <td className="gv-who"><span><b>{r.name}</b></span></td>
+                      <td className="gv-n">{r.damageDealt}</td>
+                      <td className="gv-n">{r.damageTaken}</td>
+                      <td className="gv-n">{r.healingDone}</td>
+                      <td className="gv-n">{r.kills}</td>
+                      <td className="gv-n">{r.timesDowned}</td>
+                      <td>{r.died ? <span className="gv-marg">died</span> : 'no'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <p className="gv-statline"><b>The haul.</b>{' '}
             {record.outcome === 'completed' ? (
@@ -207,6 +253,7 @@ export function AfterActionScreen() {
               {pendingLevelUps.map((r) => (
                 <button key={r.id} className="gv-btn" onClick={() => nav({ kind: 'hero', heroId: r.id })}>{r.name} ▸</button>
               ))}
+              <button className="gv-btn" data-auto-level="all" onClick={autoLevelAll}>Auto level up all</button>
             </p>
           )}
           <p style={{ margin: 0 }}>
