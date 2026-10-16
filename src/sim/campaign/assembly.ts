@@ -151,9 +151,8 @@ function equippedGear(
       if (proficient) {
         acBonus += derived.acBonus;
       } else {
-        const potency = derived.acBonus - (((base?.ac_bonus as number | null) ?? 0));
-        acBonus += derived.acBonus - Math.max(0, potency);
-        unproficientArmorPenalty += (base?.armor_check_penalty as number | null) ?? 0;
+        acBonus += derived.acBonus - derived.acPotency;
+        unproficientArmorPenalty += derived.armorCheckPenalty;
       }
       const cap = base?.max_dex as number | null | undefined;
       if (cap !== null && cap !== undefined) maxDex = maxDex === null ? cap : Math.min(maxDex, cap);

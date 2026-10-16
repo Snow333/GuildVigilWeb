@@ -31,7 +31,8 @@ describe('deriveItem — tuples to effective stats', () => {
   it('GENERATED enchanted flaming longsword: tier potency + property on-hit + composed name', () => {
     const d = deriveItem(inst('3', 'enchanted', ['flaming']));
     expect(d.attackBonus).toBe(2); // enchanted tier grant
-    expect(d.displayName).toBe('Enchanted Flaming Longsword +2');
+    // M2 itemization: the tier word is dropped when the +N already says "magic".
+    expect(d.displayName).toBe('Flaming Longsword +2');
     expect(d.onHitEffects).toHaveLength(1);
     expect(d.onHitEffects[0]!.onHit).toMatchObject({ damage_dice: '1d6', damage_type: 'fire' });
     expect(d.onHitEffects[0]!.onCrit).toMatchObject({ condition: 'persistent_fire' });
