@@ -53,7 +53,7 @@ import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
 import { SAVE_BACKFILLS } from '@sim/save/backfills';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
-import { awardXp, canLevelUp, CHARACTER_LEVEL_CAP, XP_PER_LEVEL, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
+import { awardXp, canLevelUp, CHARACTER_LEVEL_CAP, xpForNextLevel, xpToReachLevel, type XpProgress } from '@sim/heroes/xp';
 import {
   ancestryNameById, buildingsById, classesById, contentXpResolver, npcsById, progressionFor, questsById,
   shopStockRows, skillNames, spellsById, storyDialogueRows, storylineByQuestId, storylinesById,
@@ -982,7 +982,7 @@ export class CampaignSession {
     const hero = this.heroState(heroId);
     const level = characterLevel(hero);
     if (level >= CHARACTER_LEVEL_CAP) return;
-    hero.xp = Math.max(hero.xp, level * XP_PER_LEVEL);
+    hero.xp = Math.max(hero.xp, xpToReachLevel(level + 1));
   }
 
   devHealAll(): void {
@@ -1622,7 +1622,7 @@ export class CampaignSession {
   }
 
   private awardQuestXp(minute: number, questId: number, cause: number): void {
-    const result = awardXp(this.heroes, 'quest', questId, contentXpResolver);
+    const result = awardXp(this.heroes, 'quest', questId, contentXpResolver, { split: false });
     if ('error' in result || result.perHeroShare <= 0) return;
     for (const h of this.heroes) {
       if (h.status === 'dead') continue;
@@ -1633,7 +1633,7 @@ export class CampaignSession {
   private awardMonsterXp(minute: number, enemyIds: readonly number[]): void {
     const totals = new Map<string, number>();
     for (const enemyId of enemyIds) {
-      const result = awardXp(this.heroes, 'monster', enemyId, contentXpResolver);
+      const result = awardXp(this.heroes, 'monster', enemyId, contentXpResolver, { split: false });
       if ('error' in result || result.perHeroShare <= 0) continue;
       for (const h of this.heroes) {
         if (h.status !== 'dead') totals.set(h.id, (totals.get(h.id) ?? 0) + result.perHeroShare);

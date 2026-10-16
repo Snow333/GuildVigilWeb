@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  awardXp, canLevelUp, L_CAP_SENTINEL, perHeroShare, XP_PER_LEVEL, xpForNextLevel,
+  awardXp, canLevelUp, L_CAP_SENTINEL, perHeroShare, XP_PER_LEVEL, xpForNextLevel, xpToReachLevel,
   type XpSourceResolver,
 } from '@sim/heroes/xp';
 import { deriveHeroIdentity } from '@sim/heroes/ancestry';
@@ -123,21 +123,27 @@ describe('rounding (brief examples, drift accepted by design)', () => {
   });
 });
 
-describe('threshold math', () => {
-  it('XP_PER_LEVEL is 1000', () => {
+describe('threshold math (M1: the step grows with level)', () => {
+  it('XP_PER_LEVEL is 1000 — the L1 → L2 step', () => {
     expect(XP_PER_LEVEL).toBe(1000);
   });
 
-  it('threshold at level 1 is 1000', () => {
-    const info = xpForNextLevel(hero(1, 'active', 1));
-    expect(info.atCap).toBe(false);
-    expect(info.threshold).toBe(1000);
+  it('total XP to reach a level is triangular: 0, 1000, 3000, 6000 … 190000', () => {
+    expect([1, 2, 3, 4, 5].map(xpToReachLevel)).toEqual([0, 1000, 3000, 6000, 10000]);
+    expect(xpToReachLevel(20)).toBe(190_000);
   });
 
-  it('threshold at level 19 still in range', () => {
+  it('threshold at level 1 is 1000, at level 19 is 19000', () => {
+    expect(xpForNextLevel(hero(1, 'active', 1)).threshold).toBe(1000);
     const info = xpForNextLevel(hero(1, 'active', 19));
     expect(info.atCap).toBe(false);
-    expect(info.threshold).toBe(1000);
+    expect(info.threshold).toBe(19_000);
+  });
+
+  it('progress is measured from the start of the current level', () => {
+    const h = hero(1, 'active', 3);
+    h.xp = 3000 + 1234;
+    expect(xpForNextLevel(h)).toMatchObject({ progress: 1234, threshold: 3000 });
   });
 
   it('threshold at level 20 returns the sentinel', () => {
@@ -153,13 +159,26 @@ describe('threshold math', () => {
     expect(canLevelUp(h)).toBe(false);
   });
 
-  it('level-up boundary at level 1: 999 no, 1000 yes', () => {
+  it('level-up boundaries: L1 needs 1000, L2 needs 3000', () => {
     const h = hero(1);
-    expect(canLevelUp(h)).toBe(false);
     h.xp = 999;
     expect(canLevelUp(h)).toBe(false);
     h.xp = 1000;
     expect(canLevelUp(h)).toBe(true);
+    const h2 = hero(2, 'active', 2);
+    h2.xp = 2999;
+    expect(canLevelUp(h2)).toBe(false);
+    h2.xp = 3000;
+    expect(canLevelUp(h2)).toBe(true);
+  });
+});
+
+describe('full awards (M1: split:false — every living hero earns the whole amount)', () => {
+  it('each living hero gets the full value; the dead get nothing', () => {
+    const party = [hero(1), hero(2), hero(3, 'dead')];
+    const r = awardXp(party, 'quest', 9010, fixtureResolver({}, { 9010: 200 }), { split: false });
+    expect(r).toEqual({ totalAwarded: 400, perHeroShare: 200, recipientCount: 2 });
+    expect(party.map((h) => h.xp)).toEqual([200, 200, 0]);
   });
 });
 

@@ -2,7 +2,11 @@
  * XP system — faithful port of scripts/xp_manager.gd + xp_constants.gd
  * (the freshly-reworked system; decision-ledger Area 1: Keep, fixtures ported).
  *
- * Flat 1000 XP per character level, cumulative (XP is never spent).
+ * Cumulative XP, never spent. M1 (output/decisions.md): the step to the next
+ * level GROWS — reaching level L+1 from L costs XP_PER_LEVEL × L — because
+ * quest/monster XP grows with level too, so a flat step made mid-game levels
+ * arrive every mission. With full (unsplit) awards this holds roughly five
+ * missions per level from L1 to L20.
  * Source-stored values (enemies.xp_reward / quests.reward_xp).
  * Party split is round-half-up per hero; drift ≤ party size is deliberate.
  * Dead heroes excluded unless the includeDeadHeroes option is on (default OFF).
@@ -53,7 +57,7 @@ export function awardXp(
   sourceType: XpSourceType,
   sourceId: number,
   resolver: XpSourceResolver,
-  opts: { includeDeadHeroes?: boolean } = {},
+  opts: { includeDeadHeroes?: boolean; split?: boolean } = {},
 ): XpAwardResult | XpAwardError {
   if (sourceType === 'action') return { error: 'actionReserved' };
 
@@ -65,7 +69,9 @@ export function awardXp(
   const recipients = party.filter((h) => isRecipient(h, includeDead));
   if (recipients.length === 0) return { totalAwarded: 0, perHeroShare: 0, recipientCount: 0 };
 
-  const share = perHeroShare(sourceXp, recipients.length);
+  // split:false = every living hero earns the full award (PF2E style; M1 pacing,
+  // output/decisions.md). The split form stays for the ported fixtures.
+  const share = opts.split === false ? sourceXp : perHeroShare(sourceXp, recipients.length);
   if (share <= 0) return { totalAwarded: 0, perHeroShare: 0, recipientCount: recipients.length };
 
   for (const hero of recipients) hero.xp += share;
@@ -86,17 +92,24 @@ export interface XpProgress {
   atCap: boolean;
 }
 
+/** Total XP needed to BE at `level` (level 1 = 0, level 2 = 1000, level 3 = 3000, …). */
+export function xpToReachLevel(level: number): number {
+  const l = Math.max(1, Math.min(level, CHARACTER_LEVEL_CAP));
+  return (XP_PER_LEVEL * (l - 1) * l) / 2;
+}
+
 /** Mirrors get_xp_for_next_level, including the -1 sentinel at the cap. */
 export function xpForNextLevel(hero: HeroState): XpProgress {
   const level = characterLevel(hero);
   if (level >= CHARACTER_LEVEL_CAP) {
     return { currentXp: hero.xp, threshold: L_CAP_SENTINEL, progress: L_CAP_SENTINEL, atCap: true };
   }
-  const progress = hero.xp - (level - 1) * XP_PER_LEVEL;
+  const step = xpToReachLevel(level + 1) - xpToReachLevel(level);
+  const progress = hero.xp - xpToReachLevel(level);
   return {
     currentXp: hero.xp,
-    threshold: XP_PER_LEVEL,
-    progress: Math.min(Math.max(progress, 0), XP_PER_LEVEL),
+    threshold: step,
+    progress: Math.min(Math.max(progress, 0), step),
     atCap: false,
   };
 }
@@ -104,5 +117,5 @@ export function xpForNextLevel(hero: HeroState): XpProgress {
 export function canLevelUp(hero: HeroState): boolean {
   const level = characterLevel(hero);
   if (level >= CHARACTER_LEVEL_CAP) return false;
-  return hero.xp >= level * XP_PER_LEVEL;
+  return hero.xp >= xpToReachLevel(level + 1);
 }
