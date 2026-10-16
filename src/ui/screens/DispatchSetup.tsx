@@ -84,7 +84,7 @@ export function DispatchSetup() {
 
   const launch = (): void => {
     const worldStart = session.world.length;
-    const questName = `#${active.questId}`;
+    const questName = session.questName(active.questId);
     const record = exec((s) => {
       s.configureDispatch({ profile, caution });
       return s.launchDispatch();
@@ -98,7 +98,7 @@ export function DispatchSetup() {
   return (
     <div className="gv-desk" style={{ minHeight: '100vh', padding: '28px 18px 60px', margin: -24 }}>
       <div className="gv-dispatch">
-        <h1>Dispatch setup — quest #{active.questId} ({session.regionName(active.regionId)})</h1>
+        <h1>Dispatch setup — {session.questName(active.questId)} ({session.regionName(active.regionId)})</h1>
         <p style={{ margin: '0 0 18px' }}>
           <button className="gv-btn" onClick={() => nav({ kind: 'town' })}>◂ Town</button>{' '}
           <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: active.questId })}>Map</button>{' '}
