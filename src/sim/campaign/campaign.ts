@@ -25,6 +25,7 @@ import { BOOSTS_PER_MILESTONE, isBoostLevel, maxSkillRanks, skillPointsForLevel 
 import { autoGrantsForLevel, eligibleFeats, slotsForLevel, type FeatSlotKind } from '@sim/heroes/feats';
 import { characterLevel, type AbilityKey, type HeroFeat, type HeroState } from '@sim/heroes/types';
 import { canLevelUp } from '@sim/heroes/xp';
+import { learnableSpells, spellsLearnedAtLevel } from '@sim/heroes/knownSpells';
 import { classesById, progressionFor, skillNames } from '@sim/registry';
 import type { WorldMap } from '@sim/world/terrain';
 import type { EscalationLedger } from '@sim/world/escalation';
@@ -123,7 +124,29 @@ export function buildAutoLevelUpPlan(
     skillRanks,
     feats: autoPickFeats(hero, primary.classId, primary.level + 1),
     autoGrantedFeatIds: autoGrantsForLevel(primary.classId, primary.level + 1),
+    spells: autoPickSpells(hero, primary.classId, primary.level + 1),
   };
+}
+
+/**
+ * M1: "level up for me" also learns spells. Highest spell level first (the new
+ * slots are the point of levelling), then the class's preferred effect —
+ * healing for divine casters, damage for everyone else, buffs after — then id.
+ * Debuffs are never auto-picked: autoLoadout does not place them, so an
+ * auto-picked debuff would sit unused.
+ */
+function autoPickSpells(hero: HeroState, classId: number, newClassLevel: number): number[] {
+  const count = spellsLearnedAtLevel(classId, newClassLevel);
+  if (count <= 0) return [];
+  const divine = (classesById.get(classId)?.spell_list as string | null) === 'divine';
+  const pref: Record<string, number> = divine
+    ? { healing: 0, damage: 1, buff: 2 }
+    : { damage: 0, buff: 1, healing: 2 };
+  return learnableSpells(hero, classId, newClassLevel)
+    .filter((o) => o.effectType in pref)
+    .sort((a, b) => b.spellLevel - a.spellLevel || pref[a.effectType]! - pref[b.effectType]! || a.spellId - b.spellId)
+    .slice(0, count)
+    .map((o) => o.spellId);
 }
 
 /** The class's own skill priorities, or the dungeon trio. */

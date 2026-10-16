@@ -434,6 +434,11 @@ export function isBuffShapeResolvable(spell: SpellRow): boolean {
   return buffConditions(spell).length > 0;
 }
 
+/** The condition ids a resolvable buff/debuff applies (first is the "is it up?" marker). */
+export function spellConditionIds(spell: SpellRow): ConditionId[] {
+  return buffConditions(spell).map((c) => c.id);
+}
+
 /**
  * Resolve a cast against a primary target. Costs are spent here; the caller
  * (encounter loop) applies damage/healing and emits events from the result.

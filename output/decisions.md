@@ -16,3 +16,11 @@ playtest note. Newest at the bottom.
 | 2026-10-16 | M1 | Warlock pact energy comes from the `pact_energy_max_N` class feature; a spell's own `pact_energy_cost` wins (Eldritch Blast = 0, at will) | Warlocks had 0 energy and could not cast anything |
 | 2026-10-16 | M1 | Bug fix: damage dice with a minus (`1d6-1`) rolled NaN | Every hero with a negative STR mod (wizards, bards) dealt no real melee damage |
 | 2026-10-16 | M1 | Harness "punching up costs ≥10 pts" bar lowered to 8 (the measured noise floor) | Stronger L1 parties measured 9.0; the gradient is still real |
+| 2026-10-16 | M1 | Level-ups teach spells (2 at class L1, then 1 per level); the picker shows the spells the new level unlocks | `spellsLearnedAtLevel` existed but nothing called it — casters never learned anything after creation |
+| 2026-10-16 | M1 | New spells join the fight plan automatically: heals on top (ally < 40% hp), buffs once, damage by highest spell level; debuffs are left for the player | A learned spell sat in the spellbook and was never cast. Measured: autopilot completion 93.8% → 96%, wipes 6.3% → 4% |
+| 2026-10-16 | M1 | Abilities like Power Attack are NOT auto-added to the fight plan | Measured: Power Attack on "always" took a fighter from 86 → 28 wins in 150 fights; Knockdown 86 → 10. Needs an M2 design pass |
+| 2026-10-16 | M1 | Auto level-up learns spells too: highest level first; healing first for Clerics, damage first for others | Same code as the button, so "auto" heroes are not weaker casters |
+| 2026-10-16 | M1 | Warlocks learn pact spells up to what their pact energy can pay for | Warlocks have no spell slots, so the slot-based ceiling gave them nothing to learn |
+| 2026-10-16 | M1 | "Healing" spells with no dice (Remove Curse, Remove Disease, Restoration, …) are no longer offered | They healed 0 hp and spent a slot. Live spells 102 → 94 |
+| 2026-10-16 | M1 | Level-up picker hides feats/spells that do nothing and empty feat tracks (was: greyed "Not yet available") | Vision + working agreement: never offer something that does nothing |
+| 2026-10-16 | M1 | "Auto level up ▸" button at the top of the hero level-up tab | Vision: the player can skip the choices |

@@ -17,6 +17,7 @@ import type { AbilityKey } from '@sim/heroes/types';
 import type { FeatSlotKind } from '@sim/heroes/feats';
 import type { UnreadyReason } from '@sim/heroes/featEffects';
 import type { LoadoutEntry } from '@sim/combat/loadout';
+import { autoLevelHero } from '@sim/campaign/campaign';
 import { useGame } from '../state/GameProvider';
 import { SheetTab } from './SheetTab';
 
@@ -101,6 +102,8 @@ function LevelUpTab({ heroId }: { heroId: string }) {
   const [boosts, setBoosts] = useState<AbilityKey[]>([]);
   const [ranks, setRanks] = useState<Record<string, number>>({});
   const [picked, setPicked] = useState<Record<FeatSlotKind, number[]>>(EMPTY_PICKS);
+  const [spellPicks, setSpellPicks] = useState<number[]>([]);
+  const { saveGame } = useGame();
   const options = session!.levelUpOptions(heroId);
 
   if (!options.eligible) {
@@ -118,7 +121,18 @@ function LevelUpTab({ heroId }: { heroId: string }) {
   // Reads options.boostCount -- never a hardcoded 4. The count is a design knob
   // (BOOSTS_PER_MILESTONE) and duplicating it here would silently desync.
   const boostOk = !options.boostRequired || boosts.length === options.boostCount;
-  const slots = chosen ? session!.featSlotsFor(heroId, chosen.classId) : [];
+  // M1: the picker lists only what WORKS. Feats/spells the engine cannot run
+  // yet, and empty slot tracks (ancestry feats), are hidden rather than greyed.
+  const slots = (chosen ? session!.featSlotsFor(heroId, chosen.classId) : [])
+    .map((slot) => ({ ...slot, offers: slot.offers.filter((o) => o.reason !== 'not_yet_implemented') }))
+    .filter((slot) => slot.offers.some((o) => o.selectable));
+  const spellPick = chosen ? session!.spellPicksFor(heroId, chosen.classId) : { count: 0, offers: [] };
+  const spellOffersShown = spellPick.offers.filter((o) => o.reason !== 'not_yet_implemented' && o.reason !== 'already_taken');
+  const spellsOk = spellPicks.length === spellPick.count;
+  const autoLevel = (): void => {
+    exec((s) => autoLevelHero(s, heroId));
+    void saveGame();
+  };
   const autoGrants = chosen ? session!.autoGrantsFor(heroId, chosen.classId) : [];
   const wantFor = (slot: { kind: FeatSlotKind; count: number; offers: { selectable: boolean }[] }): number =>
     Math.min(slot.count, slot.offers.filter((o) => o.selectable).length);
@@ -153,6 +167,7 @@ function LevelUpTab({ heroId }: { heroId: string }) {
         skillRanks,
         feats,
         autoGrantedFeatIds: [],
+        ...(spellPicks.length > 0 ? { spells: spellPicks } : {}),
       }),
     );
     if (applied) {
@@ -160,12 +175,18 @@ function LevelUpTab({ heroId }: { heroId: string }) {
       setBoosts([]);
       setRanks({});
       setPicked(EMPTY_PICKS);
+      setSpellPicks([]);
+      void saveGame();
     }
   };
 
   return (
     <div className="gv-sheet" style={{ ['--gv-tilt' as never]: '-0.3deg' }}>
       <span className="gv-pin" />
+      <p style={{ margin: '0 0 12px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button className="gv-btn gv-btn--seal" data-auto-level="" onClick={autoLevel}>Auto level up ▸</button>
+        <span className="gv-sub">the game picks feats, spells and skills from the class template — or choose them yourself below</span>
+      </p>
       <h3 className="gv-head">Level {options.newCharacterLevel}: choose a class <span className="gv-sub">the commitment ritual</span></h3>
       <table style={{ borderCollapse: 'collapse', fontSize: 13.5, lineHeight: 2 }}>
         <tbody>
@@ -175,7 +196,7 @@ function LevelUpTab({ heroId }: { heroId: string }) {
                 <button
                   className="gv-btn"
                   disabled={!c.met || classId === c.classId}
-                  onClick={() => { setClassId(c.classId); setRanks({}); setPicked(EMPTY_PICKS); }}
+                  onClick={() => { setClassId(c.classId); setRanks({}); setPicked(EMPTY_PICKS); setSpellPicks([]); }}
                 >
                   {c.name} → {c.newClassLevel}
                 </button>
@@ -260,7 +281,35 @@ function LevelUpTab({ heroId }: { heroId: string }) {
         );
       })}
 
-      {chosen && boostOk && featsOk && (
+      {chosen && boostOk && featsOk && spellPick.count > 0 && (
+        <div data-spell-picker="">
+          <h3 className="gv-head" style={{ marginTop: 14 }}>
+            New spells: {spellPicks.length}/{spellPick.count}{' '}
+            <span className="gv-sub">added to the fight plan automatically</span>
+          </h3>
+          <table style={{ borderCollapse: 'collapse', fontSize: 13.5, lineHeight: 1.9 }}>
+            <tbody>
+              {spellOffersShown.map((o) => {
+                const on = spellPicks.includes(o.spellId);
+                const full = spellPicks.length >= spellPick.count;
+                return (
+                  <OfferRow
+                    key={o.spellId}
+                    name={o.name}
+                    detail={o.spellLevel === 0 ? 'cantrip' : `level ${o.spellLevel}`}
+                    note={o.selectable ? `${o.effectType} · ${o.description.slice(0, 60)}` : (o.detail ?? REASON_LABEL[o.reason!])}
+                    selectable={o.selectable && (!full || on)}
+                    chosen={on}
+                    onPick={() => setSpellPicks((prev) => (prev.includes(o.spellId) ? prev.filter((x) => x !== o.spellId) : full ? prev : [...prev, o.spellId]))}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {chosen && boostOk && featsOk && spellsOk && (
         <>
           <h3 className="gv-head" style={{ marginTop: 14 }}>
             Skill points: {spent}/{points} <span className="gv-sub">rank cap {options.maxRanks} = character level</span>

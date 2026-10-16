@@ -38,7 +38,8 @@ import {
   type FeatOffer, type FeatSlotKind,
 } from '@sim/heroes/feats';
 import { takeLongRestParty } from '@sim/heroes/longRest';
-import { castableSpells } from '@sim/heroes/knownSpells';
+import { castableSpells, spellOffers, spellsLearnedAtLevel, type SpellOffer } from '@sim/heroes/knownSpells';
+import { withLearnedSpells } from '@sim/heroes/autoLoadout';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
   itemContributions, slotState,
@@ -806,10 +807,24 @@ export class CampaignSession {
       autoGrantedFeatIds: autoGranted,
       hpPerLevel: prog.hp_per_level as number,
     });
+    // M1: spells learned this level join the fight — see heroes/autoLoadout.ts.
+    if (plan.spells && plan.spells.length > 0) {
+      const kit = this.kitFor(heroId);
+      kit.loadout = withLearnedSpells(kit.loadout, plan.spells);
+    }
     this.world.emit(this.minute, 'hero.level_up_applied', {
       heroId: hero.id, newLevel: applied.newCharacterLevel, classId: String(applied.classId),
     });
     return applied;
+  }
+
+  /** M1: spells this hero may learn when taking `classId` next, and how many to pick. */
+  spellPicksFor(heroId: string, classId: number): { count: number; offers: SpellOffer[] } {
+    const hero = this.heroState(heroId);
+    const nextClassLevel = (hero.classLevels.find((cl) => cl.classId === classId)?.level ?? 0) + 1;
+    const offers = spellOffers(hero, classId, nextClassLevel);
+    const learnable = offers.filter((o) => o.selectable).length;
+    return { count: Math.min(spellsLearnedAtLevel(classId, nextClassLevel), learnable), offers };
   }
 
   /**

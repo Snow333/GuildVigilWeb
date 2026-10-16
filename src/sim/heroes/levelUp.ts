@@ -18,6 +18,7 @@
  */
 
 import { classesById } from '@sim/registry';
+import { learnableSpells, spellsLearnedAtLevel } from './knownSpells';
 import { abilityMod, characterLevel, type AbilityKey, type HeroFeat, type HeroState } from './types';
 
 export const CHARACTER_LEVEL_CAP = 20;
@@ -211,6 +212,8 @@ export interface LevelUpPlan {
   skillRanks: Record<string, number>;
   feats: HeroFeat[];
   autoGrantedFeatIds: number[];
+  /** M1: spell ids learned this level-up (must be learnable at the new class level). */
+  spells?: number[];
 }
 
 export interface LevelUpApplied {
@@ -239,6 +242,21 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
   // exactly the spike the distinct rule exists to prevent.
   if (new Set(boosts).size !== boosts.length) {
     throw new Error('applyLevelUp: ability boosts must go to distinct abilities');
+  }
+
+  // Spells: each must be learnable at the NEW class level, distinct, and within
+  // the number this level teaches. Validated before any mutation.
+  const newSpells = plan.spells ?? [];
+  if (newSpells.length > 0) {
+    const nextClassLevel = (hero.classLevels.find((cl) => cl.classId === plan.classId)?.level ?? 0) + 1;
+    const allowed = new Set(learnableSpells(hero, plan.classId, nextClassLevel).map((o) => o.spellId));
+    if (new Set(newSpells).size !== newSpells.length) throw new Error('applyLevelUp: duplicate spell picks');
+    if (newSpells.length > spellsLearnedAtLevel(plan.classId, nextClassLevel)) {
+      throw new Error(`applyLevelUp: too many spells for this level (${newSpells.length})`);
+    }
+    for (const id of newSpells) {
+      if (!allowed.has(id)) throw new Error(`applyLevelUp: spell ${id} is not learnable at class level ${nextClassLevel}`);
+    }
   }
 
   // Rank cap: validated against the NEW character level, before any mutation.
@@ -287,6 +305,7 @@ export function applyLevelUp(hero: HeroState, plan: LevelUpPlan): LevelUpApplied
     hero.skills[skill] = (hero.skills[skill] ?? 0) + ranks;
   }
   for (const feat of plan.feats) hero.feats.push(feat);
+  if (newSpells.length > 0) hero.knownSpells = [...(hero.knownSpells ?? []), ...newSpells];
   for (const featId of plan.autoGrantedFeatIds) {
     if (!hero.feats.some((f) => f.featId === featId)) hero.feats.push({ featId });
   }

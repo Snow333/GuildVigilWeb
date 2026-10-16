@@ -22,7 +22,7 @@
  */
 
 import { spells } from '@content/generated';
-import { classesById, spellsById } from '@sim/registry';
+import { classesById, spellsById, warlockCostByLevel } from '@sim/registry';
 import { progressionFor } from '@sim/registry';
 /**
  * ⚠ THE GATE IMPORTS THE RESOLVER, not a copy of its rules. `isBuffShapeResolvable`
@@ -64,6 +64,13 @@ export const RESOLVABLE_EFFECTS: ReadonlySet<string> = new Set(['damage', 'heali
  */
 export function isSpellResolvable(spell: SpellRow): boolean {
   const effect = (spell.effect_type as string | null) ?? '';
+  // M1: a "healing" row with no dice is a CURE (Remove Curse, Remove Disease,
+  // Restoration) — `resolveCast` rolls nothing for it, so it healed 0 hp while
+  // the picker offered it as live and spent a slot. Only rows with dice resolve.
+  if (effect === 'healing') {
+    const dice = (spell.damage_dice as string | null) ?? '';
+    return dice !== '' && dice !== '0';
+  }
   if (RESOLVABLE_EFFECTS.has(effect)) return true;
   if (effect === 'buff' || effect === 'debuff') return isBuffShapeResolvable(spell);
   return false;
@@ -86,6 +93,24 @@ export function onSpellList(spell: SpellRow, tradition: string): boolean {
 export function maxSpellLevel(classId: number, classLevel: number): number {
   const prog = progressionFor(classId, classLevel);
   if (!prog) return -1;
+  // M1: pact casters (Warlock) have no slots at all — the schedule is pact
+  // energy. Their ceiling is the highest spell level whose energy cost fits
+  // inside the pool at this level, so a level-1 warlock (12 energy) can learn
+  // 1st-level pact spells (cost 6) and a level-9 one (28) reaches 5th.
+  if ((classesById.get(classId)?.casting_type as string | null) === 'pact_energy') {
+    let pool = 0;
+    for (let lvl = 1; lvl <= classLevel; lvl++) {
+      const raw = progressionFor(classId, lvl)?.features;
+      const feats = typeof raw === 'string' ? (JSON.parse(raw) as string[]) : [];
+      for (const f of feats) {
+        const m = /^pact_energy_max_(\d+)$/.exec(f);
+        if (m) pool = Math.max(pool, Number(m[1]));
+      }
+    }
+    let best = 0;
+    for (const [lvl, cost] of warlockCostByLevel) if (lvl > 0 && cost <= pool) best = Math.max(best, lvl);
+    return best;
+  }
   const slots = [
     prog.spell_slots_0, prog.spell_slots_1, prog.spell_slots_2, prog.spell_slots_3,
     prog.spell_slots_4, prog.spell_slots_5, prog.spell_slots_6, prog.spell_slots_7,
@@ -116,12 +141,14 @@ export interface SpellOffer {
  * ⚠ RETURNS UNSELECTABLE ROWS ON PURPOSE — see the module header. Callers that
  * want only the learnable ones filter on `.selectable`; the UI does not.
  */
-export function spellOffers(hero: HeroState, classId: number): SpellOffer[] {
+export function spellOffers(hero: HeroState, classId: number, atClassLevel?: number): SpellOffer[] {
   const classRow = classesById.get(classId);
   const tradition = (classRow?.spell_list as string | null) ?? null;
   if (!tradition) return []; // pure martial: Fighter, Rogue
 
-  const classLevel = hero.classLevels.find((c) => c.classId === classId)?.level ?? 0;
+  // M1: the level-up picker asks at the level BEING TAKEN, so a wizard
+  // reaching L3 is offered the 2nd-level spells that level unlocks.
+  const classLevel = atClassLevel ?? hero.classLevels.find((c) => c.classId === classId)?.level ?? 0;
   const ceiling = maxSpellLevel(classId, classLevel);
   const known = new Set(hero.knownSpells ?? []);
 
@@ -160,8 +187,8 @@ export function spellOffers(hero: HeroState, classId: number): SpellOffer[] {
 }
 
 /** Only the spells this hero may learn right now. */
-export function learnableSpells(hero: HeroState, classId: number): SpellOffer[] {
-  return spellOffers(hero, classId).filter((o) => o.selectable);
+export function learnableSpells(hero: HeroState, classId: number, atClassLevel?: number): SpellOffer[] {
+  return spellOffers(hero, classId, atClassLevel).filter((o) => o.selectable);
 }
 
 /**

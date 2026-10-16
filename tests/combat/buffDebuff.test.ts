@@ -263,11 +263,13 @@ describe('duration translation', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('⚠ the gate is PER SPELL, because most rows still do not resolve', () => {
-  it('MEASURED: 24 of the 96 buff/debuff rows resolve, and 102 of 218 overall', () => {
+  it('MEASURED: 24 of the 96 buff/debuff rows resolve, and 94 of 218 overall', () => {
     const bd = spells.filter((s) => s.effect_type === 'buff' || s.effect_type === 'debuff');
     expect(bd.length).toBe(96);
     expect(bd.filter(isBuffShapeResolvable).length).toBe(24);
-    expect(spells.filter(isSpellResolvable).length).toBe(102);
+    // M1: 102 → 94. Eight `healing` rows have no dice (Remove Curse, Restoration…)
+    // and healed 0 hp while costing a slot; they are no longer offered as live.
+    expect(spells.filter(isSpellResolvable).length).toBe(94);
   });
 
   // NC: make `isSpellResolvable` return true for the whole buff/debuff types →
