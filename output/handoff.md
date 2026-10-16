@@ -1,22 +1,15 @@
 # Handoff
 
-**Last session:** 2026-10-16 — **M1 built**, waiting on Steven's playtest. **M2 feedback round in flight.**
+**Last session:** 2026-10-16 — M1 built; **M2 feedback round merged**. Waiting on Steven's playtest + portraits.
 
-## M2 feedback round (in flight, 2026-10-16)
+## M2 feedback round: DONE 2026-10-16, waiting on Steven's playtest
 
-Steven's 8 requests, split by file ownership:
-
-| Track | Who | Where | Status |
-|---|---|---|---|
-| Spells: Cleric whole list + Spells tab | main session (Opus) | `main` | ✅ `62b64e8` |
-| Q: board capacity 10 / 4–6 a week, easy weeks 1–4, Marshal commission | Opus subagent | `C:\GuildVigilWeb-quests` `m2-quests` | running |
-| I: itemization pass | Opus subagent | `C:\GuildVigilWeb-items` `m2-items` | running |
-| P: Edge scrolling performance | Sonnet subagent | `C:\GuildVigilWeb-perf` `m2-perf` | running |
-| Portraits (8 busts) | Steven in ChatGPT | `output/art/bust-prompts-batch2.md` | waiting on Steven |
-
-Briefs: `output/briefs-m2/`. When each track reports: review its diff, check screenshots, merge `--no-ff`,
-full gate (use `GV_PORT`), then remove the worktree (delete the node_modules junction first).
-`delegation.model` is already back to "" (unset).
+All of Steven's 8 requests are merged on `main`. Playtest note: `output/playtest/2026-10-16-M2-feedback.md`.
+Spells (main session), quest board and commission (Track Q), itemization (Track I), scroll performance (Track P).
+Portraits are waiting on Steven: `output/art/bust-prompts-batch2.md`. When he says "portraits are in",
+run `pnpm portraits`, check `output/exploration/portrait-contact-sheet.html`, run the gate, commit.
+Content to-dos found: mid-level quest content (the board thins after week 17); Scroll of Raise Dead
+casts the wrong spell; odd prices (+2 weapons priced off their base, staff 0g).
 
 ## State
 
