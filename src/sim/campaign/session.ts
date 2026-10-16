@@ -53,7 +53,7 @@ import { difficultyFor, type DifficultyBand } from './difficulty';
 import { runBackfillChain } from '@sim/save/saveStore';
 import { SAVE_BACKFILLS } from '@sim/save/backfills';
 import { characterLevel, type AbilityKey, type HeroState } from '@sim/heroes/types';
-import { awardXp, canLevelUp, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
+import { awardXp, canLevelUp, CHARACTER_LEVEL_CAP, XP_PER_LEVEL, xpForNextLevel, type XpProgress } from '@sim/heroes/xp';
 import {
   ancestryNameById, buildingsById, classesById, contentXpResolver, npcsById, progressionFor, questsById,
   shopStockRows, skillNames, spellsById, storyDialogueRows, storylineByQuestId, storylinesById,
@@ -471,6 +471,8 @@ export class CampaignSession {
   /** Purchases against the current rotation week (stock itself derives from seeds). */
   private shopSoldWeek = 0;
   private shopSoldCounts = new Map<number, number>();
+  /** Dev panel: chart shows every destination. Session-only, never saved. */
+  private devRevealAll = false;
 
   private constructor(config: SessionConfig, rng: Rng, ledger: EscalationLedger) {
     this.campaignId = config.campaignId;
@@ -966,6 +968,43 @@ export class CampaignSession {
     this.gold += Math.floor(deriveItem(instance).price * SHOP.sellFraction);
   }
 
+  // ── Dev panel commands (playtest tooling — output/working-agreement.md §7) ──
+  // Real commands, not UI hacks, so they mutate the same state play does and
+  // a save taken afterwards round-trips like any other.
+
+  devAddGold(amount: number): void {
+    if (!Number.isFinite(amount)) throw new Error('devAddGold: amount must be finite');
+    this.gold = Math.max(0, this.gold + Math.trunc(amount));
+  }
+
+  /** Grants exactly enough XP for the hero to reach the NEXT level (the level-up itself stays a player act). */
+  devGrantLevel(heroId: string): void {
+    const hero = this.heroState(heroId);
+    const level = characterLevel(hero);
+    if (level >= CHARACTER_LEVEL_CAP) return;
+    hero.xp = Math.max(hero.xp, level * XP_PER_LEVEL);
+  }
+
+  devHealAll(): void {
+    for (const h of this.heroes) {
+      if (h.status === 'dead') h.status = 'active';
+      h.wounded = 0;
+    }
+  }
+
+  devRevealMap(on: boolean): void {
+    this.devRevealAll = on;
+  }
+
+  devMapRevealed(): boolean {
+    return this.devRevealAll;
+  }
+
+  /** Clears an in-flight quest so the board is usable again. */
+  devClearActive(): void {
+    this.active = null;
+  }
+
   // ── Queries (pure, no mutation) ───────────────────────────────────────────
 
   currentWeek(): number {
@@ -1309,6 +1348,7 @@ export class CampaignSession {
    * state), so saves need no migration and the flag can never desync.
    */
   private poiSurveyed(row: { id: number; poi_id: unknown }): boolean {
+    if (this.devRevealAll) return true;
     const poiId = row.poi_id as number | null;
     if (poiId === null) return this.completed.has(row.id);
     for (const qid of this.completed.keys()) {

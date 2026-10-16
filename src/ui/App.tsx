@@ -19,6 +19,8 @@ import { ShopScreen } from './screens/ShopScreen';
 import { PlaybackScreen } from './screens/PlaybackScreen';
 import { AfterActionScreen } from './screens/AfterActionScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { DevPanel } from './dev/DevPanel';
+import { NoteButton } from './dev/NoteButton';
 
 function Router() {
   const { screen } = useGame();
@@ -75,6 +77,8 @@ export function App() {
       ) : (
         <GameProvider>
           <Router />
+          <DevPanel />
+          <NoteButton />
         </GameProvider>
       )}
     </main>

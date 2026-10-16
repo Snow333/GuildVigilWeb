@@ -133,6 +133,22 @@ function skillPriorityFor(hero: HeroState): readonly string[] {
 }
 
 /**
+ * "Level up for me" for ONE hero: applies every level-up the hero has earned,
+ * using the class template. Returns how many levels were applied.
+ */
+export function autoLevelHero(session: CampaignSession, heroId: string): number {
+  const hero = session.heroState(heroId);
+  let applied = 0;
+  while (canLevelUp(hero)) {
+    const plan = buildAutoLevelUpPlan(hero, skillPriorityFor(hero));
+    if (!plan) break;
+    session.applyLevelUp(hero.id, plan);
+    applied++;
+  }
+  return applied;
+}
+
+/**
  * Fill this level's feat slots from the per-class priority lists.
  *
  * ⚠ Every candidate goes through `eligibleFeats`, so the readiness gate and

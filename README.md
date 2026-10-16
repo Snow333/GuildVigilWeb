@@ -1,23 +1,21 @@
 # Guild Vigil (web)
 
-TypeScript / React 19 / Vite (single-file) / Tauri 2 · the stack migration of Guild Vigil.
+Guild-management RPG with auto-battler missions. TypeScript · React 19 · Vite (single-file) · Vitest · Playwright.
 
-**Authoritative docs:** `output/core-loop.md` · `output/decision-ledger.md` · `output/guild-vigil-migration-plan.md` · `output/briefs/*` (in the parent workspace folder).
+**Start here:** `output/vision.md` → `output/working-agreement.md` → `output/roadmap.md`. Agent orientation: `CLAUDE.md`.
 
 ## Commands
 
 ```bash
-pnpm install          # once per machine
-pnpm check            # typecheck + lint (boundary rule) + tests
-pnpm dev              # Vite dev server
-pnpm convert          # regenerate src/content/generated from game_data.db
-                      #   (default path: ../GuildVigil/project/data/game_data.db)
-pnpm build            # single-file artifact in dist/
+pnpm install   # once per machine
+pnpm check     # typecheck + lint + tests
+pnpm dev       # Vite dev server
+pnpm build     # single-file artifact in dist/
+pnpm e2e       # build + Playwright
+pnpm notes     # collect in-game playtest notes from Downloads into output/playtest/inbox/
 ```
 
 ## The one rule
 
-`src/sim/**` is pure TypeScript: no React, no DOM, no Tauri, no browser globals,
-no `Math.random`, no `Date.now`. ESLint fails the build on violations
-(`eslint.config.js` — architecture constraint #2). If the sim seems to need a
-browser global, the design is wrong.
+`src/sim/**` is pure TypeScript: no React, no DOM, no browser globals, no `Math.random`, no
+`Date.now`. ESLint fails the build on violations.

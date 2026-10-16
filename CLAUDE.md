@@ -1,197 +1,76 @@
-# Guild Vigil (web) — Claude Code Orientation
+# Guild Vigil (web) — Orientation
 
-Guild Vigil is a story-driven, multi-team guild-management RPG (PF2E-flavored, continuous-time
-auto-battler combat) being rebuilt from Godot in TypeScript.
-**Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright.
+Guild-management RPG: run a guild from a run-down town, send parties on missions across a world
+map, watch them as an auto-battler, level them, grow the town, uncover a story that ends with a lich.
+PF2E-based, not PF2E-faithful. **Stack:** TS strict · React 19 · Vite (single-file artifact) · Vitest · Playwright · pnpm.
 
-## Where things stand
+## Read these first, in order
 
-- **Suite:** 907 unit + 14 e2e green. Bundle **~2,379 kB** (`pnpm size` prints the live figure) (brief #24's 12 paperdoll figures ship
-  as inline data URIs — if load time ever bites, lazy-load `src/content/generated/figures.ts`
-  rather than dropping the art).
-- **Phase:** 3 substantially complete but **NOT to its exit criteria** (audio and the Playwright
-  visual baselines). **Phase 4 is not next.**
-- **Shipped:** briefs #8–#26 (M1+M2+M3). **#27 (enemy taxonomy) APPROVED WITH AMENDMENTS — see its §9.**
-- ⚠ **THE FEAT SYSTEM IS 63% INERT: 144 of 227 feats reach nothing, and 5 of 13 classes have no feats at all.** Eighth instance of content-with-no-consumer, and the largest. Do not design class specializations against it before auditing — `output/briefs/SESSION-class-abilities.md`.
-- **Three sessions are set up and ready — prompts in `output/briefs/SESSION-PROMPTS.md`.** Order: #29 class abilities → #30 enemy specification → #28 ranged (last). #29 and #30 may run concurrently; #30 owns `build.ts`.
-- ⚠ **BUILD, DON'T THEORYCRAFT.** Settled targets (40–50% fodder) are not to be re-derived, and superseded goals (the 300–500 row count, the ≥60% ratio, the migration plan's numbers) are not to be benchmarked against. Measure to decide what to build, not to re-litigate it. Status per brief, and which findings file corrects which, is in
-  **`output/briefs/INDEX.md`** — read that, not the directory.
-- **What is next, what is blocked, what is held, and what is not built yet:
-  `output/future-work.md`.** It is stack-ranked. Do not re-derive the roadmap from this file.
-- ⚠ **#26 M1+M2 made the existing 45 statblocks fight differently; it did NOT author new ones.**
-  The remaining gap is VOLUME: 45 of 300–500 enemy bases (12%) and 22 of 300–400 quests (6%), against
-  spells/feats/progression at 100%. That is the campaign-content long pole, in `future-work.md`.
+1. **`output/vision.md`** — what the game is. **The only file Hermes may not change.** Everything serves it.
+2. **`output/working-agreement.md`** — how we work: Hermes builds and decides; Steven steers by playtesting.
+3. **`output/roadmap.md`** — milestones and current status.
+4. **Newest `output/playtest/*.md`** — open feedback is worked first. Also run `pnpm notes` to pull
+   in-game notes from Steven's Downloads folder into `output/playtest/inbox/`.
+5. **`output/handoff.md`** — what the last session left half-done.
 
-### Three standing prohibitions
+Log every design call in **`output/decisions.md`** (one line). Park questions for Steven in
+**`output/questions.md`** and keep building — never block on an answer.
 
-These stop work that looks helpful and is not. Each has its full rationale elsewhere; they are
-repeated here because nothing would prompt you to go looking first.
+Everything in `output/archive/` (old briefs, design law, core loop, ledger) is **history, not law**.
+Read it only to avoid relearning a lesson. `output/reference/*.md` are engine notes — useful, not binding.
 
-1. ⚠ **DO NOT propose balance changes off the dungeon curve.** Steven's standing call (brief #22 D5):
-   **the curve is not a gate right now** — "we haven't done any real work on enemies yet". Dungeons
-   are expected to get harder as enemy content lands, and enemies are authored against the founding
-   four's measured statblocks (`output/briefs/character-advancement-findings.md` §4). Reading a
-   harness number as a problem to fix is the most likely way to waste a session here.
-2. ⚠ **DO NOT re-tune against a geometry that is about to change.** Room geometry is a first-order
-   balance parameter — #19 §0 measured a corridor at 11–13 points of completion at d3–d5. The arena
-   work comes first. (`output/future-work.md` §2–3.)
-3. ⚠ **DO NOT give ancestry a stat effect, and DO NOT add gear scoring to `src/`.** Ancestry and
-   gender are **cosmetic by decision** (PF2E instinct says otherwise; `tests/campaign/muster.test.ts`
-   enforces it), and **the autopilot deliberately never equips** — manual gearing is a player pleasure
-   Steven declined to automate. Both are settled design, not oversights: `output/design-law.md`.
+## Engineering guardrails (cheap; keep unless one costs more than it saves — log why)
 
-## Deep references — open the one that matches your task
+- `pnpm check` green before every commit; CI (`.github/workflows/check.yml`) green after push.
+- `src/sim/**` is pure TS: no React/DOM/browser globals, no `Math.random`/`Date.now` — ESLint enforces.
+  Randomness via `Rng`/`Seeds` (`src/sim/core/`). Sim emits events; UI turns them into text.
+- **Every new feat / item / ability / enemy trait gets a test proving it changes a fight** — assert the
+  outcome (damage, hits, conditions) through the real production path, never by reading back the
+  table you populated. Inert content was this project's biggest recurring defect.
+- Saves **may break between milestones** — say so in the playtest note. Keep `CampaignSession.deserialize`
+  working for the current format only until Steven has a campaign worth keeping.
+- Content: `data/game_data.db` → `pnpm convert` → `src/content/generated/` (never hand-edit generated).
+  Changes go via `data/seeds/seed_<name>.sql` → `pnpm db:apply <path>` → `pnpm convert`. Adding rows
+  means updating the count gates (`tests/content/count-gates.test.ts` + converter) in the same commit.
+- Parallel sessions use separate git worktrees/branches. Stage files by explicit path, never `git add -A`.
 
-CLAUDE.md is capped at 20,000 characters by the context injector; past that the MIDDLE is silently
-dropped. These files hold the domain detail that used to live here and get truncated away. **They are
-authoritative for their domain** — do not copy their contents back into this file.
+## Commands (Windows / Hermes terminal)
 
-| Touching… | Read first |
-|---|---|
-| combat, the arena, spells, size, AoO, positioning | `output/reference/combat.md` |
-| any test claiming a balance number; `tests/harness/**` | `output/reference/measurement.md` |
-| feats, boosts, abilities, level-up, attribution | `output/reference/characters.md` |
-| `src/ui/**`, the art pipeline, the beat record | `output/reference/ui-and-art.md` |
-| authoring or wiring a content column, item, or enemy row | `output/reference/content.md` |
-| which brief governs what, and which findings file corrects it | `output/briefs/INDEX.md` |
-| **a settled player-facing rule** (identity, gear, XP, failure) | **`output/design-law.md`** |
-| **what is next / blocked / held / not built** | **`output/future-work.md`** |
-
-## Authoritative documents
-
-Conflicts resolve toward these, in this order:
-
-- `output/core-loop.md` — what the game IS: the four nesting levels and the four pillars.
-- `output/design-law.md` — the settled player-facing rules. Changing one needs a brief.
-- `output/future-work.md` — the stack-ranked backlog: next, blocked, held, not built.
-- `output/archive/` — **historical planning artifacts. Not authority.** The 2026-08-10 migration plan lives here; its live content was harvested into `future-work.md`. Read it only for *why* the architecture is shaped this way (Part V) or what was deliberately removed (Part II).
-- `output/briefs/INDEX.md` — every brief's status and what it settled. **Start here, not in the directory.**
-- `output/art-style-bible.md` — art law.
-- ⚠ **A brief with a `-findings.md` companion has been CORRECTED by it.** The findings doc is the
-  implementation record and **wins on every measured fact.** Do not trust the brief over it.
-- ⚠ **`output/decision-ledger.md` is HISTORICAL, not authoritative.** It is the frozen 2026-08-10
-  migration triage — "did we carry this Godot feature over?" — and it has since been overtaken in
-  places (its Area 2 still says friendly fire stays; brief #21 structurally rejected that). Read it
-  for intent and for what was deliberately REMOVED; never as a statement of current design.
-- ⚠ **A HOLD FOR SCOPE IS NOT A HOLD BY MEASUREMENT, and the two have been conflated here before** —
-  the `combat_action` loadout verb was logged as "unmeasured" in the same sentence as the
-  measurement-held threat mechanic, drifted into "held", and shipped in #22 as the `ability` verb.
-  `output/future-work.md` labels which kind each held item is. Check before reviving or dismissing.
-
-## The Eight Constraints (law, not guidance)
-
-1. **The sim has zero renderer dependency.** Everything under `src/sim/**` is pure TS: no React, no DOM, no Tauri, no browser globals. Constructible and runnable from Node with no UI.
-2. **The boundary is enforced at build time** — `eslint.config.js` fails the build on violations. If the sim seems to need a browser global, the design is wrong.
-3. **The sim runs headless and cheaply.** One resolution path serves live play, forecasting, and harnesses. Budget: a full dispatch ≤ ~50ms.
-4. **Sim emits events; presentation interprets.** No player-facing text in resolvers, ever. Events are facts.
-5. **Randomness is string-seeded and namespaced** (`Rng`, `Seeds` in `src/sim/core/`). Derived content recomputes from facts; never store what you can derive.
-6. **Persistence goes through `SaveStore`** (`src/sim/save/`). Never touch localStorage/fs directly. This includes the player-wide `UserSettings` record (`loadSettings`/`saveSettings`; web key `gv_settings`, outside the slot prefix; absent/corrupt → defaults, never fatal).
-7. **World state is derived where possible.** The escalation ledger is the one sanctioned history-dependent exception.
-8. **Save migration is the idempotent backfill chain** — stages early-return unchanged; backfilled values seed on entity ID.
-
-## Layout & import rules
-
-```
-src/sim/        pure sim (core/ heroes/ combat/ dungeon/ world/ campaign/ save/ registry/)
-art/            ACCEPTED art originals, bible §4 naming, append-only. The repo is
-                the reference of record; only derived webp (busts, figures) ever
-                ships, always as inline data URIs. Pipeline: reference/ui-and-art.md.
-src/content/    typed registries; generated/ is machine-written (converter, and
-                portraits.ts by build-portraits) — NEVER hand-edit
-src/ui/         React app (may import sim; sim may NEVER import it). ALL screens
-                speak the desk grammar. accessories.tsx = ambience layer;
-                screens/worldChart.ts = procedural chart (DENSITY = round-03 lock).
-src/ui/styles/  brief #8 style layer: tokens → materials → grammar components →
-                treatment (brief #10 paste grades) → screen conversions. Status set
-                is FROZEN + label-paired; zero image assets — both guarded by
-                tests/ui/style-tokens.test.ts. Reference: #style-drawer.
-src/ui/portrait.tsx  the ONE component that puts generated art on the desk.
-                Grades arrive as props from DATA; missing key OR a broken data URI
-                both fall to the sketch-pending silhouette. ⚠ FIGURES are 12/12 but
-                BUSTS are 4/12 — the fallback is a normal play path, not an error.
-src/platform/   SaveStore impls (localStorage today; Tauri glue when brief #7 unparks)
-tools/          content converter + seed applier (Node scripts); distribution
-                harnesses live in tests/harness/
-tests/          Vitest (unit, fixtures, property); e2e/ Playwright
+```bash
+node node_modules/vitest/vitest.mjs run            # unit tests
+npx tsc -p tsconfig.json --noEmit                  # typecheck
+npx eslint src tests tools e2e --max-warnings 0    # lint
+node node_modules/vite/bin/vite.js build           # build dist/index.html (npx vite build is refused)
+npx playwright test                                # e2e against the built artifact
+node tools/collect-notes.mjs                       # = pnpm notes
 ```
 
-Aliases: `@sim/*`, `@content/*`, `@platform/*`. Commands: `pnpm check` (typecheck+lint+test) · `pnpm size` (bundle gate: warn 8 MB / fail 12 MB — **never raise the ceiling to pass**) · `pnpm e2e` (built artifact; set `GV_CHROMIUM` to point at a preinstalled Chromium if needed) · `pnpm convert` · `pnpm portraits` (rebuild the bust module from `art/`) · `pnpm figures` (rebuild the paperdoll figure module from `art/heroes/*-figure-*.png`) · `pnpm db:apply` · `pnpm dev` · `pnpm build`.
+`pnpm` from git-bash is broken (corepack shim); call it via PowerShell:
+`powershell -NoProfile -Command "& 'C:\Program Files\nodejs\pnpm.CMD' check"`.
+Steven plays through the desktop shortcut → `tools/play.ps1` (rebuilds, opens `dist/index.html` in Edge).
 
-## The desk grammar (UI law — brief #8)
+## Layout
 
-- **One meaning per affordance, no exceptions:** brass pin = actionable now · tape = standing record/reference · wax seal = irreversible commitment · red ink = the world talking back (marginalia in margins only; max one stamp per sheet; thread from the spool) · vellum age = information age.
-- **Status colors:** FROZEN set `#0ca30c/#fab219/#ec835a/#d03b3b`, ALWAYS label-paired, never the sole carrier of a state. Flourish never replaces the number.
-- **Accessories** (quill, letter knife, thread spool, pounce pot — `accessories.tsx`) are pure presentation: aria-hidden, pointer-events none, driven by queries the screen already renders. Never add a sim query for ambience. Every accessory state has a labeled twin on screen.
-- **Flat mode** (Settings; player-wide via `UserSettings`) strips ALL ambience/tilt/texture but keeps the full grid, data, labels, and actions. Every new surface honors it from its first build.
-- Chart density is LOCKED at round-03 (executable as `worldChart.ts` DENSITY) — no new chart features without a deliberate revisit.
-- Every new surface gets a grammar audit line in the test-validation checklist — grammar erosion is brief #8's #1 named risk.
+```
+src/sim/      pure sim: core/ heroes/ combat/ dungeon/ world/ campaign/ loot/ save/ registry/
+src/content/  typed registries; generated/ is machine-written
+src/ui/       React app (may import sim; sim never imports UI). screens/, styles/, state/GameProvider.tsx,
+              dev/ (dev panel + playtest note button)
+src/platform/ SaveStore impls (localStorage)
+tools/        content converter, seed applier, chart/portrait builders, notes collector
+tests/        Vitest; e2e/ Playwright
+```
 
-## Determinism discipline
+## Gotchas that still bite
 
-- No `Math.random`, `Date.now`, or argless `new Date` in sim — lint enforces; use `Rng` and the sim clock.
-- **String hashing goes through `@sim/core/hash`** — ONE FNV-1a, shared by the save
-  signature and identity backfill. Anything taking `hash % n` MUST go through
-  `hashIndex`/`mix32` first: raw FNV's low bits are just the input's XOR-parity, so
-  two namespaced hashes of the same id correlate (this bit us — ancestry and gender
-  produced only 6 of 12 possible pairs until the avalanche step landed).
-- Backfilled values seed on the ENTITY ID, never the campaign `Rng` — drawing from
-  the Rng would move its stream position by however many entities needed repair.
-- Seed strings come from `Seeds`/`Ids` builders — never ad-hoc string concat.
-- No `async` in sim resolvers. Emission order = resolution order.
-- **The event schema is FROZEN (2026-08-10).** Adding types is legal; renaming/removing is forbidden — the manifest snapshot test will fail, and it is right. Consumers must skip-and-log unknown types.
-- Combat/dungeon time = integer 100ms ticks; world time = game-minutes. No float time.
-
-## Data discipline
-
-- Content IDs are **append-only forever** — saves reference them. Never renumber; leave gaps.
-- `src/content/generated/**` is rebuilt by `pnpm convert` from `data/game_data.db`, which lives IN this repo. ⚠ **The Godot repo `C:\GuildVigil` is FROZEN — no tool reads it, nothing is resumed from it.** Count gates in the converter AND `tests/content/count-gates.test.ts` must both be updated when content legitimately grows, in the same commit.
-- Item instances are tuples `(baseId, tier, propertyIds[], seed)` — stats/name/price always derive (`heroes/equipment.ts`). Never denormalize.
-- Every feat effect must parse and classify at load (`heroes/featEffects.ts`) — an unknown `effect_type` is a build error by design.
-- **Columns are free.** The converter is `SELECT *` and the count gates count ROWS, so adding a column costs no tooling change and no gate change. Adding a *row* costs both gates, in the same commit.
-- ⚠ **THE RECURRING DEFECT IN THIS REPO IS CONTENT AUTHORED AGAINST A CONTRACT WITH NO CONSUMER** —
-  five times so far, and nothing catches it because inert content breaks no test. When authoring a
-  column, write the consumer and a reachability assertion in the same commit. **The full inventory of
-  still-dead content, and the shop-sells-no-armour defect, live in `output/reference/content.md`.**
-
-## Testing conventions
-
-- Every resolver lands WITH rules-example fixtures. Balance-critical values get tests pinned to the real registries (see the Fighter-19/Barbarian-20 proficiency test).
-- Property tests for invariants (termination, no-legendary-from-rolls, graph connectivity); golden-seed snapshots for generators; `EventStream.hash()` for replay determinism.
-- The contract fixture (`tests/fixtures/dispatch-fixture.ts`) is what every stream consumer must parse — extend it, don't fork it.
-- Distribution harnesses (1.3+) assert on histograms vs committed baselines, not averages.
-- **The rules of evidence — the ±8-point precision floor, negative controls, probe discipline, and
-  which harnesses are degenerate — live in `output/reference/measurement.md`. Read it before writing
-  any test that claims a balance number.**
-
-## Style
-
-- TS strict is non-negotiable (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` are on — expect `!`-free code via proper narrowing).
-- Single-responsibility files; if you describe a module with "and", split it. Prefer pure functions over classes except where identity/state is the point (`Rng`, `EventStream`).
-- Comments explain WHY (ported nuances, deliberate divergences), not what.
-
-## Gotchas (things that will bite you in THIS repo)
-
-These are the cross-cutting ones — they bite regardless of what you are touching. Domain-specific
-traps live in the `output/reference/` files named above.
-
-- `SimEvent` is a **distributive** union — `switch (ev.type)` narrows `ev.data`. Don't cast payloads.
-- Generated tables are `as const` → literal-typed IDs. Widen lookups: `new Map<number, Row>(...)`.
-- ⚠ **`HeroState.ancestry`/`gender` are COSMETIC — zero stat effect**, enforced by `tests/campaign/muster.test.ts`. PF2E instinct says otherwise; this is settled design (`output/design-law.md` §1).
-- `CampaignSession.deserialize` runs the backfill chain (`@sim/save/backfills`) over a
-  clone before anything reads state. Add stages there, append-only.
-- **No two modules under `src/` may differ only by case.** `tests/ui/module-casing.test.ts` enforces it. Vite resolves `.ts` before `.tsx`, so `CombatField.tsx` beside `combatField.ts` made Windows import the wrong module and render a blank page while every Linux test stayed green. A helper beside a screen gets its OWN stem (`worldChart.ts`, `afterActionXp.ts`, `fieldReading.ts`) — never a case variant.
-- **Sessions verify on Linux; Steven develops on Windows. Green tests are not proof the app runs — and neither is green CI.** `.github/workflows/check.yml` runs typecheck/lint/test/build/size and the e2e on every push, all on Linux. After any change that adds files or moves module wiring, ask Steven to run `pnpm dev` and confirm.
-- ⚠ **The gear bracket lives in `tests/harness/gearBrackets.ts`, NOT `src/` — that placement IS the decision.** The autopilot never equips; gearing is a player pleasure Steven declined to automate. A gear-scoring helper in `src/` is the first step toward a declined feature (`output/design-law.md` §3).
-- **Every regression test gets a negative control.** Revert the fix, watch the test fail, restore, and report the observed failures. A test that passes both ways is decoration.
-- Prefer a **return-value field to a new event** where it will do — brief #13's `sealedRoutes`/`bossRoomSealed` on `DungeonDispatchResult` are the precedent. The event schema is additive-only and the manifest snapshot must always grow.
-- Use **pnpm**, not npm. Native deps build via `pnpm.onlyBuiltDependencies`. Try a plain `pnpm install --frozen-lockfile` first; if the native build 403s on node headers (it has before), fall back to `--config.onlyBuiltDependencies[]=esbuild --config.onlyBuiltDependencies[]=sharp` — only `pnpm convert`/`pnpm db:apply` need it, `src` and tests never do.
-- **Content changes go through a reviewable seed, never a hand-edit:** write `data/seeds/seed_<name>.sql` → `pnpm db:apply <path>` → `pnpm convert`. The converter is `SELECT *` and the count gates count ROWS not columns, so **adding a column costs no tooling change and no gate change**. `data/game_data.db` is committed alongside the generated output.
-- ⚠ **`output/` IN THIS REPO IS THE ONLY HOME FOR PLANNING DOCS.** A parallel copy was kept in claude.ai project knowledge and the two drifted badly (a findings file existed in one and not the other for a full session). If a doc is not in the repo, it does not exist.
-- ⚠ **A TEST THAT CHECKS A GATE BY CALLING THE GATE IS WORTHLESS — #22 shipped one and a sabotage run caught it.** Asserting "feats of a ready type pass `isEffectReady`" is a TAUTOLOGY, because `isEffectReady` reads the very map under test; flipping `resource_grant` to `true` left it green. The fix is a **WITNESS TABLE** (`tests/heroes/feats.test.ts`): every type marked ready must name an assertion that reaches the REAL consumer, with no reference to the map. Generalise it: assert against the CONSUMER, never through the predicate you are testing.
-- ⚠ **A TEST CAN ASSERT THE AGGREGATOR AGAINST ITSELF AND STAY GREEN THROUGH A TOTAL OUTAGE.** `tests/heroes/equipment.test.ts` asserted the RAW AUTHORED KEYS of `stat_bonus` — i.e. it checked `aggregateStatBonuses` against its own input — and was green for the entire period every Cloak of Resistance did nothing. Assert the CONSUMER CONTRACT (what `assembleHero` actually produces), never the shape you just fed in.
-
-## Process
-
-- New systems: implementation brief → approval → code. Keep-rebuilds from the ledger may cite the plan milestone as their brief.
-- `pnpm check` green before every commit. Commit messages name the milestone/chunk.
-- Two-machine workflow: offer to push at session end; unpushed commits block the other machine.
+- `SimEvent` is a distributive union — `switch (ev.type)` narrows `ev.data` (the field is `.data`, not `.payload`).
+  `EventStream.events` is private — use `.all()`; vitest won't notice, tsc will.
+- Generated tables are `as const` → widen lookups: `new Map<number, Row>(...)`.
+- No two `src/` modules may differ only by case — Windows resolves the wrong one and renders a blank page.
+- Sessions verify headless; Steven runs Windows/Edge. Green CI is not proof the game runs — the
+  playtest note tells him what to check.
+- Ability scores are all even, mods are `floor((score-10)/2)` — a `+1` boost does nothing. Do the arithmetic.
+- An AI-driven unit using a single-swing ability loses damage vs its 2-swing normal action unless rationed
+  (`abilityCadenceTicks`). Heroes stay at cadence 0. See `output/reference/combat.md`.
+- `isEffectReady` overstates which feats work; `tests/heroes/featReach.test.ts` measures real reach.
+- Terminal heredocs silently break `&&` chains — write commit messages to a file and `git commit -F`.

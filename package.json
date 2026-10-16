@@ -30,7 +30,8 @@
     "taxonomy": "node tools/check-enemy-taxonomy.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm taxonomy && pnpm test",
     "size": "node tools/check-bundle-size.mjs",
-    "figures": "node tools/build-figures.mjs"
+    "figures": "node tools/build-figures.mjs",
+    "notes": "node tools/collect-notes.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",
