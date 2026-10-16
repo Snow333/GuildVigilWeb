@@ -12,7 +12,7 @@
  * the words themselves carry the state. Speed choices read as pressed buttons.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { TEMPLATE_POOL } from '@sim/dungeon/pool';
 import { bfsDepths, type DungeonTemplate } from '@sim/dungeon/graph';
 import { interpretStream, type BeatLine } from '../beats/interpret';
@@ -62,6 +62,15 @@ function layoutTemplate(t: DungeonTemplate): Map<number, { x: number; y: number 
 
 /** Wall-clock ms per sim tick, derived from the sim constant (see CombatViewer). */
 const TICK_MS = 1000 / TICKS_PER_SECOND;
+
+/** One scribe line. Memoised: lines never change once written, only more are added. */
+const BeatItem = memo(function BeatItem({ line }: { line: BeatLine }) {
+  return (
+    <div className="gv-beat" data-tone={line.tone}>
+      <small>{String(line.tick).padStart(5, ' ')}</small> {line.text}
+    </div>
+  );
+});
 
 export function PlaybackScreen() {
   // The transport IS the player-wide setting — there is no local copy. Brief #8:
@@ -161,9 +170,12 @@ export function PlaybackScreen() {
     return () => cancelAnimationFrame(raf);
   }, [playing, speed, simTick >= endTick, endTick]);
 
+  // Pin the record to the newest beat. Keyed on the number of beats (not the
+  // tick) so we only force a layout when a line was actually added.
+  const beatCount = feed ? feed.lines.filter((l) => l.tick <= simTick).length : 0;
   useEffect(() => {
     feedRef.current?.scrollTo(0, feedRef.current.scrollHeight);
-  }, [simTick]);
+  }, [beatCount]);
 
   if (!session || !lastLaunch) {
     return (
@@ -380,11 +392,7 @@ export function PlaybackScreen() {
           <span className="gv-pin" />
           <h3 className="gv-head">The record <span className="gv-sub">the scribe keeps pace</span></h3>
           <div ref={feedRef} className="gv-feed">
-            {visibleLines.map((l: BeatLine, i) => (
-              <div key={i} className="gv-beat" data-tone={l.tone}>
-                <small>{String(l.tick).padStart(5, ' ')}</small> {l.text}
-              </div>
-            ))}
+            {visibleLines.map((l: BeatLine, i) => <BeatItem key={i} line={l} />)}
             {done && (
               <div>
                 <b>— end of record ({feed.lines.length} beats{feed.skipped > 0 ? `, ${feed.skipped} unknown events skipped` : ''}) —</b>

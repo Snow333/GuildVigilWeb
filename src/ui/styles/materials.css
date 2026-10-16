@@ -13,12 +13,34 @@
 .gv-desk {
   font-family: var(--gv-serif);
   color: var(--gv-ink);
+  background-color: var(--gv-desk);
+  /* The leather lives on ::before (below), not on this box. */
+  position: relative;
+  isolation: isolate;
+}
+/*
+ * PERFORMANCE (Track P). The leather used to be this box's own background with
+ * `background-attachment: fixed`. A fixed background cannot be scrolled by the
+ * compositor: the browser repaints the whole viewport of gradients and noise
+ * on every scroll step. That was the "laggy" scrolling on the dispatch and
+ * after-action screens (measured: 3x the raster time, see tools/perf-scroll.mjs).
+ *
+ * Same picture, different mechanism: a viewport-sized `position: fixed` layer
+ * behind the content. `will-change: transform` makes it its own compositor
+ * layer, painted once and then only moved. Scrolling no longer repaints it.
+ */
+.gv-desk::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
   background:
     radial-gradient(120% 90% at 50% 0%, #00000000 55%, #00000066 100%),
     var(--gv-tex-leather),
     var(--gv-tex-leather-coarse),
     linear-gradient(160deg, var(--gv-desk-warm), var(--gv-desk) 40%, #211a15);
-  background-attachment: fixed;
 }
 
 /* tooled + stitched work-area border (materials v2) */
@@ -75,6 +97,14 @@
   transform: rotate(0deg) translateY(-2px);
   box-shadow: var(--gv-shadow-lift);
 }
+/* PERFORMANCE: no hover lift while the page scrolls — see scrollQuiet.ts. The
+   sheet holds its resting pose, so scrolling repaints nothing. */
+body.gv-scrolling .gv-sheet,
+body.gv-scrolling .gv-sheet:hover {
+  transform: rotate(var(--gv-tilt, 0deg));
+  box-shadow: var(--gv-shadow-sheet);
+  transition: none;
+}
 .gv-sheet--aged { --gv-pv: var(--gv-vellum-aged); }
 .gv-sheet--old  { --gv-pv: var(--gv-vellum-old); }
 .gv-sheet--stained::after {
@@ -96,6 +126,24 @@
 /* torn lower edge for board notices */
 .gv-sheet--notice {
   clip-path: polygon(0 0, 100% 0, 100% 94%, 96% 97%, 88% 95%, 78% 99%, 66% 96%, 55% 99%, 42% 96%, 30% 99%, 18% 96%, 8% 99%, 0 95%);
+}
+
+/*
+ * PERFORMANCE: on the long screens (dispatch playback, after-action) each sheet
+ * is its own compositor layer. Scrolling then moves finished pictures of the
+ * sheets instead of repainting their grain, gradients and shadows. Scoped to
+ * those two screens so the short screens do not pay the layer memory. The
+ * sheet's blend layer only blends INSIDE the sheet (it is a stacking context
+ * already), so the look is the same. Flat mode has no tilt or grain, so it
+ * does not need the layer.
+ */
+.gv-run .gv-sheet,
+.gv-aar .gv-sheet {
+  will-change: transform;
+}
+body.gv-flat .gv-run .gv-sheet,
+body.gv-flat .gv-aar .gv-sheet {
+  will-change: auto;
 }
 
 /* ============ blotter pad (ambience furniture under correspondence) ============ */

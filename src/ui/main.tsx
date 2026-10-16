@@ -11,7 +11,9 @@ import './styles/treatment.css';
 import './styles/screens.css';
 import './styles/sheet.css';
 import './styles/record.css';
+import { installScrollQuiet } from './styles/scrollQuiet';
 
 const el = document.getElementById('root');
 if (!el) throw new Error('no #root');
+installScrollQuiet();
 createRoot(el).render(<App />);

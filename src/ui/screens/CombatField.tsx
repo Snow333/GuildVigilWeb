@@ -17,6 +17,7 @@
  * `fieldReading.ts`. No distance or judgement is ever derived from them.
  */
 
+import { memo } from 'react';
 import { ARENA, ENGAGEMENT_RANGE, SIZE_RADIUS } from '@content/combat';
 import { enemiesById } from '@sim/registry';
 import type { SimEvent } from '@sim/core/events/types';
@@ -135,31 +136,7 @@ export function CombatField({ spawns, events, tick, held, heldNote, selectedId, 
       role="img"
       aria-label={`Combat field, ${guild} guild against ${foes} enemies`}
     >
-      <rect x={px(0)} y={py(0)} width={ARENA.width * SX} height={ARENA.height * SY} className="gv-field-ground" />
-
-      {range(1, ARENA.width).map((x) => (
-        <line key={`vx${x}`} x1={px(x)} y1={py(0)} x2={px(x)} y2={py(ARENA.height)}
-          className={x % 2 ? 'gv-field-rule gv-field-rule--fine' : 'gv-field-rule'} />
-      ))}
-      {range(1, ARENA.height).map((y) => (
-        <line key={`hz${y}`} x1={px(0)} y1={py(y)} x2={px(ARENA.width)} y2={py(y)}
-          className={y % 2 ? 'gv-field-rule gv-field-rule--fine' : 'gv-field-rule'} />
-      ))}
-      <rect x={px(0)} y={py(0)} width={ARENA.width * SX} height={ARENA.height * SY} className="gv-field-border" />
-
-      {range(0, ARENA.width + 1).map((x) => (
-        <line key={`tx${x}`} x1={px(x)} y1={py(0)} x2={px(x)} y2={py(0) - (x % 2 ? 3 : 6)} className="gv-field-tick" />
-      ))}
-      {range(0, ARENA.height + 1).map((y) => (
-        <line key={`ty${y}`} x1={px(0)} y1={py(y)} x2={px(0) - (y % 2 ? 3 : 6)} y2={py(y)} className="gv-field-tick" />
-      ))}
-
-      {([[ARENA.sideAx, 'MUSTER A'], [ARENA.sideBx, 'MUSTER B']] as const).map(([x, label]) => (
-        <g key={label}>
-          <line x1={px(x)} y1={py(0)} x2={px(x)} y2={py(ARENA.height)} className="gv-field-muster" />
-          <text x={px(x)} y={py(0) - 11} textAnchor="middle" className="gv-field-axis">{label}</text>
-        </g>
-      ))}
+      <FieldGrid />
 
       {/* Engagement radius on the SELECTION only — it decides whether a reaction
           strike is possible at all, and eight of them at once is noise. */}
@@ -277,6 +254,43 @@ export function CombatField({ spawns, events, tick, held, heldNote, selectedId, 
     </svg>
   );
 }
+
+/**
+ * The ground, rules, ticks and muster lines. They depend on nothing but ARENA,
+ * so they are drawn once. Before this they were rebuilt (about 60 SVG nodes)
+ * on every playhead step. (Track P: playback cost.)
+ */
+const FieldGrid = memo(function FieldGrid() {
+  return (
+    <>
+      <rect x={px(0)} y={py(0)} width={ARENA.width * SX} height={ARENA.height * SY} className="gv-field-ground" />
+
+      {range(1, ARENA.width).map((x) => (
+        <line key={`vx${x}`} x1={px(x)} y1={py(0)} x2={px(x)} y2={py(ARENA.height)}
+          className={x % 2 ? 'gv-field-rule gv-field-rule--fine' : 'gv-field-rule'} />
+      ))}
+      {range(1, ARENA.height).map((y) => (
+        <line key={`hz${y}`} x1={px(0)} y1={py(y)} x2={px(ARENA.width)} y2={py(y)}
+          className={y % 2 ? 'gv-field-rule gv-field-rule--fine' : 'gv-field-rule'} />
+      ))}
+      <rect x={px(0)} y={py(0)} width={ARENA.width * SX} height={ARENA.height * SY} className="gv-field-border" />
+
+      {range(0, ARENA.width + 1).map((x) => (
+        <line key={`tx${x}`} x1={px(x)} y1={py(0)} x2={px(x)} y2={py(0) - (x % 2 ? 3 : 6)} className="gv-field-tick" />
+      ))}
+      {range(0, ARENA.height + 1).map((y) => (
+        <line key={`ty${y}`} x1={px(0)} y1={py(y)} x2={px(0) - (y % 2 ? 3 : 6)} y2={py(y)} className="gv-field-tick" />
+      ))}
+
+      {([[ARENA.sideAx, 'MUSTER A'], [ARENA.sideBx, 'MUSTER B']] as const).map(([x, label]) => (
+        <g key={label}>
+          <line x1={px(x)} y1={py(0)} x2={px(x)} y2={py(ARENA.height)} className="gv-field-muster" />
+          <text x={px(x)} y={py(0) - 11} textAnchor="middle" className="gv-field-axis">{label}</text>
+        </g>
+      ))}
+    </>
+  );
+});
 
 function StrikeMark({ ev, at }: { ev: SimEvent; at: ReadonlyMap<string, { x: number; y: number }> }) {
   if (ev.type === 'combat.attack_resolved') {
