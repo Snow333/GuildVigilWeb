@@ -24,6 +24,8 @@ import {
 import { CLASS_BOOST_PRIORITY, DEFAULT_BOOST_ORDER } from '@content/autopilot';
 import type { LoadoutEntry } from '@sim/combat/loadout';
 import type { HeroKit } from './assembly';
+import { autoSpellPicks, spellsLearnedAtLevel } from '@sim/heroes/knownSpells';
+import { addWhileRoom } from '@sim/heroes/spellPlan';
 
 export const FOUNDING_PARTY_SIZE = 4;
 
@@ -339,15 +341,23 @@ export function musterHero(choice: MusterChoice, index: number): HeroKit {
   const knownSpells = [
     ...new Set(loadout.filter((e) => e.action === 'cast').map((e) => e.spellId)),
   ].sort((a, b) => a - b);
+  const hero = mkHero(
+    id, name, template.classId, abilities, maxHp,
+    { ...template.skills }, template.feats.map((f) => ({ ...f })),
+    { ancestry: choice.ancestry, gender: choice.gender },
+    knownSpells,
+  );
+  // M2: a founding spellbook/repertoire caster knows its level-1 allotment
+  // (spellsLearnedAtLevel = 2) ON TOP of its signature spell. Before, a new
+  // wizard had two 1st-level slots and one spell — an empty slot it could
+  // never fill. New spells go into the fight plan where there is room.
+  const extra = autoSpellPicks(hero, template.classId, 1, spellsLearnedAtLevel(template.classId, 1));
+  hero.knownSpells = [...knownSpells, ...extra].sort((a, b) => a - b);
+  const plannedLoadout = addWhileRoom(hero, loadout, extra);
   return {
-    hero: mkHero(
-      id, name, template.classId, abilities, maxHp,
-      { ...template.skills }, template.feats.map((f) => ({ ...f })),
-      { ancestry: choice.ancestry, gender: choice.gender },
-      knownSpells,
-    ),
+    hero,
     equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),
-    loadout,
+    loadout: plannedLoadout,
     // Muster and the save backfill must agree, or save → load → save won't round-trip.
     quickSlots: emptyQuickSlots(),
     altWeaponSet: [],

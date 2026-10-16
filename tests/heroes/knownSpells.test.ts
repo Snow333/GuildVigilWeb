@@ -189,6 +189,7 @@ describe('learn rate', () => {
   it('two at level 1, one per level after', () => {
     expect(spellsLearnedAtLevel(WIZARD, 1)).toBe(2);
     expect(spellsLearnedAtLevel(WIZARD, 2)).toBe(1);
-    expect(spellsLearnedAtLevel(CLERIC, 5)).toBe(1);
+    // M2: a Cleric is GRANTED the whole divine list (PF2E) — it picks nothing at level-up.
+    expect(spellsLearnedAtLevel(CLERIC, 5)).toBe(0);
   });
 });

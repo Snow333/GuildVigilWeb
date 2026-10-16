@@ -202,14 +202,100 @@ export function learnableSpells(hero: HeroState, classId: number, atClassLevel?:
 export function spellsLearnedAtLevel(classId: number, classLevel: number): number {
   const classRow = classesById.get(classId);
   if (!classRow?.spell_list) return 0;
+  // M2: divine prepared casters are granted the whole list — nothing to pick.
+  if (spellAccess(classId) === 'divine_list') return 0;
   return classLevel <= 1 ? 2 : 1;
 }
 
-/** The hero's known spells that the engine can actually cast, in level order. */
+/**
+ * The hero's spells that the engine can actually cast, in level order: what it
+ * learned, plus (M2) the whole granted list for each divine-list class it has.
+ */
 export function castableSpells(hero: HeroState): number[] {
-  return (hero.knownSpells ?? [])
+  const ids = new Set(hero.knownSpells ?? []);
+  for (const cl of hero.classLevels) for (const id of grantedListSpells(cl.classId, cl.level)) ids.add(id);
+  return [...ids]
     .map((id) => spellsById.get(id))
     .filter((s): s is NonNullable<typeof s> => s !== undefined && isSpellResolvable(s))
     .sort((a, b) => ((a.spell_level as number) ?? 0) - ((b.spell_level as number) ?? 0) || a.id - b.id)
     .map((s) => s.id);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// M2: HOW EACH CLASS COMES BY ITS SPELLS (Steven's PF2E correction)
+//
+//  - Divine PREPARED casters (Cleric, Mystic Theurge) do not learn spells one
+//    at a time. Their deity grants the whole list: every working spell up to
+//    the level they can cast. The choice is which ones to PREPARE.
+//  - Arcane PREPARED casters (Wizard) still learn into a spellbook at level-up
+//    (PF2E: the book grows), then prepare from it.
+//  - SPONTANEOUS casters (Bard, Sorcerer) and the Warlock know a small
+//    repertoire and cast any of it — their choice happens at level-up.
+//
+// "Prepared" in this engine = the spells in the fight plan. A prepared caster
+// may plan at most `preparedLimit` levelled spells, so the choice is real.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type SpellAccess = 'divine_list' | 'spellbook' | 'repertoire' | 'none';
+
+export function spellAccess(classId: number): SpellAccess {
+  const row = classesById.get(classId);
+  const list = (row?.spell_list as string | null) ?? null;
+  if (!list) return 'none';
+  const casting = (row?.casting_type as string | null) ?? '';
+  if (casting === 'prepared' && list === 'divine') return 'divine_list';
+  if (casting === 'prepared') return 'spellbook';
+  return 'repertoire';
+}
+
+/** True when this class prepares from what it knows (Cleric, Wizard, …). */
+export const isPreparedCaster = (classId: number): boolean => {
+  const a = spellAccess(classId);
+  return a === 'divine_list' || a === 'spellbook';
+};
+
+/**
+ * Every working spell a divine-list caster has at this class level: the whole
+ * tradition list up to its highest castable spell level.
+ */
+export function grantedListSpells(classId: number, classLevel: number): number[] {
+  if (spellAccess(classId) !== 'divine_list') return [];
+  const tradition = classesById.get(classId)!.spell_list as string;
+  const ceiling = maxSpellLevel(classId, classLevel);
+  return spells
+    .filter((s) => onSpellList(s, tradition) && isSpellResolvable(s) && ((s.spell_level as number | null) ?? 0) <= ceiling)
+    .map((s) => s.id);
+}
+
+/**
+ * How many LEVELLED spells (not cantrips) a prepared caster may have in its
+ * fight plan: its total levelled slots at this level, i.e. one prepared spell
+ * per slot. Cantrips are unlimited. Non-prepared casters: no limit (null).
+ */
+export function preparedLimit(classId: number, classLevel: number): number | null {
+  if (!isPreparedCaster(classId)) return null;
+  const prog = progressionFor(classId, classLevel);
+  if (!prog) return 0;
+  let total = 0;
+  for (let lvl = 1; lvl <= 9; lvl++) total += ((prog as Record<string, unknown>)[`spell_slots_${lvl}`] as number | null) ?? 0;
+  return total;
+}
+
+/**
+ * The spells "pick for me" learns: highest spell level first, then the class's
+ * preferred effect (healing first for divine, damage first for others, buffs
+ * after), then id. Debuffs are never auto-picked — no automatic rule places
+ * them in the fight plan, so they would sit unused.
+ */
+export function autoSpellPicks(hero: HeroState, classId: number, classLevel: number, count: number): number[] {
+  if (count <= 0) return [];
+  const divine = (classesById.get(classId)?.spell_list as string | null) === 'divine';
+  const pref: Record<string, number> = divine
+    ? { healing: 0, damage: 1, buff: 2 }
+    : { damage: 0, buff: 1, healing: 2 };
+  return learnableSpells(hero, classId, classLevel)
+    .filter((o) => o.effectType in pref)
+    .sort((a, b) => b.spellLevel - a.spellLevel || pref[a.effectType]! - pref[b.effectType]! || a.spellId - b.spellId)
+    .slice(0, count)
+    .map((o) => o.spellId);
 }

@@ -24,3 +24,8 @@ playtest note. Newest at the bottom.
 | 2026-10-16 | M1 | "Healing" spells with no dice (Remove Curse, Remove Disease, Restoration, …) are no longer offered | They healed 0 hp and spent a slot. Live spells 102 → 94 |
 | 2026-10-16 | M1 | Level-up picker hides feats/spells that do nothing and empty feat tracks (was: greyed "Not yet available") | Vision + working agreement: never offer something that does nothing |
 | 2026-10-16 | M1 | "Auto level up ▸" button at the top of the hero level-up tab | Vision: the player can skip the choices |
+| 2026-10-16 | M2 | **Clerics are granted the whole divine list** (every working spell up to their highest slot level) and pick nothing at level-up; they choose what to PREPARE | Steven, PF2E: "they should just get all spells and then select what gets memorized" |
+| 2026-10-16 | M2 | Wizards keep a spellbook (learn at level-up); Bard/Sorcerer/Warlock keep a repertoire | PF2E split: prepared-from-book vs spontaneous |
+| 2026-10-16 | M2 | "Prepared" = in the fight plan. Prepared casters may plan one distinct spell per slot of that level; cantrips unlimited. Enforced in the sim (`setLoadout` too) | Makes preparing a real choice without a new resting/memorising system |
+| 2026-10-16 | M2 | New **Spells tab** on casters: prepare/unprepare by level with slot counters, and a casting order with plain "when" and "at whom" dropdowns | Steven: no way to pick what casters prioritise |
+| 2026-10-16 | M2 | Founding Wizard/Bard/Sorcerer/Warlock know their level-1 allotment (2 more spells) | A new wizard had 2 slots and 1 spell. Measured: autopilot completion 96% → 98.5%, wipes 4% → 1% |

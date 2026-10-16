@@ -20,12 +20,13 @@ import type { LoadoutEntry } from '@sim/combat/loadout';
 import { autoLevelHero } from '@sim/campaign/campaign';
 import { useGame } from '../state/GameProvider';
 import { SheetTab } from './SheetTab';
+import { SpellsTab } from './SpellsTab';
 
 const ABILITIES: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 export function HeroPanel({ heroId }: { heroId: string }) {
   const { session, nav } = useGame();
-  const [tab, setTab] = useState<'sheet' | 'levelup' | 'loadout'>('sheet');
+  const [tab, setTab] = useState<'sheet' | 'spells' | 'levelup' | 'loadout'>('sheet');
   if (!session) return null;
   const sheet = session.heroSheet(heroId);
 
@@ -35,7 +36,7 @@ export function HeroPanel({ heroId }: { heroId: string }) {
         <h1>{sheet.name} — level {sheet.level} {sheet.classes.map((c) => `${c.name} ${c.level}`).join(' / ')}</h1>
         <div className="gv-tabs">
           <button className="gv-btn" onClick={() => nav({ kind: 'town' })}>◂ Town</button>
-          {(['sheet', 'levelup', 'loadout'] as const).map((t) => (
+          {(['sheet', ...(session.spellPlan(heroId) ? ['spells' as const] : []), 'levelup', 'loadout'] as const).map((t) => (
             <button
               key={t}
               className={t === 'levelup' && sheet.canLevelUp ? 'gv-btn gv-btn--seal' : 'gv-btn'}
@@ -52,6 +53,7 @@ export function HeroPanel({ heroId }: { heroId: string }) {
           ))}
         </div>
         {tab === 'sheet' && <SheetTab heroId={heroId} />}
+        {tab === 'spells' && <SpellsTab heroId={heroId} />}
         {tab === 'levelup' && <LevelUpTab heroId={heroId} />}
         {tab === 'loadout' && <LoadoutTab heroId={heroId} />}
       </div>

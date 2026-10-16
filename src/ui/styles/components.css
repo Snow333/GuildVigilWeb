@@ -363,3 +363,14 @@ body.gv-readable .gv-slot-empty,
 body.gv-readable .gv-abilities .gv-ab b,
 body.gv-readable .gv-choice .gv-choice-label,
 body.gv-readable .gv-title h1 { letter-spacing: 0; }
+
+/* M2: plain dropdowns in the desk's type (spell page rules) */
+.gv-select {
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--gv-ink);
+  background: #f3e9d2;
+  border: 1px solid #8a734f;
+  border-radius: 4px;
+  padding: 2px 6px;
+}

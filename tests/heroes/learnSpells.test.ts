@@ -111,13 +111,14 @@ describe('level-up teaches spells, and they are cast in real fights', () => {
     expect([...casts].some((c) => c !== String(id('Magic Missile')) && known.includes(Number(c)))).toBe(true);
   });
 
-  it('every auto-levelled caster class ends up casting a spell it learned', () => {
+  it('every auto-levelled caster class ends up casting a spell it gained after founding', () => {
     for (const classId of [2, 3, 8, 9, 13]) {
       const s = session([classId]);
       const hero = s.roster()[0]!;
-      const founded = new Set(s.heroState(hero.id).knownSpells ?? []);
+      // "Gained" = usable now but not at founding: learned (Wizard, Bard, …) or granted (Cleric).
+      const founded = new Set(s.spellPlan(hero.id)!.levels.flatMap((l) => l.spells.map((sp) => sp.spellId)));
       for (let i = 0; i < 6; i++) { s.devGrantLevel(hero.id); autoLevelHero(s, hero.id); }
-      const learned = (s.heroState(hero.id).knownSpells ?? []).filter((sid) => !founded.has(sid));
+      const learned = s.spellPlan(hero.id)!.levels.flatMap((l) => l.spells.map((sp) => sp.spellId)).filter((sid) => !founded.has(sid));
       expect(learned.length, `class ${classId} learned spells`).toBeGreaterThan(0);
       const casts = castsInFights(kitOf(s, hero.id), 12);
       expect(learned.some((sid) => casts.has(String(sid))), `class ${classId} casts a learned spell`).toBe(true);

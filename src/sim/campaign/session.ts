@@ -39,7 +39,10 @@ import {
 } from '@sim/heroes/feats';
 import { takeLongRestParty } from '@sim/heroes/longRest';
 import { castableSpells, spellOffers, spellsLearnedAtLevel, type SpellOffer } from '@sim/heroes/knownSpells';
-import { withLearnedSpells } from '@sim/heroes/autoLoadout';
+import {
+  addWhileRoom, buildSpellPlan, moveSpellRule, newlyGranted, preparedViolation, setSpellRule, togglePlanned,
+  type SpellPlan,
+} from '@sim/heroes/spellPlan';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
   itemContributions, slotState,
@@ -64,7 +67,7 @@ import { quests as questRows } from '@content/generated';
 import { generateWorld, type WorldMap } from '@sim/world/terrain';
 import { planTravel, type TravelPlan } from '@sim/world/travel';
 import { EscalationLedger, type EscalationFact } from '@sim/world/escalation';
-import type { LoadoutEntry } from '@sim/combat/loadout';
+import type { LoadoutCondition, LoadoutEntry, LoadoutTargetSpec } from '@sim/combat/loadout';
 import { assembleHero, assembleParty, type HeroKit } from './assembly';
 import type { DispatchHero } from '@sim/dungeon/checks';
 
@@ -802,15 +805,22 @@ export class CampaignSession {
       ...plan.autoGrantedFeatIds,
       ...autoGrantsForLevel(plan.classId, nextClassLevel),
     ])];
+    const levelBefore = nextClassLevel - 1;
     const applied = applyLevelUp(hero, {
       ...plan,
       autoGrantedFeatIds: autoGranted,
       hpPerLevel: prog.hp_per_level as number,
     });
     // M1: spells learned this level join the fight — see heroes/autoLoadout.ts.
-    if (plan.spells && plan.spells.length > 0) {
+    // M2: prepared casters only while that spell level has a free slot; a
+    // Cleric's newly GRANTED spells (whole divine list) are offered the same way.
+    const candidates = [
+      ...(plan.spells ?? []),
+      ...newlyGranted(plan.classId, levelBefore, nextClassLevel),
+    ];
+    if (candidates.length > 0) {
       const kit = this.kitFor(heroId);
-      kit.loadout = withLearnedSpells(kit.loadout, plan.spells);
+      kit.loadout = addWhileRoom(hero, kit.loadout, candidates);
     }
     this.world.emit(this.minute, 'hero.level_up_applied', {
       heroId: hero.id, newLevel: applied.newCharacterLevel, classId: String(applied.classId),
@@ -955,7 +965,32 @@ export class CampaignSession {
         throw new Error(`setLoadout: unknown spell ${entry.spellId}`);
       }
     }
+    const bad = preparedViolation(this.heroState(heroId), entries);
+    if (bad) throw new Error(`setLoadout: ${bad}`);
     kit.loadout = jsonClone(entries);
+  }
+
+  /** M2: the caster's spell page — usable spells by level, what is prepared, the order tried. */
+  spellPlan(heroId: string): SpellPlan | null {
+    return buildSpellPlan(this.heroState(heroId), this.kitFor(heroId).loadout);
+  }
+
+  /** M2: prepare / unprepare one spell. Throws when that spell level is full. */
+  toggleSpellPlanned(heroId: string, spellId: number): void {
+    const kit = this.kitFor(heroId);
+    kit.loadout = togglePlanned(this.heroState(heroId), kit.loadout, spellId);
+  }
+
+  /** M2: move a planned spell up (-1) or down (+1) in the order it is tried. */
+  moveSpellInPlan(heroId: string, loadoutIndex: number, dir: -1 | 1): void {
+    const kit = this.kitFor(heroId);
+    kit.loadout = moveSpellRule(kit.loadout, loadoutIndex, dir);
+  }
+
+  /** M2: change when, and at whom, a planned spell is cast. */
+  setSpellPlanRule(heroId: string, loadoutIndex: number, condition: LoadoutCondition, target: LoadoutTargetSpec): void {
+    const kit = this.kitFor(heroId);
+    kit.loadout = setSpellRule(kit.loadout, loadoutIndex, condition, target);
   }
 
   /** Buy from the current rotation. Derived pricing; finite rows deplete until the next rotation. */
