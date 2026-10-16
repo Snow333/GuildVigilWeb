@@ -11,6 +11,28 @@
  */
 
 import { useGame } from '../state/GameProvider';
+import { ItemTooltip } from '../components/ItemTooltip';
+import { itemContributions, itemSummary } from '@sim/heroes/attribution';
+import type { ItemInstance } from '@sim/core/events/types';
+
+/**
+ * ⚠ ONE DESCRIBER (M2 itemization). The shop used to print its own "Mark"
+ * column — `dmg 1d8` or `AC +2` and a dash for everything else — so a Cloak of
+ * Resistance read "—" here and "+1 to every strike" on the sheet. Every row now
+ * reads `itemContributions`, the same text the hero sheet shows. No hero is
+ * looking, so there is no training line; the sheet adds that once equipped.
+ */
+function WareName({ instance, name, price }: { instance: ItemInstance; name: string; price: number }) {
+  const contributions = itemContributions(null, instance);
+  return (
+    <ItemTooltip
+      className="gv-stash-trigger"
+      data={{ name, slot: null, category: 'ware', price, contributions }}
+    >
+      <b>{name}</b>
+    </ItemTooltip>
+  );
+}
 
 export function ShopScreen() {
   const { session, exec, nav, lastError } = useGame();
@@ -43,15 +65,17 @@ export function ShopScreen() {
               <h3 className="gv-head">{buildingName} <span className="gv-sub">the counter</span></h3>
               <table>
                 <thead>
-                  <tr><th>Ware</th><th>Fits</th><th>Mark</th><th>Price</th><th>Stock</th><th></th></tr>
+                  <tr><th>Ware</th><th>Fits</th><th>Does</th><th>Price</th><th>Stock</th><th></th></tr>
                 </thead>
                 <tbody>
-                  {list.map((o) => (
+                  {list.map((o) => {
+                    const instance: ItemInstance = { baseId: o.itemBaseId, tier: 'mundane', propertyIds: [], seed: 'shop_card' };
+                    return (
                     <tr key={o.offerIndex}>
-                      <td><b>{o.derived.displayName}</b></td>
-                      <td>{o.derived.slot ?? o.derived.itemType}</td>
-                      <td style={{ color: 'var(--gv-ink-muted)' }}>
-                        {o.derived.damageDice ? `dmg ${o.derived.damageDice}` : o.derived.acBonus ? `AC +${o.derived.acBonus}` : '—'}
+                      <td><WareName instance={instance} name={o.derived.displayName} price={o.price} /></td>
+                      <td>{o.derived.slot ? o.derived.slot.replace('_', ' ') : o.derived.itemType}</td>
+                      <td style={{ color: 'var(--gv-ink-muted)' }} data-item-summary="">
+                        {itemSummary(itemContributions(null, instance))}
                       </td>
                       <td>{o.price}g</td>
                       <td>{o.remaining === null ? '∞' : `${o.remaining} left`}</td>
@@ -65,7 +89,8 @@ export function ShopScreen() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -77,8 +102,11 @@ export function ShopScreen() {
             <table>
               <tbody>
                 {stash.map((v) => (
-                  <tr key={v.index}>
-                    <td><b>{v.derived.displayName}</b></td>
+                  <tr key={v.index} data-sell-row="">
+                    <td><WareName instance={v.instance} name={v.derived.displayName} price={v.derived.price} /></td>
+                    <td style={{ color: 'var(--gv-ink-muted)' }} data-item-summary="">
+                      {itemSummary(itemContributions(null, v.instance))}
+                    </td>
                     <td style={{ color: 'var(--gv-ink-muted)' }}>worth {v.derived.price}g</td>
                     <td>sells for {v.sellPrice}g</td>
                     <td style={{ textAlign: 'right' }}>

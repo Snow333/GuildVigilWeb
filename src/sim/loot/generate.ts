@@ -10,6 +10,7 @@ import { LOOT_GRAMMAR } from '@content/dungeon';
 import { item_properties, items, loot_tables } from '@content/generated';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { Rng } from '@sim/core/rng';
+import { tierApplies } from '@sim/heroes/equipment';
 
 export type LootSource = 'enemy' | 'cache' | 'treasure' | 'vault' | 'boss';
 
@@ -122,7 +123,14 @@ export function rollLootTable(
       // Authored quality item: fixed tier, no rolls.
       out.push({ baseId: String(base.id), tier: base.quality_tier as ItemInstance['tier'], propertyIds: [], seed: `${seed}_q${q}` });
     } else {
-      const tier = rollTier(source, difficulty, rng);
+      const rolled = rollTier(source, difficulty, rng);
+      /**
+       * ⚠ A TIER ONLY MEANS SOMETHING ON A WEAPON, ARMOUR OR SHIELD (M2
+       * itemization). A "magical" healing potion was the same potion priced
+       * 16×. The roll still happens, so the seeded stream is unchanged; the
+       * instance just records the truth.
+       */
+      const tier = tierApplies(base) ? rolled : 'mundane';
       out.push({ baseId: String(base.id), tier, propertyIds: rollProperties(base, tier, rng), seed: `${seed}_q${q}` });
     }
   }

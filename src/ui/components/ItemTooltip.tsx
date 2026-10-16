@@ -184,7 +184,7 @@ export function ItemTooltip({
                     <span className="gv-tip-label">
                       {c.label}
                       {/* ⚠ the word, not just the colour — greyscale must survive */}
-                      {!c.live && <span className="gv-badge gv-badge--dead">not built</span>}
+                      {!c.live && <span className="gv-badge gv-badge--dead">not working yet</span>}
                       <small>{c.detail}</small>
                     </span>
                   </div>

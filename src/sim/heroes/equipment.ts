@@ -37,18 +37,57 @@ export const TIER_PRICE_MULT: Record<ItemInstance['tier'], number> = {
 };
 export const PROPERTY_PRICE_MULT = 2.5;
 
+/**
+ * ⚠ WHICH ITEMS A TIER ROLL MEANS ANYTHING ON (M2 itemization pass).
+ *
+ * A tier grant is a weapon's +N to hit or an armour's +N to AC. Nothing else
+ * has a place for it to go. Before this pass the grant landed in `attackBonus`
+ * on EVERY item, so a loot cloak (instance tier `magical`) read "+1 to every
+ * strike" on the sheet while `assembleHero` never read it — a lie on the card.
+ *
+ * And the grant only applies to ROLLED items: a base whose `quality_tier` is
+ * not `mundane` is an authored magic item, and its authored numbers (and
+ * authored price) already ARE its magic. The loot roller stamps those with
+ * their own quality as the instance tier, and the shop stamps them `mundane`;
+ * both must derive the same item, or a cloak from a chest sells for 16× the
+ * one from the market.
+ */
+const TIERABLE_TYPES = new Set(['weapon', 'armor', 'shield']);
+
+/** Does an instance's tier change this base at all? (Rolled weapons/armour/shields only.) */
+export function tierApplies(base: Pick<ItemRow, 'quality_tier' | 'item_type'>): boolean {
+  return base.quality_tier === 'mundane' && TIERABLE_TYPES.has(base.item_type);
+}
+const isRolled = tierApplies;
+
 export interface OnHitEffect {
   propertyId: string;
   onHit: Record<string, unknown> | null;
   onCrit: Record<string, unknown> | null;
+  /**
+   * The property's always-on effect (Keen's crit range, a resistance). Most
+   * have no consumer yet; the item card greys those. Optional because enemy
+   * riders (combat/build.ts) are built from ability rows with no passive.
+   */
+  passive?: Record<string, unknown> | null;
 }
 
 export interface DerivedItem {
   displayName: string;
   slot: string | null;
   itemType: string;
-  /** Attack-roll bonus (potency). */
+  /** Attack-roll bonus (potency). WEAPONS ONLY — 0 on everything else. */
   attackBonus: number;
+  /** The enhancement part of `acBonus` (armour/shield potency). Lost when untrained. */
+  acPotency: number;
+  /** Armour's cap on the Dex added to AC, or null. */
+  maxDex: number | null;
+  /** Property ids actually on the item (rolled + authored), for the card. */
+  propertyIds: string[];
+  /** Authored properties the row already folded into its dice (Flaming Sword's 1d6). */
+  foldedPropertyIds: string[];
+  /** Authored legendary powers, unparsed. The engine reads none of them yet. */
+  legendaryEffects: Record<string, unknown> | null;
   /** Number of EXTRA weapon damage dice (PF2E striking). */
   strikingTier: number;
   /** Weapon dice with striking applied (e.g. 1d8 + striking 1 → 2d8). */
@@ -93,17 +132,20 @@ export function applyStriking(baseDice: string | null, striking: number): string
 }
 
 /**
- * Deterministic display name: [Tier] [Properties…] Base [+potency].
- * The +N suffix is an ENHANCEMENT marker: masterwork's quality bonus is
- * craftsmanship, not enchantment, so it never suffixes.
+ * Deterministic display name: [Masterwork] [Properties…] Base [+potency].
+ *
+ * ⚠ THE TIER WORD IS DROPPED WHEN A +N SAYS THE SAME THING (M2 itemization).
+ * "Enchanted Keen Unholy Shortsword +2" said "magic" twice, and on a cloak
+ * the tier word implied a bonus that did not exist. The +N is the PF2E
+ * marker and it is the number the card explains, so it wins. Masterwork keeps
+ * its word: its +1 to hit is craftsmanship, not enchantment, so it never
+ * takes a suffix and the word is the only sign of it.
  */
-const ENHANCEMENT_TIERS = new Set(['magical', 'enchanted', 'legendary']);
+const ENHANCEMENT_TIERS = new Set<string>(['magical', 'enchanted', 'legendary']);
 
 function composeName(base: ItemRow, tier: ItemInstance['tier'], props: PropertyRow[], potency: number): string {
   const parts: string[] = [];
-  if (tier !== 'mundane' && !base.name.toLowerCase().includes(tier)) {
-    parts.push(tier.charAt(0).toUpperCase() + tier.slice(1));
-  }
+  if (tier === 'masterwork' && !base.name.toLowerCase().includes('masterwork')) parts.push('Masterwork');
   for (const p of props) if (!base.name.includes(p.name)) parts.push(p.name);
   parts.push(base.name);
   const name = parts.join(' ');
@@ -130,57 +172,110 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
     return p;
   });
 
-  const grants = TIER_GRANTS[instance.tier];
+  /**
+   * ⚠ AUTHORED PROPERTIES ARE PART OF THE ITEM TOO. Dreadblade carries
+   * `["keen","dread"]` in its row, not on the instance, and nothing read it:
+   * the sword's whole identity was decoration. They join the effect list here,
+   * EXCEPT where the row already folded the rider into its dice (Flaming Sword
+   * is `1d8+1d6`) — merging those would deal the 1d6 twice.
+   */
+  const rolled = isRolled(base);
+  const authoredIds = parseJson<unknown>(base.properties, null);
+  const authoredProps: PropertyRow[] = Array.isArray(authoredIds)
+    ? authoredIds
+      .map((id) => propertiesById.get(String(id)))
+      .filter((p): p is PropertyRow => p !== undefined && !props.includes(p))
+    : [];
+  const foldedIntoDice = authoredProps.length > 0 && countDiceTerms(base.damage_dice as string | null) > 1;
+  const effectProps = foldedIntoDice ? props : [...props, ...authoredProps];
+
+  const grants = rolled ? TIER_GRANTS[instance.tier] : TIER_GRANTS.mundane;
   const potency = Math.max((base.potency_bonus as number) ?? 0, grants.potency);
   const strikingTier = Math.max((base.striking_tier as number) ?? 0, grants.striking);
 
   /**
    * BUG A (brief #14 §5): potency was routed to `attackBonus` and nothing else,
    * and `equippedGear` only reads `attackBonus` for weapons — so on armour it
-   * went nowhere. Every magical armour row in the registry was decoration:
-   * Chain Mail +3 was identical to Chain Mail, and mundane Full Plate (ac 8,
-   * 300 gp) strictly BEAT Full Plate +3 (ac 7, 4,500 gp).
+   * went nowhere. Potency on worn gear is an enhancement bonus to AC, the
+   * defensive twin of what the attack roll gets. The armour ladder is monotone
+   * with no content edit: Full Plate +3 is ac 10 against mundane Full Plate's 8.
    *
-   * Potency on worn gear is an enhancement bonus to AC, the defensive twin of
-   * what the attack roll already gets. Using the same maxed value means it also
-   * reaches ROLLED instances via `TIER_GRANTS`, so a magical armour drop is
-   * finally worth more than its mundane base — which is what the loot grammar
-   * always claimed. The armour ladder is monotone after this with no content
-   * edit: Full Plate +3 becomes ac 10 against mundane Full Plate's 8.
+   * ⚠ AND THE MIRROR BUG (M2 itemization): potency ALSO landed in
+   * `attackBonus` on armour, cloaks and rings, where nothing reads it — so the
+   * sheet told the player a Ring of Protection +1 gave "+1 to every strike".
+   * Potency now has exactly one home per item type.
    *
    * (One row stays anomalous and it is content, not code: Ironmane's Pelt (181)
    * is legendary, level 16, 7,000 gp and carries `potency_bonus 0`, so it still
    * lands at ac 7. Flagged, not silently patched.)
    */
+  const isWeapon = base.item_type === 'weapon';
   const worn = base.item_type === 'armor' || base.item_type === 'shield';
-  const acBonus = ((base.ac_bonus as number | null) ?? 0) + (worn ? potency : 0);
+  /**
+   * ⚠ MASTERWORK ARMOUR IS LIGHTER, NOT TOUGHER. The authored Masterwork
+   * rows keep their base AC and carry one point less check penalty (Chain Mail
+   * −2 → Masterwork Chain Mail −1). A ROLLED masterwork armour used to get +1
+   * AC from the tier grant instead, so the same name meant two different
+   * items depending on whether it came from a shop or a chest.
+   */
+  const masterworkArmour = rolled && worn && instance.tier === 'masterwork';
+  const acPotency = worn && !masterworkArmour ? potency : 0;
+  const authoredAc = (base.ac_bonus as number | null) ?? 0;
+  /**
+   * ⚠ A WONDROUS ITEM'S +N IS ITS AC (Ring of Protection, Amulet of Natural
+   * Armor). The ring authors both `ac_bonus 1` and `potency_bonus 1` for the
+   * same +1, the amulet authors only the potency — so the amulet did nothing
+   * at all while its card claimed a strike bonus. Taking the larger of the
+   * two reads both rows the way their names promise, without double-counting
+   * the ring.
+   */
+  const acBonus = worn
+    ? authoredAc + acPotency
+    : base.item_type === 'wondrous'
+      ? Math.max(authoredAc, (base.potency_bonus as number | null) ?? 0)
+      : authoredAc;
+  const authoredAcp = (base.armor_check_penalty as number | null) ?? 0;
+  const armorCheckPenalty = masterworkArmour ? Math.min(0, authoredAcp + 1) : authoredAcp;
 
   const basePrice = (base.price as number) ?? 0;
+  const tierMult = rolled ? TIER_PRICE_MULT[instance.tier] : 1;
   const price = Math.max(
-    Math.round(basePrice * TIER_PRICE_MULT[instance.tier] * Math.pow(PROPERTY_PRICE_MULT, props.length)),
+    Math.round(basePrice * tierMult * Math.pow(PROPERTY_PRICE_MULT, props.length)),
     basePrice,
   );
 
   return {
-    displayName: composeName(base, instance.tier, props, potency),
+    displayName: composeName(base, rolled ? instance.tier : 'mundane', props, potency),
     slot: base.slot as string | null,
     itemType: base.item_type as string,
-    attackBonus: potency,
+    attackBonus: isWeapon ? potency : 0,
+    acPotency,
+    maxDex: (base.max_dex as number | null) ?? null,
+    propertyIds: effectProps.map((p) => p.id),
+    foldedPropertyIds: foldedIntoDice ? authoredProps.map((p) => p.id) : [],
+    legendaryEffects: parseJson<Record<string, unknown> | null>(base.legendary_effects, null),
     strikingTier,
     damageDice: applyStriking(base.damage_dice as string | null, strikingTier),
     damageType: base.damage_type as string | null,
     acBonus,
-    armorCheckPenalty: (base.armor_check_penalty as number | null) ?? 0,
+    armorCheckPenalty,
     statBonuses: parseJson<Record<string, number>>(base.stat_bonus, {}),
-    onHitEffects: props.map((p) => ({
+    onHitEffects: effectProps.map((p) => ({
       propertyId: p.id,
       onHit: parseJson<Record<string, unknown> | null>(p.on_hit_effect, null),
       onCrit: parseJson<Record<string, unknown> | null>(p.on_crit_effect, null),
+      passive: parseJson<Record<string, unknown> | null>(p.passive_effect, null),
     })),
     weaponTraits: parseJson<string[]>(base.weapon_traits, []),
     bulk: (base.bulk as number) ?? 0,
     price,
   };
+}
+
+/** "1d8+1d6" → 2, "1d8+1" → 1, null → 0. */
+function countDiceTerms(dice: string | null): number {
+  if (!dice) return 0;
+  return dice.split('+').filter((p) => /\d*d\d+/.test(p)).length;
 }
 
 /** Total armour check penalty across everything worn (≤ 0). Applies to Stealth. */

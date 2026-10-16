@@ -121,6 +121,18 @@ describe('⚠ EXPOSURE — ledgers agree with the ENGINE, not just themselves', 
     expect(attackPenaltyLedger(hero, equipped).total, 'the penalty half').toBe(c.weaponPenalty);
     expect(c.weaponPenalty, 'a wizard in plate with a greatsword IS penalised').toBeLessThan(0);
   });
+
+  /**
+   * ⚠ UNTRAINED +N ARMOUR loses its +N in the engine (D1). Full Plate has no
+   * +N, so the case above could not see the ledger skipping that rule.
+   */
+  it('⚠ still agrees when an untrained hero wears +N armour', () => {
+    const kit = kitFor(WIZARD);
+    kit.equipped = [inst(byName('Chain Mail +2'))];
+    const c = assembleHero(kit).c;
+    expect(acLedger(kit.hero, kit.equipped).total, 'AC without the lost +2').toBe(c.ac);
+    expect(attackPenaltyLedger(kit.hero, kit.equipped).total).toBe(c.weaponPenalty);
+  });
 });
 
 describe('the ledger explains, not just totals', () => {

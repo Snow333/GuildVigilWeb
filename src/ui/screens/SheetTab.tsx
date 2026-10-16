@@ -28,6 +28,7 @@ import { Portrait, hasPortrait } from '../portrait';
 import { figures, hasFigure } from '@content/generated/figures';
 import type { StatLedger, AttributionSlot } from '@sim/campaign/session';
 import { ItemTooltip } from '../components/ItemTooltip';
+import { itemSummary } from '@sim/heroes/attribution';
 
 /** Slot → the doll position, as percentages of the figure box. */
 /**
@@ -86,7 +87,9 @@ function SlotBox({
   slot, selected, onSelect,
 }: { slot: AttributionSlot; selected: boolean; onSelect: () => void }) {
   const pos = SLOT_POS[slot.slot] ?? { left: '50%', top: '50%' };
-  const contribution = slot.contributions.find((c) => c.kind === 'ac' || c.kind === 'attack');
+  // ⚠ The box shows the item's real headline numbers ("+2 to hit · 1d6
+  // piercing"), from the same describer as the inspector and the shop.
+  const summary = slot.name ? itemSummary(slot.contributions) : null;
   return (
     <ItemTooltip
       data={slot.name ? {
@@ -107,7 +110,7 @@ function SlotBox({
       <span className="gv-dlabel">{SLOT_LABEL[slot.slot] ?? slot.slot}</span>
       <span className="gv-dbox" data-selected={selected ? 'yes' : 'no'}>
         <span className="gv-dnm">{slot.name ?? 'empty'}</span>
-        {contribution && <span className="gv-dco">{contribution.detail}</span>}
+        {summary && <span className="gv-dco">{summary}</span>}
       </span>
       {/*
         ⚠ THE BADGE IS THE NON-COLOUR CARRIER. '!' marks a slot that looks
@@ -296,7 +299,7 @@ export function SheetTab({ heroId }: { heroId: string }) {
                     <span className="gv-effect-body">
                       {c.label}
                       <span className={c.live ? 'gv-badge gv-badge--live' : 'gv-badge gv-badge--dead'}>
-                        {c.live ? 'active' : 'not built'}
+                        {c.live ? 'works' : 'not working yet'}
                       </span>
                       <small>{c.detail}</small>
                     </span>
@@ -384,7 +387,6 @@ function StashRows({ heroId }: { heroId: string }) {
                     name: row.derived.displayName,
                     slot: row.derived.slot,
                     category: row.derived.itemType,
-                    damage: row.derived.damageDice ?? null,
                     price: row.sellPrice,
                     contributions,
                   }}
@@ -392,6 +394,7 @@ function StashRows({ heroId }: { heroId: string }) {
                   {row.derived.displayName}
                 </ItemTooltip>
               </td>
+              <td className="gv-stash-what" data-item-summary="" style={{ fontSize: 12.5, color: 'var(--gv-ink-soft)' }}>{itemSummary(contributions)}</td>
               <td className="gv-stash-slot">{target.reason}</td>
               <td className="gv-stash-act">
                 <button

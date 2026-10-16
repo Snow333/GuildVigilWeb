@@ -23,11 +23,14 @@
 
 import { abilityMod, characterLevel } from './types';
 import { totalProficiency } from './proficiency';
-import { aggregateStatBonuses, deriveItem } from './equipment';
+import { aggregateStatBonuses, deriveItem, propertiesById, type DerivedItem } from './equipment';
 import { isProficientWithArmor, isProficientWithWeapon } from './gearProficiency';
 import { resolveStatMods } from './featEffects';
 import { itemBasesById } from './equipment';
 import { NON_PROFICIENCY_PENALTY } from '@content/combat';
+import { isConditionId } from '@sim/combat/conditions';
+import { spellsById } from '@sim/registry';
+import { isConsumableUsable, spellIdForItem } from './quickSlots';
 import type { HeroState } from './types';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { AbilityKey } from './types';
@@ -53,13 +56,24 @@ const BASE_AC = 10;
 const BASE_SPEED = 5;
 const FEET_PER_UNIT = 5;
 
-/** Equipped items that carry an AC contribution, with their display names. */
-function armourTerms(equipped: readonly ItemInstance[]): LedgerTerm[] {
+/**
+ * Equipped items that carry an AC contribution, with their display names.
+ *
+ * ⚠ UNTRAINED ARMOUR LOSES ITS +N, exactly as `equippedGear` in assembly.ts
+ * does (brief #23 D1). This ledger used to add the full `acBonus` regardless,
+ * so a wizard in Chain Mail +2 read AC 2 higher than the engine used. Only
+ * hidden because no test put an untrained hero in +N armour.
+ */
+function armourTerms(hero: HeroState, equipped: readonly ItemInstance[]): LedgerTerm[] {
   const out: LedgerTerm[] = [];
   for (const inst of equipped) {
     const d = deriveItem(inst);
-    if (d.acBonus === 0) continue;
-    out.push({ label: d.displayName, category: 'item', value: d.acBonus, slot: d.slot ?? 'none' });
+    const row = itemBasesById.get(inst.baseId);
+    const worn = d.itemType === 'armor' || d.itemType === 'shield';
+    const trained = !worn || !row || isProficientWithArmor(hero, row);
+    const value = trained ? d.acBonus : d.acBonus - d.acPotency;
+    if (value === 0) continue;
+    out.push({ label: d.displayName, category: 'item', value, slot: d.slot ?? 'none' });
   }
   return out;
 }
@@ -113,7 +127,7 @@ export function acLedger(hero: HeroState, equipped: readonly ItemInstance[]): St
    * If AC ever gains real proficiency, add it HERE and in assembly.ts together.
    */
 
-  terms.push(...armourTerms(equipped));
+  terms.push(...armourTerms(hero, equipped));
   if (itemStat['ac']) terms.push({ label: 'Worn items', category: 'item', value: itemStat['ac'] });
 
   return { total: terms.reduce((s, t) => s + t.value, 0), terms };
@@ -242,75 +256,313 @@ export function speedLedger(hero: HeroState, equipped: readonly ItemInstance[]):
   return { total: terms.reduce((s, t) => s + t.value, 0), terms };
 }
 
-/** What ONE equipped item contributes, for the reverse view (gear → effects). */
+/** What ONE item contributes, for the reverse view (gear → effects). */
 export interface ItemContribution {
+  /** Short heading: "To hit", "Armour", "Flaming". */
   label: string;
-  /** `attack` | `damage` | `ac` | `save` | `speed` | `ability` | `rider`. */
+  /**
+   * `attack` | `damage` | `ac` | `save` | `ability` | `speed` | `hp` | `skill`
+   * | `rider` | `use` | `power` | `penalty`.
+   */
   kind: string;
+  /** The claim in plain words: "+2 to hit", "AC +3 (Dex max +2)". */
   detail: string;
-  /** False when the engine has no consumer — the UI greys and marks it. */
+  /** False when the engine has no consumer — the UI greys it: "not working yet". */
   live: boolean;
 }
 
+const ABILITY_WORD: Readonly<Record<string, string>> = {
+  str: 'Strength', dex: 'Dexterity', con: 'Constitution',
+  int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma',
+};
+const SAVE_WORD: Readonly<Record<string, string>> = {
+  fort_save: 'Fortitude', ref_save: 'Reflex', will_save: 'Will',
+};
+
+/** Conditions in plain words. Unknown ids fall back to the id with spaces. */
+const CONDITION_WORD: Readonly<Record<string, string>> = {
+  persistent_bleed: 'bleeds over time',
+  persistent_poison: 'poisoned over time',
+  persistent_fire: 'burns over time',
+  bound_to_wielder: 'held in place',
+};
+
+/** Target filters the engine cannot check (creature type/alignment is not modelled). */
+const FILTER_WORD: Readonly<Record<string, string>> = {
+  undead: 'undead',
+  evil_or_undead: 'evil or undead foes',
+  good: 'good foes',
+};
+
 /**
- * Everything a single item does, including what it CLAIMS to do and cannot.
+ * Always-on property effects, in plain words.
  *
- * ⚠ INERT EFFECTS ARE RETURNED, NOT OMITTED, with `live: false`. A player
- * holding a Wounding longsword must be told the rider does nothing rather than
- * shown a sword with no mention of it — silence reads as "there is nothing
- * here", which is a different and wronger claim.
+ * ⚠ NONE OF THESE HAS A CONSUMER YET — `passive_effect` is read by nothing in
+ * the sim. They are listed so the card can say what the item WILL do and grey
+ * it, never so it can claim it. If one gets wired, it must move to a live line
+ * with a test, not just a flag flip here.
+ */
+const PASSIVE_WORD: Readonly<Record<string, string>> = {
+  keen: 'crits on 19–20',
+  ghost_touch: 'hits ghosts fully',
+  returning: 'flies back after a throw',
+  shifting: 'changes weapon shape',
+  shadow: '+2 Stealth',
+  fortification: '25% chance to stop a crit',
+  slick: '+4 to break free',
+  ethereal: 'walk through walls once per rest',
+  pathfinding: 'ignores rough ground',
+  trapfinding: '+4 to find traps',
+  shadowstep: 'harder to ambush',
+  truesight: 'finds hidden rooms',
+  lockbreaker: '+4 to open locks',
+  everlight: 'lights the dark',
+  sorvai_marked: '+2 against the Sorvai',
+  fire_resistant: 'takes 5 less fire damage',
+  cold_resistant: 'takes 5 less cold damage',
+  shock_resistant: 'takes 5 less lightning damage',
+  acid_resistant: 'takes 5 less acid damage',
+  sonic_resistant: 'takes 5 less sonic damage',
+};
+
+interface EffectJson {
+  damage_dice?: string;
+  damage_type?: string;
+  condition?: string;
+  value?: number;
+  effect?: string;
+  value_percent?: number;
+  target_filter?: string;
+}
+
+const signed = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
+const conditionWord = (id: string, value?: number): string => {
+  const word = CONDITION_WORD[id] ?? id.replace(/_/g, ' ');
+  return value !== undefined && value > 1 ? `${word} ${value}` : word;
+};
+
+/**
+ * Split one authored effect into the parts the engine performs and the parts
+ * it does not.
+ *
+ * ⚠ MIRRORS `resolveWeaponRiders` + the encounter loop, which is the consumer:
+ * damage dice always roll; a condition lands only if `isConditionId` knows it;
+ * `lifesteal` heals; any target filter withholds the WHOLE effect. Asked of
+ * the consumer's own gate (`isConditionId`) rather than a copied list, so a
+ * newly modelled condition lights up here without an edit.
+ */
+function splitEffect(e: EffectJson | null): { live: string[]; dead: string[] } {
+  const live: string[] = [];
+  const dead: string[] = [];
+  if (!e) return { live, dead };
+  const parts: { text: string; works: boolean }[] = [];
+  if (e.damage_dice) parts.push({ text: `+${e.damage_dice} ${e.damage_type ?? ''}`.trim(), works: true });
+  if (e.condition) parts.push({ text: conditionWord(e.condition, e.value), works: isConditionId(e.condition) });
+  if (e.effect === 'lifesteal') parts.push({ text: `heals you ${e.value_percent ?? 0}% of it`, works: true });
+  else if (e.effect === 'ac_penalty') parts.push({ text: `${e.value ?? -1} AC to the foe`, works: false });
+  else if (e.effect) parts.push({ text: e.effect.replace(/_/g, ' '), works: false });
+
+  if (e.target_filter !== undefined) {
+    const vs = FILTER_WORD[e.target_filter] ?? e.target_filter.replace(/_/g, ' ');
+    for (const p of parts) dead.push(`${p.text} vs ${vs}`);
+    return { live, dead };
+  }
+  for (const p of parts) (p.works ? live : dead).push(p.text);
+  return { live, dead };
+}
+
+/** One property → up to two lines: what works, and what does not yet. */
+function propertyLines(eff: OnHitEffectLike, out: ItemContribution[]): void {
+  const prop = propertiesById.get(eff.propertyId);
+  const label = prop?.name ?? eff.propertyId;
+  const hit = splitEffect(eff.onHit as EffectJson | null);
+  const crit = splitEffect(eff.onCrit as EffectJson | null);
+
+  const liveBits = whenBits(hit.live, crit.live);
+  if (liveBits.length) out.push({ label, kind: 'rider', detail: liveBits.join('. '), live: true });
+
+  const deadBits = whenBits(hit.dead, crit.dead);
+  if (eff.passive) deadBits.push(PASSIVE_WORD[eff.propertyId] ?? (prop?.description ?? '').split('.')[0]!);
+  if (deadBits.length) out.push({ label, kind: 'rider', detail: deadBits.join('. '), live: false });
+}
+
+/** "+1d6 fire on a hit. +1d10 fire on a crit" — or one line when both say the same. */
+function whenBits(onHit: string[], onCrit: string[]): string[] {
+  const h = onHit.join(', ');
+  const c = onCrit.join(', ');
+  if (h && h === c) return [`${h} on a hit or crit`];
+  const out: string[] = [];
+  if (h) out.push(`${h} on a hit`);
+  if (c) out.push(`${c} on a crit`);
+  return out;
+}
+
+type OnHitEffectLike = DerivedItem['onHitEffects'][number];
+
+/** Authored stat_bonus → plain lines. Three equal saves read as one line. */
+function statLines(stats: Record<string, number>, out: ItemContribution[]): void {
+  const saves = ['fort_save', 'ref_save', 'will_save'].map((k) => stats[k]);
+  const allSaves = saves.every((v) => v !== undefined && v === saves[0]);
+  if (allSaves) out.push({ label: 'Saves', kind: 'save', detail: `${signed(saves[0]!)} to all saves`, live: true });
+
+  for (const [stat, value] of Object.entries(stats)) {
+    if (ABILITY_WORD[stat]) {
+      out.push({ label: ABILITY_WORD[stat]!, kind: 'ability', detail: `${signed(value)} ${ABILITY_WORD[stat]}`, live: true });
+    } else if (SAVE_WORD[stat]) {
+      if (!allSaves) out.push({ label: SAVE_WORD[stat]!, kind: 'save', detail: `${signed(value)} ${SAVE_WORD[stat]}`, live: true });
+    } else if (stat === 'speed') {
+      // ⚠ In the SHEET's units (1 = 5 ft), matching assembly's conversion, so
+      // the card's "+2 speed" is the jump the player sees on the Speed number.
+      out.push({ label: 'Speed', kind: 'speed', detail: `${signed(Math.round(value / 5))} speed`, live: true });
+    } else if (stat === 'hp') {
+      out.push({ label: 'Health', kind: 'hp', detail: `${signed(value)} hit points`, live: true });
+    } else if (stat === 'ac') {
+      out.push({ label: 'Armour', kind: 'ac', detail: `AC ${signed(value)}`, live: true });
+    } else {
+      // A key `assembleHero` never reads. Shown, greyed — never claimed.
+      out.push({ label: stat.replace(/_/g, ' '), kind: 'ability', detail: signed(value), live: false });
+    }
+  }
+}
+
+/**
+ * What a pouch item does when used.
+ *
+ * ⚠ READ FROM THE SPELL ROW, NOT THE ITEM ROW. The item's own `properties`
+ * JSON is flavour the engine never reads, and it disagrees with the spell that
+ * actually resolves: Alchemist Fire's item row says 1d8, its spell rolls 1d6.
+ * The card must quote the number the fight uses.
+ */
+function useLine(base: NonNullable<ReturnType<typeof itemBasesById.get>>, out: ItemContribution[]): void {
+  const usable = isConsumableUsable(String(base.id));
+  const spellId = spellIdForItem(String(base.id));
+  const spell = spellId !== null ? spellsById.get(spellId) : undefined;
+  let detail = 'Used once in a fight';
+  if (base.item_type === 'scroll') {
+    detail = `Casts ${spell?.name ?? 'a spell'} once`;
+  } else if (spell) {
+    const dice = String(spell.damage_dice ?? '');
+    const hasDice = /\d*d\d+/.test(dice);
+    const fx = parseProps(spell.effects);
+    const cond = typeof fx['condition'] === 'string' && isConditionId(fx['condition'])
+      ? String(fx['condition']).replace(/_/g, ' ') : null;
+    if (spell.effect_type === 'healing' && hasDice) detail = `Heals ${dice} once`;
+    else if (spell.effect_type === 'damage' && hasDice) {
+      detail = `Thrown: ${dice} ${DAMAGE_WORD[String(spell.damage_type)] ?? spell.damage_type ?? ''}`.trim() + ' once';
+    } else if (spell.effect_type === 'damage' && cond) detail = `Thrown: the foe is ${cond === 'immobilized' ? 'stuck' : cond}`;
+  }
+  out.push({ label: 'Use', kind: 'use', detail, live: usable });
+}
+
+const DAMAGE_WORD: Readonly<Record<string, string>> = { positive: 'holy', negative: 'unholy', electricity: 'lightning' };
+
+function parseProps(raw: unknown): Record<string, unknown> {
+  if (typeof raw !== 'string' || raw.length === 0) return {};
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Everything a single item does, in plain words, including what it CLAIMS to
+ * do and cannot. THE one describer: the sheet, the stash tooltip and the shop
+ * all read this, so the three can never disagree.
+ *
+ * ⚠ EVERY LIVE NUMBER HERE IS PROVEN TO REACH `assembleHero`'s combatant by
+ * tests/items/itemCards.test.ts, one item per slot. Before the M2 itemization
+ * pass, every magic-tier item said "+1 to every strike" — a cloak, a ring —
+ * because the tier grant landed in `attackBonus` regardless of type, and
+ * assembly only reads that field off the weapon.
+ *
+ * ⚠ INERT EFFECTS ARE RETURNED, NOT OMITTED, with `live: false`. Silence reads
+ * as "there is nothing here", which is a different and wronger claim.
+ *
+ * `hero` is optional: the shop describes an item for nobody in particular, so
+ * it gets the item's own numbers and no proficiency line.
  */
 export function itemContributions(
-  hero: HeroState,
+  hero: HeroState | null,
   instance: ItemInstance,
 ): ItemContribution[] {
   const d = deriveItem(instance);
+  const row = itemBasesById.get(instance.baseId);
   const out: ItemContribution[] = [];
 
-  if (d.attackBonus !== 0) {
-    out.push({ label: 'Attack bonus', kind: 'attack', detail: `+${d.attackBonus} to every strike`, live: true });
-  }
-  if (d.damageDice) {
-    out.push({ label: 'Weapon damage', kind: 'damage', detail: d.damageDice, live: true });
-  }
-  if (d.acBonus !== 0) {
-    out.push({ label: 'Armour class', kind: 'ac', detail: `+${d.acBonus}`, live: true });
-  }
-  for (const [stat, value] of Object.entries(d.statBonuses)) {
-    out.push({ label: stat, kind: 'ability', detail: `${value >= 0 ? '+' : ''}${value}`, live: true });
-  }
-
-  /**
-   * ⚠ RIDERS ARE LIVE AS OF BRIEF #24 M1 — except those naming a condition the
-   * engine does not model, which still do nothing. Reporting them all as live
-   * would recreate the exact lie this sheet exists to expose.
-   */
-  for (const eff of d.onHitEffects) {
-    const onHit = eff.onHit as { damage_dice?: string; damage_type?: string; condition?: string } | null;
-    if (!onHit) continue;
-    if (onHit.damage_dice) {
-      out.push({
-        label: eff.propertyId,
-        kind: 'rider',
-        detail: `${onHit.damage_dice} ${onHit.damage_type ?? ''} per hit`.trim(),
-        live: true,
-      });
-    } else if (onHit.condition) {
-      out.push({
-        label: eff.propertyId,
-        kind: 'rider',
-        detail: `applies ${onHit.condition}`,
-        live: UNMODELLED_CONDITIONS.indexOf(onHit.condition) === -1,
-      });
+  if (d.itemType === 'weapon') {
+    if (d.attackBonus !== 0) {
+      out.push({ label: 'To hit', kind: 'attack', detail: `${signed(d.attackBonus)} to hit`, live: true });
+    }
+    if (d.damageDice) {
+      out.push({ label: 'Damage', kind: 'damage', detail: `${d.damageDice} ${d.damageType ?? ''}`.trim(), live: true });
+    }
+    for (const id of d.foldedPropertyIds) {
+      const p = propertiesById.get(id);
+      out.push({ label: p?.name ?? id, kind: 'rider', detail: 'its extra die is in the damage above', live: true });
     }
   }
 
-  const row = itemBasesById.get(instance.baseId);
-  if (d.itemType === 'weapon' && row && !isProficientWithWeapon(hero, row)) {
-    out.push({ label: 'Not proficient', kind: 'penalty', detail: `${NON_PROFICIENCY_PENALTY} to attack`, live: true });
+  if (d.itemType === 'armor' || d.itemType === 'shield') {
+    const trained = !hero || !row || isProficientWithArmor(hero, row);
+    // ⚠ Untrained armour keeps its base AC and loses its +N — assembly's rule (D1).
+    const ac = trained ? d.acBonus : d.acBonus - d.acPotency;
+    const cap = d.maxDex !== null ? ` (Dex max ${signed(d.maxDex)})` : '';
+    out.push({ label: 'Armour', kind: 'ac', detail: `AC ${signed(ac)}${cap}`, live: true });
+    if (d.armorCheckPenalty !== 0) {
+      out.push({ label: 'Stealth', kind: 'skill', detail: `${d.armorCheckPenalty} to Stealth`, live: true });
+    }
+    if (!trained) {
+      const bits = [d.acPotency > 0 ? `loses its +${d.acPotency}` : '', d.armorCheckPenalty !== 0 ? `${d.armorCheckPenalty} to hit` : '']
+        .filter(Boolean);
+      out.push({ label: 'Not trained', kind: 'penalty', detail: bits.length ? bits.join(', ') : 'no effect yet', live: true });
+    }
+  } else if (d.itemType !== 'weapon' && d.acBonus !== 0) {
+    out.push({ label: 'Armour', kind: 'ac', detail: `AC ${signed(d.acBonus)}`, live: true });
+  }
+
+  statLines(d.statBonuses, out);
+
+  /**
+   * ⚠ RIDERS ARE LIVE AS OF BRIEF #24 M1 — except the parts naming a condition
+   * the engine does not model, a target it cannot recognise, or an always-on
+   * property effect. Those are greyed, line by line.
+   */
+  for (const eff of d.onHitEffects) propertyLines(eff, out);
+
+  if (d.legendaryEffects) {
+    const powers: string[] = [];
+    const unique = d.legendaryEffects['unique_ability'] as { name?: string } | undefined;
+    if (unique?.name) powers.push(unique.name);
+    const grants = d.legendaryEffects['grants'];
+    if (Array.isArray(grants)) powers.push(...grants.map((g) => String(g).replace(/_/g, ' ')));
+    out.push({ label: 'Legend', kind: 'power', detail: powers.length ? powers.join(', ') : 'special powers', live: false });
+  }
+
+  if (row && (d.itemType === 'consumable' || d.itemType === 'scroll')) useLine(row, out);
+  if (d.itemType === 'ammo') out.push({ label: 'Ammo', kind: 'use', detail: 'bows do not use ammo yet', live: false });
+
+  if (hero && d.itemType === 'weapon' && row && !isProficientWithWeapon(hero, row)) {
+    out.push({ label: 'Not trained', kind: 'penalty', detail: `${NON_PROFICIENCY_PENALTY} to hit`, live: true });
   }
 
   return out;
+}
+
+/** Kinds that headline a card, in the order a player reads an item. */
+const HEADLINE_KINDS = ['attack', 'damage', 'ac', 'save', 'ability', 'speed', 'hp', 'use'];
+
+/**
+ * The one-line version for tight spaces (paperdoll box, shop row): the first
+ * two live numbers. Falls back to "not working yet" when nothing is live, so
+ * a dead item never reads as a blank, and never as a claim.
+ */
+export function itemSummary(contributions: readonly ItemContribution[]): string {
+  const live = contributions.filter((c) => c.live && HEADLINE_KINDS.includes(c.kind));
+  live.sort((a, b) => HEADLINE_KINDS.indexOf(a.kind) - HEADLINE_KINDS.indexOf(b.kind));
+  if (live.length > 0) return live.slice(0, 2).map((c) => c.detail).join(' · ');
+  return contributions.length > 0 ? 'not working yet' : '—';
 }
 
 /**
