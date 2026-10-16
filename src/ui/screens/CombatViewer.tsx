@@ -12,7 +12,7 @@
  * The stream is a finished fact, so scrubbing and stepping are exact and free.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { TICKS_PER_SECOND } from '@content/combat';
 import type { CombatSegment } from '@sim/core/events/segments';
 import { interpretStream } from '../beats/interpret';
@@ -50,7 +50,12 @@ export interface CombatViewerProps {
   names: ReadonlyMap<string, string>;
 }
 
-export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
+/**
+ * Memoised (Track P). The dungeon playhead re-renders PlaybackScreen on every
+ * step, and this viewer runs its own clock; without `memo` the whole field,
+ * roster and record were rebuilt twice per step while the player scrolled.
+ */
+export const CombatViewer = memo(function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
   // Same rule as the dispatch transport: the ladder IS the persisted setting,
   // not a local copy that forgets itself between fights and between sessions.
   const { defaultCombatSpeed, setDefaultCombatSpeed } = useGame();
@@ -165,9 +170,12 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
     return () => cancelAnimationFrame(raf);
   }, [playing, speed, done, segment.ticks]);
 
+  // Keep the record pinned to the newest beat. Keyed on the NUMBER of beats, not
+  // the tick: reading scrollHeight forces a layout, and most ticks add no beat.
+  const beatCount = visibleLines.length;
   useEffect(() => {
     feedRef.current?.scrollTo(0, feedRef.current.scrollHeight);
-  }, [tick]);
+  }, [beatCount]);
 
   const label = (id: string): string => names.get(id) ?? id;
   const state = fieldStateAt(spawns, segment.events, tick);
@@ -337,7 +345,7 @@ export function CombatViewer({ segment, siteLabel, names }: CombatViewerProps) {
       </div>
     </div>
   );
-}
+});
 
 /** Side by FORM, matching the field: solid guild disc, hollow enemy ring. */
 function RosterGlyph({ side, status }: { side: 'heroes' | 'enemies'; status: string }) {
