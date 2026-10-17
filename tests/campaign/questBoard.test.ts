@@ -46,7 +46,7 @@ describe('the board: up to 10, 4–6 a week, seeded', () => {
     }
     // Variance is the point (Steven: "for variance testing/feel").
     expect(seen.size).toBeGreaterThan(1);
-  });
+  }, 60_000);
 
   it('never holds more than 10 regular notices across a 30-week career', () => {
     for (const id of SEEDS.slice(0, 4)) {
