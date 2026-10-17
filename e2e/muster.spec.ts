@@ -34,22 +34,22 @@ test('the founding muster gates a new campaign and writes the player choices thr
   await expect(page.locator('.gv-roll .gv-rollmember').first()).toContainText('Grusha');
   await expect(page.locator('.gv-roll .gv-rollmember').first()).toContainText('Half-Orc woman');
 
-  // Recruit 2 takes an ancestry with NO art — deliberately choosable.
+  // Recruit 2 takes a batch-2 ancestry — as of 2026-10-17 every ancestry has art.
   await page.locator('.gv-roll .gv-rollmember').nth(1).click();
   await page.locator('.gv-mtile:has-text("Gnome")').click();
-  await expect(page.locator('.gv-mtile:has-text("Gnome") [data-sketch]')).toBeVisible();
-  await expect(page.locator('.gv-mtile:has-text("Gnome")')).toContainText('awaiting field sketch');
+  await expect(page.locator('.gv-mtile:has-text("Gnome") [data-sketch]')).toHaveCount(0);
+  await expect(page.locator('.gv-mtile:has-text("Gnome")')).toContainText('sketch on file');
 
   await page.locator('button:has-text("Sign the charter")').click();
   await page.locator('h1:has-text("Town Hub")').waitFor();
 
-  // The choices reached the roster: the authored name, the right paste, and a
-  // silhouette for the subject with no art.
+  // The choices reached the roster: the authored name and the right pastes.
+  // Batch 2 (2026-10-17) filled the roster, so BOTH recruits show real art.
   const roster = page.locator('.gv-ledger:has-text("Roster")');
   await expect(roster).toContainText('Grusha');
   await expect(roster.locator('[data-portrait="hero-halforc-f"]')).toBeVisible();
-  await expect(roster.locator('[data-portrait="hero-gnome-m"][data-sketch]')).toBeVisible();
-  // ...and art that DOES exist renders as a real image, not the fallback.
+  await expect(roster.locator('[data-portrait="hero-gnome-m"] img.gv-art')).toBeVisible();
+  await expect(roster.locator('[data-portrait="hero-gnome-m"][data-sketch]')).toHaveCount(0);
   await expect(roster.locator('[data-portrait="hero-halforc-f"] img.gv-art')).toBeVisible();
 
   // Survives the save/reload round trip (the backfill must not overwrite a

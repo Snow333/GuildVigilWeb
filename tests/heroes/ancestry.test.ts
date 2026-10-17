@@ -103,8 +103,11 @@ describe('portrait keys (bible §4 naming, executable)', () => {
 });
 
 describe('generated portraits module + the silhouette fallback path', () => {
-  it('carries exactly the batch-1 subjects, keyed as the sim asks for them', () => {
+  it('carries the full roster, keyed as the sim asks for them', () => {
+    // Batch 2 (2026-10-17) finished the set: every ancestry × gender has a bust.
     expect([...PORTRAIT_KEYS].sort()).toEqual([
+      'hero-dwarf-f', 'hero-dwarf-m', 'hero-elf-f', 'hero-elf-m',
+      'hero-gnome-f', 'hero-gnome-m', 'hero-halfling-f', 'hero-halfling-m',
       'hero-halforc-f', 'hero-halforc-m', 'hero-human-f', 'hero-human-m',
     ]);
   });
@@ -115,17 +118,21 @@ describe('generated portraits module + the silhouette fallback path', () => {
     }
   });
 
-  it('THE FALLBACK IS THE COMMON CASE: 8 of 12 hero subjects have no art', () => {
-    // Elf/Dwarf/Halfling/Gnome are parked pending the artist decision, so the
-    // silhouette is a normal play path, not an error path. If this ever reads
-    // 12/12, the fallback stopped being exercised in real play — keep a test
-    // that pins the fallback behavior itself.
+  it('EVERY hero subject now has art — the roster is complete', () => {
     const all = ancestryIds.flatMap((id) => GENDERS.map((g) => portraitKey(id, g)));
     expect(all).toHaveLength(12);
-    const missing = all.filter((k) => !(k in portraits));
-    expect(missing.sort()).toEqual([
-      'hero-dwarf-f', 'hero-dwarf-m', 'hero-elf-f', 'hero-elf-m',
-      'hero-gnome-f', 'hero-gnome-m', 'hero-halfling-f', 'hero-halfling-m',
-    ]);
+    expect(all.filter((k) => !(k in portraits))).toEqual([]);
+  });
+
+  it('the silhouette fallback is still REACHABLE — NPC and enemy keys have no art', () => {
+    // Batch 2 filled the hero roster, so heroes no longer exercise the
+    // fallback. It is not dead code: every NPC and enemy subject still
+    // resolves to a key with no payload, and Portrait renders the silhouette
+    // for exactly that condition (`portraits[key] === undefined`). Pin the
+    // condition itself so a registry change cannot silently remove the path.
+    for (const key of [ArtKeys.npc('Edrin Vale'), ArtKeys.enemy('Warg Alpha')]) {
+      expect(PORTRAIT_KEYS).not.toContain(key);
+      expect(portraits[key]).toBeUndefined();
+    }
   });
 });
