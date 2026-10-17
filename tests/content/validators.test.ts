@@ -130,21 +130,6 @@ describe('content validators — stat bands (volume never outruns integrity)', (
  * silently re-breaking the same six pointers.
  */
 describe('content validators — scroll pointers', () => {
-  /**
-   * ⚠ ONE DELIBERATE EXCEPTION, DECIDED NOT OVERLOOKED (brief #23 D3).
-   *
-   * `Scroll of Raise Dead` (#53) points at Scorching Ray because **no Raise
-   * Dead spell exists in the game**, and item ids are append-only so the row
-   * cannot be dropped. Steven's call: leave it pointing somewhere valid and
-   * flag it for the content pass.
-   *
-   * If you are here because this test failed: DO NOT widen this list to make
-   * it pass. A new entry means a new broken pointer, which is the bug this
-   * test exists to catch. Fix the data. The only legitimate reason to REMOVE
-   * this entry is someone authoring a real Raise Dead spell.
-   */
-  const KNOWN_UNRESOLVED: readonly number[] = [53];
-
   const scrolls = items.filter((i) => i.item_type === 'scroll');
   const spellNameById = new Map<number, string>(spells.map((s) => [s.id as number, s.name as string]));
 
@@ -162,7 +147,6 @@ describe('content validators — scroll pointers', () => {
   it('a "Scroll of X" resolves to the spell actually named X', () => {
     const broken: string[] = [];
     for (const scroll of scrolls) {
-      if (KNOWN_UNRESOLVED.includes(scroll.id as number)) continue;
       const claimed = scroll.name.replace(/^Scroll of /, '').trim().toLowerCase();
       const actual = (spellNameById.get(scroll.spell_id as number) ?? '').trim().toLowerCase();
       if (claimed !== actual) {
@@ -184,7 +168,9 @@ describe('content validators — scroll pointers', () => {
     }
   });
 
-  it('the allow-list stays a list of one — a second entry means a new bug', () => {
-    expect(KNOWN_UNRESOLVED).toHaveLength(1);
+  it('Scroll of Raise Dead (#53) was repointed and renamed in track I2 — no allow-list remains', () => {
+    // It used to be the one deliberate exception (brief #23 D3). Spell 106 does nothing in the sim,
+    // so the row became Scroll of Breath of Life; tests/items/scrollsAndPrices.test.ts proves it works.
+    expect(scrolls.find((s) => s.id === 53)!.name).toBe('Scroll of Breath of Life');
   });
 });

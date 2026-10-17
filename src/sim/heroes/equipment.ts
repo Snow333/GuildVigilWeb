@@ -31,11 +31,53 @@ export const TIER_GRANTS: Record<ItemInstance['tier'], { potency: number; striki
   legendary: { potency: 4, striking: 1 }, // never generated; authored bases only
 };
 
-/** Price multipliers by tier + per-property (placeholder-tunable; harness-validated). */
+/**
+ * Price multipliers by tier + per-property (placeholder-tunable; harness-validated).
+ *
+ * ⚠ ARMOUR AND SHIELDS ONLY. A weapon used to be priced this way too, which made
+ * a +2 dagger (16g) cost a fraction of a +2 longsword (120g) and a Staff free:
+ * the multiplier scaled the STICK, not the magic. Weapons are priced by
+ * `weaponPrice` below, where the rune carries the value.
+ */
 export const TIER_PRICE_MULT: Record<ItemInstance['tier'], number> = {
   mundane: 1, masterwork: 4, magical: 16, enchanted: 48, legendary: 1,
 };
 export const PROPERTY_PRICE_MULT = 2.5;
+
+/**
+ * WEAPON PRICE = plain base price + rune prices (track I2).
+ *
+ * The SAME numbers are in `data/seeds/seed_item_fixes.sql`, which prices the
+ * authored `+N` rows in the data. `tests/items/scrollsAndPrices.test.ts` checks
+ * every authored row against `weaponPrice`, so the two cannot drift: a rolled
+ * "magical" Longsword and the authored Longsword +1 cost the same.
+ */
+export const MASTERWORK_FEE = 25;
+/** Indexed by potency bonus (+0 … +4). */
+export const POTENCY_RUNE_PRICE: readonly number[] = [0, 100, 250, 600, 1500];
+/** Indexed by striking tier (0 … 3). */
+export const STRIKING_RUNE_PRICE: readonly number[] = [0, 120, 300, 700];
+/** Per property rune on a ROLLED weapon. Named items keep their authored price. */
+export const WEAPON_PROPERTY_RUNE_PRICE = 200;
+
+const runeAt = (table: readonly number[], i: number): number =>
+  table[Math.min(Math.max(i, 0), table.length - 1)]!;
+
+/**
+ * What a weapon costs. `plainPrice` is the mundane base of the same weapon, so
+ * the magic is worth the same on any stick. `masterwork` is a flat fee, not a
+ * rune — masterwork carries +1 to hit but is not magic.
+ */
+export function weaponPrice(
+  plainPrice: number,
+  opts: { masterwork: boolean; potency: number; striking: number; properties: number },
+): number {
+  if (opts.masterwork) return plainPrice + MASTERWORK_FEE;
+  return plainPrice
+    + runeAt(POTENCY_RUNE_PRICE, opts.potency)
+    + runeAt(STRIKING_RUNE_PRICE, opts.striking)
+    + opts.properties * WEAPON_PROPERTY_RUNE_PRICE;
+}
 
 /**
  * ⚠ WHICH ITEMS A TIER ROLL MEANS ANYTHING ON (M2 itemization pass).
@@ -239,10 +281,20 @@ export function deriveItem(instance: ItemInstance): DerivedItem {
 
   const basePrice = (base.price as number) ?? 0;
   const tierMult = rolled ? TIER_PRICE_MULT[instance.tier] : 1;
-  const price = Math.max(
-    Math.round(basePrice * tierMult * Math.pow(PROPERTY_PRICE_MULT, props.length)),
-    basePrice,
-  );
+  // A ROLLED weapon is priced by its runes (an authored row already carries its
+  // runes in `base.price`, set by seed_item_fixes.sql). Everything else keeps
+  // the tier multiplier.
+  const price = isWeapon && rolled
+    ? weaponPrice(basePrice, {
+      masterwork: instance.tier === 'masterwork',
+      potency,
+      striking: strikingTier,
+      properties: props.length,
+    })
+    : Math.max(
+      Math.round(basePrice * tierMult * Math.pow(PROPERTY_PRICE_MULT, props.length)),
+      basePrice,
+    );
 
   return {
     displayName: composeName(base, rolled ? instance.tier : 'mundane', props, potency),
