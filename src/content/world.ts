@@ -64,7 +64,7 @@ export const ESCALATION = {
 } as const;
 
 /**
- * Scheduler: the authored pool (generated + `earlyQuests.ts`), posted by level
+ * Scheduler: the authored pool (generated + `earlyQuests.ts` + `midQuests.ts`), posted by level
  * band. M2 (Steven): the board holds up to 10, but each week only 4–6 NEW
  * postings go up (seeded count) — the board should not fill every week.
  */
@@ -82,4 +82,11 @@ export const SCHEDULER = {
   /** Post quests within [partyLevel − 1, partyLevel + 2 + pressure drift]. */
   levelBandBelow: 1,
   levelBandAbove: 2,
+  /**
+   * A posting is TAKEABLE when its challenge is at most partyLevel + this. It is the
+   * autopilot's own ceiling (campaign.ts `autopilotWeek`) and the board's "beyond us"
+   * band (difficulty.ts), written once. The weekly draw fills the board with takeable
+   * postings first, so "beyond us" jobs never crowd out something the guild can do.
+   */
+  takeableAbove: 1,
 } as const;

@@ -10,6 +10,7 @@ import {
   story_dialogue, storyline_quests, storylines, warlock_spell_costs, world_regions,
 } from '@content/generated';
 import { AUTHORED_QUESTS, type QuestRow } from '@content/earlyQuests';
+import { MID_QUESTS } from '@content/midQuests';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
 // Key types widened to number: the generated `as const` tables produce literal
@@ -35,14 +36,16 @@ export const ENEMY_CLASSIFICATIONS = ['Fodder', 'Melee', 'Ranged', 'Magic'] as c
 export type EnemyClassification = (typeof ENEMY_CLASSIFICATIONS)[number];
 /**
  * Generated quests PLUS the hand-authored early quests and Marshal's
- * commissions (`@content/earlyQuests`, ids 900+). One map, so launch, XP,
- * board and chart treat an authored row exactly like a generated one.
+ * commissions (`@content/earlyQuests`, ids 900+) and the mid-level quests
+ * (`@content/midQuests`, ids 1000+). One map, so launch, XP, board and chart
+ * treat an authored row exactly like a generated one.
  */
 export const questsById = new Map<number, QuestRow>([
   ...quests.map((q): [number, QuestRow] => [q.id, q]),
   ...AUTHORED_QUESTS.map((q): [number, QuestRow] => [q.id, q]),
+  ...MID_QUESTS.map((q): [number, QuestRow] => [q.id, q]),
 ]);
-if (questsById.size !== quests.length + AUTHORED_QUESTS.length) {
+if (questsById.size !== quests.length + AUTHORED_QUESTS.length + MID_QUESTS.length) {
   throw new Error('registry: an authored quest id collides with a generated quest id');
 }
 export const classesById = new Map<number, (typeof classes)[number]>(classes.map((c) => [c.id, c]));

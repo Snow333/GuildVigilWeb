@@ -5,13 +5,13 @@ exports[`career distribution harness — the guild across seasons > THE BASELINE
   "ambushDeaths": 0,
   "avgFinalLevelX100": 415,
   "completionRate": 0.95,
-  "failRate": 0.006,
-  "goldP50": 8894,
+  "failRate": 0.004,
+  "goldP50": 8649,
   "idleWeekRate": 0,
-  "itemsP50": 84,
+  "itemsP50": 80,
   "levelUpsTotal": 252,
   "maxEscalationTier": 3,
   "weeksWithQuestActivity": 480,
-  "wipeRate": 0.044,
+  "wipeRate": 0.046,
 }
 `;

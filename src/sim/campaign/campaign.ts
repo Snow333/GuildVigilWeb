@@ -14,6 +14,7 @@
  *  - wipes lose the haul; retreats keep it (the party walked out carrying it)
  */
 
+import { SCHEDULER } from '@content/world';
 import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
 import type { Caution, MissionProfile } from '@sim/dungeon/dispatch';
@@ -207,7 +208,7 @@ export function autopilotWeek(
 ): { record: QuestRecord | null; levelUps: number } {
   session.advanceWeek();
   const pl = session.partyLevel();
-  const takeable = session.board().filter((b) => b.challenge <= pl + 1);
+  const takeable = session.board().filter((b) => b.challenge <= pl + SCHEDULER.takeableAbove);
   if (takeable.length === 0) return { record: null, levelUps: 0 }; // idle week — nothing the guild would survive
 
   const pick = takeable.reduce((a, b) =>
