@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  abilityDef, abilityInterval, abilityReady, applySelfAbility, applyStrikeRider, consumeAbility,
+  abilityDef, abilityReady, applySelfAbility, applyStrikeRider, consumeAbility,
 } from '@sim/combat/abilities';
 import { applyCondition } from '@sim/combat/conditions';
 import { runEncounter } from '@sim/combat/encounter';
@@ -86,17 +86,23 @@ describe('the three limiters are distinct systems (brief #22 D2)', () => {
     expect(abilityReady(u, POISON_WEAPON, 100 + def.cooldownTicks)).toBe(true);
   });
 
-  it('an ability with neither limiter is always ready', () => {
+  it('EVERY strike ability now carries a cooldown — the signature move has a rhythm', () => {
+    // M2: `actions` buys a cooldown instead of dead time, with a floor of two
+    // intervals. A one-interval cooldown would be no cooldown at all, since
+    // the unit's next action lands exactly one interval later.
     const u = combatant();
+    const pa = abilityDef(POWER_ATTACK)!;
+    expect(pa.cooldownTicks).toBe(ENCOUNTER.attackIntervalTicks * 2);
     consumeAbility(u, POWER_ATTACK, 0);
-    expect(abilityReady(u, POWER_ATTACK, 0)).toBe(true);
+    expect(abilityReady(u, POWER_ATTACK, ENCOUNTER.attackIntervalTicks)).toBe(false);
+    expect(abilityReady(u, POWER_ATTACK, ENCOUNTER.attackIntervalTicks * 2)).toBe(true);
+
+    // Brutish Shove is `actions: 1` and would otherwise have permanent uptime.
+    const shove = abilityDef(BRUTISH_SHOVE)!;
+    expect(shove.actions).toBe(1);
+    expect(shove.cooldownTicks).toBe(ENCOUNTER.attackIntervalTicks * 2);
   });
 
-  it('ACTION COST is a time cost, orthogonal to both limiters', () => {
-    const base = ENCOUNTER.attackIntervalTicks;
-    expect(abilityInterval(base, abilityDef(POWER_ATTACK)!)).toBe(base * 2);
-    expect(abilityInterval(base, abilityDef(BRUTISH_SHOVE)!)).toBe(base * 1);
-  });
 });
 
 describe('the loadout walk reaches abilities', () => {
@@ -274,18 +280,98 @@ describe('EXPOSURE — abilities fire in a real encounter and change its outcome
     expect(damageOf(withAbility)).toBeGreaterThan(0);
   });
 
-  it('Power Attack trades RATE for SIZE — fewer swings, bigger hits', () => {
-    const withAbility = run(POWER_ATTACK_LOADOUT, 'rate-vs-size');
-    const plain = run([], 'rate-vs-size');
+  it('POWER ATTACK IS A GAIN, NOT A TAX — more damage, and the burst survives', () => {
+    /**
+     * ⚠ THIS TEST REPLACES "Power Attack trades RATE for SIZE" (brief #22).
+     *
+     * That test asserted `swings(withAbility) < swings(plain)` and passed for
+     * three milestones while the feature it guarded was a 45-53% damage LOSS:
+     * it pinned the COST and never once checked that anything was bought with
+     * it. A feat the player spends a slot on must beat not having it, and the
+     * only honest way to say so is to compare damage against the same fight
+     * with an empty loadout.
+     *
+    /**
+     * ⚠ MEASURED AS TIME-TO-KILL, NOT TOTAL DAMAGE. The dummy has finite hp,
+     * so both runs deal roughly its hp either way and total damage is flat
+     * regardless of how good the ability is — the first draft of this test
+     * read 10039 vs 10143 and said "no gain" about a model the sandbag probe
+     * measured at +15%. When the target dies, the thing that improved is the
+     * CLOCK. Any future damage claim here must pick a metric the kill does
+     * not saturate.
+     */
+    const SEEDS = 24;
+    let abilityTicks = 0; let plainTicks = 0;
+    let abilitySwings = 0; let plainSwings = 0;
 
-    const swings = (r: ReturnType<typeof runEncounter>): number =>
+    const swingsOf = (r: ReturnType<typeof runEncounter>): number =>
       r.stream.all().filter((e) => e.type === 'combat.attack_resolved'
         && (e.data as { attackerId: string }).attackerId === 'hero_f').length;
 
-    // ⚠ THIS IS THE WHOLE POINT OF THE ACTION-COST MODEL. A 2-action ability
-    // that swung as often as a normal attack would be strictly better and the
-    // loadout choice would be fake. Fewer swings is the cost being paid.
-    expect(swings(withAbility)).toBeLessThan(swings(plain));
+    for (let s = 0; s < SEEDS; s++) {
+      const a = run(POWER_ATTACK_LOADOUT, `gain-${s}`);
+      const b = run([], `gain-${s}`);
+      abilityTicks += a.ticks; plainTicks += b.ticks;
+      abilitySwings += swingsOf(a); plainSwings += swingsOf(b);
+    }
+
+    // THE CLAIM: the signature move pays — the same fighter kills the same
+    // dummy FASTER with his feat than without it. Under the old model he was
+    // slower, which is the whole reason the model changed.
+    expect(abilityTicks).toBeLessThan(plainTicks);
+
+    // AND the burst is intact — the rider rides a normal action now, so the
+    // fighter is not giving up swings to use his own feat. Under the old
+    // single-swing model this ratio was about 0.25.
+    expect(abilitySwings).toBeGreaterThan(plainSwings * 0.85);
+  });
+
+  it('the rider lands ONCE per action, not once per swing', () => {
+    // ⚠ The burst is `swingsPerAction` swings and the rider is gated on
+    // `swing === 0`. Without that gate Power Attack would roll its extra die
+    // on every swing and Knockdown would re-trip an already-prone target —
+    // the failure brief #22's single-swing model existed to prevent, which
+    // now has to be prevented inside the burst instead.
+    const r = run(
+      [{ action: 'ability', featId: KNOCKDOWN, condition: { kind: 'always' }, target: 'scoredEnemy' }],
+      'rider-once',
+    );
+    const events = r.stream.all();
+    const byTick = new Map<number, number>();
+    for (const e of events) {
+      if (e.type !== 'combat.condition_applied') continue;
+      const d = e.data as { conditionId: string };
+      if (d.conditionId !== 'prone') continue;
+      byTick.set(e.tick, (byTick.get(e.tick) ?? 0) + 1);
+    }
+    expect(byTick.size).toBeGreaterThan(0); // the ability fired at all
+    for (const [, count] of byTick) expect(count).toBe(1);
+  });
+
+  it('AN ABILITY ACTION COSTS A NORMAL INTERVAL — no time surcharge', () => {
+    /**
+     * ⚠ Asserted through a REAL encounter's action spacing, not by calling an
+     * interval helper. The old `abilityInterval(base, def)` returned
+     * `base * def.actions`, and a unit test on it proved only that the helper
+     * multiplied — never that the multiplication was right for this engine.
+     * It was not: it made Power Attack 45-53% of a plain strike.
+     *
+     * The fighter's own actions are the witness. With a 2-action ability on
+     * `always` and a 2-interval cooldown, his actions must still land one
+     * normal interval apart; under the old model every other gap doubled.
+     */
+    const r = run(POWER_ATTACK_LOADOUT, 'interval-cost');
+    const actionTicks = [...new Set(
+      r.stream.all()
+        .filter((e) => e.type === 'combat.attack_resolved'
+          && (e.data as { attackerId: string }).attackerId === 'hero_f')
+        .map((e) => e.tick),
+    )].sort((a, b) => a - b);
+
+    expect(actionTicks.length).toBeGreaterThan(3);
+    const gaps = actionTicks.slice(1).map((t, i) => t - actionTicks[i]!);
+    // Every gap is one normal interval. A single `base * 2` gap fails this.
+    for (const g of gaps) expect(g).toBe(ENCOUNTER.attackIntervalTicks);
   });
 
   it('Intimidating Strike actually lands frightened on an enemy mid-fight', () => {
