@@ -32,7 +32,49 @@ all it is, the model change is fine and the harness question is how to measure
 it. If it is not, something about an ability action is costing a party
 something the one-on-one probe cannot see.
 
-**How to settle it:** condition the comparison on runs that reach the same
-room depth, and diff two seeded `runEncounter` streams (one party fight, not a
-duel) with and without the ability entry, event by event. Until then abilities
-stay out of the auto fight plan and the player places them by hand.
+**SETTLED 2026-10-17 — the cause is the burst, and the answer is level-dependent.**
+
+`encounter.ts`: a normal action is a burst of `swingsPerAction` swings, and the
+loop does `if (target.hp <= 0) break;` — **it never retargets**. So a bigger
+first swing that kills throws away the rest of the burst, and the extra die
+lands on a body that was already falling. Both penalties scale with how
+over-sized a hero's swing is compared to enemy hp.
+
+Measured on REAL enemy rows at each `base_level`, with bracket-geared parties
+built through the harness's own `partyAt` production path, 40 seeds per cell,
+one room of four bodies:
+
+| lvl | median foe hp | swings/action | overkill | hero win % | ticks to clear |
+|---|---|---|---|---|---|
+| 1 | 8 | 1.26 → 1.20 | 42% → 45% | 100 → 100 | 50 → 50 |
+| 2 | 18 | 1.34 → 1.31 | 25% → 29% | 100 → 100 | 69 → **61** |
+| 3 | 24 | 1.43 → 1.44 | 29% → 29% | 100 → 100 | 83 → 83 |
+| 4 | 32 | 1.48 → 1.45 | 23% → 23% | 100 → 100 | 93 → 92 |
+| 5 | 44 | 1.43 → 1.43 | 21% → 23% | 100 → 100 | 79 → **77** |
+| 6 | 55 | 1.47 → 1.45 | 20% → 20% | 100 → 100 | 100 → **95** |
+| 7 | 55 | 1.47 → 1.45 | 15% → 15% | 100 → 100 | 101 → **95** |
+| 8 | 120 | 1.61 → 1.60 | −12% → −7% | 50 → **55** | 131 → 135 |
+
+(left of each arrow = no Power Attack, right = Power Attack on `always`.)
+
+Enemy hp outgrows hero damage-per-swing, so **overkill falls from 42% to 15%**
+across the curve and Power Attack stops being a tax: a drag at L1–2, neutral
+L3–4, a 5–6% faster clear by L6–7, and at L8 it converts into win rate
+(+5 points). ⚠ Win rate is saturated at 100% for L1–7 in a single-room test,
+so ticks-to-clear is the usable signal there; the L8 tick figure is confounded
+because more runs now survive to the end instead of ending early in a loss.
+
+So the career-harness result (−5.2 points of completion) is not wrong, it is
+**dominated by the early game** — a career starts at L1 and spends most of its
+runs in exactly the band where Power Attack loses.
+
+**Two follow-ups this opens, in value order:**
+
+1. **Make the burst retarget instead of `break`.** This is the real prize and
+   it has nothing to do with feats: at L1 a party wastes **42% of its damage**
+   on corpses, and even at L7 it is 15%. Retargeting the remaining swings at
+   another living enemy would lift every hero in the game, and would very
+   likely flip Power Attack positive at all levels as a side effect. It
+   changes every fight, so it needs its own measured pass and a re-baseline.
+2. **Then revisit auto-adding abilities**, either unconditionally (if the
+   retarget fix removes the early-game penalty) or gated on level.
