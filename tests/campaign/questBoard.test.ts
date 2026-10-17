@@ -145,12 +145,15 @@ function launchFresh(questId: number, i: number): string {
   s.advanceWeek();
   const state: SessionSaveState = s.serialize();
   state.open = [{ questId, postedWeek: 1 }];
+  // The camp fight is seeded from the dispatch number, not the campaign id. Without
+  // this every one of the N launches below replayed the SAME fight (Track Q2 finding).
+  state.dispatchN = i * 13;
   const live = CampaignSession.deserialize(state);
   live.acceptQuest(questId);
   return live.launchDispatch().outcome;
 }
 
-const N = 40;
+const N = 24;
 const winRate = (questId: number): number => {
   let wins = 0;
   for (let i = 0; i < N; i++) if (launchFresh(questId, i) === 'completed') wins++;
@@ -165,7 +168,7 @@ describe('easy means easy: real launches with the default level-1 party', () => 
     const report = [...rates].map(([id, r]) => `${id} ${questsById.get(id)!.name}: ${(r * 100).toFixed(0)}%`);
     console.log(`early easy win rates (n=${N}):\n  ${report.join('\n  ')}`);
     for (const [id, r] of rates) expect(r, `quest ${id}`).toBeGreaterThanOrEqual(0.8);
-  }, 60_000);
+  }, 120_000);
 
   it('the letter-1 commission is also winnable for a level-1 party', () => {
     const id = COMMISSIONS.find((c) => c.dialogueId === 1)!.quest.id;

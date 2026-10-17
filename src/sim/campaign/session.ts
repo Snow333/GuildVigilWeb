@@ -550,7 +550,9 @@ export class CampaignSession {
     //      (brief #6: the arc must not wait behind filler),
     //   2. weeks 1–4: easy quests until at least 2 are up — same rule
     //      (a fresh guild needs wins),
-    //   3. everything else eligible, in a seeded shuffle, up to this week's size.
+    //   3. everything else eligible up to this week's size: takeable jobs before
+    //      "beyond us" ones, a camp fight and a dungeon first if the board has
+    //      neither, then the seeded shuffle.
     // Marshal's commissions never post here and never count toward either cap.
     const pl = this.partyLevel();
     const boardRng = Rng.child(Seeds.campaign(this.campaignId), 'board', week);
@@ -587,7 +589,24 @@ export class CampaignSession {
     // In weeks 1–4 the easy pool is spent ONLY by the guarantee above, two at
     // a time — if the shuffle could post five of them in week 1, they would
     // all expire together in week 3 and leave the guarantee nothing to post.
-    for (const row of boardRng.shuffle(candidates)) {
+    // Takeable postings go first (the shuffle stays the seeded tie-break), so a
+    // "beyond us" job only takes a slot once nothing the guild can do is left.
+    // Without this a level-10 board drew its rows from the whole band
+    // [pl − 1, pl + 2] and one row in five was a job the guild would decline.
+    const shuffled = boardRng.shuffle(candidates);
+    const ordered = [...shuffled.filter((r) => this.takeable(r, pl)), ...shuffled.filter((r) => !this.takeable(r, pl))];
+    // A varied board has both kinds of job. With dungeons outnumbering camp
+    // fights two to one, a plain draw left 18% of mid-level weeks (up to 43% at
+    // level 10) with no camp fight or no dungeon to pick; this rule: 0.5%. So a
+    // kind missing from the board gets the first free slot — still drawn from
+    // `ordered`, so still takeable-first.
+    for (const kind of ['combat', 'dungeon']) {
+      if (regularOpen() >= target) break;
+      if (this.open.some((o) => !COMMISSION_QUEST_IDS.has(o.questId) && questsById.get(o.questId)?.quest_type === kind)) continue;
+      const row = ordered.find((r) => r.quest_type === kind && !isOpen(r.id) && !(early && EARLY_EASY_QUEST_IDS.has(r.id)));
+      if (row) post(row);
+    }
+    for (const row of ordered) {
       if (regularOpen() >= target) break;
       if (early && EARLY_EASY_QUEST_IDS.has(row.id)) continue;
       post(row);
@@ -615,6 +634,12 @@ export class CampaignSession {
     if (row.min_level < pl - SCHEDULER.levelBandBelow) return false;
     if (row.min_level > pl + SCHEDULER.levelBandAbove + drift) return false;
     return true;
+  }
+
+  /** The guild would take this job: its challenge is within reach of the party (see SCHEDULER.takeableAbove). */
+  private takeable(row: QuestRow, partyLevel: number): boolean {
+    const challenge = Math.max(row.dungeon_level ?? row.min_level, 1);
+    return challenge <= partyLevel + SCHEDULER.takeableAbove;
   }
 
   /** Weeks a posting stays up: commissions linger longer than normal notices. */
