@@ -35,6 +35,9 @@ async function loadWithMagicGear(page: Page): Promise<void> {
     env.state.stash = [
       { baseId: '59', tier: 'magical', propertyIds: [], seed: 'e2e_ring' },                  // Ring of Protection +1
       { baseId: '35', tier: 'mundane', propertyIds: [], seed: 'e2e_potion' },                // Healing Potion (Minor)
+      { baseId: '132', tier: 'magical', propertyIds: [], seed: 'e2e_dagger2' },              // Dagger +2
+      { baseId: '133', tier: 'magical', propertyIds: [], seed: 'e2e_sword2' },               // Longsword +2
+      { baseId: '16', tier: 'mundane', propertyIds: [], seed: 'e2e_staff' },                 // Staff
     ];
     localStorage.setItem(key, JSON.stringify(env));
   });
@@ -97,6 +100,18 @@ test('the shop describes wares with the same card text', async ({ page }) => {
   // The sell list uses the describer too.
   const ring = page.locator('tr[data-sell-row]', { hasText: 'Ring of Protection +1' });
   await expect(ring.locator('[data-item-summary]')).toHaveText('AC +1');
+
+  // Track I2: the rune carries the value. A +2 dagger (was 16g) is worth within
+  // 15g of a +2 longsword (was 120g), and the Staff is no longer worth 0g.
+  const worth = async (name: string): Promise<number> => {
+    const text = await page.locator('tr[data-sell-row]', { hasText: name }).locator('td', { hasText: 'worth' }).innerText();
+    return Number(/worth (\d+)g/.exec(text)![1]);
+  };
+  const dagger2 = await worth('Dagger +2');
+  const sword2 = await worth('Longsword +2');
+  expect(dagger2).toBe(252);
+  expect(sword2).toBe(265);
+  expect(await worth('Staff')).toBe(2);
 
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/shop-items.png`, fullPage: true });
 });
