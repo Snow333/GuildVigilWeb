@@ -13,7 +13,7 @@ import { EventStream } from '@sim/core/events/stream';
 import { Rng } from '@sim/core/rng';
 import { boundToRoom, desiredPosition, inAttackRange, moveStep, stepToward, gap } from './ai';
 import {
-  abilityDef, abilityInterval, applySelfAbility, applyStrikeRider, consumeAbility,
+  abilityDef, applySelfAbility, applyStrikeRider, consumeAbility,
 } from './abilities';
 import { decayFlurry, flurryPenalty, rollDice } from './dice';
 import { applyCondition, canMove, expireConditions, hasCondition, isConditionId, speedMod } from './conditions';
@@ -410,7 +410,7 @@ export function runEncounter(
                 durationTicks: ENCOUNTER.attackIntervalTicks * 2,
               });
             }
-            u.nextActionTick = tick + abilityInterval(attackInterval(u), def, u.abilityCadenceTicks > 0);
+            u.nextActionTick = tick + attackInterval(u);
             continue;
           }
           // Nothing to do with it — fall through to a plain strike this action
@@ -510,20 +510,24 @@ export function runEncounter(
       const conceal = rollConceal(u, target, all, rng);
 
       /**
-       * ABILITY STRIKES ARE A SINGLE SWING, NOT A BURST (brief #22 M2).
+       * AN ABILITY STRIKE IS A NORMAL BURST WITH A RIDER ON THE FIRST SWING
+       * (M2, 2026-10-17 — reverses brief #22's single-swing model).
        *
-       * ⚠ A normal action is `swingsPerAction` swings with MAP inside the
-       * burst. An ability strike is ONE swing plus a rider, and its cost is
-       * paid in TIME (`actions: N` scales the next interval). Running an
-       * ability through the burst loop would apply its rider once per swing —
-       * Power Attack's extra die twice, Knockdown tripping an already-prone
-       * target — and would make actives strictly better than striking, which
-       * is the exact failure the action-cost model exists to prevent.
+       * ⚠ It used to be ONE swing, with the cost paid in TIME (`actions: N`
+       * scaled the next interval). Measured over 40 seeds on a sandbag, that
+       * made Power Attack 45-53% of a plain strike — a strict downgrade no
+       * loadout condition could rescue. See `abilities.ts`'s header.
+       *
+       * So the burst is normal and the rider lands ONCE, on the first swing.
+       * Applying it per swing is still forbidden — it would double Power
+       * Attack's die and re-trip an already-prone target — which is why the
+       * rider sits behind `swing === 0` rather than inside the shared path.
+       * The cost is now the ability's COOLDOWN, not a lost swing.
        */
       const abilityDefinition = picked.entry.action === 'ability'
         ? abilityDef(picked.entry.featId)
         : null;
-      const swings = abilityDefinition ? 1 : ENCOUNTER.swingsPerAction;
+      const swings = ENCOUNTER.swingsPerAction;
 
       // Strike: basic attack = a burst; MAP lives INSIDE the burst (0/−5, agile 0/−4).
       for (let swing = 0; swing < swings; swing++) {
@@ -546,7 +550,7 @@ export function runEncounter(
           u.pendingPoisonDice = null;
         }
 
-        if (abilityDefinition && hit) {
+        if (abilityDefinition && hit && swing === 0) {
           const rider = applyStrikeRider(abilityDefinition, u, target, {
             rng, tick, room: ARENA,
             critical: strike.roll.degree === 'critSuccess',
@@ -624,7 +628,7 @@ export function runEncounter(
       u.lastSwingTick = tick;
       if (abilityDefinition) {
         consumeAbility(u, (picked.entry as { featId: number }).featId, tick);
-        u.nextActionTick = tick + abilityInterval(attackInterval(u), abilityDefinition, u.abilityCadenceTicks > 0);
+        u.nextActionTick = tick + attackInterval(u);
       } else {
         u.nextActionTick = tick + attackInterval(u);
       }

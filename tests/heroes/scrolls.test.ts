@@ -96,14 +96,14 @@ describe('⚠ the primary-tradition rule', () => {
 
   /**
    * ⚠ THE 98% PROBLEM, PINNED AS A NUMBER. If the tradition rule ever loosens
-   * to "any match", divine-gated scrolls jump from 1 to 13 and the Wizard
+   * to "any match", divine-gated scrolls jump from 2 to 14 and the Wizard
    * picks up a native discount on almost every scroll in the game.
    */
-  it('⚠ exactly ONE scroll gates on religion — an any-match rule would make it 13', () => {
+  it('⚠ exactly TWO scrolls gate on religion (Heal, Breath of Life) — an any-match rule would make it 14', () => {
     const byReligion = scrolls.filter(
       (i) => gatingSkill(spellsById.get(i.spell_id as number) as never) === 'religion',
     );
-    expect(byReligion.length, 'the tradition rule has loosened').toBe(1);
+    expect(byReligion.length, 'the tradition rule has loosened').toBe(2);
   });
 
   it('arcane and occult gate on Arcana; divine gates on Religion', () => {

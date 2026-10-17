@@ -16,12 +16,34 @@
  *  - DEBUFFS are NOT auto-added. A debuff on "always" would replace every
  *    damage cast forever; the loadout has no "target lacks condition" check
  *    yet, so the player places debuffs by hand.
+ *  - ABILITIES are still NOT auto-added. The reason changed; see below.
  *
- * ⚠ ABILITIES (feats like Power Attack) are NOT auto-added either. Measured
- * (probe, 150 fights each): Power Attack on "always" took a fighter from
- * 86 → 28 wins against two bandits; Knockdown 86 → 10. A single-swing ability
- * replaces the normal two-swing action, so spamming it is a large loss. Those
- * need a design pass (M2), not a default.
+ * ⚠ ABILITIES STAY OUT OF THE AUTO PLAN — BUT NOT FOR M1'S REASON (M2, 2026-10-17).
+ *
+ * M1 withheld them because the ability MODEL made them a tax: an ability
+ * strike was one swing where a normal action is two, so Power Attack measured
+ * 45-53% of a plain strike and a fighter went 86 -> 28 wins on `always`. M2
+ * fixed the model — an ability now rides a normal action and pays a cooldown,
+ * measured at 109-116% of a plain strike against a sandbag. So the original
+ * objection is gone, and a hand-placed ability is now worth placing.
+ *
+ * Auto-adding them was then built and MEASURED ON THE CAMPAIGN HARNESS, and
+ * it still loses:
+ *
+ *   no abilities in the plan      completion 95.0%   wipes 4.4%
+ *   Power Attack auto-added       completion 89.8%   wipes 9.6%
+ *   + Intimidating Strike too     completion 92.7%   wipes 6.5%
+ *
+ * ⚠ THE SANDBAG PROBE AND THE CAMPAIGN DISAGREE, AND THE CAMPAIGN WINS. A
+ * lone fighter beating a 1,000,000-hp dummy faster does not predict a party's
+ * dungeon completion: the party result carries a run-length term (a party
+ * that kills faster pushes deeper before it retreats, and dies there), which
+ * the one-on-one probe cannot see. Do not re-derive the +15% figure and
+ * conclude auto-adding is safe — it was measured, it is not.
+ *
+ * The cause of Power Attack's -5.2 points is NOT yet understood and is parked
+ * in output/questions.md. Until it is, the player places abilities by hand in
+ * the loadout editor, where the model fix makes them pay.
  */
 
 import { spellsById } from '@sim/registry';

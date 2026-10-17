@@ -27,12 +27,27 @@
  * Everything here is per-encounter and dies with the Combatant, which is why
  * no save migration is needed for M2.
  *
- * ⚠ ACTION COST IS ORTHOGONAL TO ALL THREE. `actions: N` is a TIME cost, not a
- * limiter: a 2-action ability scales the next interval by N, so Power Attack
- * is "one bigger hit instead of two normal ones" rather than a free upgrade.
- * Without it every active would be strictly better than striking and the
- * loadout choice would be fake — the AI would take Power Attack every time and
- * the player's ordering would mean nothing.
+ * ⚠ `actions: N` IS NO LONGER A TIME COST — IT BUYS A COOLDOWN (M2, 2026-10-17).
+ *
+ * It used to scale the next interval, so Power Attack was "one bigger hit
+ * instead of two normal ones". MEASURED over 40 seeds on a sandbag, that model
+ * made Power Attack **45-53% of a plain strike's damage** — not a tradeoff, a
+ * strict and enormous downgrade, which is why M1 measured a fighter going
+ * 86 -> 28 wins in 150 fights with it set to `always`.
+ *
+ * The arithmetic is structural, not a tuning miss. A normal action is
+ * `swingsPerAction` swings; an ability strike was ONE swing at `actions x`
+ * the interval, so Power Attack bought +1 damage die for 3 of every 4 swings.
+ * In a continuous-time auto-battler SWINGS ARE THE CURRENCY and there is no
+ * three-actions-per-turn scarcity to make "spend more, hit harder" pay. Even
+ * removing the multiplier entirely only reached 90-106% of plain — break-even
+ * at best. No condition on the loadout entry can rescue a move that is at best
+ * a wash, so "when should Power Attack fire?" has no good answer under it.
+ *
+ * So an ability now RIDES a normal action instead of replacing it: the full
+ * burst swings, the rider lands on the first swing, the interval is normal,
+ * and the cost is a COOLDOWN derived from `actions`. The player's feat is a
+ * gain, as a chosen feat should be; the balance lever is how often it fires.
  */
 
 import type { Rng } from '@sim/core/rng';
@@ -77,12 +92,9 @@ const KNOWN_EFFECTS: ReadonlySet<string> = new Set([...STRIKE_EFFECTS,
   'remove_condition', 'grant_ally_ac', 'apply_weapon_poison']);
 
 /**
- * ⚠ COOLDOWNS ARE ENGINE POLICY, NOT CONTENT — for now.
- *
- * No feat row carries a cooldown field today; the content expresses limits as
- * `actions` (time cost) and `limit: once_per_combat`. The cooldown MECHANISM
- * is built and tested here because Steven asked for all three tiers, and this
- * map is where a per-feat cooldown is declared until a seed adds a column.
+ * ⚠ AN EXPLICIT PER-FEAT COOLDOWN OVERRIDE. Every other ability derives its
+ * cooldown from `actions` (see `strikeCooldownTicks`); these two are
+ * non-strike abilities whose natural limit is their own effect duration.
  *
  * ⚠ Adding `cooldown_ticks` to the feats table costs NO tooling change — the
  * converter is `SELECT *` and the count gates count ROWS (CLAUDE.md, Data
@@ -97,6 +109,23 @@ const COOLDOWN_TICKS: Readonly<Record<number, number>> = {
   138: ENCOUNTER.attackIntervalTicks * 2,
 };
 
+/**
+ * A STRIKE ABILITY'S COOLDOWN — what `actions: N` now buys (M2).
+ *
+ * ⚠ THE FLOOR OF TWO INTERVALS IS LOAD-BEARING. `consumeAbility` sets
+ * `readyAt = tick + cooldown` and the unit's next action is exactly one
+ * interval later, so a cooldown of ONE interval is indistinguishable from no
+ * cooldown at all — the ability would fire on every single action and the
+ * signature move would just be how the class strikes. Two intervals makes it
+ * every other action: a visible rhythm of normal, SIGNATURE, normal, signature.
+ *
+ * Brutish Shove (`actions: 1`) is the only strike ability that would otherwise
+ * have permanent uptime; the floor catches it.
+ */
+function strikeCooldownTicks(actions: number): number {
+  return ENCOUNTER.attackIntervalTicks * Math.max(2, actions);
+}
+
 const defCache = new Map<number, AbilityDef | null>();
 
 /** Parse a feat into an ability definition. Null when it is not a wired active. */
@@ -109,14 +138,16 @@ export function abilityDef(featId: number): AbilityDef | null {
   if (fx && fx.effectType === 'combat_action' && isEffectReady(featId)) {
     const effect = fx.raw['effect'] as string | undefined;
     if (effect && KNOWN_EFFECTS.has(effect)) {
+      const actions = Math.max(1, (fx.raw['actions'] as number | undefined) ?? 1);
+      const isStrike = STRIKE_EFFECTS.has(effect);
       def = {
         featId,
         name: fx.featName,
         effect: effect as AbilityEffect,
-        actions: Math.max(1, (fx.raw['actions'] as number | undefined) ?? 1),
+        actions,
         oncePerCombat: fx.raw['limit'] === 'once_per_combat',
-        cooldownTicks: COOLDOWN_TICKS[featId] ?? 0,
-        isStrike: STRIKE_EFFECTS.has(effect),
+        cooldownTicks: COOLDOWN_TICKS[featId] ?? (isStrike ? strikeCooldownTicks(actions) : 0),
+        isStrike,
         raw: fx.raw,
       };
     }
@@ -156,28 +187,6 @@ export function consumeAbility(u: Combatant, featId: number, tick: number): void
   if (def.cooldownTicks > 0) u.abilityReadyAt.set(featId, tick + def.cooldownTicks);
   // Only a strike starts the cadence — see `abilityReady` for why.
   if (def.isStrike) u.lastAbilityTick = tick;
-}
-
-/**
- * The interval this ability imposes on the NEXT action — the time cost.
- * `actions: 2` means the swing occupies two actions' worth of the clock.
- *
- * ⚠ A UNIT WITH A CADENCE DOES NOT PAY THE MULTIPLIER (brief #30), because it
- * would be charged TWICE for the same thing. The `actions` cost is PF2E's
- * three-actions-per-turn economy, and it works for a player because the player
- * CHOOSES the moment. An AI takes the top matching loadout entry every action,
- * so for it the rationing is done by `abilityCadenceTicks` — charging the
- * multiplier on top turns one swing per interval into one swing per two, and
- * a 2-action ability lands at a quarter of a plain action's swing rate.
- *
- * Measured with the multiplier applied to enemies: every melee class was a
- * strict DOWNGRADE (-35% to -69% damage, and the hero finished with MORE hp
- * against a classed enemy than an unclassed one). Heroes keep the multiplier
- * — `abilityCadenceTicks` is 0 for every hero, so this branch never fires for
- * them and brief #29's balance is untouched.
- */
-export function abilityInterval(baseInterval: number, def: AbilityDef, cadenced = false): number {
-  return cadenced ? baseInterval : baseInterval * def.actions;
 }
 
 // ── Riders on a strike ──────────────────────────────────────────────────────

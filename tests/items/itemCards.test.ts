@@ -317,7 +317,6 @@ describe('price sanity', () => {
       const prices = (['mundane', 'masterwork', 'magical', 'enchanted'] as const)
         .map((t) => deriveItem(inst(row.id, t)).price);
       for (let i = 1; i < prices.length; i++) {
-        if (row.price === 0) continue; // a free Staff stays free; nothing to scale
         expect(prices[i], `${row.name} tier ${i}`).toBeGreaterThan(prices[i - 1]!);
       }
     }

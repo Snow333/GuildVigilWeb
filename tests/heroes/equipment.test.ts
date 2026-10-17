@@ -36,7 +36,8 @@ describe('deriveItem — tuples to effective stats', () => {
     expect(d.onHitEffects).toHaveLength(1);
     expect(d.onHitEffects[0]!.onHit).toMatchObject({ damage_dice: '1d6', damage_type: 'fire' });
     expect(d.onHitEffects[0]!.onCrit).toMatchObject({ condition: 'persistent_fire' });
-    expect(d.price).toBeGreaterThan(deriveItem(inst('3')).price * 40);
+    // Priced by its runes (track I2): plain Longsword 15 + potency +2 (250) + one property rune (200).
+    expect(d.price).toBe(deriveItem(inst('3')).price + 250 + 200);
   });
 
   it('striking adds extra weapon dice', () => {
