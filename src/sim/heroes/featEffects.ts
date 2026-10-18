@@ -103,6 +103,20 @@ export const ACTIVE_WIRED: ReadonlySet<number> = new Set([
   135, // Channel Smite      (Cleric L2)   strike_plus_channel
   138, // Defensive Ward     (Cleric L6)   grant_ally_ac
   71, // Poison Weapon       (Rogue L2)    apply_weapon_poison
+  // ── M2: the Ranger and the Bard, who had NO feats at all ──
+  310, // Precise Shot       (Ranger L2)   strike_with_bonus
+  311, // Hobbling Shot      (Ranger L4)   strike_plus_condition, slowed
+  312, // Driving Shot       (Ranger L6)   strike_plus_shove
+  313, // Terrifying Volley  (Ranger L8)   strike_plus_condition, frightened
+  314, // Crippling Shot     (Ranger L10)  strike_plus_trip, no MAP
+  330, // Inspire Courage    (Bard L1)     grant_party_condition, emboldened
+  333, // Dirge of Doom      (Bard L8)     grant_party_condition on ENEMIES
+  334, // Inspire Greatness  (Bard L9)     grant_party_condition, heroism
+  340, // Harmonize          (Bard L2)     grant_ally_ac
+  341, // Soothing Refrain   (Bard L4)     remove_condition, once per combat
+  342, // Song of Strife     (Bard L6)     grant_party_condition, blessed
+  343, // Bardic Sting       (Bard L8)     strike_plus_condition, sickened
+  344, // Call to Arms       (Bard L10)    grant_party_condition, hasted
 ]);
 
 /** Why a feat cannot be selected. FROZEN set — the UI label-pairs each one. */
@@ -173,7 +187,7 @@ const REACTION_FEAT_NAMES: ReadonlySet<string> = new Set(['Reactive Strike', 'Ni
 const WIRED_ACTIVE_EFFECTS: ReadonlySet<string> = new Set([
   'strike_with_bonus', 'strike_plus_condition', 'strike_plus_shove',
   'strike_plus_trip', 'strike_plus_channel',
-  'remove_condition', 'grant_ally_ac', 'apply_weapon_poison',
+  'remove_condition', 'grant_ally_ac', 'grant_party_condition', 'apply_weapon_poison',
 ]);
 
 export const CONSUMER_MATCHERS: readonly ConsumerMatcher[] = [

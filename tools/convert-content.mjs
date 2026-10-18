@@ -23,7 +23,9 @@ const outDir = join(repoRoot, 'src', 'content', 'generated');
 // Hard gates on the tables whose hand-tuned values are irreplaceable.
 const EXPECTED_COUNTS = {
   spells: 218,
-  feats: 227,
+  // 227 + 16 (M2: Ranger and Bard, who had zero feat rows between them —
+  // data/seeds/seed_ranger_bard_feats.sql).
+  feats: 243,
   class_progression: 230,
   class_proficiency_tiers: 112,
   items: 183,

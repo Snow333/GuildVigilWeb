@@ -43,6 +43,7 @@ import {
   addWhileRoom, buildSpellPlan, moveSpellRule, newlyGranted, preparedViolation, setSpellRule, togglePlanned,
   type SpellPlan,
 } from '@sim/heroes/spellPlan';
+import { withGrantedAbilities } from '@sim/heroes/autoLoadout';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
   itemContributions, slotState,
@@ -947,6 +948,17 @@ export class CampaignSession {
     if (candidates.length > 0) {
       const kit = this.kitFor(heroId);
       kit.loadout = addWhileRoom(hero, kit.loadout, candidates);
+    }
+    // M2: a NON-STRIKE ability gained this level joins the fight plan, the way
+    // a learned spell does — a bard's Inspire Courage must not need a trip to
+    // a menu. Strike riders stay out; see heroes/autoLoadout.ts for the
+    // measurement that separates the two.
+    {
+      const kit = this.kitFor(heroId);
+      kit.loadout = withGrantedAbilities(
+        kit.loadout,
+        [...plan.feats.map((f) => f.featId), ...autoGranted],
+      );
     }
     this.world.emit(this.minute, 'hero.level_up_applied', {
       heroId: hero.id, newLevel: applied.newCharacterLevel, classId: String(applied.classId),

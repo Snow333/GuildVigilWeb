@@ -66,6 +66,7 @@ export type AbilityEffect =
   | 'strike_plus_channel'
   | 'remove_condition'
   | 'grant_ally_ac'
+  | 'grant_party_condition'
   | 'apply_weapon_poison';
 
 export interface AbilityDef {
@@ -89,7 +90,7 @@ const STRIKE_EFFECTS: ReadonlySet<string> = new Set([
 ]);
 
 const KNOWN_EFFECTS: ReadonlySet<string> = new Set([...STRIKE_EFFECTS,
-  'remove_condition', 'grant_ally_ac', 'apply_weapon_poison']);
+  'remove_condition', 'grant_ally_ac', 'grant_party_condition', 'apply_weapon_poison']);
 
 /**
  * ⚠ AN EXPLICIT PER-FEAT COOLDOWN OVERRIDE. Every other ability derives its
@@ -108,6 +109,17 @@ const COOLDOWN_TICKS: Readonly<Record<number, number>> = {
   // every action is the same as a permanent buff, so it gates to its duration.
   138: ENCOUNTER.attackIntervalTicks * 2,
 };
+
+/**
+ * How long a bard's performance holds, and how often it may be restarted.
+ *
+ * ⚠ THE COOLDOWN IS SHORTER THAN THE DURATION ON PURPOSE. A performance the
+ * bard cannot refresh before it lapses would flicker: the party would spend
+ * part of every fight un-inspired through no decision of anyone's. Refreshing
+ * one action early costs the bard that action, which is the real price.
+ */
+export const PERFORMANCE_DURATION_TICKS = ENCOUNTER.attackIntervalTicks * 5;
+export const PERFORMANCE_COOLDOWN_TICKS = ENCOUNTER.attackIntervalTicks * 4;
 
 /**
  * A STRIKE ABILITY'S COOLDOWN — what `actions: N` now buys (M2).
@@ -146,7 +158,9 @@ export function abilityDef(featId: number): AbilityDef | null {
         effect: effect as AbilityEffect,
         actions,
         oncePerCombat: fx.raw['limit'] === 'once_per_combat',
-        cooldownTicks: COOLDOWN_TICKS[featId] ?? (isStrike ? strikeCooldownTicks(actions) : 0),
+        cooldownTicks: COOLDOWN_TICKS[featId]
+          ?? (effect === 'grant_party_condition' ? PERFORMANCE_COOLDOWN_TICKS
+            : isStrike ? strikeCooldownTicks(actions) : 0),
         isStrike,
         raw: fx.raw,
       };
@@ -326,6 +340,12 @@ export interface SelfAbilityOutcome {
   removed: ConditionId[];
   /** An ally buffed, if any (Defensive Ward). */
   buffedAllyId?: string;
+  /**
+   * Everyone a party-wide performance landed on, with what it applied
+   * (Inspire Courage). Separate from `buffedAllyId` because the caller emits
+   * one `condition_applied` per body and needs the id AND the value.
+   */
+  partyBuff?: { conditionId: ConditionId; value: number; durationTicks: number; targetIds: string[] };
   /** True when the ability did something; false means it should not have fired. */
   applied: boolean;
 }
@@ -368,6 +388,43 @@ export function applySelfAbility(
       if (!best) return { removed: [], applied: false };
       applyCondition(best, 'defending', bonus, tick + ENCOUNTER.attackIntervalTicks * 2);
       return { removed: [], buffedAllyId: best.id, applied: true };
+    }
+
+    case 'grant_party_condition': {
+      /**
+       * INSPIRE COURAGE AND FRIENDS (M2) — the bard's whole identity.
+       *
+       * ⚠ IT APPLIES AN EXISTING CONDITION, IT DOES NOT INVENT A BONUS.
+       * `blessed` and `heroism` are already read by `attackMod`/`saveMod` in
+       * conditions.ts, so the buff reaches the dice through a consumer that
+       * predates this verb. Authoring a fresh "+1 party attack" field would
+       * have been another modifier nothing reads — this repo's oldest defect.
+       *
+       * The performer is included: a bard singing for the party is in the
+       * party. Dying/unconscious allies are skipped — a corpse is not
+       * inspired, and buffing one would make `abilityWorthUsing` think there
+       * was work to do forever.
+       */
+      const id = def.raw['condition'] as string | undefined;
+      if (!id || !isKnownCondition(id)) return { removed: [], applied: false };
+      const value = (def.raw['value'] as number | undefined) ?? 1;
+      const durationTicks = (def.raw['duration_ticks'] as number | undefined) ?? PERFORMANCE_DURATION_TICKS;
+      /**
+       * ⚠ `target_side: 'enemies'` is what makes Dirge of Doom possible from
+       * the same verb as Inspire Courage. `frightened` is value-carrying and
+       * subtracts from both `attackMod` and `acMod`, so a dirge is an inspire
+       * pointed the other way — one verb, two songs, no second code path.
+       */
+      const hostile = def.raw['target_side'] === 'enemies';
+      const targetIds: string[] = [];
+      for (const a of all) {
+        const isTarget = hostile ? a.side !== u.side : a.side === u.side;
+        if (!isTarget || a.hp <= 0 || a.conditions.has('unconscious')) continue;
+        applyCondition(a, id, value, tick + durationTicks);
+        targetIds.push(a.id);
+      }
+      if (targetIds.length === 0) return { removed: [], applied: false };
+      return { removed: [], partyBuff: { conditionId: id, value, durationTicks, targetIds }, applied: true };
     }
 
     case 'apply_weapon_poison': {

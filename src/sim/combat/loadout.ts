@@ -253,6 +253,20 @@ function abilityWorthUsing(def: AbilityDef, u: Combatant, all: readonly Combatan
       return u.pendingPoisonDice === null;
     case 'grant_ally_ac':
       return all.some((a) => a.side === u.side && a.id !== u.id && a.hp > 0 && !a.conditions.has('defending'));
+    case 'grant_party_condition':
+      /**
+       * ⚠ NO "already up?" CHECK HERE, DELIBERATELY — THE COOLDOWN RATIONS IT.
+       *
+       * The obvious gate ("only sing if someone lacks the condition") was
+       * written first and measured WORSE: it blocks the refresh until the
+       * song has already lapsed, so the party flickers in and out of the buff
+       * and uptime fell to 74%. The cooldown is deliberately SHORTER than the
+       * duration (4 intervals against 5) so the bard tops the song up one
+       * action early; `applyCondition` keeps the longest expiry, so the
+       * refresh extends it rather than restarting it. Uptime is ~100% and the
+       * bard pays one action in four for it, which IS the cost.
+       */
+      return true;
     default:
       return true;
   }

@@ -47,6 +47,7 @@
  */
 
 import { spellsById } from '@sim/registry';
+import { abilityDef } from '@sim/combat/abilities';
 import { spellConditionIds } from '@sim/combat/spells';
 import type { LoadoutEntry } from '@sim/combat/loadout';
 
@@ -80,6 +81,61 @@ function entryFor(spellId: number): LoadoutEntry | null {
 }
 
 const rank: Record<Slot, number> = { heal: 0, buff: 1, damage: 2, skip: 3 };
+
+/**
+ * ONLY A PARTY SONG IS AUTO-PLANNED. Everything else the player places.
+ *
+ * ⚠ THIS NARROW ALLOW-LIST IS THE MEASUREMENT, AND IT COST THREE WRONG
+ * GUESSES TO GET. In this engine an action IS swings, so spending one on
+ * anything else has to earn its keep:
+ *
+ *   every ability auto-planned      completion 95.0% -> 89.8%   (Power Attack
+ *                                   overkills low-hp enemies and the burst
+ *                                   `break`s on the kill without retargeting)
+ *   every NON-STRIKE auto-planned   completion 95.0% -> 90.4%   (Poison Weapon
+ *                                   and Defensive Ward buy a 1d4 rider or +2 AC
+ *                                   for a whole action — the documented
+ *                                   "an action that adds no swing is a loss")
+ *   only `grant_party_condition`    neutral to +1.7 points of party win rate,
+ *                                   measured on a bard plus three front-liners
+ *                                   against 3/4/5 level-5 enemies
+ *
+ * A song is the exception because it buys +1 attack for the WHOLE party for
+ * five intervals and the bard pays one action in four for it — it scales with
+ * party size, where a single-target ward does not. And a bard whose Inspire
+ * Courage never fires is the defect this repo keeps shipping: a signature
+ * ability sitting behind a menu the player never opens.
+ *
+ * ⚠ Do NOT widen this to `!def.isStrike` on the reasoning that "a buff cannot
+ * overkill". That exact reasoning was measured and it is wrong.
+ */
+function autoPlannable(featId: number): boolean {
+  return abilityDef(featId)?.effect === 'grant_party_condition';
+}
+
+/**
+ * The loadout with every newly held NON-STRIKE ability added (M2).
+ *
+ * Entries are `always`; the cooldown decides when they fire and
+ * `abilityWorthUsing` suppresses the no-ops (Determination with nothing to
+ * clear, a ward on an already-warded ally). `pickAction` falls through to a
+ * plain strike when none is ready, so this never costs an action.
+ */
+export function withGrantedAbilities(
+  loadout: readonly LoadoutEntry[],
+  featIds: readonly number[],
+): LoadoutEntry[] {
+  const out = [...loadout];
+  const present = new Set(
+    out.filter((e) => e.action === 'ability').map((e) => (e as { featId: number }).featId),
+  );
+  for (const featId of featIds) {
+    if (present.has(featId) || !autoPlannable(featId)) continue;
+    out.push({ action: 'ability', featId, condition: { kind: 'always' }, target: 'self' });
+    present.add(featId);
+  }
+  return out;
+}
 
 /** Where an existing entry sits in the same ordering (non-cast entries keep their place at the end). */
 function entryRank(e: LoadoutEntry): [number, number] {
