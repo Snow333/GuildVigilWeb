@@ -4,29 +4,29 @@ exports[`the at-level contract — a level-N party in a level-N dungeon > THE BA
 {
   "curve": {
     "d1": {
-      "completedPct": 97,
+      "completedPct": 97.3,
       "retreatedPct": 2.7,
-      "wipedPct": 0.3,
+      "wipedPct": 0,
     },
     "d2": {
       "completedPct": 94.7,
-      "retreatedPct": 5,
-      "wipedPct": 0.3,
+      "retreatedPct": 5.3,
+      "wipedPct": 0,
     },
     "d3": {
-      "completedPct": 91.3,
+      "completedPct": 92.7,
       "retreatedPct": 5.7,
-      "wipedPct": 3,
+      "wipedPct": 1.7,
     },
     "d4": {
-      "completedPct": 66.7,
-      "retreatedPct": 24.3,
-      "wipedPct": 9,
+      "completedPct": 69.3,
+      "retreatedPct": 25,
+      "wipedPct": 5.7,
     },
     "d5": {
-      "completedPct": 77,
-      "retreatedPct": 18.7,
-      "wipedPct": 4.3,
+      "completedPct": 76.3,
+      "retreatedPct": 20.3,
+      "wipedPct": 3.3,
     },
   },
   "gear": "bracket",
