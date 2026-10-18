@@ -168,8 +168,17 @@ export const SKILL_PAYOFFS = {
    * (you cannot pick or force a spell), and Arcana can dispel the runes outright.
    * The flag comes from its OWN seeded stream, so room types, DCs and enemies are
    * byte-identical to a dungeon without it.
+   *
+   * ⚠ TUNED, NOT GUESSED. The penalty is the only thing that makes Arcana worth
+   * having, and it is a real cost to a party that skipped it. Swept on 300 paired
+   * seeds per cell against the harness party (which never trains Arcana):
+   *   0.4 / -2  small d4 72.3 -> 66.7, d5 76.7 -> 72.7, medium d5 56.7 -> 49.3
+   *   0.4 / -1  small d4 -3.0, d5 -2.0, medium d5 -4.7
+   *   0.3 / -1  small d4 -1.3, d5 -1.4, medium d5 -4.4   <- shipped
+   * With an autopilot-style wizard (Arcana +1 a level) 0.3 / -1 is within 1.0
+   * point everywhere. At penalty 0 Arcana did nothing for that party at all.
    */
-  arcana: { runedChance: 0.4, runePenalty: 2 },
+  arcana: { runedChance: 0.3, runePenalty: 1 },
   /**
    * RELIGION — warding the undead. Before a fight with undead in it, the party's
    * best Religion roll decides how badly they flinch: `frightened` at this value

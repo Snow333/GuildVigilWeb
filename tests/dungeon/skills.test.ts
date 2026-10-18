@@ -71,7 +71,9 @@ function fightIn(s: EventStream, roomId: string): SimEvent[] {
 
 describe('ARCANA — rune-sealed doors and traps', () => {
   it('breaks the runes on a door nobody else could open, in a real dungeon', () => {
-    const cell: Cell = { tier: 'small', difficulty: 3 };
+    // A level-1 party in a deep dungeon: the hazard DCs are high enough that
+    // doors really do stay shut, which is where Arcana earns its keep.
+    const cell: Cell = { tier: 'medium', difficulty: 7 };
     let found: { i: number; edge: string } | null = null;
     for (let i = 0; i < 400 && !found; i++) {
       const on = run(cell, i, party({ arcana: 12 }));
@@ -96,7 +98,9 @@ describe('ARCANA — rune-sealed doors and traps', () => {
   });
 
   it('disarms a runed trap with Arcana; the control walks into it', () => {
-    const cell: Cell = { tier: 'small', difficulty: 3 };
+    // A level-1 party in a deep dungeon: the hazard DCs are high enough that
+    // doors really do stay shut, which is where Arcana earns its keep.
+    const cell: Cell = { tier: 'medium', difficulty: 7 };
     let found: { i: number; room: string } | null = null;
     for (let i = 0; i < 400 && !found; i++) {
       const on = run(cell, i, party({ arcana: 12 }));
