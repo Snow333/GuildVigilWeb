@@ -143,6 +143,19 @@ export function AfterActionScreen() {
             </div>
           )}
 
+          {/* Track S: what Arcana, Religion, Survival and Deception did down there.
+              Only drawn when one of them was called on. */}
+          {mission.skillLines.length > 0 && (
+            <div data-mission-skills="">
+              <p className="gv-statline" style={{ marginBottom: 4 }}><b>Skills.</b></p>
+              <ul style={{ margin: '0 0 10px', paddingLeft: 20, fontSize: 13.5, lineHeight: 1.7 }}>
+                {mission.skillLines.map((l) => (
+                  <li key={l.skill} data-skill-line={l.skill}><b>{l.skill}.</b> {l.text}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <p className="gv-statline"><b>The haul.</b>{' '}
             {record.outcome === 'completed' ? (
               <>Quest reward {questGold}g + dungeon haul {haulGold}g</>

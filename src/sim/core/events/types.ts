@@ -15,6 +15,10 @@ export const SCHEMA_VERSION = 1;
 
 // ── Shared value shapes ──────────────────────────────────────────────────────
 
+/** The four skills Track S put to work on a mission. */
+export type SkillUsed = 'arcana' | 'religion' | 'survival' | 'deception';
+export type SkillEffect = 'runes_dispelled' | 'undead_warded' | 'forage' | 'feint';
+
 /** PF2E degree of success, resolved per attack/check event. */
 export type Degree = 'critFailure' | 'failure' | 'success' | 'critSuccess';
 
@@ -55,7 +59,8 @@ export interface EventPayloads {
   'explore.area_revealed': { roomIds: string[]; corridorIds: string[] };
   'explore.entry_check_started': { edgeId: string };
   'explore.trap_detected': { roomId: string; trapId: string; roll: RollBreakdown; heroId: string };
-  'explore.trap_disarm_attempted': { trapId: string; roll: RollBreakdown; heroId: string; retry: number };
+  /** `skill` is absent on pre-Track-S streams: that means Thievery. */
+  'explore.trap_disarm_attempted': { trapId: string; roll: RollBreakdown; heroId: string; retry: number; skill?: 'thievery' | 'arcana' };
   'explore.trap_triggered': { trapId: string; trapKind: 'damage' | 'aoe' | 'status' | 'alarm' };
   'explore.lock_attempted': { edgeId: string; method: 'pick' | 'force' | 'spell'; roll: RollBreakdown; heroId: string; retry: number };
   'explore.lock_opened': { edgeId: string; method: 'pick' | 'force' | 'spell' };
@@ -68,6 +73,18 @@ export interface EventPayloads {
   'explore.room_cleared': { roomId: string };
   'explore.rested': { locationId: string; package: string };
   'explore.route_blocked': { edgeId: string; reason: 'impossibleDc' | 'noRoute' };
+  /**
+   * Track S: a non-dungeon-trio skill did (or tried to do) something on a mission.
+   * One fact per attempt, so the report can say what the skill bought AND what a
+   * miss cost. `amount` is the size of the payoff (see `SkillEffect`).
+   */
+  'explore.skill_used': {
+    roomId: string; skill: SkillUsed; effect: SkillEffect; heroId: string; roll: RollBreakdown;
+    /** runes_dispelled: 0 · undead_warded: frightened value · forage: HP healed · feint: ticks flat-footed. */
+    amount: number;
+    /** How many enemies were affected (undead_warded, feint). */
+    targets?: number;
+  };
 
   // combat.*
   'combat.started': { combatId: string; roomId: string; sideA: string[]; sideB: string[]; ambushTier?: string };
@@ -166,6 +183,7 @@ export const EVENT_TYPE_MANIFEST = Object.freeze([
   'explore.trap_disarm_attempted', 'explore.trap_triggered', 'explore.lock_attempted', 'explore.lock_opened',
   'explore.door_forced', 'explore.enemy_presence_detected', 'explore.ambush_resolved', 'explore.clue_found',
   'explore.shrine_activated', 'explore.cache_looted', 'explore.room_cleared', 'explore.rested', 'explore.route_blocked',
+  'explore.skill_used',
   'combat.started', 'combat.unit_spawned', 'combat.unit_engaged', 'combat.attack_resolved', 'combat.spell_cast', 'combat.aoe_resolved',
   'combat.damage_applied', 'combat.healing_applied', 'combat.condition_applied', 'combat.condition_save_resolved',
   'combat.condition_expired', 'combat.reaction_triggered', 'combat.unit_moved', 'combat.unit_downed',

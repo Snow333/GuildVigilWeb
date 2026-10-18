@@ -153,3 +153,46 @@ export const PROFILES = {
   /** Loot & Resources completes at this much collected gold-equivalent value × difficulty. */
   lootRunValueTarget: (difficulty: number) => 150 + difficulty * 100,
 } as const;
+
+/**
+ * Track S (M2) — the four skills that used to do nothing on a mission.
+ *
+ * Every number here is a lever the dungeon-curve harness can see. DCs follow the
+ * hazard formula's shape (rise with difficulty and party level) so a skill that
+ * matters at level 1 still matters at level 7 instead of going trivial.
+ */
+export const SKILL_PAYOFFS = {
+  /**
+   * ARCANA — rune-sealed doors and traps. `runedChance` of the hazards a dungeon
+   * rolls carry magic runes. On those, Thievery and Athletics lose `runePenalty`
+   * (you cannot pick or force a spell), and Arcana can dispel the runes outright.
+   * The flag comes from its OWN seeded stream, so room types, DCs and enemies are
+   * byte-identical to a dungeon without it.
+   */
+  arcana: { runedChance: 0.4, runePenalty: 2 },
+  /**
+   * RELIGION — warding the undead. Before a fight with undead in it, the party's
+   * best Religion roll decides how badly they flinch: `frightened` at this value
+   * (−attack, −AC) for the whole fight. Living enemies are never warded.
+   */
+  religion: { dcBase: 11, frightened: { success: 2, critSuccess: 3 } },
+  /**
+   * SURVIVAL — foraging on a rest. Success heals this much extra of max HP on top
+   * of the normal rest (`PROFILES.restHealFrac`, 0.5), for every hero. A crit is a
+   * second rest's worth of food. Rests are rare, so the payoff has to be felt.
+   */
+  survival: { dcBase: 11, bonusHealFrac: { success: 0.25, critSuccess: 0.5 } },
+  /**
+   * DECEPTION (the vision's "Trickery") — a feint as the fight opens. The enemy
+   * is flat-footed for this many ticks (10 ticks = 1 second): -2 AC and sneak
+   * attacks go off. ⚠ Measured first contact lands at tick 25–155 (the walk across
+   * the arena plus the start delay), so a window shorter than ~120 expired before
+   * a single blow and the feint did nothing.
+   */
+  deception: { dcBase: 11, flatFootedTicks: { success: 120, critSuccess: 200 } },
+} as const;
+
+/** One check DC for the new skills — hazard-shaped, no jitter (no per-room draw). */
+export function skillPayoffDc(base: number, difficulty: number, partyLevel: number): number {
+  return base + difficulty + Math.floor(partyLevel / 2);
+}

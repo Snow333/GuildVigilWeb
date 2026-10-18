@@ -161,6 +161,7 @@ export function deriveDispatchSummary(stream: EventStream): DispatchSummary {
         summary.exploration.locksOpened++;
         break;
 
+      case 'explore.skill_used':
       case 'explore.trap_detected':
       case 'explore.enemy_presence_detected': {
         const { heroId, roll } = ev.data;

@@ -174,7 +174,7 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
       return t(`${nameFor(ev.data.heroId)} spots a trap (${fmtRoll(ev.data.roll)}).`, 'good');
     case 'explore.trap_disarm_attempted':
       return t(
-        `${nameFor(ev.data.heroId)} ${CHECK_WORD[ev.data.roll.degree]} disarming the trap (${fmtRoll(ev.data.roll)}).`,
+        `${nameFor(ev.data.heroId)} ${CHECK_WORD[ev.data.roll.degree]} disarming the trap${ev.data.skill === 'arcana' ? ' with Arcana' : ''} (${fmtRoll(ev.data.roll)}).`,
         ev.data.roll.degree === 'success' || ev.data.roll.degree === 'critSuccess' ? 'good' : 'bad',
       );
     case 'explore.trap_triggered':
@@ -195,6 +195,29 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
         ev.data.tier === 'partySurprise' ? `The party gets the drop on them.` : `Contact — surprise: ${ev.data.tier}.`,
         ev.data.tier === 'partySurprise' ? 'good' : 'bad',
       );
+    case 'explore.skill_used': {
+      const who = nameFor(ev.data.heroId);
+      const d = ev.data;
+      const ok = d.roll.degree === 'success' || d.roll.degree === 'critSuccess';
+      const roll = fmtRoll(d.roll);
+      switch (d.effect) {
+        case 'runes_dispelled':
+          return t(`${who} reads the runes and breaks the seal (Arcana, ${roll}).`, 'good');
+        case 'undead_warded':
+          return ok
+            ? t(`${who} wards the undead (Religion, ${roll}). They fight weaker.`, 'good')
+            : t(`${who} tries to ward the undead (Religion, ${roll}). It fails.`, 'neutral');
+        case 'forage':
+          return ok
+            ? t(`${who} forages (Survival, ${roll}). The party heals ${d.amount} more.`, 'good')
+            : t(`${who} finds nothing to forage (Survival, ${roll}).`, 'neutral');
+        case 'feint':
+          return ok
+            ? t(`${who} feints (Deception, ${roll}). The enemy is caught off guard.`, 'good')
+            : t(`${who}'s feint fails (Deception, ${roll}).`, 'neutral');
+      }
+      return null;
+    }
     case 'explore.clue_found':
       return t(`A clue surfaces: ${ev.data.clueId} (${ev.data.arcId}).`, 'good');
     case 'explore.shrine_activated':
