@@ -410,6 +410,17 @@ export function runEncounter(
                 durationTicks: ENCOUNTER.attackIntervalTicks * 2,
               });
             }
+            // A performance lands on the whole party: one line per body, so
+            // the record and the field both show who it reached.
+            if (outcome.partyBuff) {
+              const pb = outcome.partyBuff;
+              for (const targetId of pb.targetIds) {
+                stream.emit(tick, 'combat.condition_applied', {
+                  targetId, conditionId: pb.conditionId,
+                  value: pb.value, durationTicks: pb.durationTicks,
+                });
+              }
+            }
             u.nextActionTick = tick + attackInterval(u);
             continue;
           }

@@ -18,11 +18,11 @@ function hero(classLevels: [number, number][] = [[1, 1]]): HeroState {
 }
 
 describe('THE WIRING TEST: every feat payload parses and classifies', () => {
-  it('all 227 feats are indexed — zero unparseable, zero unknown types', () => {
+  it('all 243 feats are indexed — zero unparseable, zero unknown types', () => {
     // buildIndex() throws at import time on any failure, so reaching here with
     // a full index IS the proof. The count pins it.
     expect(featEffectsById.size).toBe(feats.length);
-    expect(featEffectsById.size).toBe(227);
+    expect(featEffectsById.size).toBe(243);
   });
 
   it('effect_type distribution matches the source data (snapshot)', () => {
@@ -30,8 +30,8 @@ describe('THE WIRING TEST: every feat payload parses and classifies', () => {
     for (const fx of featEffectsById.values()) counts[fx.effectType] = (counts[fx.effectType] ?? 0) + 1;
     // Known distribution from the Godot data profile (nuance sweep, verified at conversion):
     expect(counts).toEqual({
-      passive_modifier: 119, combat_action: 51, reaction: 16, resource_grant: 12,
-      stat_mod: 8, special: 6, stance: 4, skill_mod: 4, spell_modifier: 3,
+      passive_modifier: 120, combat_action: 64, reaction: 16, resource_grant: 12,
+      stat_mod: 8, special: 6, stance: 4, skill_mod: 6, spell_modifier: 3,
       weapon_spec: 2, toggle: 1, conditional_stat_mod: 1,
     });
   });

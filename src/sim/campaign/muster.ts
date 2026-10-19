@@ -26,6 +26,7 @@ import type { LoadoutEntry } from '@sim/combat/loadout';
 import type { HeroKit } from './assembly';
 import { autoSpellPicks, spellsLearnedAtLevel } from '@sim/heroes/knownSpells';
 import { addWhileRoom } from '@sim/heroes/spellPlan';
+import { withGrantedAbilities } from '@sim/heroes/autoLoadout';
 
 export const FOUNDING_PARTY_SIZE = 4;
 
@@ -353,7 +354,12 @@ export function musterHero(choice: MusterChoice, index: number): HeroKit {
   // never fill. New spells go into the fight plan where there is room.
   const extra = autoSpellPicks(hero, template.classId, 1, spellsLearnedAtLevel(template.classId, 1));
   hero.knownSpells = [...knownSpells, ...extra].sort((a, b) => a - b);
-  const plannedLoadout = addWhileRoom(hero, loadout, extra);
+  // M2: a founding hero's own non-strike actives are planned too, so a
+  // day-one bard actually sings.
+  const plannedLoadout = withGrantedAbilities(
+    addWhileRoom(hero, loadout, extra),
+    hero.feats.map((f) => f.featId),
+  );
   return {
     hero,
     equipped: template.equipped.map((e) => ({ ...e, propertyIds: [...e.propertyIds] })),

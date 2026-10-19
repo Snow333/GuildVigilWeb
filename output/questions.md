@@ -68,13 +68,15 @@ So the career-harness result (−5.2 points of completion) is not wrong, it is
 **dominated by the early game** — a career starts at L1 and spends most of its
 runs in exactly the band where Power Attack loses.
 
-**Two follow-ups this opens, in value order:**
+**CLOSED 2026-10-17 by Steven.** Power Attack stays as it is, and the burst
+will **NOT** be made to retarget globally — carry-through belongs to **Cleave**,
+a melee feat still to be added. Making every attack carry through would hand
+out for free the thing Cleave is meant to sell. So the 42%-of-damage-on-corpses
+figure is not a bug to fix; it is the gap Cleave fills, and it also explains
+why Cleave will feel strong when it arrives.
 
-1. **Make the burst retarget instead of `break`.** This is the real prize and
-   it has nothing to do with feats: at L1 a party wastes **42% of its damage**
-   on corpses, and even at L7 it is 15%. Retargeting the remaining swings at
-   another living enemy would lift every hero in the game, and would very
-   likely flip Power Attack positive at all levels as a side effect. It
-   changes every fight, so it needs its own measured pass and a re-baseline.
-2. **Then revisit auto-adding abilities**, either unconditionally (if the
-   retarget fix removes the early-game penalty) or gated on level.
+⚠ DO NOT "fix" the `if (target.hp <= 0) break;` in `encounter.ts` as a general
+engine improvement. It is load-bearing design space.
+
+Auto-adding abilities was revisited separately and settled: only
+`grant_party_condition` (bard songs) is auto-planned. See `decisions.md`.
