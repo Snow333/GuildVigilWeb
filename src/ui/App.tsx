@@ -16,6 +16,7 @@ import { QuestBoard } from './screens/QuestBoard';
 import { DispatchSetup } from './screens/DispatchSetup';
 import { WorldMapScreen } from './screens/WorldMapScreen';
 import { ShopScreen } from './screens/ShopScreen';
+import { TownScreen } from './screens/TownScreen';
 import { PlaybackScreen } from './screens/PlaybackScreen';
 import { AfterActionScreen } from './screens/AfterActionScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -41,6 +42,8 @@ function Router() {
       return <WorldMapScreen questId={screen.questId} />;
     case 'shop':
       return <ShopScreen />;
+    case 'townUpgrades':
+      return <TownScreen />;
     case 'playback':
       return <PlaybackScreen />;
     case 'afterAction':

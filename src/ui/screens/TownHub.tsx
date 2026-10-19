@@ -208,6 +208,7 @@ export function TownHub() {
               )}
               <button className="gv-btn" onClick={() => nav({ kind: 'map', questId: null })}>World map</button>
               <button className="gv-btn" onClick={() => nav({ kind: 'shop' })}>Shop</button>
+              <button className="gv-btn" data-nav-town-upgrades="" onClick={() => nav({ kind: 'townUpgrades' })}>Town &amp; Upgrades</button>
               <button className="gv-btn" onClick={() => nav({ kind: 'settings' })}>Settings</button>
               <button className="gv-btn" onClick={() => void saveGame()}>Save</button>
               <button className="gv-btn gv-btn--ghost" onClick={quitToTitle}>Quit to title</button>
