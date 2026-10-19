@@ -11,10 +11,10 @@
 import { describe, expect, it } from 'vitest';
 import { CampaignSession } from '@sim/campaign/session';
 import { starterParty } from '@sim/campaign/starterParty';
-import { effectAt, type BuildingView, type BlockedReason } from '@sim/campaign/town';
+import { effectAt, partySizeAtLevel, type BuildingView, type BlockedReason } from '@sim/campaign/town';
 import { RESOURCE_KINDS, emptyStock, type ResourceStock } from '@content/town';
 import {
-  gapLine, ledgerOrder, needRows, partySizeFromText, picksTogether, rankPicks, resourceUnits,
+  gapLine, ledgerOrder, needRows, picksTogether, rankPicks, resourceUnits,
   statusCounts, statusOf,
 } from '../../src/ui/screens/townPicks';
 
@@ -319,19 +319,25 @@ describe('what the player reads', () => {
 });
 
 describe('the Guild Hall ladder', () => {
-  it('reads the party size from the effect copy, and the sim agrees at every level', () => {
+  it('reads the party size from the effect KEY, and the sim agrees at every level', () => {
+    /**
+     * ⚠ This used to parse "(\d+) heroes" out of the player-facing copy, which
+     * breaks silently the moment anyone rewords it to "a party of five". It
+     * now reads the machine key `party_size_N` — the same strings
+     * `maxPartySize()` keys on, so the ladder and the engine cannot disagree.
+     */
     const s = wealthy();
     for (let level = 1; level <= 3; level++) {
       if (level > 1) s.upgradeBuilding(1);
       expect(s.buildingLevel(1)).toBe(level);
-      expect(partySizeFromText(effectAt(1, level)?.text), `level ${level}`).toBe(s.maxPartySize());
+      expect(partySizeAtLevel(1, level), `level ${level}`).toBe(s.maxPartySize());
     }
     expect(s.maxPartySize()).toBe(6);
   });
 
-  it('copes with a line that names no number', () => {
-    expect(partySizeFromText('Keep up to some heroes')).toBeNull();
-    expect(partySizeFromText(null)).toBeNull();
+  it('a level that is not a party-size rung reports nothing', () => {
+    expect(partySizeAtLevel(3, 1)).toBeNull();   // Blacksmith L1 is `weapons`
+    expect(partySizeAtLevel(1, 9)).toBeNull();   // no such Guild Hall level
   });
 });
 

@@ -94,6 +94,23 @@ export function effectAt(buildingId: number, level: number): EffectCopy | null {
   return EFFECT_COPY[key] ?? null;
 }
 
+/**
+ * The party size a building level allows, or null if that level is not a
+ * party-size rung.
+ *
+ * ⚠ READS THE EFFECT KEY (`party_size_5`), NEVER THE PLAYER-FACING PROSE. The
+ * UI first did this by regexing "(\d+) heroes" out of `EFFECT_COPY.text` —
+ * which works until someone rewords the copy to "a party of five", and then
+ * the ladder silently shows the wrong number. The key is a machine contract
+ * and is safe to parse; the prose is written for humans and is expected to
+ * change. `maxPartySize()` keys on the same strings, so the two cannot drift.
+ */
+export function partySizeAtLevel(buildingId: number, level: number): number | null {
+  const key = effectsOf(buildingId)[`level_${level}`];
+  const m = /^party_size_(\d+)$/.exec(key ?? '');
+  return m ? Number(m[1]) : null;
+}
+
 /** Does the guild hold this effect string at its current levels? */
 export function hasEffect(levels: BuildingLevels, effectKey: string): boolean {
   for (const row of buildings) {

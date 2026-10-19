@@ -168,17 +168,6 @@ export function picksTogether(
 
 // ── the Guild Hall ladder ───────────────────────────────────────────────────
 
-/**
- * Party size from the Guild Hall's plain-English effect line ("Send 5 heroes on
- * a mission"). The sim exposes the size only as copy per level, so the ladder
- * reads it from there; `tests/ui/townScreen.test.ts` cross-checks every level
- * against `session.maxPartySize()` so a reworded line fails loudly instead of
- * silently drawing the wrong number of heroes.
- */
-export function partySizeFromText(text: string | null | undefined): number | null {
-  const m = /(\d+)\s+heroes/.exec(text ?? '');
-  return m ? Number(m[1]) : null;
-}
 
 /** Tier word for the Tavern table. */
 export const TIER_LABEL: Record<'common' | 'uncommon' | 'rare', string> = {

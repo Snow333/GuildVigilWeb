@@ -15,11 +15,11 @@
  */
 
 import { useState, type ReactNode } from 'react';
-import { effectAt, upgradeCost, type BuildingView, type UpgradeCost } from '@sim/campaign/town';
+import { effectAt, partySizeAtLevel, upgradeCost, type BuildingView, type UpgradeCost } from '@sim/campaign/town';
 import { RESOURCE_KINDS, type ResourceKind, type ResourceStock } from '@content/town';
 import { useGame } from '../state/GameProvider';
 import {
-  STATUS_LABEL, TIER_LABEL, gapLine, ledgerOrder, needRows, partySizeFromText, picksTogether,
+  STATUS_LABEL, TIER_LABEL, gapLine, ledgerOrder, needRows, picksTogether,
   rankPicks, statusCounts, statusOf, type Pick, type TownStatus, type Upgradable,
 } from './townPicks';
 
@@ -205,7 +205,10 @@ export function TownScreen() {
             {picks.length === 0 ? (
               <>You have <b>{gold} gold</b>. Nothing is ready to buy.</>
             ) : together.affordable ? (
-              <>You have <b>{gold} gold</b>. You can afford all {picks.length === 1 ? '1 pick' : `${picks.length} picks`}.</>
+              <>You have <b>{gold} gold</b>.{' '}
+                {picks.length === 1
+                  ? 'This one is ready to buy.'
+                  : `All ${picks.length} of these are ready to buy.`}</>
             ) : (
               <>You have <b>{gold} gold</b>. You can&apos;t buy all {picks.length} picks at once — start at the top.</>
             )}
@@ -340,7 +343,7 @@ export function TownScreen() {
               <tbody>
                 {ladderLevels.map((lvl) => {
                   const eff = effectAt(GUILD_HALL, lvl);
-                  const size = partySizeFromText(eff?.text);
+                  const size = partySizeAtLevel(GUILD_HALL, lvl);
                   const done = (guildHall?.level ?? 0) >= lvl;
                   const isNext = (guildHall?.level ?? 0) + 1 === lvl;
                   const bill = !done ? upgradeCost(GUILD_HALL, lvl) : null;
