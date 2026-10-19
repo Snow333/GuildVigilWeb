@@ -47,4 +47,6 @@ export const Seeds = {
   forecast: (partySize: number, i: number) => `forecast_${partySize}_${i}`,
   worldWeek: (week: number) => `week_${week}`,
   rotation: (buildingId: number, week: number) => `rotation_${buildingId}_${week}`,
+  /** Resource-site placement (M3): per region per kind, stable for a world. */
+  site: (worldSeed: number, regionId: string, kind: string) => `site_${worldSeed}_${regionId}_${kind}`,
 } as const;

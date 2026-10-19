@@ -45,6 +45,16 @@ import {
 } from '@sim/heroes/spellPlan';
 import { withGrantedAbilities } from '@sim/heroes/autoLoadout';
 import {
+  blockersFor, hasEffect, levelOf, townView, upgradeCost,
+  type BuildingLevels, type BuildingView,
+} from './town';
+import {
+  RECRUIT_COST, RECRUIT_TIERS, RESOURCE_KINDS, STARTING_BUILDINGS, emptyStock,
+  type RecruitTier, type ResourceKind, type ResourceStock,
+} from '@content/town';
+import { allSites, siteKey, type ResourceSite } from './sites';
+import { defaultChoiceFor, musterHero } from '@sim/campaign/muster';
+import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
   itemContributions, slotState,
   type ItemContribution, type SlotState, type StatLedger,
@@ -371,10 +381,21 @@ export interface SessionSaveState {
   shopSold?: { week: number; counts: [number, number][] };
   /** Marshal letters the player answered (M2; absent in older saves — backfills empty). */
   answered?: number[];
+  /**
+   * M3 town state. All optional: a pre-M3 save backfills to a guild with a
+   * level-1 Guild Hall, no other buildings, no resources and no reputation,
+   * which is exactly the state M3 starts a new campaign in — so an old save
+   * loads into the new systems instead of crashing.
+   */
+  buildingLevels?: [number, number][];
+  resources?: [string, number][];
+  reputation?: number;
+  /** Secured resource sites, by the region they sit in. */
+  sites?: { regionId: string; kind: string; securedWeek: number }[];
 }
 
 /** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
-export const SHOP = { rotationSlots: 6, sellFraction: 0.5 } as const;
+export const SHOP = { rotationSlots: 6, slotsPerLevel: 2, sellFraction: 0.5 } as const;
 
 /** Haven's home-turf radius in the coarse partition (shared with the chart's anchors). */
 export const HAVEN_REGION_RADIUS = 12;
@@ -494,6 +515,21 @@ export class CampaignSession {
   /** Marshal letters (story_dialogue ids) the player has answered — they stop showing. */
   private answered = new Set<number>();
   private dispatchN = 0;
+  /**
+   * M3 — the town. Level 0 = never built; the Guild Hall starts at 1 because a
+   * guild with no hall cannot send anyone anywhere (its level_1 effect IS the
+   * starting party size of 4).
+   */
+  private buildingLevels: BuildingLevels = { ...STARTING_BUILDINGS };
+  private resources: ResourceStock = emptyStock();
+  /**
+   * Reputation. ⚠ Quest completion already awarded `rep` into an event payload
+   * and NOTHING stored it, so `buildings.reputation_required` had nothing to
+   * check against. M3 keeps the running total.
+   */
+  private reputation = 0;
+  /** Secured resource sites: regionId → the kind it pays, and when it was taken. */
+  private sites: { regionId: string; kind: ResourceKind; securedWeek: number }[] = [];
   private profile: MissionProfile = 'fullExplore';
   private caution: Caution = 'standard';
   /** Purchases against the current rotation week (stock itself derives from seeds). */
@@ -526,6 +562,21 @@ export class CampaignSession {
     const week = this.week;
     this.minute = (week - 1) * CLOCK.minutesPerWeek;
     this.world.emit(this.minute, 'world.week_tick', { week });
+
+    // ── Resource income (M3) ──
+    // Secured sites pay before the board is drawn, so a player who just took a
+    // timber camp can spend that timber the same week they see the new board.
+    const income = this.weeklyIncome();
+    const earned: string[] = [];
+    for (const kind of RESOURCE_KINDS) {
+      if (income[kind] > 0) {
+        this.resources[kind] += income[kind];
+        earned.push(`${income[kind]} ${kind}`);
+      }
+    }
+    if (earned.length > 0) {
+      this.world.emit(this.minute, 'town.site_income', { week, totals: earned.join(', ') });
+    }
 
     // ── Expiry sweep ──
     for (let i = this.open.length - 1; i >= 0; i--) {
@@ -843,10 +894,18 @@ export class CampaignSession {
     if (outcome === 'completed') {
       const haul = dispatch ? dispatch.gold : 0;
       this.gold += (quest.reward_gold as number) + haul;
+      /**
+       * M3: the Library's xp_bonus_Npct applies here, and reputation is now
+       * BANKED rather than only announced — `reputation_required` on the
+       * buildings table had nothing to check against before this line.
+       */
+      const questXp = Math.round((quest.reward_xp as number) * this.xpMultiplier());
+      const questRep = quest.reward_reputation as number;
+      this.reputation += questRep;
       if (dispatch) this.stash.push(...dispatch.items);
       const doneEv = this.world.emit(minute, 'world.quest_completed', {
         questId: String(q.questId), regionId: q.regionId,
-        xp: quest.reward_xp as number, gold: quest.reward_gold as number, rep: quest.reward_reputation as number,
+        xp: questXp, gold: quest.reward_gold as number, rep: questRep,
       });
       this.completed.set(q.questId, week);
       this.recordFact(week, q.regionId, 'quest_completed', String(q.questId), minute);
@@ -1153,7 +1212,7 @@ export class CampaignSession {
     const instance = this.stash[stashIndex];
     if (!instance) throw new Error(`sellItem: no stash item at index ${stashIndex}`);
     this.stash.splice(stashIndex, 1);
-    this.gold += Math.floor(deriveItem(instance).price * SHOP.sellFraction);
+    this.gold += Math.floor(deriveItem(instance).price * this.sellFraction());
   }
 
   // ── Dev panel commands (playtest tooling — output/working-agreement.md §7) ──
@@ -1411,6 +1470,208 @@ export class CampaignSession {
     });
   }
 
+  // ── THE TOWN (M3) ────────────────────────────────────────────────────────
+
+  /** Every building, what it gives now, what the next level costs and why it is blocked. */
+  town(): BuildingView[] {
+    return townView(this.buildingLevels, this.gold, this.resources, this.reputation);
+  }
+
+  buildingLevel(buildingId: number): number {
+    return levelOf(this.buildingLevels, buildingId);
+  }
+
+  resourceStock(): ResourceStock {
+    return { ...this.resources };
+  }
+
+  reputationTotal(): number {
+    return this.reputation;
+  }
+
+  securedSites(): { regionId: string; kind: ResourceKind; securedWeek: number }[] {
+    return this.sites.map((s) => ({ ...s }));
+  }
+
+  /**
+   * Buy the next level of a building. Throws on anything the player could not
+   * legitimately do, so the UI never has to guess — it reads `town()` for the
+   * blockers and only calls this on an unblocked row.
+   */
+  upgradeBuilding(buildingId: number): { level: number; gold: number } {
+    const blockers = blockersFor(
+      buildingId, this.buildingLevels, this.gold, this.resources, this.reputation,
+    );
+    if (blockers.length > 0) {
+      throw new Error(`upgradeBuilding ${buildingId}: ${blockers.map((b) => b.text).join(' ')}`);
+    }
+    const next = levelOf(this.buildingLevels, buildingId) + 1;
+    const cost = upgradeCost(buildingId, next);
+    this.gold -= cost.gold;
+    for (const kind of RESOURCE_KINDS) {
+      const need = cost.resources[kind] ?? 0;
+      if (need > 0) this.resources[kind] -= need;
+    }
+    this.buildingLevels[buildingId] = next;
+    this.world.emit(this.minute, 'town.building_upgraded', {
+      buildingId: String(buildingId), level: next, goldSpent: cost.gold,
+    });
+    return { level: next, gold: this.gold };
+  }
+
+  /**
+   * PARTY SIZE — the guild-hall ladder, and the first building effect with
+   * teeth. `party_size_N` is read here and nowhere else.
+   *
+   * ⚠ Reads the EFFECT, not the level number. A Guild Hall at level 2 means 5
+   * only because its `level_2` effect string says `party_size_5`; keying on
+   * the level would silently diverge the moment the content changed.
+   */
+  maxPartySize(): number {
+    for (const n of [6, 5, 4]) {
+      if (hasEffect(this.buildingLevels, `party_size_${n}`)) return n;
+    }
+    return 4;
+  }
+
+  /** Market: what a sold item fetches, as a fraction of its worth. */
+  sellFraction(): number {
+    if (hasEffect(this.buildingLevels, 'sell_price_100pct')) return 1;
+    if (hasEffect(this.buildingLevels, 'sell_price_90pct')) return 0.9;
+    if (hasEffect(this.buildingLevels, 'sell_price_80pct')) return 0.8;
+    return SHOP.sellFraction;
+  }
+
+  /** Library: a multiplier on quest XP. */
+  xpMultiplier(): number {
+    if (hasEffect(this.buildingLevels, 'xp_bonus_10pct')) return 1.1;
+    if (hasEffect(this.buildingLevels, 'xp_bonus_5pct')) return 1.05;
+    return 1;
+  }
+
+  /** Stables: a multiplier on travel time (lower is faster). */
+  travelMultiplier(): number {
+    if (hasEffect(this.buildingLevels, 'travel_speed_50pct')) return 0.5;
+    if (hasEffect(this.buildingLevels, 'travel_speed_25pct')) return 0.75;
+    return 1;
+  }
+
+  /**
+   * Every resource site in the world, with whether the guild holds it.
+   *
+   * Derived from the region table and the world seed each call; only the
+   * `secured` flag is state. Cheapest first, so the list reads as a to-do.
+   */
+  resourceSites(): (ResourceSite & { secured: boolean })[] {
+    const held = new Set(this.sites.map((st) => siteKey(st.regionId, st.kind)));
+    return allSites(this.map, this.map.seed).map((site) => ({
+      ...site,
+      secured: held.has(siteKey(site.regionId, site.kind)),
+    }));
+  }
+
+  /**
+   * Take a site. The expedition itself is a dispatch the player already ran —
+   * this banks the result.
+   *
+   * ⚠ Idempotent by (region, kind): securing a site twice does not double its
+   * income, because the weekly payout iterates the stored list.
+   */
+  secureSite(regionId: string, kind: ResourceKind): void {
+    const site = this.resourceSites().find((st) => st.regionId === regionId && st.kind === kind);
+    if (!site) throw new Error(`secureSite: no ${kind} site in ${regionId}`);
+    if (site.secured) return;
+    this.sites.push({ regionId, kind, securedWeek: this.week });
+    this.world.emit(this.minute, 'town.site_secured', { regionId, kind, yield: site.yield });
+  }
+
+  /** Units per week the guild currently earns, by kind. */
+  weeklyIncome(): ResourceStock {
+    const out = emptyStock();
+    for (const site of this.resourceSites()) {
+      if (site.secured) out[site.kind] += site.yield;
+    }
+    return out;
+  }
+
+  // ── RECRUITING (M3) ──────────────────────────────────────────────────────
+
+  /**
+   * Who the Tavern can introduce right now.
+   *
+   * ⚠ Gated on the Tavern's authored effect strings, not on its level number,
+   * so re-authoring the Tavern re-aims this without touching the engine.
+   */
+  recruitPool(): { classId: number; className: string; tier: RecruitTier; cost: number }[] {
+    const out: { classId: number; className: string; tier: RecruitTier; cost: number }[] = [];
+    const tiers: RecruitTier[] = ['common', 'uncommon', 'rare'];
+    for (const tier of tiers) {
+      if (!hasEffect(this.buildingLevels, `recruit_${tier}`)) continue;
+      for (const classId of RECRUIT_TIERS[tier]) {
+        out.push({
+          classId,
+          className: classesById.get(classId)?.name ?? `class ${classId}`,
+          tier,
+          cost: RECRUIT_COST[tier],
+        });
+      }
+    }
+    return out;
+  }
+
+  /** Roster size, which is also the party that walks out of the gate. */
+  rosterSize(): number {
+    return this.kits.length;
+  }
+
+  /**
+   * Hire a hero. Throws rather than silently failing, same contract as
+   * `upgradeBuilding` — the UI reads `recruitPool()` and `maxPartySize()` and
+   * only calls this when it is legal.
+   */
+  recruitHero(classId: number, name = ''): HeroKit {
+    const offer = this.recruitPool().find((o) => o.classId === classId);
+    if (!offer) {
+      throw new Error(`recruitHero: no ${classId} available — the Tavern does not reach that tier yet`);
+    }
+    if (this.kits.length >= this.maxPartySize()) {
+      throw new Error(
+        `recruitHero: the guild hall holds ${this.maxPartySize()} — upgrade it before hiring a ${offer.className}`,
+      );
+    }
+    if (this.gold < offer.cost) {
+      throw new Error(`recruitHero: need ${offer.cost}g, have ${this.gold}g`);
+    }
+    this.gold -= offer.cost;
+    /**
+     * ⚠ INDEXED BY ROSTER LENGTH, WHICH IS SAFE ONLY BECAUSE NOTHING IS EVER
+     * REMOVED FROM `kits`. A dead hero keeps their slot (status carries the
+     * death), so ids stay unique. If removal is ever added, this needs a
+     * monotonic counter instead or two heroes will share an id.
+     */
+    const choice = { ...defaultChoiceFor(classId), ...(name.trim() ? { name: name.trim() } : {}) };
+    const kit = musterHero(choice, this.kits.length);
+    this.kits.push(kit);
+    this.heroes.push(kit.hero);
+    this.world.emit(this.minute, 'town.hero_recruited', {
+      heroId: kit.hero.id, className: offer.className, cost: offer.cost,
+    });
+    return kit;
+  }
+
+  /** Dev/testing: hand the guild resources without securing a site. */
+  grantResources(amounts: Partial<ResourceStock>): void {
+    for (const kind of RESOURCE_KINDS) {
+      const add = amounts[kind] ?? 0;
+      if (add !== 0) this.resources[kind] = Math.max(0, this.resources[kind] + Math.trunc(add));
+    }
+  }
+
+  /** Dev/testing: move reputation. */
+  grantReputation(amount: number): void {
+    this.reputation = Math.max(0, this.reputation + Math.trunc(amount));
+  }
+
   /**
    * The week's shop rotation — pure derivation from Seeds.rotation(buildingId, week)
    * (constraint 7: never store what you can derive); only purchases are state.
@@ -1420,14 +1681,24 @@ export class CampaignSession {
     const soldCounts = this.shopSoldWeek === this.week ? this.shopSoldCounts : new Map<number, number>();
     const byBuilding = new Map<number, typeof shopStockRows[number][]>();
     for (const row of shopStockRows) {
-      if ((row.required_building_level as number) > 1) continue; // building levels arrive with the town systems
+      // M3: the gate is the guild's actual building level. 45 of 105 rows sat
+      // behind a hardcoded `continue` here — "building levels arrive with the
+      // town systems" — and this is those systems arriving.
+      if ((row.required_building_level as number) > levelOf(this.buildingLevels, row.building_id as number)) continue;
       const rows = byBuilding.get(row.building_id as number) ?? [];
       rows.push(row);
       byBuilding.set(row.building_id as number, rows);
     }
     for (const [buildingId, rows] of [...byBuilding.entries()].sort((a, b) => a[0] - b[0])) {
       const rng = new Rng(Seeds.rotation(buildingId, this.week));
-      const rotation = rows.length <= SHOP.rotationSlots ? rows : rng.shuffle(rows).slice(0, SHOP.rotationSlots);
+      /**
+       * M3 — THE SHELF GROWS WITH THE BUILDING. Measured: with a flat 6 slots,
+       * upgrading the Blacksmith left the offer count at 12 and changed only
+       * WHICH six rotated, so the thing the player just paid for was invisible.
+       * Widening the rotation is what makes the unlocked rows actually surface.
+       */
+      const slots = SHOP.rotationSlots + (levelOf(this.buildingLevels, buildingId) - 1) * SHOP.slotsPerLevel;
+      const rotation = rows.length <= slots ? rows : rng.shuffle(rows).slice(0, slots);
       const building = buildingsById.get(buildingId);
       const buildingName = (building?.shop_display_name as string | null) ?? building?.name ?? `building_${buildingId}`;
       for (const row of rotation) {
@@ -1639,6 +1910,13 @@ export class CampaignSession {
       escalation: this.ledger.serialize(),
       shopSold: { week: this.shopSoldWeek, counts: [...this.shopSoldCounts.entries()] },
       answered: [...this.answered].sort((a, b) => a - b),
+      // M3 town state. Sorted so a save is byte-stable for the save-format test.
+      buildingLevels: Object.entries(this.buildingLevels)
+        .map(([id, lvl]) => [Number(id), lvl] as [number, number])
+        .sort((a, b) => a[0] - b[0]),
+      resources: RESOURCE_KINDS.map((k) => [k, this.resources[k]] as [string, number]),
+      reputation: this.reputation,
+      sites: this.sites.map((st) => ({ ...st })),
     });
   }
 
@@ -1677,6 +1955,16 @@ export class CampaignSession {
     session.shopSoldCounts = new Map(data.shopSold?.counts ?? []);
     // M2: pre-commission saves have no answered letters — every letter shows again.
     session.answered = new Set(Array.isArray(data.answered) ? data.answered : []);
+    // M3: the backfill stage guarantees these are present and well-shaped.
+    session.buildingLevels = Object.fromEntries(data.buildingLevels ?? [[1, 1]]);
+    session.resources = emptyStock();
+    for (const [kind, n] of data.resources ?? []) {
+      if ((RESOURCE_KINDS as readonly string[]).includes(kind)) session.resources[kind as ResourceKind] = n;
+    }
+    session.reputation = data.reputation ?? 0;
+    session.sites = (data.sites ?? [])
+      .filter((st) => (RESOURCE_KINDS as readonly string[]).includes(st.kind))
+      .map((st) => ({ regionId: st.regionId, kind: st.kind as ResourceKind, securedWeek: st.securedWeek }));
     return session;
   }
 

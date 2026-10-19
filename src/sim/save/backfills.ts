@@ -10,6 +10,7 @@
  * two loads of the same save would diverge).
  */
 
+import { STARTING_BUILDINGS } from '@content/town';
 import { deriveHeroIdentity, isAncestryId, isGender } from '@sim/heroes/ancestry';
 import { normalizeQuickSlots, QUICK_SLOT_COUNT } from '@sim/heroes/quickSlots';
 import type { BackfillStage } from './saveStore';
@@ -185,7 +186,88 @@ export const backfillLongRestUses: BackfillStage = (state) => {
   return touched ? s : state;
 };
 
+/**
+ * M3 — the town. Pre-M3 saves have no buildings, resources, reputation or
+ * sites.
+ *
+ * ⚠ INVENTS NOTHING EXCEPT THE GUILD HALL, AND THAT IS NOT AN INVENTION. The
+ * Guild Hall's `level_1` effect IS `party_size_4`, which is the party size
+ * every pre-M3 save already played with — so granting level 1 PRESERVES the
+ * save's behaviour rather than changing it. Granting level 0 would silently
+ * shrink a loaded party below four and break a save that worked.
+ *
+ * Everything else starts empty: a veteran guild does not get retroactive
+ * credit for buildings it never paid for, and guessing a level from the save's
+ * gold or week would be fabricating progress the player did not earn.
+ *
+ * ⚠ REPAIRS malformed shapes rather than letting a resolver trip later, same
+ * posture as the stages above: non-array maps are replaced, and entries that
+ * are not sane integers are dropped.
+ */
+export const backfillTown: BackfillStage = (state) => {
+  const s = state as (Record<string, unknown> & { v?: unknown }) | null;
+  if (!s || typeof s !== 'object') return state;
+
+  let touched = false;
+
+  const levels = s['buildingLevels'];
+  if (!Array.isArray(levels)) {
+    /**
+     * ⚠ THE WHOLE STARTING SET, NOT JUST THE HALL. A pre-M3 save had a
+     * WORKING SHOP — the old gate put every level-1 row on sale — so granting
+     * only the Guild Hall loads a veteran guild into an empty market. Caught
+     * by `tests/campaign/town.test.ts`; granting the starting buildings
+     * preserves the save's behaviour, which is what a backfill is for.
+     */
+    s['buildingLevels'] = Object.entries(STARTING_BUILDINGS)
+      .map(([id, lvl]) => [Number(id), lvl] as [number, number])
+      .sort((a, b) => a[0] - b[0]);
+    touched = true;
+  } else {
+    const clean = levels.filter((e): e is [number, number] =>
+      Array.isArray(e) && e.length === 2
+      && Number.isInteger(e[0]) && (e[0] as number) > 0
+      && Number.isInteger(e[1]) && (e[1] as number) > 0);
+    if (clean.length !== levels.length) { s['buildingLevels'] = clean; touched = true; }
+    // A save that lost its Guild Hall row cannot send anyone anywhere.
+    if (!clean.some((e) => e[0] === 1)) {
+      (s['buildingLevels'] as [number, number][]).push([1, STARTING_BUILDINGS[1] ?? 1]);
+      touched = true;
+    }
+  }
+
+  const res = s['resources'];
+  if (!Array.isArray(res)) {
+    s['resources'] = [];
+    touched = true;
+  } else {
+    const clean = res.filter((e): e is [string, number] =>
+      Array.isArray(e) && e.length === 2 && typeof e[0] === 'string'
+      && typeof e[1] === 'number' && Number.isFinite(e[1]) && (e[1] as number) >= 0);
+    if (clean.length !== res.length) { s['resources'] = clean; touched = true; }
+  }
+
+  if (typeof s['reputation'] !== 'number' || !Number.isFinite(s['reputation'])) {
+    s['reputation'] = 0;
+    touched = true;
+  }
+
+  const sites = s['sites'];
+  if (!Array.isArray(sites)) {
+    s['sites'] = [];
+    touched = true;
+  } else {
+    const clean = sites.filter((e) =>
+      e && typeof e === 'object' && typeof (e as Record<string, unknown>)['regionId'] === 'string'
+      && typeof (e as Record<string, unknown>)['kind'] === 'string');
+    if (clean.length !== sites.length) { s['sites'] = clean; touched = true; }
+  }
+
+  return touched ? s : state;
+};
+
 /** Stages run in order. Append only — a stage's position is part of its contract. */
 export const SAVE_BACKFILLS: readonly BackfillStage[] = [
   backfillHeroIdentity, backfillKnownSpells, backfillQuickSlots, backfillLongRestUses,
+  backfillTown,
 ];

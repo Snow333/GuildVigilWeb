@@ -9,7 +9,7 @@
  * misses, round bucketing) is Phase 3 polish per the plan.
  */
 
-import { spellsById } from '@sim/registry';
+import { buildingsById, spellsById } from '@sim/registry';
 import type { EventStream } from '@sim/core/events/stream';
 import type { RollBreakdown, SimEvent } from '@sim/core/events/types';
 
@@ -136,6 +136,11 @@ function signed(n: number): string {
  */
 function spellName(spellId: number): string {
   return (spellsById.get(spellId)?.name as string | undefined) ?? `spell ${spellId}`;
+}
+
+/** Building id → authored name, same reasoning as spellName above. */
+function buildingName(buildingId: string): string {
+  return (buildingsById.get(Number(buildingId))?.name as string | undefined) ?? `building ${buildingId}`;
 }
 
 /** One event → one line, or null to drop it silently (structural noise). */
@@ -379,7 +384,17 @@ export function interpretEvent(ev: SimEvent, nameFor: NameResolver = (id) => id)
       return t(`Quest ${ev.data.questId} expired unanswered (${ev.data.regionId}).`, 'bad');
     case 'world.quest_completed':
       return t(`Quest ${ev.data.questId} COMPLETE: +${ev.data.gold}g, +${ev.data.xp}xp.`, 'good');
-    case 'world.quest_failed':
+
+
+    // ── town.* (M3) ──
+    case 'town.building_upgraded':
+      return t(`${buildingName(ev.data.buildingId)} is now level ${ev.data.level} (${ev.data.goldSpent}g).`, 'good');
+    case 'town.site_secured':
+      return t(`${ev.data.kind} site secured in ${ev.data.regionId} — ${ev.data.yield}/week.`, 'good');
+    case 'town.hero_recruited':
+      return t(`A ${ev.data.className} signs on (${ev.data.cost}g).`, 'good');
+    case 'town.site_income':
+      return t(`Week ${ev.data.week} income: ${ev.data.totals}.`, 'system');    case 'world.quest_failed':
       return t(`Quest ${ev.data.questId} failed (${ev.data.regionId}).`, 'bad');
     case 'world.escalation_changed':
       return t(`${ev.data.regionId} pressure: tier ${ev.data.oldTier} → ${ev.data.newTier}.`,

@@ -135,6 +135,11 @@ export interface EventPayloads {
   'world.quest_accepted': { questId: string; partyId: string };
   'world.quest_expired': { questId: string; regionId: string };
   'world.quest_completed': { questId: string; regionId: string; xp: number; gold: number; rep: number };
+  // ── The town (M3) ──
+  'town.building_upgraded': { buildingId: string; level: number; goldSpent: number };
+  'town.site_secured': { regionId: string; kind: string; yield: number };
+  'town.site_income': { week: number; totals: string };
+  'town.hero_recruited': { heroId: string; className: string; cost: number };
   'world.quest_failed': { questId: string; regionId: string };
   'world.escalation_changed': { regionId: string; oldTier: number; newTier: number };
   'world.villain_beat_fired': { regionId: string; villainId: string; beatId: string };
@@ -192,6 +197,7 @@ export const EVENT_TYPE_MANIFEST = Object.freeze([
   'hero.xp_awarded', 'hero.level_up_applied', 'hero.deed_earned', 'hero.died', 'hero.wounded_changed',
   'loot.rolled', 'loot.item_generated', 'loot.collected', 'loot.left_behind',
   'world.week_tick', 'world.quest_posted', 'world.quest_accepted', 'world.quest_expired', 'world.quest_completed',
+  'town.building_upgraded', 'town.site_secured', 'town.site_income', 'town.hero_recruited',
   'world.quest_failed', 'world.escalation_changed', 'world.villain_beat_fired', 'world.poi_state_changed',
   'world.poi_income_paid', 'world.building_upgrade_started', 'world.building_upgrade_completed',
   'world.shop_restocked', 'world.rotation_changed', 'world.hero_recruited', 'world.respec_purchased',
