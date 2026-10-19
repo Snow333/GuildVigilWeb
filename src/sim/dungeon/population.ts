@@ -4,7 +4,7 @@
  * clue placement, rest charges. All seeded on the dispatch (constraint 5).
  */
 
-import { DUNGEON_TIERS, ENCOUNTERS, HAZARDS, ROOM_TYPE_WEIGHTS, partyScaledBudget } from '@content/dungeon';
+import { DUNGEON_TIERS, ENCOUNTERS, HAZARDS, ROOM_TYPE_WEIGHTS, SKILL_PAYOFFS, partyScaledBudget } from '@content/dungeon';
 import { enemies } from '@content/generated';
 import { Rng } from '@sim/core/rng';
 import { bfsDepths, type DungeonTemplate } from './graph';
@@ -12,6 +12,11 @@ import { bfsDepths, type DungeonTemplate } from './graph';
 export interface RoomHazard {
   dc: number;
   detected?: boolean;
+  /**
+   * Track S: magic runes. Thievery and Athletics are worse against these and
+   * Arcana can dispel them. Set from its own seeded stream — see `populate`.
+   */
+  runed?: boolean;
 }
 
 export interface PopulatedRoom {
@@ -83,6 +88,10 @@ export function populate(
   partySize: number = 4,
 ): PopulatedDungeon {
   const rng = new Rng(`pop_${seed}_${template.templateId}`);
+  // Track S: which hazards carry runes is drawn from a SEPARATE stream. Pulling it
+  // from `rng` would shift every later room type, DC and enemy roll, and every
+  // seeded dungeon in the game would change shape under the player.
+  const runeRng = new Rng(`rune_${seed}_${template.templateId}`);
   const rooms = new Map<number, PopulatedRoom>();
   const minL = Math.max(difficulty - ENCOUNTERS.levelBand, 1);
   const maxL = difficulty + ENCOUNTERS.levelBand;
@@ -117,9 +126,11 @@ export function populate(
       const forceTrap = type === 'trap'; // typed trap rooms always carry one
       if (type !== 'boss' && (forceTrap || rng.chance(trapChance))) {
         trap = { dc: hazardDc(difficulty, template.tier, partyLevel, type, rng) };
+        if (runeRng.chance(SKILL_PAYOFFS.arcana.runedChance)) trap.runed = true;
       }
       if (rng.chance(lockChance) || type === 'vault') {
         lock = { dc: hazardDc(difficulty, template.tier, partyLevel, type, rng) };
+        if (runeRng.chance(SKILL_PAYOFFS.arcana.runedChance)) lock.runed = true;
       }
     }
 

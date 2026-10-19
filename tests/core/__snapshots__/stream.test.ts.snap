@@ -45,6 +45,7 @@ exports[`EventStream (constraint #4) > FREEZE GUARD: the type manifest only ever
   "explore.room_entered",
   "explore.route_blocked",
   "explore.shrine_activated",
+  "explore.skill_used",
   "explore.trap_detected",
   "explore.trap_disarm_attempted",
   "explore.trap_triggered",

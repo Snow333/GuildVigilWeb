@@ -9,7 +9,7 @@ import { combatant } from '../combat/conditions.test';
 function member(id: string, over: Parameters<typeof combatant>[0] = {}): DispatchHero {
   return {
     c: combatant({ id, name: id, attackBonus: 7, damageDice: '1d8+3', maxHp: 30, hp: 30, ac: 17, initiativeBonus: 5, ...over }),
-    skills: { perception: 6, thievery: 5, athletics: 6 },
+    skills: { perception: 6, thievery: 5, athletics: 6, arcana: 0, religion: 0, survival: 0, deception: 0 },
   };
 }
 

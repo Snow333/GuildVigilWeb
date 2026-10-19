@@ -83,6 +83,12 @@ const SKILL_ABILITY: Record<string, AbilityKey> = {
   arcana: 'int',
   religion: 'wis',
   nature: 'wis',
+  // Track S: the mission skills. Every row here is load-bearing for the same
+  // reason `stealth` is — a missing row falls back to WIS, so a Deception (CHA)
+  // feint would quietly be keyed off Wisdom and every test that merely runs the
+  // code path would still pass.
+  survival: 'wis',
+  deception: 'cha',
 };
 
 function parseFeatures(raw: unknown): string[] {
@@ -483,6 +489,10 @@ export function assembleHero(kit: HeroKit): DispatchHero {
       perception: perceptionTotal,
       thievery: skill('thievery'),
       athletics: skill('athletics'),
+      arcana: skill('arcana'),
+      religion: skill('religion'),
+      survival: skill('survival'),
+      deception: skill('deception'),
     },
   };
 }

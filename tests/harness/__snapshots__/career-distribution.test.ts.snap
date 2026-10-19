@@ -3,15 +3,15 @@
 exports[`career distribution harness — the guild across seasons > THE BASELINE: exact distribution snapshot — drift must justify itself 1`] = `
 {
   "ambushDeaths": 0,
-  "avgFinalLevelX100": 415,
-  "completionRate": 0.95,
-  "failRate": 0.004,
-  "goldP50": 8649,
+  "avgFinalLevelX100": 420,
+  "completionRate": 0.965,
+  "failRate": 0.002,
+  "goldP50": 9504,
   "idleWeekRate": 0,
-  "itemsP50": 80,
-  "levelUpsTotal": 252,
+  "itemsP50": 84,
+  "levelUpsTotal": 256,
   "maxEscalationTier": 3,
   "weeksWithQuestActivity": 480,
-  "wipeRate": 0.046,
+  "wipeRate": 0.033,
 }
 `;

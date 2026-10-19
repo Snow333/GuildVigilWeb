@@ -9,6 +9,7 @@
  */
 
 import { deriveDispatchSummary, type HeroTally } from '@sim/core/events/summary';
+import type { SimEvent } from '@sim/core/events/types';
 import type { QuestRecord } from '@sim/campaign/session';
 
 /** One line of the "who did what" table. */
@@ -27,6 +28,12 @@ export interface MissionHeroRow {
 export interface MissionSummary {
   /** One plain sentence (or two short ones) for how the mission went. */
   sentence: string;
+  /**
+   * What Arcana, Religion, Survival and Deception did on this mission, one short
+   * line each. Empty when none of them was called on. A skill the player built a
+   * hero around must be able to SEE that it mattered (Track S).
+   */
+  skillLines: SkillLine[];
   /** Heroes who took part, in roster order. */
   rows: MissionHeroRow[];
 }
@@ -39,6 +46,11 @@ const RETREAT_WORDS: Record<string, string> = {
   decisionBudget: 'The party ran out of time.',
   playerRecall: 'You called the party back.',
 };
+
+export interface SkillLine { skill: 'Arcana' | 'Religion' | 'Survival' | 'Deception'; text: string }
+
+const SKILL_ORDER = ['arcana', 'religion', 'survival', 'deception'] as const;
+const SKILL_LABEL = { arcana: 'Arcana', religion: 'Religion', survival: 'Survival', deception: 'Deception' } as const;
 
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
 
@@ -101,7 +113,59 @@ export function buildMissionSummary(
     if (!names.has(id)) rows.push({ heroId: id, name: 'A hero', ...t });
   }
 
-  return { sentence: outcomeSentence(record, dungeon?.combats.victories ?? 0, surfaceSummaries), rows };
+  return {
+    sentence: outcomeSentence(record, dungeon?.combats.victories ?? 0, surfaceSummaries),
+    skillLines: record.dispatch ? skillLines(record.dispatch.stream.all(), names) : [],
+    rows,
+  };
+}
+
+/**
+ * One line per skill that was called on. Counts are read straight off the
+ * `explore.skill_used` facts: a line only says "worked" for a roll that really
+ * succeeded, and says how many tries missed so the player sees the whole story.
+ */
+function skillLines(events: readonly SimEvent[], names: ReadonlyMap<string, string>): SkillLine[] {
+  type Use = Extract<SimEvent, { type: 'explore.skill_used' }>['data'];
+  const uses = events.filter((e): e is Extract<SimEvent, { type: 'explore.skill_used' }> => e.type === 'explore.skill_used').map((e) => e.data);
+  const out: SkillLine[] = [];
+  const ok = (u: Use): boolean => u.roll.degree === 'success' || u.roll.degree === 'critSuccess';
+  const who = (us: Use[]): string => {
+    const set = [...new Set(us.map((u) => names.get(u.heroId) ?? 'A hero'))];
+    return set.length <= 2 ? set.join(' and ') : `${set[0]} and ${set.length - 1} more`;
+  };
+  for (const skill of SKILL_ORDER) {
+    const mine = uses.filter((u) => u.skill === skill);
+    if (mine.length === 0) continue;
+    const wins = mine.filter(ok);
+    const label = SKILL_LABEL[skill];
+    let text: string;
+    switch (skill) {
+      case 'arcana':
+        // Arcana is only reported when it worked: it is one option among several.
+        text = `${who(mine)} broke the runes on ${plural(mine.length, 'seal', 'seals')}.`;
+        break;
+      case 'religion':
+        text = wins.length === 0
+          ? `${who(mine)} tried to ward the undead. It failed ${plural(mine.length, 'time', 'times')}.`
+          : `${who(wins)} warded the undead in ${wins.length} of ${plural(mine.length, 'fight', 'fights')}. They fought weaker.`;
+        break;
+      case 'survival': {
+        const hp = wins.reduce((s, u) => s + u.amount, 0);
+        text = wins.length === 0
+          ? `${who(mine)} found nothing to forage.`
+          : `${who(wins)} foraged on ${wins.length} of ${plural(mine.length, 'rest', 'rests')}. The party healed ${hp} more HP.`;
+        break;
+      }
+      case 'deception':
+        text = wins.length === 0
+          ? `${who(mine)} tried to feint. It failed ${plural(mine.length, 'time', 'times')}.`
+          : `${who(wins)} feinted in ${wins.length} of ${plural(mine.length, 'fight', 'fights')}. The foe was caught off guard.`;
+        break;
+    }
+    out.push({ skill: label, text });
+  }
+  return out;
 }
 
 function outcomeSentence(

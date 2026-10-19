@@ -8,7 +8,7 @@
  * the template graph — a competent squad, not a solver.
  */
 
-import { LOOT_GRAMMAR, PROFILES, type DungeonTier } from '@content/dungeon';
+import { LOOT_GRAMMAR, PROFILES, SKILL_PAYOFFS, skillPayoffDc, type DungeonTier } from '@content/dungeon';
 import { EventStream } from '@sim/core/events/stream';
 import type { ItemInstance } from '@sim/core/events/types';
 import { Rng } from '@sim/core/rng';
@@ -18,7 +18,9 @@ import { rollDice } from '@sim/combat/dice';
 import { healDying } from '@sim/combat/dying';
 import { runEncounter } from '@sim/combat/encounter';
 import { rollEnemyLoot, rollLootTable, type LootSource } from '@sim/loot/generate';
-import { ambushTier, detectTrap, disarmTrap, openLock, type DispatchHero } from './checks';
+import {
+  ambushTier, detectTrap, disarmTrap, feintOpening, forage, openLock, wardUndead, type DispatchHero,
+} from './checks';
 import { type DungeonTemplate } from './graph';
 import { pickTemplate } from './pool';
 import { populate, type PopulatedRoom } from './population';
@@ -68,6 +70,12 @@ export interface DungeonDispatchResult {
 
 export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatchResult {
   const rng = new Rng(`dispatch_${opts.dispatchId}`);
+  // Track S: Religion, Survival and Deception roll on their OWN stream. Taking
+  // those draws from `rng` would re-deal every later trap, loot and ambush roll
+  // whenever a skill check happens, which would bury the skill's real effect
+  // under a re-shuffle of luck. Arcana replaces rolls that already existed, so
+  // it stays on `rng`.
+  const skillRng = new Rng(`skills_${opts.dispatchId}`);
   const template: DungeonTemplate = opts.templateId
     ? (() => {
         const t = pickTemplate(opts.tier, opts.seed);
@@ -205,7 +213,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
 
     if (room.lock) {
       tick += TICKS.checks;
-      const res = openLock(opts.party, room.lock, viaEdge, stream, tick, rng);
+      const res = openLock(opts.party, room.lock, viaEdge, stream, tick, rng, roomId(n));
       if (!res.ok) {
         stream.emit(tick, 'explore.route_blocked', { edgeId: viaEdge, reason: 'impossibleDc' });
         blocked.add(n);
@@ -218,7 +226,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
       const detected = detectTrap(opts.party, room.trap, roomId(n), `${roomId(n)}:trap`, stream, tick, rng, opts.autoDetectTraps ?? false);
       let fires = !detected;
       if (detected) {
-        const res = disarmTrap(opts.party, room.trap, `${roomId(n)}:trap`, stream, tick, rng);
+        const res = disarmTrap(opts.party, room.trap, `${roomId(n)}:trap`, stream, tick, rng, roomId(n));
         fires = res.triggered;
         if (!res.ok && !res.triggered) fires = false; // impossible to disarm but known: edge past it carefully
       }
@@ -248,6 +256,13 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
       const detectDc = 12 + opts.difficulty * 2;
       const ambush = ambushTier(opts.party, detectDc, rng);
       stream.emit(tick, 'explore.ambush_resolved', { roomId: roomId(n), tier: ambush });
+      // Track S: the party's skills act before the first blow lands. Both are
+      // applied to the Combatants the fight is about to be run on, so the effect
+      // reaches the fight itself (a condition the combat engine reads), not just
+      // the log.
+      const undead = enemies.filter((_, i) => isUndead(room.enemyIds[i]!));
+      wardUndead(opts.party, undead, roomId(n), skillPayoffDc(SKILL_PAYOFFS.religion.dcBase, opts.difficulty, opts.partyLevel), stream, tick, skillRng);
+      feintOpening(opts.party, enemies, roomId(n), skillPayoffDc(SKILL_PAYOFFS.deception.dcBase, opts.difficulty, opts.partyLevel), stream, tick, skillRng);
       const combat = runEncounter(`${opts.dispatchId}:f${n}`, roomId(n), heroes, enemies, `combat_${opts.dispatchId}_r${n}`);
       stream.absorb(combat.stream, tick);
       tick += combat.ticks;
@@ -365,6 +380,7 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
           h.c.hp = Math.min(h.c.hp + Math.floor(h.c.maxHp * PROFILES.restHealFrac), h.c.maxHp);
         }
         stream.emit(tick, 'explore.rested', { locationId: roomId(current), package: 'short' });
+        forage(opts.party, roomId(current), skillPayoffDc(SKILL_PAYOFFS.survival.dcBase, opts.difficulty, opts.partyLevel), stream, tick, skillRng);
         continue;
       }
       outcome = 'retreated';
@@ -442,6 +458,11 @@ export function runDungeonDispatch(opts: DungeonDispatchOptions): DungeonDispatc
 // ── Registry lookups kept local to avoid widening the module graph ───────────
 
 import { enemiesById } from '@sim/registry';
+
+/** Religion's target: the registry says what a creature is, not its name. */
+function isUndead(enemyId: number): boolean {
+  return enemiesById.get(enemyId)?.enemy_type === 'undead';
+}
 
 function lootTableOf(enemyId: number): number | null {
   return (enemiesById.get(enemyId)?.loot_table_id as number | null) ?? null;
