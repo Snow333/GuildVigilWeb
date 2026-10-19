@@ -23,6 +23,8 @@ export type Screen =
   | { kind: 'dispatch' }
   | { kind: 'map'; questId: number | null }
   | { kind: 'shop' }
+  /** M3: the town's buildings, resources and recruiting (track T). */
+  | { kind: 'townUpgrades' }
   | { kind: 'playback' }
   | { kind: 'afterAction' }
   | { kind: 'settings' };

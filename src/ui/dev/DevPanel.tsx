@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { autoLevelHero } from '@sim/campaign/campaign';
+import { RESOURCE_KINDS } from '@content/town';
 import { useGame } from '../state/GameProvider';
 import { overlayButton } from './overlayStyle';
 
@@ -58,6 +59,15 @@ export function DevPanel() {
             <span>Gold {session.goldAmount()}</span>
             <button style={overlayButton} onClick={() => run((s) => s.devAddGold(500))}>+500</button>
             <button style={overlayButton} onClick={() => run((s) => s.devAddGold(5000))}>+5000</button>
+          </div>
+
+          {/* M3 town: resources only arrive from secured sites, so a playtester
+              (and the town e2e) needs a way to stock the stores. */}
+          <div style={row}>
+            <span>Stores</span>
+            <button style={overlayButton} data-dev-stores="" onClick={() => run((s) => s.grantResources(Object.fromEntries(RESOURCE_KINDS.map((k) => [k, 20]))))}>+20 each</button>
+            <span>Rep {session.reputationTotal()}</span>
+            <button style={overlayButton} data-dev-rep="" onClick={() => run((s) => s.grantReputation(10))}>+10</button>
           </div>
 
           <div style={row}>
