@@ -32,7 +32,8 @@
 | M0 — Reset and playtest tooling | ✅ done 2026-10-16 |
 | M1 — The whole loop, thin | ✅ built 2026-10-16 — awaiting Steven's playtest (`playtest/2026-10-16-M1.md`) |
 | M2 — Signature classes, round 1 | ✅ **built** 2026-10-18 — awaiting Steven's playtest (`playtest/2026-10-18-M2.md`). Ability model fixed; Ranger +8 and Bard +9 feats (both had **zero**); Wizard's 3 fixable rows made live; Arcana/Religion/Survival/Deception now matter on missions. **Thin spots:** Rogue has 1 active, Wizard still has 21 inert feats |
-| M3 – M9 | not started |
+| M3 — The town grows | 🟡 **core built** 2026-10-19 — awaiting playtest + a UI. Resources, 12 map sites with weekly income, building levels, upgrades, recruiting and the guild-hall 4→5→6 ladder all work and persist. **Not done:** no town SCREEN yet (3 mockup variants await Steven's pick), and 22 of 43 building effects are still inert |
+| M4 – M9 | not started |
 
 ### M0 — Reset and playtest tooling *(small)*
 - Archive old briefs and process docs; install vision, agreement, roadmap; cut `CLAUDE.md` to a short pointer file.

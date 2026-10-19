@@ -1,63 +1,62 @@
 # Handoff
 
-**Last session:** 2026-10-18 — **M2 is built.** Signature classes and mission skills
-merged. **Waiting on Steven's playtest.**
+**Last session:** 2026-10-19 — **M3 core is built** (the town economy).
+**Waiting on Steven:** a playtest, and a pick between three town-screen mockups.
 
-Playtest note: `output/playtest/2026-10-18-M2.md`. Decisions: `output/decisions.md`.
+Playtest note: `output/playtest/2026-10-19-M3-core.md`.
+M2's note (still unplayed): `output/playtest/2026-10-18-M2.md`.
 
-## What shipped (this session + the one before it)
+## M3 — what works now
 
-| Thing | State |
+| System | State |
 |---|---|
-| 8 missing ancestry busts | 12/12 portraits are real art |
-| Ability model | An ability rides a normal action and pays a cooldown (was a 45–53% tax) |
-| Scroll of Raise Dead | Repointed to Breath of Life and renamed (Raise Dead is inert) |
-| Weapon prices | Rune-based rule; the Staff is no longer free |
-| Mid-level quests | 41 jobs, min_level 6–15, takeable-first board draw |
-| **Ranger** | **8 feats — had ZERO** |
-| **Bard** | **9 feats — had ZERO**; `grant_party_condition` verb added |
-| **Wizard** | 3 of 24 feats made live (touch hit, touch damage, Protective Ward) |
-| **Mission skills** | Arcana, Religion, Survival, Deception each do something visible |
+| **Resources** | 9 kinds, derived from what each region says it produces |
+| **Resource sites** | 12 on the map, L1–L7, secured sites pay every week |
+| **Building levels** | All 18 buildings, real levels, costs, prereqs, reputation gates |
+| **Upgrades** | Spend gold **and** resources; blockers explained in plain words |
+| **Guild-hall ladder** | 4 → 5 → 6 heroes, and it is REAL (see below) |
+| **Recruiting** | New — gated on the Tavern's own `recruit_*` effects |
+| **Reputation** | Now banked from quests; was announced and thrown away |
 
-All merged to `main` and pushed, CI green. Gate: 82 files / 1246 unit tests,
-32 e2e on `GV_PORT=4174`, bundle 2,551.62 kB (21.3% of the fail ceiling).
-Career harness: completion 96.5%, wipes 3.3%.
-
-## Live-active count per class (the M2 scorecard)
-
-| Class | Feats | Live actives |
-|---|---|---|
-| Fighter | 23 | 6 |
-| Bard | 9 | 8 |
-| Ranger | 8 | 5 |
-| Cleric | 23 | 2 |
-| Wizard | 24 | 1 (+2 live touch passives) |
-| Rogue | 23 | 1 (+ Sneak Attack, which works) |
+**21 of 43 building effects are wired.** The other 22 carry
+`wired: false` in `EFFECT_COPY` so the UI greys them rather than promising
+them. That flag is pinned by a test — do not flip one without wiring it.
 
 ## Next session
 
-1. **If Steven has played:** `pnpm notes`, then triage into
-   `playtest/2026-10-18-M2.md`.
-2. **M2's thin spots, if the playtest says they matter:**
-   - **Rogue** is the thinnest flagship — one active (Poison Weapon) plus Sneak Attack.
-   - **Wizard still has 21 inert feats** (Counterspell, Familiar, Spell Mastery,
-     Effortless Concentration…). Each needs its own engine hook; none is a seed fix.
-   - **Sorcerer/Warlock/Barbarian/Monk** have not been looked at for M2 standard.
-3. **Then M3 — the town grows** (`roadmap.md`): resource sites, building upgrades,
-   the guild-hall size ladder.
+1. **If Steven picked a mockup:** build the town screen from
+   `output/exploration/town-variant-{A,B,C}-claude.html`. My recommendation
+   was **B (do-this-next)**, possibly with A's full ledger behind a toggle.
+2. **Make securing a site a real mission.** Today `secureSite()` banks a site
+   but there is no "go and take it" quest. This is the biggest gap in the loop.
+3. **Then the rest of M3's effects, or M4** (two parties, map reveal, outposts).
 
-⚠ **DO NOT make the attack burst retarget.** `encounter.ts`'s
-`if (target.hp <= 0) break;` looks like an obvious bug (a party wastes 42% of its
-damage on corpses at L1, 15% at L7) and it is **reserved design space for the
-Cleave feat** — Steven's call, 2026-10-17. Giving every attack carry-through
-would hand out for free the thing Cleave is meant to sell. Logged in
-`decisions.md`, `questions.md` and the `guild-vigil` skill.
+## ⚠ Traps — read before touching these
 
-⚠ **Only `grant_party_condition` is auto-planned into the fight plan.** Measured
+**DO NOT make the attack burst retarget.** `encounter.ts`'s
+`if (target.hp <= 0) break;` looks like an obvious bug (a party wastes 42% of
+its damage on corpses at L1) and it is **reserved design space for Cleave** —
+Steven's call, 2026-10-17. Logged in `decisions.md`, `questions.md` and the
+`guild-vigil` skill.
+
+**DO NOT widen the fight-plan auto-add past `grant_party_condition`.** Measured
 three ways: every ability 95.0%→89.8%, every non-strike 95.0%→90.4%, songs-only
-95.0% unchanged with +1.7 party win rate. "A buff cannot overkill so it is safe
-to auto-add" was reasoned, built, measured and is WRONG. Do not widen
-`autoPlannable` without re-measuring.
+unchanged with +1.7 party win rate. "A buff cannot overkill so it is safe to
+auto-add" was reasoned, built, measured and is WRONG.
+
+**DO NOT start every building at level 0.** The shop gates on building level,
+and a town at 0 everywhere has an EMPTY shop — measured, 0 offers.
+`STARTING_BUILDINGS` (Guild Hall, General Store, Blacksmith) exists for that
+reason, and the save backfill grants the same set because a pre-M3 save had a
+working shop and must keep it.
+
+**DO NOT trust a single seed for map placement.** The duplicate-tile negative
+control PASSED against one seed and the bug was still there — across 60 seeds
+it reproduces in 9. `tests/campaign/town.test.ts` sweeps 40 seeds.
+
+**Subagents keep dying** with "owner exited before recording a terminal
+result" — three times now. They commit fine; recover their work from the
+worktree branch by hand and verify it yourself.
 
 ## Content debt found and NOT fixed (from the track reports)
 
