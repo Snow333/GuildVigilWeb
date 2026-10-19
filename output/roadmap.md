@@ -31,7 +31,7 @@
 |---|---|
 | M0 — Reset and playtest tooling | ✅ done 2026-10-16 |
 | M1 — The whole loop, thin | ✅ built 2026-10-16 — awaiting Steven's playtest (`playtest/2026-10-16-M1.md`) |
-| M2 — Signature classes, round 1 | 🟡 **half done** 2026-10-17 — the ability model is fixed (a feat is now a gain, not a 50% tax) and the M2 content to-dos are merged. **Not done:** Ranger and Bard still have zero class feats, Wizard has zero live actives, so "tell them apart in a fight" is not delivered. See `playtest/2026-10-17-M2-round2.md` |
+| M2 — Signature classes, round 1 | ✅ **built** 2026-10-18 — awaiting Steven's playtest (`playtest/2026-10-18-M2.md`). Ability model fixed; Ranger +8 and Bard +9 feats (both had **zero**); Wizard's 3 fixable rows made live; Arcana/Religion/Survival/Deception now matter on missions. **Thin spots:** Rogue has 1 active, Wizard still has 21 inert feats |
 | M3 – M9 | not started |
 
 ### M0 — Reset and playtest tooling *(small)*

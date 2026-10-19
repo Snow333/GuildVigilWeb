@@ -1,42 +1,63 @@
 # Handoff
 
-**Last session:** 2026-10-17 — portraits finished, the ability model fixed, items and the
-mid-level board merged. **Waiting on Steven's playtest.**
+**Last session:** 2026-10-18 — **M2 is built.** Signature classes and mission skills
+merged. **Waiting on Steven's playtest.**
 
-Playtest note: `output/playtest/2026-10-17-M2-round2.md`. Decisions: `output/decisions.md`.
+Playtest note: `output/playtest/2026-10-18-M2.md`. Decisions: `output/decisions.md`.
 
-## What shipped this session
+## What shipped (this session + the one before it)
 
 | Thing | State |
 |---|---|
-| 8 missing ancestry busts | Done — 12/12 portraits are real art, contact sheet shown to Steven |
-| Ability model (Power Attack) | Fixed — an ability rides a normal action and pays a cooldown |
+| 8 missing ancestry busts | 12/12 portraits are real art |
+| Ability model | An ability rides a normal action and pays a cooldown (was a 45–53% tax) |
 | Scroll of Raise Dead | Repointed to Breath of Life and renamed (Raise Dead is inert) |
-| Weapon prices | Rebuilt on a rune-based rule; the Staff is no longer free |
-| Mid-level quests | 41 jobs, min_level 6–15, plus a takeable-first board draw |
+| Weapon prices | Rune-based rule; the Staff is no longer free |
+| Mid-level quests | 41 jobs, min_level 6–15, takeable-first board draw |
+| **Ranger** | **8 feats — had ZERO** |
+| **Bard** | **9 feats — had ZERO**; `grant_party_condition` verb added |
+| **Wizard** | 3 of 24 feats made live (touch hit, touch damage, Protective Ward) |
+| **Mission skills** | Arcana, Religion, Survival, Deception each do something visible |
 
-All merged to `main` and pushed. Gate: 78 files / 1186+ unit tests, 31 e2e on
-`GV_PORT=4174`, bundle 2,538.96 kB (21.2% of the fail ceiling).
+All merged to `main` and pushed, CI green. Gate: 82 files / 1246 unit tests,
+32 e2e on `GV_PORT=4174`, bundle 2,551.62 kB (21.3% of the fail ceiling).
+Career harness: completion 96.5%, wipes 3.3%.
+
+## Live-active count per class (the M2 scorecard)
+
+| Class | Feats | Live actives |
+|---|---|---|
+| Fighter | 23 | 6 |
+| Bard | 9 | 8 |
+| Ranger | 8 | 5 |
+| Cleric | 23 | 2 |
+| Wizard | 24 | 1 (+2 live touch passives) |
+| Rogue | 23 | 1 (+ Sneak Attack, which works) |
 
 ## Next session
 
-1. **If Steven has played:** run `pnpm notes` (moves Downloads `gv-note-*.json` into
-   `playtest/inbox/`), then triage into the M2 round-2 playtest note.
-2. **The best-value piece of work on the table — the non-retargeting burst.**
-   `encounter.ts` runs an action as a burst of `swingsPerAction` swings and does
-   `if (target.hp <= 0) break;` — it never turns to the next living enemy. Measured
-   against real enemy rows: a party wastes **42% of its damage at level 1**, 29% at
-   level 3, still **15% at level 7**. Fixing it lifts every hero in the game and would
-   very likely flip Power Attack positive at all levels as a side effect. It changes
-   every fight, so it needs its own measured pass and a re-baseline. Steven has been
-   asked and has not answered yet.
-3. **Then revisit auto-adding abilities** — either unconditionally (if the retarget fix
-   removes the early-game penalty) or gated on level. The numbers are in `questions.md`.
-4. **M2's remaining scope:** "signature classes, round 1" is only half done. The ability
-   model is fixed, but **Ranger and Bard still have ZERO class feats**, so the "ranged
-   ranger" flagship does not exist. Wizard has 24 feats of which **0** are live actives.
-5. Still open from M1: debuffs need a "target lacks condition" loadout check; the playback
-   heading still says "quest <name>".
+1. **If Steven has played:** `pnpm notes`, then triage into
+   `playtest/2026-10-18-M2.md`.
+2. **M2's thin spots, if the playtest says they matter:**
+   - **Rogue** is the thinnest flagship — one active (Poison Weapon) plus Sneak Attack.
+   - **Wizard still has 21 inert feats** (Counterspell, Familiar, Spell Mastery,
+     Effortless Concentration…). Each needs its own engine hook; none is a seed fix.
+   - **Sorcerer/Warlock/Barbarian/Monk** have not been looked at for M2 standard.
+3. **Then M3 — the town grows** (`roadmap.md`): resource sites, building upgrades,
+   the guild-hall size ladder.
+
+⚠ **DO NOT make the attack burst retarget.** `encounter.ts`'s
+`if (target.hp <= 0) break;` looks like an obvious bug (a party wastes 42% of its
+damage on corpses at L1, 15% at L7) and it is **reserved design space for the
+Cleave feat** — Steven's call, 2026-10-17. Giving every attack carry-through
+would hand out for free the thing Cleave is meant to sell. Logged in
+`decisions.md`, `questions.md` and the `guild-vigil` skill.
+
+⚠ **Only `grant_party_condition` is auto-planned into the fight plan.** Measured
+three ways: every ability 95.0%→89.8%, every non-strike 95.0%→90.4%, songs-only
+95.0% unchanged with +1.7 party win rate. "A buff cannot overkill so it is safe
+to auto-add" was reasoned, built, measured and is WRONG. Do not widen
+`autoPlannable` without re-measuring.
 
 ## Content debt found and NOT fixed (from the track reports)
 
