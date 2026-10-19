@@ -15,6 +15,8 @@ import { CampaignSession } from '@sim/campaign/session';
 import { starterParty } from '@sim/campaign/starterParty';
 import { RESOURCE_KINDS, EFFECT_COPY, STARTING_BUILDINGS, UPGRADE_RESOURCES } from '@content/town';
 import { buildings } from '@content/generated/buildings';
+import { shop_stock as shopStockRows } from '@content/generated/shop_stock';
+import { items as itemRows } from '@content/generated/items';
 
 const GUILD_HALL = 1;
 const BLACKSMITH = 3;
@@ -90,6 +92,75 @@ describe('the content gate: every building has a price and every effect has word
       'transcription', 'travel_speed_25pct', 'travel_speed_50pct',
       'weapons', 'xp_bonus_10pct', 'xp_bonus_5pct',
     ]);
+  });
+});
+
+describe('what an upgrade UNLOCKS matches what the copy promises', () => {
+  /**
+   * ⚠ THE DEFECT THIS CATCHES ACTUALLY SHIPPED. `EFFECT_COPY` was first
+   * written by paraphrasing the effect STRINGS, which produced four promises
+   * the shop rows do not keep — "the smith sells armour too" at level 2, when
+   * Chain Mail is on sale at level 1; "masterwork gear" for a single
+   * Longsword +1; "rare items" for two healing potions; and the Market's
+   * sell-price copy hiding that the Market is itself a shop.
+   *
+   * Pinning the newly-unlocked rows per level means a content change fails
+   * here and forces the copy to be re-read, rather than letting the promise
+   * quietly go stale. It is a cross-check, not a tautology: the expectation is
+   * written from the ITEMS, and the copy it guards lives in a different file.
+   */
+  const unlockedAt = (buildingId: number, level: number): { count: number; types: string[] } => {
+    const rows = shopStockRows.filter(
+      (r) => (r.building_id as number) === buildingId
+        && (r.required_building_level as number) === level,
+    );
+    const byId = new Map(itemRows.map((i) => [i.id as number, i]));
+    const types = [...new Set(rows.map((r) => {
+      const item = byId.get(r.item_id as number);
+      return (item?.item_type as string | undefined) ?? 'unknown';
+    }))].sort();
+    return { count: rows.length, types };
+  };
+
+  it('the Blacksmith already sells armour at level 1 — level 2 is weapons and shields', () => {
+    expect(unlockedAt(BLACKSMITH, 1)).toEqual({ count: 22, types: ['armor', 'shield', 'weapon'] });
+    expect(unlockedAt(BLACKSMITH, 2)).toEqual({ count: 6, types: ['shield', 'weapon'] });
+  });
+
+  it('the Blacksmith level 3 is ONE magic weapon, not a masterwork range', () => {
+    expect(unlockedAt(BLACKSMITH, 3)).toEqual({ count: 1, types: ['weapon'] });
+  });
+
+  it('the General Store level 3 is two healing potions, not a rare-item range', () => {
+    expect(unlockedAt(GENERAL_STORE, 3)).toEqual({ count: 2, types: ['consumable'] });
+  });
+
+  it('the Market is a SHOP as well as a sell-price bonus', () => {
+    // Its effect strings only mention the sell price, so without this the UI
+    // would never tell the player the Market stocks anything.
+    const total = [1, 2, 3].reduce((n, l) => n + unlockedAt(MARKET, l).count, 0);
+    expect(total).toBe(18);
+    expect(unlockedAt(MARKET, 1).types).toContain('wondrous');
+  });
+
+  it('every level a shop building has an effect for also unlocks stock', () => {
+    // ⚠ An effect that claims an unlock at a level with no new rows is a lie
+    // the player pays for.
+    for (const row of buildings) {
+      const id = row.id as number;
+      const effects = JSON.parse((row.effects as string | null) ?? '{}') as Record<string, string>;
+      const sells = shopStockRows.some((r) => (r.building_id as number) === id);
+      if (!sells) continue;
+      for (const [key, effect] of Object.entries(effects)) {
+        const level = Number(key.replace('level_', ''));
+        const copy = EFFECT_COPY[effect];
+        // Only shop-flavoured promises must be backed by rows; the Market's
+        // sell-price effects earn their keep elsewhere.
+        if (!copy?.wired || effect.startsWith('sell_price')) continue;
+        expect(unlockedAt(id, level).count, `${row.name as string} L${level} (${effect}) promises stock but unlocks none`)
+          .toBeGreaterThan(0);
+      }
+    }
   });
 });
 

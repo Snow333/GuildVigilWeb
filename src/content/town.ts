@@ -190,18 +190,34 @@ export const EFFECT_COPY: Readonly<Record<string, EffectCopy>> = {
   party_size_5: { text: 'Send 5 heroes on a mission', wired: true },
   party_size_6: { text: 'Send 6 heroes on a mission', wired: true },
   // Shop stock gates — 45 of 105 shop rows were unreachable before M3.
-  weapons: { text: 'The smith sells weapons', wired: true },
-  armor: { text: 'The smith sells armour too', wired: true },
-  masterwork: { text: 'The smith sells masterwork gear', wired: true },
-  consumables: { text: 'The store sells potions and kit', wired: true },
-  better_stock: { text: 'The store keeps better stock', wired: true },
-  rare_items: { text: 'The store gets rare items in', wired: true },
+  /**
+   * ⚠ THIS COPY IS WRITTEN FROM THE SHOP ROWS, NOT FROM THE EFFECT STRING'S
+   * NAME, AND THE DIFFERENCE IS NOT COSMETIC. The first draft paraphrased the
+   * strings and shipped four false promises:
+   *   - `armor` (Blacksmith L2) read "sells armour too" — but Chain Mail and
+   *     Chain Shirt are on sale at L1 already. L2 actually adds the big
+   *     two-handers and the heavy shields.
+   *   - `masterwork` (L3) read "masterwork gear", plural, for ONE row:
+   *     Longsword +1.
+   *   - `rare_items` (Store L3) read "rare items in" for two healing potions.
+   *   - the Market's `sell_price_*` mentioned only the sell price, hiding that
+   *     the Market IS a shop with 18 rows of its own.
+   * `tests/campaign/town.test.ts` pins what each level unlocks, so a content
+   * change forces this copy to be re-read instead of quietly going stale.
+   */
+  weapons: { text: 'The smith sells weapons, armour and shields', wired: true },
+  armor: { text: 'The smith adds two-handed weapons and heavy shields', wired: true },
+  masterwork: { text: 'The smith can get hold of a magic sword', wired: true },
+  consumables: { text: 'The store sells potions, antidotes and ammunition', wired: true },
+  better_stock: { text: 'The store adds stronger potions and silver arrows', wired: true },
+  rare_items: { text: 'The store adds the best healing potions', wired: true },
   scroll_shop: { text: 'The wizards sell scrolls', wired: true },
-  transcription: { text: 'The wizards sell better scrolls', wired: true },
-  // Market: SHOP.sellFraction was a fixed 0.5, so this is a real lever.
-  sell_price_80pct: { text: 'Sell your loot for 80% of its worth', wired: true },
-  sell_price_90pct: { text: 'Sell your loot for 90% of its worth', wired: true },
-  sell_price_100pct: { text: 'Sell your loot for its full worth', wired: true },
+  transcription: { text: 'The wizards add higher-level scrolls', wired: true },
+  // Market: SHOP.sellFraction was a fixed 0.5, so this is a real lever — AND
+  // the Market stocks potions and wondrous items of its own at every level.
+  sell_price_80pct: { text: 'Sell loot for 80% of its worth; stocks charms and potions', wired: true },
+  sell_price_90pct: { text: 'Sell loot for 90%; stocks stat-boosting wondrous items', wired: true },
+  sell_price_100pct: { text: 'Sell loot for full worth; stocks the best wondrous items', wired: true },
   // Library: a flat multiplier on quest XP.
   xp_bonus_5pct: { text: 'Heroes learn 5% faster', wired: true },
   xp_bonus_10pct: { text: 'Heroes learn 10% faster', wired: true },
