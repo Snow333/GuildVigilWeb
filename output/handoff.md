@@ -1,62 +1,65 @@
 # Handoff
 
-**Last session:** 2026-10-19 — **M3 core is built** (the town economy).
-**Waiting on Steven:** a playtest, and a pick between three town-screen mockups.
+**Last session:** 2026-10-19 — **M3 is built and playable.** The town economy
+earns AND spends. **Waiting on Steven's playtest.**
 
-Playtest note: `output/playtest/2026-10-19-M3-core.md`.
+Playtest note: `output/playtest/2026-10-19-M3.md`.
 M2's note (still unplayed): `output/playtest/2026-10-18-M2.md`.
 
-## M3 — what works now
+## M3 — what works
 
 | System | State |
 |---|---|
-| **Resources** | 9 kinds, derived from what each region says it produces |
-| **Resource sites** | 12 on the map, L1–L7, secured sites pay every week |
-| **Building levels** | All 18 buildings, real levels, costs, prereqs, reputation gates |
-| **Upgrades** | Spend gold **and** resources; blockers explained in plain words |
-| **Guild-hall ladder** | 4 → 5 → 6 heroes, and it is REAL (see below) |
-| **Recruiting** | New — gated on the Tavern's own `recruit_*` effects |
-| **Reputation** | Now banked from quests; was announced and thrown away |
+| **Resources** | 9 kinds, derived from each region's `known_resources` |
+| **Site expeditions** | 12 quests (ids 2000+), never on the board, taken from the sites list |
+| **Weekly income** | A secured site pays forever |
+| **Building levels** | All 18, with costs, prerequisites and reputation gates |
+| **Upgrades** | Gold + resources; blockers explained in plain words |
+| **Guild-hall ladder** | 4 → 5 → 6, and recruiting exists so it is real |
+| **Town & Upgrades screen** | Variant B: 3 ranked picks + the full 18 as a fold |
 
-**21 of 43 building effects are wired.** The other 22 carry
-`wired: false` in `EFFECT_COPY` so the UI greys them rather than promising
-them. That flag is pinned by a test — do not flip one without wiring it.
+**21 of 43 building effects are wired.** The other 22 carry `wired: false` and
+the screen greys them with "Not working yet". A test pins the wired list.
 
 ## Next session
 
-1. **If Steven picked a mockup:** build the town screen from
-   `output/exploration/town-variant-{A,B,C}-claude.html`. My recommendation
-   was **B (do-this-next)**, possibly with A's full ledger behind a toggle.
-2. **Make securing a site a real mission.** Today `secureSite()` banks a site
-   but there is no "go and take it" quest. This is the biggest gap in the loop.
-3. **Then the rest of M3's effects, or M4** (two parties, map reveal, outposts).
+1. **If Steven has played:** `pnpm notes`, triage into the M3 note.
+2. **The open design question** he may answer: stone is only in Gravel Downs
+   (L3), so the 5th hero is gated behind levelling to ~L3. Add a second stone
+   region, or lower the Guild Hall's stone cost, if he says it drags.
+3. **Then either** wire more building effects (Infirmary, Training Grounds,
+   Watchtower, hero caps — each needs its own engine hook, none is a seed fix)
+   **or move to M4** (two parties, map reveal, outposts).
 
 ## ⚠ Traps — read before touching these
 
 **DO NOT make the attack burst retarget.** `encounter.ts`'s
-`if (target.hp <= 0) break;` looks like an obvious bug (a party wastes 42% of
-its damage on corpses at L1) and it is **reserved design space for Cleave** —
-Steven's call, 2026-10-17. Logged in `decisions.md`, `questions.md` and the
-`guild-vigil` skill.
+`if (target.hp <= 0) break;` is **reserved design space for Cleave** —
+Steven's call, 2026-10-17.
 
 **DO NOT widen the fight-plan auto-add past `grant_party_condition`.** Measured
-three ways: every ability 95.0%→89.8%, every non-strike 95.0%→90.4%, songs-only
-unchanged with +1.7 party win rate. "A buff cannot overkill so it is safe to
-auto-add" was reasoned, built, measured and is WRONG.
+three ways; "buffs can't overkill so they're safe" was built, measured, WRONG.
 
-**DO NOT start every building at level 0.** The shop gates on building level,
+**DO NOT start every building at level 0.** The shop gates on building level
 and a town at 0 everywhere has an EMPTY shop — measured, 0 offers.
-`STARTING_BUILDINGS` (Guild Hall, General Store, Blacksmith) exists for that
-reason, and the save backfill grants the same set because a pre-M3 save had a
-working shop and must keep it.
+`STARTING_BUILDINGS` exists for that, and the save backfill grants the same set.
 
-**DO NOT trust a single seed for map placement.** The duplicate-tile negative
-control PASSED against one seed and the bug was still there — across 60 seeds
-it reproduces in 9. `tests/campaign/town.test.ts` sweeps 40 seeds.
+**DO NOT parse numbers out of player-facing copy.** The ladder briefly regexed
+"(\d+) heroes" out of `EFFECT_COPY.text`; four of those strings had been
+reworded one commit earlier. Use the machine key (`partySizeAtLevel`).
 
-**Subagents keep dying** with "owner exited before recording a terminal
-result" — three times now. They commit fine; recover their work from the
-worktree branch by hand and verify it yourself.
+**DO NOT write effect copy by paraphrasing the effect NAME.** Four false
+promises shipped that way (`armor` claimed armour the shop already sold at L1).
+Write it from the rows the level unlocks; `tests/campaign/town.test.ts` pins them.
+
+**DO NOT `rm -rf` or PowerShell-`Remove-Item` a worktree's `node_modules`
+junction** — both destroy the MAIN checkout's `node_modules`. It happened twice
+this session. Use Python `os.rmdir(path)`, then `git worktree remove --force`.
+Symptom: `tsc` says "This is not the tsc command you are looking for" and
+vitest reports fewer test FILES. Check `node_modules/.bin` exists.
+
+**A single seed is not a test for anything procedural.** Two negative controls
+this milestone failed to fire against one seed and only bit across 40.
 
 ## Content debt found and NOT fixed (from the track reports)
 
