@@ -11,6 +11,7 @@ import {
 } from '@content/generated';
 import { AUTHORED_QUESTS, type QuestRow } from '@content/earlyQuests';
 import { MID_QUESTS } from '@content/midQuests';
+import { SITE_QUESTS } from '@content/siteQuests';
 import type { XpSourceResolver } from '@sim/heroes/xp';
 
 // Key types widened to number: the generated `as const` tables produce literal
@@ -36,16 +37,23 @@ export const ENEMY_CLASSIFICATIONS = ['Fodder', 'Melee', 'Ranged', 'Magic'] as c
 export type EnemyClassification = (typeof ENEMY_CLASSIFICATIONS)[number];
 /**
  * Generated quests PLUS the hand-authored early quests and Marshal's
- * commissions (`@content/earlyQuests`, ids 900+) and the mid-level quests
- * (`@content/midQuests`, ids 1000+). One map, so launch, XP, board and chart
+ * commissions (`@content/earlyQuests`, ids 900+), the mid-level quests
+ * (`@content/midQuests`, ids 1000+) and the M3 site expeditions
+ * (`@content/siteQuests`, ids 2000+). One map, so launch, XP, board and chart
  * treat an authored row exactly like a generated one.
+ *
+ * ⚠ Site expeditions are in this map because `launchDispatch` resolves every
+ * quest through it, but they are NOT postable — `session.postable` excludes
+ * them, because an expedition is chosen off the sites list, not drawn as
+ * trouble on the board.
  */
 export const questsById = new Map<number, QuestRow>([
   ...quests.map((q): [number, QuestRow] => [q.id, q]),
   ...AUTHORED_QUESTS.map((q): [number, QuestRow] => [q.id, q]),
   ...MID_QUESTS.map((q): [number, QuestRow] => [q.id, q]),
+  ...SITE_QUESTS.map((q): [number, QuestRow] => [q.id, q]),
 ]);
-if (questsById.size !== quests.length + AUTHORED_QUESTS.length + MID_QUESTS.length) {
+if (questsById.size !== quests.length + AUTHORED_QUESTS.length + MID_QUESTS.length + SITE_QUESTS.length) {
   throw new Error('registry: an authored quest id collides with a generated quest id');
 }
 export const classesById = new Map<number, (typeof classes)[number]>(classes.map((c) => [c.id, c]));

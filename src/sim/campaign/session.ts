@@ -53,6 +53,7 @@ import {
   type RecruitTier, type ResourceKind, type ResourceStock,
 } from '@content/town';
 import { allSites, siteKey, type ResourceSite } from './sites';
+import { isSiteQuest, siteForQuestId, siteQuestFor } from '@content/siteQuests';
 import { defaultChoiceFor, musterHero } from '@sim/campaign/muster';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
@@ -672,6 +673,14 @@ export class CampaignSession {
    */
   private postable(row: QuestRow, week: number, pl: number): boolean {
     if (COMMISSION_QUEST_IDS.has(row.id)) return false;
+    /**
+     * ⚠ A SITE EXPEDITION IS NEVER DRAWN ON THE BOARD. It lives in
+     * `questsById` only because `launchDispatch` resolves quests through it;
+     * the player chooses an expedition off the SITES list. Letting these post
+     * would both flood the board (12 extra rows) and let a site be taken by
+     * accident by someone browsing notices.
+     */
+    if (isSiteQuest(row.id)) return false;
     if (EARLY_ONLY_QUEST_IDS.has(row.id) && week > SCHEDULER.earlyWeeks) return false;
     const doneWeek = this.completed.get(row.id);
     if (doneWeek !== undefined && week - doneWeek < SCHEDULER.expiryWeeks) return false;
@@ -902,6 +911,14 @@ export class CampaignSession {
       const questXp = Math.round((quest.reward_xp as number) * this.xpMultiplier());
       const questRep = quest.reward_reputation as number;
       this.reputation += questRep;
+      /**
+       * ⚠ THIS IS THE ONLY LEGITIMATE WAY A SITE BECOMES SECURED IN PLAY.
+       * `secureSite` is public for tests and dev tooling, but the earning path
+       * is winning the expedition — the site is the reward, which is why the
+       * gold purse on these rows is deliberately thin.
+       */
+      const siteLink = siteForQuestId(q.questId);
+      if (siteLink) this.secureSite(siteLink.regionId, siteLink.kind, minute);
       if (dispatch) this.stash.push(...dispatch.items);
       const doneEv = this.world.emit(minute, 'world.quest_completed', {
         questId: String(q.questId), regionId: q.regionId,
@@ -1557,6 +1574,45 @@ export class CampaignSession {
   }
 
   /**
+   * Send the party to take a site. Sets it as the active objective; the player
+   * then launches it with the ordinary `launchDispatch()`, so an expedition
+   * travels, fights, pays XP and shows up in the report like any other job.
+   *
+   * ⚠ Does NOT secure the site. Winning does — see `launchDispatch`.
+   */
+  acceptSiteExpedition(regionId: string, kind: ResourceKind): number {
+    const site = this.resourceSites().find((st) => st.regionId === regionId && st.kind === kind);
+    if (!site) throw new Error(`acceptSiteExpedition: no ${kind} site in ${regionId}`);
+    if (site.secured) throw new Error(`acceptSiteExpedition: the guild already holds the ${kind} site`);
+    if (this.active) throw new Error('acceptSiteExpedition: the party is already out on a job');
+    const link = siteQuestFor(regionId, kind);
+    if (!link) throw new Error(`acceptSiteExpedition: no expedition exists for ${kind} in ${regionId}`);
+
+    const ev = this.world.emit(this.minute, 'world.quest_accepted', {
+      questId: String(link.questId), partyId: Ids.party(1),
+    });
+    this.active = {
+      questId: link.questId,
+      postedWeek: this.week,
+      regionId,
+      pos: site.pos,
+      acceptSeq: ev.seq,
+    };
+    return link.questId;
+  }
+
+  /** The expeditions the guild could mount right now: every site it does not hold. */
+  availableExpeditions(): { questId: number; site: ResourceSite }[] {
+    const out: { questId: number; site: ResourceSite }[] = [];
+    for (const site of this.resourceSites()) {
+      if (site.secured) continue;
+      const link = siteQuestFor(site.regionId, site.kind);
+      if (link) out.push({ questId: link.questId, site });
+    }
+    return out;
+  }
+
+  /**
    * Every resource site in the world, with whether the guild holds it.
    *
    * Derived from the region table and the world seed each call; only the
@@ -1577,12 +1633,20 @@ export class CampaignSession {
    * ⚠ Idempotent by (region, kind): securing a site twice does not double its
    * income, because the weekly payout iterates the stored list.
    */
-  secureSite(regionId: string, kind: ResourceKind): void {
+  secureSite(regionId: string, kind: ResourceKind, atMinute = this.minute): void {
     const site = this.resourceSites().find((st) => st.regionId === regionId && st.kind === kind);
     if (!site) throw new Error(`secureSite: no ${kind} site in ${regionId}`);
     if (site.secured) return;
     this.sites.push({ regionId, kind, securedWeek: this.week });
-    this.world.emit(this.minute, 'town.site_secured', { regionId, kind, yield: site.yield });
+    /**
+     * ⚠ `atMinute` IS NOT OPTIONAL POLISH. `launchDispatch` tracks its own
+     * local `minute` that runs ahead of `this.minute` for the whole expedition
+     * (travel out, the fight, travel home), and `this.minute` is only
+     * reconciled at the end. Emitting at `this.minute` from inside a dispatch
+     * sends the event stream BACKWARDS, which its monotonic guard rejects
+     * outright — measured: "time went backwards (30 -> 0)".
+     */
+    this.world.emit(atMinute, 'town.site_secured', { regionId, kind, yield: site.yield });
   }
 
   /** Units per week the guild currently earns, by kind. */
@@ -2081,6 +2145,16 @@ export class CampaignSession {
    * posting scan reach the null-poi rows.)
    */
   private questPos(row: { id: number; poi_id: unknown; min_level: unknown }): { x: number; y: number } {
+    /**
+     * ⚠ A SITE EXPEDITION SITS WHERE THE SITE SITS. Placing it with `placePoi`
+     * would put the mission somewhere other than the thing it is taking, so
+     * the map would show two unrelated pins for one objective.
+     */
+    const link = siteForQuestId(row.id);
+    if (link) {
+      const site = this.resourceSites().find((st) => st.regionId === link.regionId && st.kind === link.kind);
+      if (site) return site.pos;
+    }
     const poiId = row.poi_id as number | null;
     const key = poiId !== null ? `p${poiId}` : `q${row.id}`;
     const cached = this.poiCache.get(key);
