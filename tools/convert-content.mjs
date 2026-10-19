@@ -25,7 +25,7 @@ const EXPECTED_COUNTS = {
   spells: 218,
   // 227 + 16 (M2: Ranger and Bard, who had zero feat rows between them —
   // data/seeds/seed_ranger_bard_feats.sql).
-  feats: 243,
+  feats: 244,
   class_progression: 230,
   class_proficiency_tiers: 112,
   items: 183,

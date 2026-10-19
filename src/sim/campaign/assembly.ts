@@ -186,6 +186,26 @@ function sneakDice(hero: HeroState): string {
   return '';
 }
 
+/**
+ * Extra damage dice a feat adds to TOUCH-range spells (M2).
+ *
+ * ⚠ Same shape as `sneakDice` above, and the same warning applies: it returns
+ * on the FIRST matching feat rather than summing, so two such feats do not
+ * stack. Reads `touch_damage_dice` — the key the seed actually writes; a
+ * bespoke `effect` string here would be another payload nothing consumes,
+ * which is what #220 was before this.
+ */
+function touchDamageDice(hero: HeroState): string {
+  for (const hf of hero.feats) {
+    const fx = featEffectsById.get(hf.featId);
+    if (!fx || fx.effectType !== 'passive_modifier') continue;
+    if (fx.raw['trigger'] !== 'touch_spell_damage') continue;
+    const dice = fx.raw['touch_damage_dice'];
+    if (typeof dice === 'string' && dice.length > 0) return dice;
+  }
+  return '';
+}
+
 /** Reactions from class features and reaction-type feats (combat-known ids only). */
 function reactionIds(hero: HeroState, features: Set<string>): string[] {
   const out = new Set<string>();
@@ -295,6 +315,7 @@ function castingBlock(
 
   return {
     attackBonus: totalProficiency(hero, 'spell_attack') + castMod + (featStat['spell_attack'] ?? 0),
+    touchDamageDice: touchDamageDice(hero),
     dc: 10 + totalProficiency(hero, 'spell_dc') + castMod,
     casterLevel: best.level,
     kind: isPact ? 'pact' : 'slots',

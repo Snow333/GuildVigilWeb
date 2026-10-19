@@ -18,11 +18,11 @@ function hero(classLevels: [number, number][] = [[1, 1]]): HeroState {
 }
 
 describe('THE WIRING TEST: every feat payload parses and classifies', () => {
-  it('all 243 feats are indexed — zero unparseable, zero unknown types', () => {
+  it('all 244 feats are indexed — zero unparseable, zero unknown types', () => {
     // buildIndex() throws at import time on any failure, so reaching here with
     // a full index IS the proof. The count pins it.
     expect(featEffectsById.size).toBe(feats.length);
-    expect(featEffectsById.size).toBe(243);
+    expect(featEffectsById.size).toBe(244);
   });
 
   it('effect_type distribution matches the source data (snapshot)', () => {
@@ -30,8 +30,8 @@ describe('THE WIRING TEST: every feat payload parses and classifies', () => {
     for (const fx of featEffectsById.values()) counts[fx.effectType] = (counts[fx.effectType] ?? 0) + 1;
     // Known distribution from the Godot data profile (nuance sweep, verified at conversion):
     expect(counts).toEqual({
-      passive_modifier: 120, combat_action: 64, reaction: 16, resource_grant: 12,
-      stat_mod: 8, special: 6, stance: 4, skill_mod: 6, spell_modifier: 3,
+      passive_modifier: 119, combat_action: 64, reaction: 16, resource_grant: 12,
+      stat_mod: 9, special: 6, stance: 4, skill_mod: 7, spell_modifier: 3,
       weapon_spec: 2, toggle: 1, conditional_stat_mod: 1,
     });
   });
@@ -56,7 +56,10 @@ describe('passive stat_mod resolution (ported + completed)', () => {
 
   it('multiple stat_mod feats accumulate per stat', () => {
     const statModFeats = effectsByDomain('passive').filter((f) => f.effectType === 'stat_mod');
-    expect(statModFeats.length).toBe(8);
+    // 8 + Touch Hit Specialization (#219), rewritten from an inert
+    // `passive_modifier/bonus_attack` payload onto `stat_mod/spell_attack`,
+    // which `casting.attackBonus` already sums.
+    expect(statModFeats.length).toBe(9);
     const all = resolveStatMods(hero([[1, 5]]), statModFeats.map((f) => ({ featId: f.featId })));
     const total = Object.values(all).reduce((a, b) => a + b, 0);
     expect(total).toBeGreaterThan(0);

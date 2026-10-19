@@ -103,6 +103,10 @@ export const ACTIVE_WIRED: ReadonlySet<number> = new Set([
   135, // Channel Smite      (Cleric L2)   strike_plus_channel
   138, // Defensive Ward     (Cleric L6)   grant_ally_ac
   71, // Poison Weapon       (Rogue L2)    apply_weapon_poison
+  104, // Protective Ward   (Wizard L4)   grant_ally_ac — was an inert
+  //                                     `create_ward_ac_bonus` verb, which
+  //                                     made it the Wizard's ONLY active
+  //                                     and it did nothing.
   // ── M2: the Ranger and the Bard, who had NO feats at all ──
   310, // Precise Shot       (Ranger L2)   strike_with_bonus
   311, // Hobbling Shot      (Ranger L4)   strike_plus_condition, slowed
@@ -233,6 +237,14 @@ export const CONSUMER_MATCHERS: readonly ConsumerMatcher[] = [
       fx.effectType === 'passive_modifier' &&
       fx.raw['trigger'] === 'strike_vs_flat_footed' &&
       fx.raw['effect'] === 'bonus_damage',
+  },
+  {
+    site: 'touchDamageDice',
+    where: 'campaign/assembly.ts — one payload shape',
+    matches: (fx) =>
+      fx.effectType === 'passive_modifier' &&
+      fx.raw['trigger'] === 'touch_spell_damage' &&
+      typeof fx.raw['touch_damage_dice'] === 'string',
   },
   {
     site: 'partyDungeonBonus',

@@ -10,7 +10,7 @@ import { CONTENT_MANIFEST } from '@content/generated';
 const GATES: Record<string, number> = {
   spells: 218,
   // 227 + 16 (M2: Ranger and Bard, seed_ranger_bard_feats.sql)
-  feats: 243,
+  feats: 244,
   class_progression: 230,
   class_proficiency_tiers: 112,
   items: 183,

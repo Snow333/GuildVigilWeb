@@ -506,7 +506,18 @@ export function resolveCast(
         const { degree, natStep } = determineDegree(d20 + attackBonus, effectiveAc, d20);
         entry.attack = { d20, modifier: attackBonus, total: d20 + attackBonus, dc: effectiveAc, degree, natStep };
         if (degree === 'success' || degree === 'critSuccess') {
-          entry.damage = Math.max(rollDice(rng, dice) * (degree === 'critSuccess' ? 2 : 1), 1);
+          /**
+           * TOUCH SPECIALIZATION (M2): a feat's extra dice land only on a
+           * TOUCH-range spell, and only on a hit. Rolled BEFORE the crit
+           * doubling so a critical touch doubles the whole package, which is
+           * how weapon crits already behave.
+           */
+          const touchBonus = spell.range_type === 'touch' && caster.casting?.touchDamageDice
+            ? rollDice(rng, caster.casting.touchDamageDice)
+            : 0;
+          entry.damage = Math.max(
+            (rollDice(rng, dice) + touchBonus) * (degree === 'critSuccess' ? 2 : 1), 1,
+          );
           if (condition) entry.conditionApplied = { ...condition, durationTicks: riderTicks };
         }
       }

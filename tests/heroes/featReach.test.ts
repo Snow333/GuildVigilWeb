@@ -129,6 +129,18 @@ describe('EVERY consumer matcher has a witness that reaches the REAL consumer', 
       expect(without.c.sneakAttackDice).toBe('');
     },
 
+    touchDamageDice: () => {
+      // Touch Damage Specialization (#220): assembleHero must put the dice on
+      // `casting.touchDamageDice`, which is what resolveCast reads for a
+      // touch-range spell. Asserting the feat payload instead would prove
+      // nothing — that payload existed and was inert before M2.
+      const lvl = { classLevels: [{ classId: 2, level: 6, orderTaken: 1 }] };
+      const withFeat = assembleHero(kitWithFeats(2, [{ featId: 220 }], lvl));
+      const without = assembleHero(kitWithFeats(2, [], lvl));
+      expect(withFeat.c.casting?.touchDamageDice).toBe('1d4');
+      expect(without.c.casting?.touchDamageDice ?? '').toBe('');
+    },
+
     partyDungeonBonus: () => {
       // Trap Finder (#70) carries dungeon_bonus, read by partyDungeonBonus.
       // ⚠ The bonus string is `auto_detect_traps_adjacent`, not

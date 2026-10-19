@@ -1244,8 +1244,8 @@ export const feats = [
   "class_id": 2,
   "level_req": 4,
   "prerequisites": "{}",
-  "effects": "{\"effect_type\": \"combat_action\", \"implemented\": false, \"actions\": 1, \"effect\": \"create_ward_ac_bonus\"}",
-  "description": "You create a protective ward on a 1-tile area. Allies standing in the ward gain +1 circumstance bonus to AC. Lasts 2 rounds.",
+  "effects": "{\"effect_type\": \"combat_action\", \"actions\": 1, \"effect\": \"grant_ally_ac\", \"ac_bonus\": 2}",
+  "description": "You throw up a shield of force around an ally who needs it. That ally defends better for a moment.",
   "feature_key": null,
   "ancestry_id": null
  },
@@ -2624,8 +2624,8 @@ export const feats = [
   "class_id": 2,
   "level_req": 5,
   "prerequisites": "{}",
-  "effects": "{\"effect_type\": \"passive_modifier\", \"modifies\": \"touch_spell_attack\", \"effect\": \"bonus_attack\", \"tier_table\": [{\"class_level\": 5, \"value\": 2}, {\"class_level\": 10, \"value\": 4}, {\"class_level\": 15, \"value\": 6}], \"implementation_notes\": \"combat_spell_resolver._compute_spell_attack applies when spell range_type == 'touch'. Tier from granting class's level. Not on cantrips. Single-target only.\"}",
-  "description": "Your precision with melee touch spells grows with experience. +2/+4/+6 bonus to touch spell attack rolls at class levels 5, 10, 15. Does not apply to cantrips or ranged spells.",
+  "effects": "{\"effect_type\": \"stat_mod\", \"stat\": \"spell_attack\", \"value\": 1, \"scaling\": \"flat\"}",
+  "description": "You have practised landing a spell on something that is trying to stop you. +1 to hit with spells.",
   "feature_key": null,
   "ancestry_id": null
  },
@@ -2636,8 +2636,8 @@ export const feats = [
   "class_id": 2,
   "level_req": 6,
   "prerequisites": "{}",
-  "effects": "{\"effect_type\": \"passive_modifier\", \"modifies\": \"touch_spell_damage\", \"effect\": \"bonus_dice_d4\", \"tier_table\": [{\"class_level\": 6, \"value\": 1}, {\"class_level\": 11, \"value\": 2}, {\"class_level\": 16, \"value\": 3}], \"implementation_notes\": \"combat_spell_resolver._apply_touch_damage_spec applies when range_type == 'touch' and spell_level > 0. Bonus dice are d4; damage type inherits from spell. Crit doubles per spell crit rules. Single-target only.\"}",
-  "description": "Your melee touch spells hit with greater force. +1d4/+2d4/+3d4 damage at class levels 6, 11, 16. Damage type matches the spell. Does not apply to cantrips.",
+  "effects": "{\"effect_type\": \"passive_modifier\", \"trigger\": \"touch_spell_damage\", \"effect\": \"bonus_damage\", \"touch_damage_dice\": \"1d4\"}",
+  "description": "Your hands carry more than the spell does. Touch-range spells you cast deal extra damage.",
   "feature_key": null,
   "ancestry_id": null
  },
@@ -2831,6 +2831,18 @@ export const feats = [
   "effects": "{\"effect_type\": \"combat_action\", \"actions\": 1, \"effect\": \"grant_party_condition\", \"condition\": \"emboldened\", \"value\": 1}",
   "description": "You strike up a rousing tune. Everyone in the party attacks better while it lasts.",
   "feature_key": "inspire_courage",
+  "ancestry_id": null
+ },
+ {
+  "id": 332,
+  "name": "Lore Master",
+  "feat_type": "class",
+  "class_id": 8,
+  "level_req": 5,
+  "prerequisites": "{}",
+  "effects": "{\"effect_type\": \"skill_mod\", \"skill\": \"arcana\", \"value\": 2, \"scaling\": \"flat\", \"additional_skill_mod\": {\"skill\": \"religion\", \"value\": 2}}",
+  "description": "You have read about this. +2 Arcana and +2 Religion, which both tell on a mission.",
+  "feature_key": "lore_master",
   "ancestry_id": null
  },
  {

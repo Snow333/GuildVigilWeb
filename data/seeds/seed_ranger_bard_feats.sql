@@ -79,12 +79,12 @@ INSERT INTO feats (id, name, feat_type, class_id, level_req, prerequisites, effe
 -- Auto-granted class features. These are the bard's identity, so they are
 -- granted rather than chosen.
 --
--- ⚠ `inspire_competence` (L3) and `lore_master` (L5) are deliberately LEFT
--- UNGRANTED. The only honest rows for them are skill_mods on Performance,
--- Arcana and Religion, and nothing in src/ reads those skills yet — the feat
--- would be a number on a sheet that never touches a die. They stay as they
--- are today (granting nothing) until a mission actually checks those skills,
--- which is better than pretending.
+-- ⚠ `lore_master` (L5) WAS held back because nothing read Arcana or Religion.
+-- Track S wired both into dungeon missions (Arcana breaks rune-sealed hazards,
+-- Religion wards undead), so the row is live content now and is granted.
+-- `inspire_competence` (L3) is STILL left ungranted: its only honest row is a
+-- Performance bonus, and Performance is read by nothing — that would be a
+-- number on a sheet that never touches a die.
 INSERT INTO feats (id, name, feat_type, class_id, level_req, prerequisites, effects, description, feature_key) VALUES
 (330, 'Inspire Courage', 'class', 8, 1, '{}',
  '{"effect_type": "combat_action", "actions": 1, "effect": "grant_party_condition", "condition": "emboldened", "value": 1}',
@@ -92,6 +92,11 @@ INSERT INTO feats (id, name, feat_type, class_id, level_req, prerequisites, effe
  'inspire_courage'),
 
 
+
+(332, 'Lore Master', 'class', 8, 5, '{}',
+ '{"effect_type": "skill_mod", "skill": "arcana", "value": 2, "scaling": "flat", "additional_skill_mod": {"skill": "religion", "value": 2}}',
+ 'You have read about this. +2 Arcana and +2 Religion, which both tell on a mission.',
+ 'lore_master'),
 
 (333, 'Dirge of Doom', 'class', 8, 8, '{}',
  '{"effect_type": "combat_action", "actions": 1, "effect": "grant_party_condition", "target_side": "enemies", "condition": "frightened", "value": 1}',

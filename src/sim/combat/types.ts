@@ -133,6 +133,21 @@ export interface Combatant {
     kind: 'slots' | 'pact';
     slots: number[];
     pactEnergy: number;
+    /**
+     * Extra damage dice on TOUCH-range spells (M2 — the touch-casting wizard).
+     *
+     * ⚠ OPTIONAL BECAUSE ITS ABSENCE IS THE NORMAL CASE. Every enemy caster
+     * and every caster without the Touch Damage Specialization feat simply
+     * has none, and `resolveCast` treats a missing value as "no bonus" — so
+     * the field is not a flag anyone has to remember to clear.
+     *
+     * It lives on `casting` rather than on the Combatant because it is a
+     * property of how this hero casts, and `resolveCast` already has the
+     * casting state in hand at the damage site. Touch range is the gate
+     * (`range_type === 'touch'`), so a wizard who stands back and throws
+     * ranged spells gets nothing from it — which is the point of the feat.
+     */
+    touchDamageDice?: string;
   } | null;
   /** Ordered ability priorities (core-loop D4); empty = always strike. */
   loadout: import('./loadout').LoadoutEntry[];
