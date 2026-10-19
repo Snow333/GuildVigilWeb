@@ -100,9 +100,9 @@ export function TownScreen() {
   const counts = statusCounts(town);
   const built = town.filter((b) => b.level > 0).length;
 
-  // Fold is open by default only when there are NO picks (otherwise the top of
-  // the page would be empty and the answer would be hiding behind a click).
-  const open = foldOpen ?? picks.length === 0;
+  // The fold starts shut: 18 rows of reasons is the long part of this screen
+  // (a fresh guild measured 3,500px with it open). The gap line points at it.
+  const open = foldOpen ?? false;
   const ledger = ledgerOrder(town).filter((b) => filter === 'all' || statusOf(b) === filter);
 
   const upgrade = (id: number): void => {
@@ -134,7 +134,7 @@ export function TownScreen() {
         disabled={blocked}
         onClick={() => upgrade(b.id)}
       >
-        {blocked ? 'Upgrade' : dead ? 'Build anyway ▸' : 'Upgrade ▸'}
+        {blocked ? 'Upgrade' : dead ? 'Build anyway' : 'Upgrade ▸'}
       </button>
     );
   };
@@ -207,8 +207,7 @@ export function TownScreen() {
             ) : together.affordable ? (
               <>You have <b>{gold} gold</b>. You can afford all {picks.length === 1 ? '1 pick' : `${picks.length} picks`}.</>
             ) : (
-              <>You have <b>{gold} gold</b>. The {picks.length === 1 ? '1 pick costs' : `${picks.length} picks cost`}{' '}
-                <b>{together.totalGold} gold</b> together — so start at the top.</>
+              <>You have <b>{gold} gold</b>. You can&apos;t buy all {picks.length} picks at once — start at the top.</>
             )}
           </p>
 
@@ -218,6 +217,11 @@ export function TownScreen() {
             <div className="gv-sheet gv-sheet--aged gv-tn-gap" data-tn-gap="">
               <span className="gv-tape" />
               <p style={{ margin: 0 }}>{gap}</p>
+              {picks.length === 0 && (
+                <p className="gv-tn-none" style={{ margin: '4px 0 0' }}>
+                  Open <b>Show all {town.length}</b> below to see what each building is waiting on.
+                </p>
+              )}
             </div>
           )}
 
@@ -234,12 +238,6 @@ export function TownScreen() {
                 <small>every building, one line each</small>
               </summary>
 
-              <div className="gv-tn-counts" data-tn-counts="">
-                <span><b>{counts.ready}</b> ready</span>
-                <span><b>{counts.short}</b> short on stuff</span>
-                <span><b>{counts.locked}</b> locked</span>
-                <span><b>{counts.maxed}</b> fully built</span>
-              </div>
               <div className="gv-tn-filters" role="group" aria-label="Show">
                 {([['all', `All ${town.length}`], ['ready', `Ready ${counts.ready}`], ['short', `Short ${counts.short}`],
                   ['locked', `Locked ${counts.locked}`], ['maxed', `Fully built ${counts.maxed}`]] as [Filter, string][]).map(
@@ -260,12 +258,12 @@ export function TownScreen() {
               <table className="gv-tn-ledger" data-tn-ledger="">
                 <thead>
                   <tr>
-                    <th style={{ width: '16%' }}>Building</th>
-                    <th style={{ width: '20%' }}>You have now</th>
-                    <th style={{ width: '22%' }}>Next level gives you</th>
-                    <th style={{ width: '17%' }}>Costs</th>
-                    <th style={{ width: '17%' }}>Can I do it?</th>
-                    <th style={{ width: '8%' }}></th>
+                    <th style={{ width: '15%' }}>Building</th>
+                    <th style={{ width: '17%' }}>You have now</th>
+                    <th style={{ width: '21%' }}>Next level gives you</th>
+                    <th style={{ width: '14%' }}>Costs</th>
+                    <th style={{ width: '20%' }}>Can I do it?</th>
+                    <th style={{ width: '13%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
