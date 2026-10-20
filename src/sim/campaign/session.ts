@@ -857,7 +857,8 @@ export class CampaignSession {
     const heroes = kits.map((k) => k.hero);
     const quest = questsById.get(q.questId)!;
     const week = this.week;
-    const pl = this.partyLevel();
+    // ⚠ THIS BAND's level, not the roster's. See partyLevel's warning.
+    const pl = this.partyLevel(partyIndex);
     let minute = this.minute;
 
     for (const h of heroes) h.wounded = 0;
@@ -1381,9 +1382,32 @@ export class CampaignSession {
    * since brief #11: an empty `heroes` divides by zero, and `Math.max(NaN, 1)`
    * is NaN, which would poison every difficulty band on the board.
    */
-  partyLevel(): number {
-    if (this.heroes.length === 0) return 1;
-    return Math.max(Math.round(this.heroes.reduce((s, h) => s + characterLevel(h), 0) / this.heroes.length), 1);
+  /**
+   * The level the game should scale to.
+   *
+   * ⚠ WITH NO ARGUMENT THIS IS THE GUILD'S REACH (its STRONGEST band), NOT THE
+   * ROSTER AVERAGE. The average was the M4 bug: hire four green recruits for a
+   * B-team and the roster average drops, which quietly made the whole BOARD
+   * easier even though the main band had not changed. The guild's reach is what
+   * the board should answer to.
+   *
+   * ⚠ WITH A BAND INDEX IT IS THAT BAND'S OWN AVERAGE, and every per-dispatch
+   * consumer must pass one. Scaling a dungeon to the roster average sent a weak
+   * second band into content pitched for the first — the single thing most
+   * likely to make two parties feel broken rather than fun.
+   */
+  partyLevel(partyIndex?: number): number {
+    const avg = (heroes: readonly HeroState[]): number => (
+      heroes.length === 0
+        ? 1
+        : Math.max(Math.round(heroes.reduce((n, h) => n + characterLevel(h), 0) / heroes.length), 1)
+    );
+    if (partyIndex !== undefined) return avg(this.partyKits(partyIndex).map((k) => k.hero));
+    this.syncParties();
+    const bands = this.parties
+      .filter((ids) => ids.length > 0)
+      .map((ids) => avg(this.kits.filter((k) => ids.includes(k.hero.id)).map((k) => k.hero)));
+    return bands.length === 0 ? avg(this.heroes) : Math.max(...bands);
   }
 
   roster(): RosterEntry[] {
@@ -2091,15 +2115,24 @@ export class CampaignSession {
    * Forecast honesty (risk R5): forecast seeds ≠ live seed, SAME resolution path.
    * Consumes no campaign RNG and mutates no hero state — pure by construction.
    */
-  forecast(questId: number, cfg: ForecastConfig, n: number): ForecastResult {
+  forecast(questId: number, cfg: ForecastConfig, n: number, partyIndex = 0): ForecastResult {
     const posting = this.open.find((o) => o.questId === questId) ??
       (this.actives.find((a) => a?.questId === questId) ?? null);
     if (!posting) throw new Error(`forecast: quest ${questId} is not available`);
     const quest = questsById.get(questId)!;
     const dungeonLevel = Math.max((quest.dungeon_level as number | null) ?? (quest.min_level as number), 1);
-    const pl = this.partyLevel();
+    /**
+     * ⚠ THE FORECAST MUST SIMULATE THE BAND THAT WOULD ACTUALLY GO.
+     * It previously assembled `this.kits` — the WHOLE roster — and scaled to
+     * the roster average, so once a second band existed the forecast was a
+     * prediction about a party that would never be sent. That breaks the one
+     * guarantee this method has (forecast honesty, risk R5): same inputs, same
+     * resolution path as the real dispatch.
+     */
+    const kits = this.partyKits(partyIndex);
+    const pl = this.partyLevel(partyIndex);
     const autoDetect = partyDungeonBonus(
-      this.kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
+      kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
       'auto_detect_traps_adjacent',
     ).found;
 
@@ -2109,10 +2142,10 @@ export class CampaignSession {
     for (let i = 0; i < n; i++) {
       const result = runDungeonDispatch({
         dispatchId: `forecast_${i}`,
-        partyId: Ids.party(1),
-        party: assembleParty(this.kits), // fresh combatants per run — real heroes untouched
+        partyId: Ids.party(partyIndex + 1),
+        party: assembleParty(kits), // fresh combatants per run — real heroes untouched
         tier: dungeonTierFor(dungeonLevel),
-        seed: Seeds.forecast(this.kits.length, i),
+        seed: Seeds.forecast(kits.length, i),
         profile: cfg.profile,
         caution: cfg.caution,
         difficulty: dungeonLevel,
@@ -2141,8 +2174,10 @@ export class CampaignSession {
     };
   }
 
-  board(): BoardEntry[] {
-    const partyLevel = this.partyLevel();
+  board(partyIndex?: number): BoardEntry[] {
+    // The difficulty WORDS are relative to whoever would go; with no band
+    // named it is the guild's reach, which is what a shared board should say.
+    const partyLevel = this.partyLevel(partyIndex);
     return this.open.map((o) => {
       const row = questsById.get(o.questId)!;
       const challenge = Math.max(row.dungeon_level ?? row.min_level, 1);

@@ -21,13 +21,21 @@ export interface DifficultyBand {
   label: string;
   /** Index into the frozen status set (--gv-s0…--gv-s3). */
   tier: 0 | 1 | 2 | 3;
-  /** Plain-language why, in the guild's voice — shown beside the label. */
+  /**
+   * Plain-language why, shown beside the label.
+   *
+   * ⚠ SAYS "THEM", NOT "THE GUILD". M4 made the board readable through a
+   * single band's eyes (`board(partyIndex)`), and the same posting is
+   * "Dangerous — a level above them" to the A-team and "Beyond us — 5 levels
+   * over them" to the B-team. Phrased as "the guild" the second reading was
+   * nonsense, because the guild's reach IS the A-team.
+   */
   reason: string;
 }
 
 /**
  * Bands by `challenge − partyLevel`:
- *   ≤ −2  routine    two or more levels under the guild
+ *   ≤ −2  routine    two or more levels under them
  *   −1…0  measured   at or just under
  *     +1  dangerous  the autopilot's ceiling — it will take this, barely
  *   ≥ +2  beyond     over the ceiling; the guild declines
@@ -42,15 +50,15 @@ export function difficultyFor(challenge: number, partyLevel: number): Difficulty
     return { id: 'routine', label: 'Routine', tier: 0, reason: 'well within the guild' };
   }
   if (delta <= 0) {
-    return { id: 'measured', label: 'Measured', tier: 1, reason: 'a fair match for the guild' };
+    return { id: 'measured', label: 'Measured', tier: 1, reason: 'a fair match for them' };
   }
   if (delta === 1) {
-    return { id: 'dangerous', label: 'Dangerous', tier: 2, reason: 'a level above the guild' };
+    return { id: 'dangerous', label: 'Dangerous', tier: 2, reason: 'a level above them' };
   }
   return {
     id: 'beyond',
     label: 'Beyond us',
     tier: 3,
-    reason: delta === 2 ? 'two levels over the guild' : `${delta} levels over the guild`,
+    reason: delta === 2 ? 'two levels over them' : `${delta} levels over them`,
   };
 }
