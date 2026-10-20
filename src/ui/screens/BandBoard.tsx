@@ -82,7 +82,11 @@ function BandHead({ band, p }: { band: BandView; p: BandBoardProps }) {
       <div className="gv-bd-names" data-names="">
         {band.empty
           ? 'Nobody yet. Add heroes from the hall.'
-          : band.heroes.map((h) => `${shortName(h.name)} L${h.level}`).join(' · ')}
+          : band.heroes.map((h, i) => (
+            <span key={h.id} className="gv-bd-nm">
+              {i > 0 && ' · '}{shortName(h.name)} L{h.level}<Tags hero={h} />
+            </span>
+          ))}
       </div>
       {band.out && (
         <div className="gv-bd-outline" data-out-job={band.out.questId}>
@@ -203,7 +207,7 @@ export function BandBoard(p: BandBoardProps) {
               <tr>
                 <th className="gv-bd-jobh" scope="col">
                   <b>The board</b>
-                  <small>{view.jobs.filter((j) => j.heldBy === null).length} jobs posted · week {pl.week}</small>
+                  <small>{view.postedCount} jobs posted · week {pl.week}</small>
                 </th>
                 {view.bands.map((b) => <BandHead key={b.index} band={b} p={p} />)}
                 {view.nextLocked !== null && (

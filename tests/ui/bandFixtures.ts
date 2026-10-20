@@ -34,6 +34,8 @@ export interface GuildSpec {
   seats?: number[];
   /** Levels gained by each hall hero, in order. */
   hallLevels?: number[];
+  /** Weeks to advance after seating, so the board is redrawn for the bands' real levels. */
+  weeks?: number;
   seed?: string;
 }
 
@@ -72,6 +74,7 @@ export function realGuild(spec: GuildSpec): CampaignSession {
   });
   const hallIds = ids.slice(at);
   (spec.hallLevels ?? []).forEach((g, i) => { if (hallIds[i]) levelUp(s, hallIds[i]!, g); });
+  for (let w = 0; w < (spec.weeks ?? 0); w++) s.advanceWeek();
   return s;
 }
 

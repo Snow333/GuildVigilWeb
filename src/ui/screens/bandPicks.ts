@@ -171,6 +171,8 @@ export interface BandsView {
   plates: Plates;
   bands: BandView[];
   jobs: JobRow[];
+  /** How many jobs are still on the board (held jobs are rows too, but they are not posted). */
+  postedCount: number;
   hall: HallHero[];
   /** The roster editor: one column per band, then the hall. Each hero carries only the moves that are legal. */
   roster: RosterColumn[];
@@ -451,6 +453,7 @@ export function readBands(src: BandSource): BandsView {
     },
     bands,
     jobs: [...posted, ...held],
+    postedCount: posted.length,
     hall,
     roster,
     bestByBand,
