@@ -21,6 +21,7 @@ import { items as itemRows } from '@content/generated/items';
 const GUILD_HALL = 1;
 const BLACKSMITH = 3;
 const GENERAL_STORE = 4;
+const BARRACKS = 2;
 const CHAPEL = 5;
 const TAVERN = 6;
 const LIBRARY = 7;
@@ -85,7 +86,12 @@ describe('the content gate: every building has a price and every effect has word
     // note's promises change with it.
     const wired = Object.entries(EFFECT_COPY).filter(([, v]) => v.wired).map(([k]) => k).sort();
     expect(wired).toEqual([
-      'armor', 'better_stock', 'consumables', 'map_reveal_large', 'map_reveal_small', 'masterwork',
+      // Both M4 tracks wired effects, hence the merge: fog took the
+      // Watchtower's map_reveal_*, parties took the Barracks' hero_cap_*.
+      'armor', 'better_stock', 'consumables',
+      'hero_cap_10', 'hero_cap_15', 'hero_cap_6',
+      'map_reveal_large', 'map_reveal_small',
+      'masterwork',
       'party_size_4', 'party_size_5', 'party_size_6',
       'rare_items', 'recruit_common', 'recruit_rare', 'recruit_uncommon',
       'scroll_shop', 'sell_price_100pct', 'sell_price_80pct', 'sell_price_90pct',
@@ -214,6 +220,7 @@ describe('the guild-hall ladder', () => {
     const s = wealthy('hire');
     s.upgradeBuilding(TAVERN);
     s.upgradeBuilding(GUILD_HALL);
+    s.upgradeBuilding(BARRACKS); // M4: the Barracks is what houses a 5th hero
     expect(s.rosterSize()).toBe(4);
     s.recruitHero(1, 'Newcomer');
     expect(s.rosterSize()).toBe(5);
@@ -226,12 +233,33 @@ describe('the guild-hall ladder', () => {
     expect(['completed', 'failed', 'wiped', 'retreated']).toContain(result.outcome);
   });
 
-  it('the guild hall is the cap — hiring past it is refused', () => {
+  it('the BARRACKS is the hiring cap — M4 reversed this', () => {
+    /**
+     * ⚠ THIS TEST PINNED A CONFLATION AND HAS BEEN UPDATED, NOT DELETED.
+     * M3 capped hiring on `maxPartySize()` (the Guild Hall). That is wrong:
+     * the Guild Hall says how many heroes MARCH, the Barracks says how many
+     * the guild can HOUSE. With them fused, a guild could never keep a
+     * reserve, so a second party was impossible — which M4 needs.
+     */
     const s = wealthy('cap');
     s.upgradeBuilding(TAVERN);
-    expect(s.maxPartySize()).toBe(4);
+    expect(s.maxPartySize()).toBe(4);      // guild hall: four march
+    expect(s.heroCapacity()).toBe(4);      // no barracks: four on the books
     expect(s.rosterSize()).toBe(4);
-    expect(() => s.recruitHero(1)).toThrow(/guild hall holds 4/);
+    expect(() => s.recruitHero(1)).toThrow(/barracks houses 4/);
+  });
+
+  it('a Barracks lets the guild keep MORE heroes than it can march', () => {
+    const s = wealthy('reserve');
+    s.upgradeBuilding(TAVERN);
+    s.upgradeBuilding(BARRACKS);           // hero_cap_6
+    expect(s.heroCapacity()).toBe(6);
+    expect(s.maxPartySize()).toBe(4);      // still a four-hero hall
+    s.recruitHero(1, 'Reserve A');
+    s.recruitHero(4, 'Reserve B');
+    expect(s.rosterSize()).toBe(6);
+    // Two of them cannot fit in the single band, so they wait at the hall.
+    expect(s.unassignedHeroes().length).toBe(2);
   });
 
   it('no tavern, no recruits — there is nowhere in town to meet them', () => {
@@ -261,6 +289,7 @@ describe('the guild-hall ladder', () => {
       const probe = wealthy(`c${offer.classId}`);
       probe.upgradeBuilding(TAVERN); probe.upgradeBuilding(TAVERN); probe.upgradeBuilding(TAVERN);
       probe.upgradeBuilding(GUILD_HALL);
+      probe.upgradeBuilding(BARRACKS); // room on the books for the hire
       expect(() => probe.recruitHero(offer.classId)).not.toThrow();
     }
   });
@@ -436,6 +465,7 @@ describe('persistence', () => {
     const s = wealthy('save');
     s.upgradeBuilding(TAVERN);
     s.upgradeBuilding(GUILD_HALL);
+    s.upgradeBuilding(BARRACKS);
     s.recruitHero(1, 'Saved');
     const site = s.resourceSites()[0]!;
     s.secureSite(site.regionId, site.kind);

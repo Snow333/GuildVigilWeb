@@ -91,6 +91,13 @@ export function TownScreen() {
   const sites = session.resourceSites();
   const roster = session.rosterSize();
   const maxParty = session.maxPartySize();
+  /**
+   * ⚠ HIRING IS CAPPED BY THE BARRACKS (beds), MARCHING BY THE GUILD HALL.
+   * M3 showed `roster of maxParty`, which was the same wrong fusion the sim
+   * had: it told the player to upgrade the Guild Hall when what they actually
+   * needed was somewhere to put the person.
+   */
+  const capacity = session.heroCapacity();
   const pool = session.recruitPool();
 
   const picks = rankPicks(town);
@@ -195,7 +202,7 @@ export function TownScreen() {
             <span className="gv-plate">GOLD <b data-tn-gold="">{gold}</b></span>
             <span className="gv-plate">REPUTATION <b>{rep}</b></span>
             <span className="gv-plate">BUILT <b>{built} of {town.length}</b></span>
-            <span className="gv-plate">HEROES <b data-tn-roster="">{roster} of {maxParty}</b></span>
+            <span className="gv-plate">HEROES <b data-tn-roster="">{roster} of {capacity}</b></span>
           </div>
           {lastError && <p className="gv-marg" data-tn-error="" style={{ margin: '0 0 14px' }}><b>!</b> {lastError}</p>}
         </div>
@@ -379,8 +386,8 @@ export function TownScreen() {
               <span className="gv-tape" />
               <h3 className="gv-head">Tavern <span className="gv-sub">hire a hero</span></h3>
               <p className="gv-tn-roster" data-tn-roster-line="">
-                Roster <b>{roster} of {maxParty}</b>
-                {roster >= maxParty && <> — the guild hall is full. Upgrade it to hire more.</>}
+                Roster <b>{roster} of {capacity}</b>
+                {roster >= capacity && <> — the barracks is full. Upgrade it to hire more.</>}
               </p>
               <label className="gv-tn-name">
                 Name (optional){' '}
@@ -406,7 +413,7 @@ export function TownScreen() {
                         <button
                           className="gv-btn gv-btn--tiny"
                           data-hire={o.classId}
-                          disabled={roster >= maxParty || gold < o.cost}
+                          disabled={roster >= capacity || gold < o.cost}
                           onClick={() => hire(o.classId)}
                         >
                           Hire

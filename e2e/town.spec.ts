@@ -70,7 +70,8 @@ test('buying the first pick spends the stock and raises the building level', asy
   await expect.poll(() => stock(page, 'timber')).toBe(timberBefore - 20);
   expect(await stock(page, 'stone')).toBe(stoneBefore - 12);
   expect(await level(page, 1)).toBe(levelBefore + 1);
-  await expect(page.locator('[data-tn-roster]')).toHaveText('4 of 5');
+  // No Barracks in this test, so the books still hold only the founding four.
+  await expect(page.locator('[data-tn-roster]')).toHaveText('4 of 4');
   await expect(page.locator('[data-ghlevel="2"]')).toHaveAttribute('data-state', 'built');
   await expect(page.locator('[data-tn-error]')).toHaveCount(0);
 
@@ -78,7 +79,7 @@ test('buying the first pick spends the stock and raises the building level', asy
   await expect(page.locator('[data-pick="1"]')).toHaveCount(0);
 });
 
-test('a Tavern and a bigger Guild Hall let the player hire a fifth hero', async ({ page }) => {
+test('a Tavern and a BARRACKS let the player hire a fifth hero', async ({ page }) => {
   await page.goto('/');
   await newCampaign(page, 'Town Hire');
   await devPanel(page, async (panel) => {
@@ -91,6 +92,10 @@ test('a Tavern and a bigger Guild Hall let the player hire a fifth hero', async 
   await openLedger(page);
   await page.locator('[data-tn-ledger] tr[data-b="1"] [data-upgrade]').click();
   await expect.poll(() => level(page, 1)).toBe(2);
+  // M4: the Guild Hall makes room in the BAND; the Barracks makes room on the
+  // BOOKS, and hiring is capped by the books.
+  await page.locator('[data-tn-ledger] tr[data-b="2"] [data-upgrade]').click();
+  await expect.poll(() => level(page, 2)).toBe(1);
 
   const goldBeforeTavern = await gold(page);
   await page.locator('[data-tn-ledger] tr[data-b="6"] [data-upgrade]').click();
@@ -99,17 +104,17 @@ test('a Tavern and a bigger Guild Hall let the player hire a fifth hero', async 
 
   const tavern = page.locator('[data-section="tavern"]');
   await expect(tavern).toBeVisible();
-  await expect(page.locator('[data-tn-roster]')).toHaveText('4 of 5');
+  await expect(page.locator('[data-tn-roster]')).toHaveText('4 of 6'); // 6 beds from the Barracks
 
   const goldBeforeHire = await gold(page);
   await tavern.locator('[data-recruit-name]').fill('Wren');
   await tavern.locator('[data-hire]').first().click();
 
-  await expect(page.locator('[data-tn-roster]')).toHaveText('5 of 5');
+  await expect(page.locator('[data-tn-roster]')).toHaveText('5 of 6');
   expect(await gold(page)).toBe(goldBeforeHire - 150);
-  // Full roster: every Hire button is now off and the screen says why.
-  await expect(tavern.locator('[data-hire]:not([disabled])')).toHaveCount(0);
-  await expect(page.locator('[data-tn-roster-line]')).toContainText('Upgrade it to hire more');
+  // One bed left, so hiring is still open — the band is full at 5 but the
+  // books are not. That split IS the M4 change.
+  await expect(tavern.locator('[data-hire]:not([disabled])').first()).toBeEnabled();
 
   // The new hero is on the hub roster.
   await page.getByRole('button', { name: '◂ Town Hub' }).click();
@@ -128,10 +133,17 @@ test('blocked rows show the sim\'s own reason; unwired effects are greyed and ta
   await expect(page.locator('tr[data-b="8"] [data-why]')).toContainText('Needs Library at level 1 first.');
   await expect(page.locator('tr[data-b="1"] [data-why]')).toContainText('Short 20 more timber, 12 more stone.');
 
-  // Barracks' next effect is authored but not implemented.
-  const barracks = page.locator('tr[data-b="2"]');
-  await expect(barracks.locator('[data-effect="unwired"]')).toContainText('Keep up to 6 heroes in the guild');
-  await expect(barracks.locator('[data-not-working]')).toContainText('Not working yet');
+  /**
+   * The Chapel's next effect is authored but not implemented.
+   *
+   * ⚠ THIS USED TO POINT AT THE BARRACKS, WHICH M4 WIRED. Pick a subject that
+   * is still inert when this test breaks, rather than deleting it — the thing
+   * being guarded is that the UI never sells an effect the engine does not
+   * keep, and that is only testable against a genuinely dead one.
+   */
+  const chapel = page.locator('tr[data-b="5"]');
+  await expect(chapel.locator('[data-effect="unwired"]')).toContainText('Resting heals half your wounds');
+  await expect(chapel.locator('[data-not-working]')).toContainText('Not working yet');
   // …and the Guild Hall's wired effect carries no such tag.
   // (both the level it has now and the one it is buying)
   await expect(page.locator('tr[data-b="1"] [data-effect="wired"]')).toHaveCount(2);

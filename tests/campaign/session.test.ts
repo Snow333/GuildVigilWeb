@@ -57,7 +57,8 @@ describe('CampaignSession — command validation', () => {
     expect(() => s.acceptQuest(99999)).toThrow(/not on the board/);
     const first = s.board()[0]!;
     s.acceptQuest(first.questId);
-    expect(() => s.acceptQuest(first.questId)).toThrow(/already active/);
+    // M4: bands are numbered now, so the message names the party.
+    expect(() => s.acceptQuest(first.questId)).toThrow(/party 1 is already on quest/);
     expect(s.activeQuest()?.questId).toBe(first.questId);
     expect(s.board().some((b) => b.questId === first.questId)).toBe(false);
   });

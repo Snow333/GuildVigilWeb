@@ -1,0 +1,304 @@
+/**
+ * TWO PARTIES (M4) — the roster stops being the party.
+ *
+ * ⚠ M3 FUSED TWO DIFFERENT NUMBERS AND THIS MILESTONE SPLITS THEM.
+ * `recruitHero` capped on `maxPartySize()` (the Guild Hall), so the guild
+ * could never employ more heroes than it could march — no reserve, therefore
+ * no second band. The Guild Hall says how many MARCH; the Barracks says how
+ * many the guild HOUSES.
+ *
+ * ⚠ THE BAND COUNT IS NOT TUNED, IT IS READ. The roadmap's ladder is
+ * "1x4 → 1x5 → 1x6 → 6+4", and Barracks level 2 was already authored as
+ * `hero_cap_10`. Ten bodies is exactly 6+4, so the second band falls out of
+ * content that has existed since before this milestone.
+ */
+import { describe, expect, it } from 'vitest';
+import { CampaignSession } from '@sim/campaign/session';
+import { starterParty } from '@sim/campaign/starterParty';
+import { RESOURCE_KINDS } from '@content/town';
+
+const GUILD_HALL = 1;
+const BARRACKS = 2;
+const TAVERN = 6;
+
+/** A guild with the means to buy anything, so a test isolates ONE gate. */
+function rich(id: string): CampaignSession {
+  const s = CampaignSession.create({ campaignId: id, seed: `world_${id}`, party: starterParty() });
+  s.devAddGold(500_000);
+  s.grantResources(Object.fromEntries(RESOURCE_KINDS.map((k) => [k, 9999])));
+  s.grantReputation(200);
+  return s;
+}
+
+/** A guild that can field two full bands. */
+function twoBands(id: string): CampaignSession {
+  const s = rich(id);
+  s.upgradeBuilding(BARRACKS); s.upgradeBuilding(BARRACKS); // hero_cap_10 → 2 bands
+  s.upgradeBuilding(GUILD_HALL); s.upgradeBuilding(GUILD_HALL); // 6 march
+  s.upgradeBuilding(TAVERN); s.upgradeBuilding(TAVERN);
+  const pool = s.recruitPool();
+  while (s.rosterSize() < 10) s.recruitHero(pool[s.rosterSize() % pool.length]!.classId, `Hire${s.rosterSize()}`);
+  return s;
+}
+
+describe('the two numbers M3 had fused', () => {
+  it('the Guild Hall says how many MARCH, the Barracks how many are HOUSED', () => {
+    const s = rich('split');
+    expect(s.maxPartySize()).toBe(4);
+    expect(s.heroCapacity()).toBe(4);
+
+    s.upgradeBuilding(BARRACKS);
+    expect(s.heroCapacity()).toBe(6);
+    expect(s.maxPartySize()).toBe(4); // unchanged — a bigger bunkhouse is not a bigger band
+
+    s.upgradeBuilding(GUILD_HALL);
+    expect(s.maxPartySize()).toBe(5);
+    expect(s.heroCapacity()).toBe(6); // unchanged — a bigger hall is not more beds
+  });
+
+  it('a guild with no Barracks keeps exactly its founding four', () => {
+    const s = rich('nobarracks');
+    s.upgradeBuilding(TAVERN);
+    expect(s.heroCapacity()).toBe(4);
+    expect(() => s.recruitHero(1)).toThrow(/barracks houses 4/);
+  });
+
+  it('a reserve can exist: more heroes on the books than fit in the band', () => {
+    const s = rich('reserve');
+    s.upgradeBuilding(TAVERN);
+    s.upgradeBuilding(BARRACKS); // 6 housed, 4 march
+    s.recruitHero(1, 'A');
+    s.recruitHero(4, 'B');
+    expect(s.rosterSize()).toBe(6);
+    expect(s.partyRosters()[0]!.length).toBe(4);
+    expect(s.unassignedHeroes().length).toBe(2);
+  });
+});
+
+describe('the band ladder is read off the Barracks, not tuned', () => {
+  it('6 → one band, 10 → two (the roadmap\u2019s 6+4), 15 → three', () => {
+    const s = rich('ladder');
+    expect(s.partyCount()).toBe(1);
+    s.upgradeBuilding(BARRACKS);
+    expect(s.heroCapacity()).toBe(6);
+    expect(s.partyCount()).toBe(1);
+    s.upgradeBuilding(BARRACKS);
+    expect(s.heroCapacity()).toBe(10);
+    expect(s.partyCount()).toBe(2);
+    s.upgradeBuilding(BARRACKS);
+    expect(s.heroCapacity()).toBe(15);
+    expect(s.partyCount()).toBe(3);
+  });
+
+  it('a hero cap of 10 really is 6 + 4 with a level-3 hall', () => {
+    const s = twoBands('sixfour');
+    expect(s.rosterSize()).toBe(10);
+    expect(s.partyRosters().map((p) => p.length).slice(0, 2)).toEqual([6, 4]);
+    expect(s.unassignedHeroes()).toEqual([]);
+  });
+});
+
+describe('two bands, two jobs, one week', () => {
+  it('each band takes its own quest and both resolve', () => {
+    const s = twoBands('two');
+    s.advanceWeek();
+    const board = s.board();
+    expect(board.length).toBeGreaterThanOrEqual(2);
+
+    s.acceptQuest(board[0]!.questId, 0);
+    s.acceptQuest(board[1]!.questId, 1);
+    const actives = s.activeByParty();
+    expect(actives[0]?.questId).toBe(board[0]!.questId);
+    expect(actives[1]?.questId).toBe(board[1]!.questId);
+
+    const a = s.launchDispatch(0);
+    const b = s.launchDispatch(1);
+    expect(a.questId).toBe(board[0]!.questId);
+    expect(b.questId).toBe(board[1]!.questId);
+    expect(s.activeByParty()).toEqual([null, null]);
+  });
+
+  it('the two bands share no heroes', () => {
+    // ⚠ The whole point. If `launchDispatch` still assembled `this.kits`,
+    // both bands would march the entire roster and this would be the only
+    // test that noticed.
+    const s = twoBands('nooverlap');
+    const [first, second] = s.partyRosters();
+    expect(first!.length).toBeGreaterThan(0);
+    expect(second!.length).toBeGreaterThan(0);
+    expect(first!.filter((id) => second!.includes(id))).toEqual([]);
+  });
+
+  it('an IDLE band cannot take a job another band already holds', () => {
+    const s = twoBands('nodouble');
+    s.advanceWeek();
+    const questId = s.board()[0]!.questId;
+    s.acceptQuest(questId, 0);
+    // Band 2 is free, but the posting is gone from the board.
+    expect(s.board().some((e) => e.questId === questId)).toBe(false);
+    expect(() => s.acceptQuest(questId, 1)).toThrow();
+  });
+
+  it('a quest band 2 is OUT on is never re-posted to the board', () => {
+    /**
+     * ⚠ THIS IS THE TEST THAT GUARDS `postable`, AND THE BOARD TEST ABOVE IS
+     * NOT. `acceptQuest` splices the posting out of `open` directly, so
+     * `board()` hides it no matter what `postable` says — a negative control
+     * that reverted `postable` to checking only party 1's job left every other
+     * test GREEN. `postable` decides RE-POSTING on later weeks, so the bug it
+     * guards is: band 2 marches off with a quest, next week the board offers
+     * the same quest again, and band 1 can take the job band 2 is already
+     * doing.
+     */
+    const s = twoBands('repost');
+    s.advanceWeek();
+    const questId = s.board()[0]!.questId;
+    s.acceptQuest(questId, 1);
+
+    for (let w = 0; w < 12; w++) {
+      s.advanceWeek();
+      expect(
+        s.board().some((e) => e.questId === questId),
+        `week ${w + 2}: quest ${questId} was re-posted while band 2 was out on it`,
+      ).toBe(false);
+      expect(s.activeByParty()[1]?.questId).toBe(questId);
+    }
+  });
+
+  it('a busy band refuses a second job', () => {
+    const s = twoBands('busy');
+    s.advanceWeek();
+    const board = s.board();
+    s.acceptQuest(board[0]!.questId, 0);
+    expect(() => s.acceptQuest(board[1]!.questId, 0)).toThrow(/party 1 is already on quest/);
+  });
+
+  it('a band with nobody in it cannot be sent', () => {
+    const s = twoBands('empty');
+    for (const id of [...s.partyRosters()[1]!]) s.assignHero(id, null);
+    expect(s.partyRosters()[1]).toEqual([]);
+    s.advanceWeek();
+    s.acceptQuest(s.board()[0]!.questId, 1);
+    expect(() => s.launchDispatch(1)).toThrow(/is empty/);
+  });
+
+  it('only the dispatching band is freed when a job ends', () => {
+    const s = twoBands('free');
+    s.advanceWeek();
+    const board = s.board();
+    s.acceptQuest(board[0]!.questId, 0);
+    s.acceptQuest(board[1]!.questId, 1);
+    s.launchDispatch(1);
+    // ⚠ Band 1 must still be out. An earlier draft cleared `this.active`
+    // (party 1's slot) from inside the dispatch, so sending band 2 freed
+    // band 1 and left band 2 stuck on its quest forever.
+    expect(s.activeByParty()[0]?.questId).toBe(board[0]!.questId);
+    expect(s.activeByParty()[1]).toBeNull();
+  });
+
+  it('abandoning is per band', () => {
+    const s = twoBands('abandon');
+    s.advanceWeek();
+    const board = s.board();
+    s.acceptQuest(board[0]!.questId, 0);
+    s.acceptQuest(board[1]!.questId, 1);
+    s.abandonQuest(1);
+    expect(s.activeByParty()[0]?.questId).toBe(board[0]!.questId);
+    expect(s.activeByParty()[1]).toBeNull();
+  });
+
+  it('a site expedition can be run by the second band', () => {
+    const s = twoBands('siteband');
+    const site = s.availableExpeditions().find((e) => e.site.level === 1)!;
+    s.advanceWeek();
+    s.acceptSiteExpedition(site.site.regionId, site.site.kind, 1);
+    expect(s.activeByParty()[1]).not.toBeNull();
+    expect(s.activeByParty()[0]).toBeNull();
+    s.launchDispatch(1);
+    expect(s.securedSites().length).toBe(1);
+  });
+});
+
+describe('assigning heroes', () => {
+  it('a hero can be moved between bands, and out to the hall', () => {
+    const s = twoBands('move');
+    const mover = s.partyRosters()[1]![0]!;
+    s.assignHero(mover, null);
+    expect(s.unassignedHeroes()).toContain(mover);
+    expect(s.partyRosters()[1]).not.toContain(mover);
+    s.assignHero(mover, 1);
+    expect(s.partyRosters()[1]).toContain(mover);
+  });
+
+  it('the Guild Hall caps a band, so a full band refuses a transfer', () => {
+    const s = twoBands('fullband');
+    expect(s.partyRosters()[0]!.length).toBe(s.maxPartySize());
+    const other = s.partyRosters()[1]![0]!;
+    expect(() => s.assignHero(other, 0)).toThrow(/guild hall is the limit/);
+  });
+
+  it('a band that is out on a job cannot be reshuffled', () => {
+    // ⚠ The hero is not physically in town, and swapping them would change
+    // the party the dispatch is about to resolve.
+    const s = twoBands('locked');
+    s.advanceWeek();
+    s.acceptQuest(s.board()[0]!.questId, 0);
+    const marching = s.partyRosters()[0]![0]!;
+    expect(() => s.assignHero(marching, null)).toThrow(/out on a job/);
+    expect(() => s.assignHero(s.partyRosters()[1]![0]!, 0)).toThrow(/out on a job/);
+  });
+
+  it('a band the Barracks cannot support is refused', () => {
+    const s = rich('noband2');
+    s.upgradeBuilding(BARRACKS); // 6 housed → still one band
+    expect(s.partyCount()).toBe(1);
+    expect(() => s.assignHero(s.partyRosters()[0]![0]!, 1)).toThrow(/houses 1 band/);
+  });
+
+  it('an unknown hero is refused', () => {
+    expect(() => rich('ghost').assignHero('hero_999', 0)).toThrow(/no hero/);
+  });
+});
+
+describe('persistence', () => {
+  it('bands and their jobs survive a save and load', () => {
+    const s = twoBands('save');
+    s.advanceWeek();
+    const board = s.board();
+    s.acceptQuest(board[0]!.questId, 0);
+    s.acceptQuest(board[1]!.questId, 1);
+
+    const back = CampaignSession.deserialize(s.serialize());
+    expect(back.partyRosters()).toEqual(s.partyRosters());
+    expect(back.activeByParty()).toEqual(s.activeByParty());
+    expect(back.heroCapacity()).toBe(s.heroCapacity());
+    expect(back.partyCount()).toBe(s.partyCount());
+    // ...and the restored second band can still be launched.
+    expect(() => back.launchDispatch(1)).not.toThrow();
+  });
+
+  it('a pre-M4 save loads as one band and loses nobody', () => {
+    const s = twoBands('legacy');
+    const saved = JSON.parse(JSON.stringify(s.serialize())) as Record<string, unknown>;
+    delete saved['parties'];
+    delete saved['partyActives'];
+
+    const back = CampaignSession.deserialize(saved as never);
+    expect(back.rosterSize()).toBe(10);
+    // Everyone is either marching or waiting at the hall — nobody vanishes.
+    const placed = back.partyRosters().flat().length + back.unassignedHeroes().length;
+    expect(placed).toBe(10);
+    expect(back.partyRosters()[0]!.length).toBeLessThanOrEqual(back.maxPartySize());
+  });
+
+  it('a hand-mangled party list is repaired, not fatal', () => {
+    const s = twoBands('mangled');
+    const saved = JSON.parse(JSON.stringify(s.serialize())) as Record<string, unknown>;
+    // A hero who does not exist, a duplicate, and a non-string.
+    saved['parties'] = [['hero_1', 'hero_1', 'hero_404', 7], ['hero_2']];
+    const back = CampaignSession.deserialize(saved as never);
+    expect(back.partyRosters()[0]).toEqual(['hero_1']);
+    expect(back.partyRosters()[1]).toEqual(['hero_2']);
+    expect(back.unassignedHeroes().length).toBe(8);
+  });
+});

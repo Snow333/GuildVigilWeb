@@ -229,16 +229,22 @@ export const EFFECT_COPY: Readonly<Record<string, EffectCopy>> = {
   // ⚠ The UI greys these and says "not working yet". Never promise an effect
   // the engine does not keep — that is this repo's oldest defect, and an
   // upgrade the player PAID for would be the worst place to do it.
-  hero_cap_6: { text: 'Keep up to 6 heroes in the guild', wired: false },
-  hero_cap_10: { text: 'Keep up to 10 heroes in the guild', wired: false },
-  hero_cap_15: { text: 'Keep up to 15 heroes in the guild', wired: false },
+  // ⚠ WIRED IN M4, AND IT DOES TWO THINGS. `heroCapacity()` reads these for
+  // how many heroes the guild may employ — which M3 wrongly took from the
+  // Guild Hall — and `partyCount()` reads the SAME keys for how many bands can
+  // march, because ten beds is the roadmap's "6+4".
+  hero_cap_6: { text: 'Keep up to 6 heroes on the books', wired: true },
+  hero_cap_10: { text: 'Keep 10 heroes, and field a SECOND party', wired: true },
+  hero_cap_15: { text: 'Keep 15 heroes, and field a THIRD party', wired: true },
   rest_heal_50pct: { text: 'Resting heals half your wounds', wired: false },
   rest_heal_full: { text: 'Resting heals you completely', wired: false },
   recruit_common: { text: 'Fighters, rogues, clerics and wizards look for work here', wired: true },
   recruit_uncommon: { text: 'Rangers, bards, barbarians and monks turn up too', wired: true },
   recruit_rare: { text: 'Sorcerers and warlocks drift in', wired: true },
-  map_reveal_small: { text: 'See a little more of the map', wired: true },
-  map_reveal_large: { text: 'See much more of the map', wired: true },
+  // Measured in the fog layer: sight goes 3 -> 6 -> 9 tiles around every
+  // place the guild has walked, so a tower re-lights old roads too.
+  map_reveal_small: { text: 'See twice as far around every road you have walked', wired: true },
+  map_reveal_large: { text: 'See three times as far around every road you have walked', wired: true },
   remove_conditions: { text: 'The infirmary clears lingering ailments', wired: false },
   revive_dead: { text: 'The infirmary can bring back the dead', wired: false },
   train_level_5: { text: 'Train heroes up to level 5', wired: false },

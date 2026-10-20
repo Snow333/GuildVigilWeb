@@ -236,6 +236,11 @@
   color: var(--gv-ink-soft);
   line-height: 1.6;
   margin: 8px 12px 6px;
+  /* ⚠ CLEARS THE THREAD SPOOL, which hangs off the sheet at left:-30 /
+     bottom:34. The fog legend made this note long enough to wrap to a third
+     line, and that line ran behind the spool so the sentence lost its first
+     few words. Found by screenshot, not by reading the CSS. */
+  padding-left: 3.25rem;
 }
 
 /* chart ink: geometry lives in the SVG, color lives here (tokens only) */
