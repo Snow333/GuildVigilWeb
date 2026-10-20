@@ -1,65 +1,62 @@
 # Handoff
 
-**Last session:** 2026-10-19 — **M3 is built and playable.** The town economy
-earns AND spends. **Waiting on Steven's playtest.**
+**Last session:** 2026-10-20 — **M4 is built.** Two parties, fog of war,
+outposts. **Waiting on Steven's playtest.**
 
-Playtest note: `output/playtest/2026-10-19-M3.md`.
-M2's note (still unplayed): `output/playtest/2026-10-18-M2.md`.
+Playtest notes, newest first: `playtest/2026-10-20-M4.md`,
+`2026-10-19-M3.md`, `2026-10-18-M2.md` (none played yet).
 
-## M3 — what works
+## M4 — what works
 
 | System | State |
 |---|---|
-| **Resources** | 9 kinds, derived from each region's `known_resources` |
-| **Site expeditions** | 12 quests (ids 2000+), never on the board, taken from the sites list |
-| **Weekly income** | A secured site pays forever |
-| **Building levels** | All 18, with costs, prerequisites and reputation gates |
-| **Upgrades** | Gold + resources; blockers explained in plain words |
-| **Guild-hall ladder** | 4 → 5 → 6, and recruiting exists so it is real |
-| **Town & Upgrades screen** | Variant B: 3 ranked picks + the full 18 as a fold |
+| **Barracks → reserve** | Hiring is capped by beds, not by the marching band |
+| **Second/third band** | 10 beds → 2 bands, 15 → 3. Each takes its own job |
+| **Fog of war** | Map starts dark, opens along walked roads; Watchtower widens it |
+| **Outposts** | A held site stages travel for jobs in its own region |
 
-**21 of 43 building effects are wired.** The other 22 carry `wired: false` and
-the screen greys them with "Not working yet". A test pins the wired list.
+**24 of 43 building effects are wired** (was 21): M4 added `hero_cap_*` and
+`map_reveal_*`. The other 19 carry `wired: false` and the Town screen greys
+them. A test pins the list — do not flip one without wiring it.
 
 ## Next session
 
-1. **If Steven has played:** `pnpm notes`, triage into the M3 note.
-2. **The open design question** he may answer: stone is only in Gravel Downs
-   (L3), so the 5th hero is gated behind levelling to ~L3. Add a second stone
-   region, or lower the Guild Hall's stone cost, if he says it drags.
-3. **Then either** wire more building effects (Infirmary, Training Grounds,
-   Watchtower, hero caps — each needs its own engine hook, none is a seed fix)
-   **or move to M4** (two parties, map reveal, outposts).
+1. **If Steven has played:** `pnpm notes`, triage into the M4 note.
+2. **The obvious gap: there is no UI for bands.** The engine has
+   `partyRosters()`, `unassignedHeroes()`, `assignHero()`, `activeByParty()`
+   and `launchDispatch(partyIndex)`, but the Town/Dispatch screens still drive
+   band 1 only. Bands fill automatically as you hire. **This is the first thing
+   to build if he likes two parties.**
+3. **Then M5** — "Gear and enemies you can outplay".
 
 ## ⚠ Traps — read before touching these
 
 **DO NOT make the attack burst retarget.** `encounter.ts`'s
-`if (target.hp <= 0) break;` is **reserved design space for Cleave** —
+`if (target.hp <= 0) break;` is reserved design space for **Cleave** —
 Steven's call, 2026-10-17.
 
-**DO NOT widen the fight-plan auto-add past `grant_party_condition`.** Measured
-three ways; "buffs can't overkill so they're safe" was built, measured, WRONG.
+**DO NOT widen the fight-plan auto-add past `grant_party_condition`.**
+Measured three ways; "buffs can't overkill so they're safe" was WRONG.
 
-**DO NOT start every building at level 0.** The shop gates on building level
-and a town at 0 everywhere has an EMPTY shop — measured, 0 offers.
-`STARTING_BUILDINGS` exists for that, and the save backfill grants the same set.
+**DO NOT use `this.active` in party-aware code.** It is a getter over
+`actives[0]`, i.e. band 1. An ambushed second band once freed the FIRST band's
+slot and kept its own job forever. Use `actives[partyIndex]`.
 
-**DO NOT parse numbers out of player-facing copy.** The ladder briefly regexed
-"(\d+) heroes" out of `EFFECT_COPY.text`; four of those strings had been
-reworded one commit earlier. Use the machine key (`partySizeAtLevel`).
+**DO NOT start every building at level 0** — the shop gates on building level
+and a town at 0 has an EMPTY shop. See `STARTING_BUILDINGS`.
 
-**DO NOT write effect copy by paraphrasing the effect NAME.** Four false
-promises shipped that way (`armor` claimed armour the shop already sold at L1).
-Write it from the rows the level unlocks; `tests/campaign/town.test.ts` pins them.
+**DO NOT parse numbers out of player-facing copy**, and **do not write effect
+copy by paraphrasing the effect NAME** — both shipped bugs this month.
 
 **DO NOT `rm -rf` or PowerShell-`Remove-Item` a worktree's `node_modules`
-junction** — both destroy the MAIN checkout's `node_modules`. It happened twice
-this session. Use Python `os.rmdir(path)`, then `git worktree remove --force`.
-Symptom: `tsc` says "This is not the tsc command you are looking for" and
-vitest reports fewer test FILES. Check `node_modules/.bin` exists.
+junction** — it destroys the MAIN checkout's. Use Python `os.rmdir(path)`.
 
-**A single seed is not a test for anything procedural.** Two negative controls
-this milestone failed to fire against one seed and only bit across 40.
+**NEGATIVE CONTROLS ARE THE HIGHEST-YIELD CHECK HERE — AND FOUR FAILED TO
+FIRE THIS MONTH**, each exposing a test that passed by a route around the code
+it claimed to guard (one seed instead of forty; a value the setup had set
+rather than the code derived; a posting already spliced out of the board; a
+geometry case that hid the bug). When a sabotage leaves the suite green, go
+and find the route the test is taking.
 
 ## Content debt found and NOT fixed (from the track reports)
 

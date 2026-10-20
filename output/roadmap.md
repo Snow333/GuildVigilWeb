@@ -33,7 +33,8 @@
 | M1 — The whole loop, thin | ✅ built 2026-10-16 — awaiting Steven's playtest (`playtest/2026-10-16-M1.md`) |
 | M2 — Signature classes, round 1 | ✅ **built** 2026-10-18 — awaiting Steven's playtest (`playtest/2026-10-18-M2.md`). Ability model fixed; Ranger +8 and Bard +9 feats (both had **zero**); Wizard's 3 fixable rows made live; Arcana/Religion/Survival/Deception now matter on missions. **Thin spots:** Rogue has 1 active, Wizard still has 21 inert feats |
 | M3 — The town grows | ✅ **built** 2026-10-19 — awaiting playtest (`playtest/2026-10-19-M3.md`). Resources, 12 takeable sites with weekly income, building levels/upgrades, recruiting, the guild-hall 4→5→6 ladder, and the Town & Upgrades screen. **Thin spots:** 22 of 43 building effects still inert; a site can never be lost once taken |
-| M4 – M9 | not started |
+| M4 — Multiple parties, exploration, outposts | ✅ **built** 2026-10-20 — awaiting playtest (`playtest/2026-10-20-M4.md`). Barracks houses a reserve; 10 beds fields a second band; the map starts dark and opens as you walk; held sites stage travel. **Thin spots:** no UI for assigning heroes to bands, sight ranges unplaytested, 19 of 43 building effects still inert |
+| M5 – M9 | not started |
 
 ### M0 — Reset and playtest tooling *(small)*
 - Archive old briefs and process docs; install vision, agreement, roadmap; cut `CLAUDE.md` to a short pointer file.
