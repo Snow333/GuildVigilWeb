@@ -272,8 +272,17 @@ describe('readBands — each band reads the board through its own eyes', () => {
     expect(cell(v, 10, 0).risky).toBe(false);
   });
 
-  it('lists postings easiest first and offers the next locked band', () => {
+  it('lists postings easiest first (then by id), whatever order the board holds them in', () => {
+    const shuffled = [
+      { questId: 13, challenge: 11, xp: 1500 }, { questId: 21, challenge: 5, xp: 10 },
+      { questId: 10, challenge: 2, xp: 100 }, { questId: 20, challenge: 5, xp: 10 }, { questId: 12, challenge: 8, xp: 900 },
+    ];
+    const order = readBands(fakeSource({ heroes: BASE, postings: shuffled, bands: 2 })).jobs.map((j) => j.questId);
+    expect(order).toEqual([10, 20, 21, 12, 13]);
     expect(v.jobs.map((j) => j.questId)).toEqual([10, 11, 12, 13]);
+  });
+
+  it('offers the next locked band until the ceiling', () => {
     expect(v.nextLocked).toBeNull(); // 3 bands = the ceiling
     expect(readBands(fakeSource({ heroes: BASE, postings: POSTINGS, bands: 2 })).nextLocked).toBe(2);
     expect(readBands(fakeSource({ heroes: BASE, postings: POSTINGS, bands: 1 })).nextLocked).toBe(1);
@@ -542,6 +551,20 @@ describe('bandActions', () => {
     };
     expect(() => sendBand(refusing, 0, 7)).toThrow('acceptQuest: nope');
     expect(calls2).toEqual([]);
+  });
+
+  it('does not let a failed rollback hide the real error: if the march already cleared the job, nothing is abandoned', () => {
+    // the real abandonQuest THROWS when the band holds nothing; calling it blindly would replace the sim's sentence
+    let held: unknown = { questId: 7 };
+    const actor: BandActor = {
+      acceptQuest: () => undefined,
+      configureDispatch: () => undefined,
+      launchDispatch: () => { held = null; throw new Error('launchDispatch: the road washed out'); },
+      activeByParty: () => [held as never],
+      abandonQuest: () => { if (!held) throw new Error('abandonQuest: party 1 has no active quest'); held = null; },
+      assignHero: () => undefined,
+    };
+    expect(() => sendBand(actor, 0, 7)).toThrow('launchDispatch: the road washed out');
   });
 
   it('launchHeld marches a band that holds a job; callBack returns the job to the board', () => {
