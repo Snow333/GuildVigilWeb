@@ -557,6 +557,15 @@ export class CampaignSession {
     this.heroes = config.party.map((k) => k.hero);
     this.rng = rng;
     this.map = generateWorld(new Rng(config.seed).int(1, 2 ** 30));
+    /**
+     * ⚠ SEEDED HERE, NOT IN `deserialize`, AND THAT MATTERS FOR SAVES. Adding
+     * Haven on restore only made `serialize → deserialize → serialize`
+     * non-idempotent — a save taken before the first dispatch had no visited
+     * tiles, the reload invented one, and four round-trip tests that compare
+     * whole states went red. Doing it in the constructor means fresh and
+     * restored sessions start from the same fact: the guild knows its own town.
+     */
+    this.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
     this.world = new EventStream('world', config.campaignId);
     this.ledger = ledger;
   }
@@ -819,8 +828,8 @@ export class CampaignSession {
     const dispatchId = Ids.dispatch(this.dispatchN);
 
     // ── Travel out ──
-    // M4: the guild learns the land by walking it. Haven is always known.
-    this.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
+    // M4: the guild learns the land by walking it. (Haven is seeded at
+    // construction, so it is not re-added here.)
     this.visited.add(`${q.pos.x},${q.pos.y}`);
     const plan = planTravel(this.map, WORLD.haven, q.pos);
     if (plan) {
@@ -2056,12 +2065,11 @@ export class CampaignSession {
       if ((RESOURCE_KINDS as readonly string[]).includes(kind)) session.resources[kind as ResourceKind] = n;
     }
     session.reputation = data.reputation ?? 0;
-    // M4: a pre-M4 save has walked the world but never recorded it. Haven is
-    // seeded so the map is never wholly black; the rest re-reveals as played.
-    session.visited = new Set(
-      (data.visited ?? []).filter((k) => typeof k === 'string' && /^\d+,\d+$/.test(k)),
-    );
-    session.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
+    // M4: a pre-M4 save has walked the world but never recorded it, so it
+    // re-reveals as it is played. Haven is already seeded by the constructor.
+    for (const key of data.visited ?? []) {
+      if (typeof key === 'string' && /^\d+,\d+$/.test(key)) session.visited.add(key);
+    }
     session.sites = (data.sites ?? [])
       .filter((st) => (RESOURCE_KINDS as readonly string[]).includes(st.kind))
       .map((st) => ({ regionId: st.regionId, kind: st.kind as ResourceKind, securedWeek: st.securedWeek }));
