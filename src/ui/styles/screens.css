@@ -1091,3 +1091,24 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 .gv-tn-roster { margin: 0 0 8px; font-size: 14.5px; }
 .gv-tn-name { display: block; margin: 0 0 8px; font-size: 13.5px; color: var(--gv-ink-soft); }
 .gv-tn-name input { width: 100%; box-sizing: border-box; margin-top: 3px; }
+
+/* ============ M4: fog of war on the chart ============
+   Unsurveyed land is an opaque dark cover with a faint hatch — clearly "not
+   information", never just a dimmer map. */
+.gv-chart-fog {
+  fill: #2c2417;
+}
+.gv-chart-fog-line {
+  stroke: #54462d;
+}
+.gv-chart-rumour-ring {
+  fill: #2c2417;
+  stroke: var(--gv-vellum);
+}
+.gv-chart-rumour {
+  fill: var(--gv-vellum);
+  font-style: italic;
+  paint-order: stroke;
+  stroke: #2c2417;
+  stroke-width: 2.5px;
+}

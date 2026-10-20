@@ -85,7 +85,7 @@ describe('the content gate: every building has a price and every effect has word
     // note's promises change with it.
     const wired = Object.entries(EFFECT_COPY).filter(([, v]) => v.wired).map(([k]) => k).sort();
     expect(wired).toEqual([
-      'armor', 'better_stock', 'consumables', 'masterwork',
+      'armor', 'better_stock', 'consumables', 'map_reveal_large', 'map_reveal_small', 'masterwork',
       'party_size_4', 'party_size_5', 'party_size_6',
       'rare_items', 'recruit_common', 'recruit_rare', 'recruit_uncommon',
       'scroll_shop', 'sell_price_100pct', 'sell_price_80pct', 'sell_price_90pct',

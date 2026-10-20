@@ -7,10 +7,19 @@
  * and unsurveyed objectives mark "?" — no name in text, tooltip, or aria.
  * The UI computes no rules: discovery, pressure, anchors, and paths are all
  * session queries; this file only inks them.
+ *
+ * M4 FOG OF WAR: the chart starts dark. What is lit is DERIVED on every render
+ * from the tiles the party has walked plus the Watchtower's sight (see
+ * @sim/world/reveal) — nothing about the fog is stored. Terrain in the dark is
+ * not drawn at all, and an opaque hatched cover sits over the rest of the
+ * survey. Region names and pressure washes stay readable in the dark: those
+ * are news from the board, not survey. Postings in the dark show as a plain
+ * "?" rumour with no cross. The dev panel's "reveal map" lifts the fog.
  */
 
 import { WORLD } from '@content/world';
 import { REGION_IDS, regionAnchors } from '@sim/campaign/session';
+import { WATCHTOWER_ID, computeFog, sightRangeFor, unrevealedRuns, type FogView } from '@sim/world/reveal';
 import { ThreadSpool } from '../accessories';
 import { useGame } from '../state/GameProvider';
 import { chartFeatures } from './worldChart';
@@ -20,6 +29,9 @@ const SX = 8;
 const SY = 8;
 const W = WORLD.width * SX;
 const H = WORLD.height * SY;
+
+/** How far the fog cover runs past the neatline so its blurred edge never lightens the frame. */
+const FOG_BLEED = 24;
 
 const cx = (x: number): number => (x + 0.5) * SX;
 const cy = (y: number): number => (y + 0.5) * SY;
@@ -58,6 +70,24 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
   const selected = questId ?? active?.questId ?? null;
   const plan = selected !== null ? session.travelPreview(selected) : null;
   const features = chartFeatures(map);
+
+  // ── fog: derived, never stored ──
+  const devLifted = session.devMapRevealed();
+  const sight = sightRangeFor(session.buildingLevel(WATCHTOWER_ID));
+  const fog: FogView = computeFog(session.visitedTiles(), sight);
+  const lit = (p: { x: number; y: number }): boolean => devLifted || fog.isRevealed(Math.round(p.x), Math.round(p.y));
+  const fogRuns = devLifted ? [] : unrevealedRuns(fog);
+  const fogD = fogRuns
+    .map((r) => {
+      const x0 = r.x === 0 ? -FOG_BLEED : r.x * SX;
+      const x1 = r.x + r.w === fog.width ? W + FOG_BLEED : (r.x + r.w) * SX;
+      const y0 = r.y === 0 ? -FOG_BLEED : r.y * SY;
+      const y1 = r.y === fog.height - 1 ? H + FOG_BLEED : (r.y + 1) * SY;
+      return `M${x0} ${y0}H${x1}V${y1}H${x0}Z`;
+    })
+    .join('');
+  const total = fog.width * fog.height;
+  const shown = devLifted ? total : fog.revealedCount;
 
   const anchors = regionAnchors();
 
@@ -99,10 +129,12 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
   const clear = (p: { x: number; y: number }): boolean =>
     clearOfFurniture(cx(p.x), cy(p.y)) && clearOfText(cx(p.x), cy(p.y));
   const glyphs = {
-    mountains: features.mountains.filter(clear),
-    forests: features.forests.filter(clear),
-    snowfields: features.snowfields.filter(clear),
+    mountains: features.mountains.filter((p) => clear(p) && lit(p)),
+    forests: features.forests.filter((p) => clear(p) && lit(p)),
+    snowfields: features.snowfields.filter((p) => clear(p) && lit(p)),
   };
+
+  const seaLit = features.sea !== null && lit(features.sea);
 
   const routeD = plan
     ? plan.path.map((p, i) => `${i === 0 ? 'M' : 'L'}${cx(p.x)} ${cy(p.y)}`).join(' ')
@@ -140,12 +172,26 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
           </span>
           <h3 className="gv-head">The frontier <span className="gv-sub">the working chart</span></h3>
 
-          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Hand-drawn survey chart of the frontier">
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            role="img"
+            aria-label={`Hand-drawn survey chart of the frontier. The guild has surveyed ${Math.round((shown / total) * 100)} percent of it.`}
+            data-fog-total={total}
+            data-fog-revealed={shown}
+            data-fog-sight={sight}
+            data-fog-lifted={devLifted ? 'true' : 'false'}
+          >
             <defs>
               <marker id="gv-xm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7">
                 <path d="M2 2 L8 8 M8 2 L2 8" className="gv-chart-red" strokeWidth={1.8} />
               </marker>
               {/* the survey stops at the neatline — border lakes stay framed */}
+              <filter id="gv-fog-soft" x="-5%" y="-5%" width="110%" height="110%">
+                <feGaussianBlur stdDeviation={4} />
+              </filter>
+              <pattern id="gv-fog-hatch" width={7} height={7} patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+                <line x1={0} y1={0} x2={0} y2={7} className="gv-chart-fog-line" strokeWidth={1.2} />
+              </pattern>
               <clipPath id="gv-frame">
                 <rect x={9} y={9} width={W - 18} height={H - 18} />
               </clipPath>
@@ -175,11 +221,11 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                 opacity={0.85}
               />
               <g className="gv-chart-fill-soft" opacity={0.5}>
-                {features.stipple.map((p, i) => (
+                {features.stipple.filter(lit).map((p, i) => (
                   <circle key={i} cx={cx(p.x)} cy={cy(p.y)} r={0.9} />
                 ))}
               </g>
-              {features.sea && (
+              {features.sea && seaLit && (
                 <text
                   x={cx(features.sea.x)}
                   y={cy(features.sea.y)}
@@ -237,6 +283,16 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                   opacity={0.65}
                 />
               ))}
+
+              {/* the unknown: an opaque hatched cover over everything unsurveyed
+                  (coast and roads included). Its edge is softened so the lit
+                  area reads as a glow, not a stencil. */}
+              {fogD && (
+                <g data-fog-cover="">
+                  <path d={fogD} className="gv-chart-fog" filter="url(#gv-fog-soft)" />
+                  <path d={fogD} fill="url(#gv-fog-hatch)" />
+                </g>
+              )}
             </g>
 
             {/* Haven keep */}
@@ -328,16 +384,18 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
               const px = cx(b.pos.x);
               const py = cy(b.pos.y);
               const sel = b.questId === selected;
+              const inDark = !lit(b.pos);
               return (
                 <g
                   key={b.questId}
                   data-map-poi=""
                   data-quest-id={b.questId}
                   data-discovered={b.discovered ? 'true' : 'false'}
+                  data-in-fog={inDark ? 'true' : 'false'}
                   {...(sel ? { 'data-selected': '' } : {})}
                   role="button"
                   tabIndex={0}
-                  aria-label={b.discovered ? `quest #${b.questId} ${b.name}` : `quest #${b.questId} — an unsurveyed objective`}
+                  aria-label={b.discovered && !inDark ? `quest #${b.questId} ${b.name}` : `quest #${b.questId} — an unsurveyed objective`}
                   style={{ cursor: 'pointer' }}
                   onClick={() => nav({ kind: 'map', questId: b.questId })}
                   onKeyDown={(e) => {
@@ -347,15 +405,25 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
                     }
                   }}
                 >
-                  {b.discovered && <title>#{b.questId} {b.name}</title>}
-                  <path
-                    d={`M${px - 4} ${py - 4} L${px + 4} ${py + 4} M${px + 4} ${py - 4} L${px - 4} ${py + 4}`}
-                    className="gv-chart-red"
-                    strokeWidth={sel ? 2.6 : 1.8}
-                  />
-                  <text x={px + 7} y={py + 4} fontSize={10.5} className="gv-chart-redtext gv-chart-halo">
-                    {b.discovered ? `#${b.questId} ${shorten(b.name)}` : '?'}
-                  </text>
+                  {b.discovered && !inDark && <title>#{b.questId} {b.name}</title>}
+                  {inDark ? (
+                    /* a rumour: a pale ring and "?" on the dark — no cross, no name */
+                    <>
+                      <circle cx={px} cy={py} r={sel ? 6 : 4.5} className="gv-chart-rumour-ring" strokeWidth={sel ? 2 : 1.3} />
+                      <text x={px + 9} y={py + 4} fontSize={11} className="gv-chart-rumour">?</text>
+                    </>
+                  ) : (
+                    <>
+                      <path
+                        d={`M${px - 4} ${py - 4} L${px + 4} ${py + 4} M${px + 4} ${py - 4} L${px - 4} ${py + 4}`}
+                        className="gv-chart-red"
+                        strokeWidth={sel ? 2.6 : 1.8}
+                      />
+                      <text x={px + 7} y={py + 4} fontSize={10.5} className="gv-chart-redtext gv-chart-halo">
+                        {b.discovered ? `#${b.questId} ${shorten(b.name)}` : '?'}
+                      </text>
+                    </>
+                  )}
                 </g>
               );
             })}
@@ -399,8 +467,10 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
           <p className="gv-chart-note">
             Peaks are mountains, groves forest, chevrons snowfield, dashed lines road, dots open
             water. Red X marks a posting — click one to trace its route; ? is a destination the
-            guild has not surveyed. Washes carry their pressure in writing; the watch report holds
-            the numbers.
+            guild has not surveyed. Hatched dark is land the guild has not seen: it opens up as the
+            guild walks, and wider still once a Watchtower stands. A pale ring with a ? on the dark
+            is a rumour of a job out there. Washes carry their pressure in writing; the watch report
+            holds the numbers.
           </p>
         </div>
       </div>
