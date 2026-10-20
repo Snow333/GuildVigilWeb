@@ -889,10 +889,11 @@ export class CampaignSession {
     // M4: the guild learns the land by walking it. (Haven is seeded at
     // construction, so it is not re-added here.)
     this.visited.add(`${q.pos.x},${q.pos.y}`);
-    const plan = planTravel(this.map, WORLD.haven, q.pos);
+    const origin = this.travelOriginFor(q.regionId, q.pos);
+    const plan = planTravel(this.map, origin, q.pos);
     if (plan) {
       this.world.emit(minute, 'dispatch.travel_leg_started', {
-        fromX: WORLD.haven.x, fromY: WORLD.haven.y, toX: q.pos.x, toY: q.pos.y, etaMinutes: plan.etaMinutes,
+        fromX: origin.x, fromY: origin.y, toX: q.pos.x, toY: q.pos.y, etaMinutes: plan.etaMinutes,
       }, q.acceptSeq);
       // Every tile on the road is seen in passing, not just the destination.
       for (const step of plan.path) this.visited.add(`${step.x},${step.y}`);
@@ -1577,6 +1578,42 @@ export class CampaignSession {
 
   // ── THE TOWN (M3) ────────────────────────────────────────────────────────
 
+  // ── OUTPOSTS (M4) ────────────────────────────────────────────────────────
+
+  /**
+   * A band travels from the nearest OUTPOST it can use, not always from Haven.
+   *
+   * ⚠ AN OUTPOST IS A SECURED SITE, NOT A NEW THING TO PLACE. The guild
+   * already holds ground at every site it has taken, and those sites already
+   * have map positions. Inventing a separate outpost entity would have meant
+   * second placement rules, second save state and a second UI for a benefit
+   * the player can already point at on the map.
+   *
+   * ⚠ ONLY SITES IN THE SAME REGION COUNT. A timber camp three regions away
+   * is not a staging post for this job — that would turn one early expedition
+   * into a global travel discount and delete the point of the Stables.
+   */
+  private travelOriginFor(regionId: string, pos: { x: number; y: number }): { x: number; y: number } {
+    let best: { x: number; y: number } = { x: WORLD.haven.x, y: WORLD.haven.y };
+    let bestCost = planTravel(this.map, WORLD.haven, pos)?.totalCost ?? Infinity;
+    for (const site of this.resourceSites()) {
+      if (!site.secured || site.regionId !== regionId) continue;
+      const leg = planTravel(this.map, site.pos, pos);
+      if (leg && leg.totalCost < bestCost) {
+        best = site.pos;
+        bestCost = leg.totalCost;
+      }
+    }
+    return best;
+  }
+
+  /** Every outpost the guild can stage from: the sites it holds. */
+  outposts(): { regionId: string; regionName: string; kind: ResourceKind; pos: { x: number; y: number } }[] {
+    return this.resourceSites()
+      .filter((s) => s.secured)
+      .map((s) => ({ regionId: s.regionId, regionName: s.regionName, kind: s.kind, pos: s.pos }));
+  }
+
   // ── PARTIES AND THE ROSTER (M4) ──────────────────────────────────────────
 
   /**
@@ -2092,7 +2129,7 @@ export class CampaignSession {
     }
     hauls.sort((a, b) => a - b);
     durations.sort((a, b) => a - b);
-    const plan = planTravel(this.map, WORLD.haven, posting.pos);
+    const plan = planTravel(this.map, this.travelOriginFor(posting.regionId, posting.pos), posting.pos);
     return {
       n,
       completed,
@@ -2211,7 +2248,7 @@ export class CampaignSession {
     const q = this.open.find((o) => o.questId === questId)
       ?? (this.actives.find((a) => a?.questId === questId) ?? null);
     if (!q) return null;
-    return planTravel(this.map, WORLD.haven, q.pos);
+    return planTravel(this.map, this.travelOriginFor(q.regionId, q.pos), q.pos);
   }
 
   // ── Persistence ───────────────────────────────────────────────────────────
