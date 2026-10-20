@@ -48,6 +48,37 @@ Derived from `WORLD` in `src/content/world.ts` (80×60, Haven at 16,38) and the 
 Style D is the creative/exploratory slot: the land is *stitched in* as the guild learns it,
 so progress reads as a tapestry being woven.
 
+## Round 2 — styles built from Steven's reference images (2026-10-20)
+
+Steven supplied five reference images, kept at `map-mockups/refs/`. Each round-2 prompt passes
+its reference via `reference_image_urls` and borrows the *rendering technique* only.
+
+| # | Style | Reference | Fog-of-war treatment |
+|---|---|---|---|
+| E | Tolkien / Middle-earth ink-on-parchment atlas | `ref-e-middleearth.jpg` | undrawn parchment; ink stops mid-stroke |
+| F | Laser-cut cork relief on dark panel, amber LED under-lighting | `ref-f-cork.jpg` | bare unlit panel — land is *built and lit* as you explore |
+| G | Torn adventurer's chart, teal watercolour sea | `ref-g-treasure.jpg` | the sheet is missing; the map is recovered in fragments |
+| H | Illustrated atlas, satellite-like terrain | `ref-h-atlas.jpg` | opaque cloud deck |
+| I | Painted collector map, ribbon banners | `ref-i-painted.jpg` | painted cloud banks |
+
+### ⚠ Two traps found in round 2
+
+1. **A reference image overrides `aspect_ratio`.** G came back square and H came back portrait
+   because their references were. Fix: add an explicit `CRITICAL FRAMING` paragraph demanding a
+   wide landscape rectangle, and re-check `pixel_size` in the tool result — not just the
+   `aspect_ratio` you asked for.
+2. **A reference image's TEXT gets copied, including its language and title.** H reproduced the
+   Aredia reference's Spanish labels and its literal `AREDIA` title. Fix: state that only the
+   rendering technique is borrowed, forbid copying any text/title/language from the reference,
+   and supply the exact English place names to use.
+
+### ⚠ Reversal: gpt-image-2 renders legible text
+
+Round 1 banned all lettering on the assumption it would come out garbled. That was wrong —
+round 2 produced clean, correctly spelled English place names (`GREYFORD`, `Lake Ashenmere`,
+`Thornwood Reach`). Allow hand-lettered names in any style whose identity depends on them, and
+supply the names explicitly so they match our lore.
+
 ## The three states
 
 | State | Revealed | POIs | Notes |
@@ -65,4 +96,5 @@ showing three states.
 
 ## Filenames
 
-`output/art/map-mockups/map-<a|b|c|d>-<style>-<1start|2mid|3late>.png`
+`output/art/map-mockups/map-<a-i>-<style>-<1start|2mid|3late>.png` — 9 styles x 3 states = 27 images.
+References: `output/art/map-mockups/refs/ref-<e-i>-<style>.jpg` (committed; the generated maps are gitignored).
