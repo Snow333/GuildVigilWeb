@@ -688,8 +688,17 @@ export class CampaignSession {
       SCHEDULER.maxOpenQuests,
     );
     const regularOpen = (): number => this.open.filter((o) => !COMMISSION_QUEST_IDS.has(o.questId)).length;
+    /**
+     * ⚠ THE BOARD MUST SERVE EVERY BAND, NOT THE GUILD'S BEST ONE. Drawn
+     * against a single level it posted min_level 4-7 for a guild whose second
+     * band was level 1: measured over 48 weeks, band 1 could take 93% of
+     * postings and band 2 could take **0 of 248**. Every job read "Beyond us",
+     * so a second band had literally nothing to do and the whole feature was
+     * decoration. A posting is eligible if it falls inside ANY band's window.
+     */
+    const bandLevels = this.bandLevels();
     const candidates = [...questsById.values()]
-      .filter((row) => this.postable(row, week, pl))
+      .filter((row) => bandLevels.some((level) => this.postable(row, week, level)))
       .sort((a, b) => a.id - b.id);
     const isOpen = (id: number): boolean => this.open.some((o) => o.questId === id);
     const post = (row: QuestRow): void => {
@@ -745,6 +754,18 @@ export class CampaignSession {
    * level band, and the early-weeks window for hand-authored easy quests.
    * Commissions never post through the weekly scan — only a letter posts them.
    */
+  /**
+   * Every band's level, strongest first — what the board must cater to.
+   * An empty band is skipped: it cannot take work (see `acceptQuest`).
+   */
+  private bandLevels(): number[] {
+    this.syncParties();
+    const levels = this.parties
+      .map((ids, i) => (ids.length > 0 ? this.partyLevel(i) : null))
+      .filter((n): n is number => n !== null);
+    return levels.length > 0 ? [...new Set(levels)].sort((a, b) => b - a) : [this.partyLevel()];
+  }
+
   private postable(row: QuestRow, week: number, pl: number): boolean {
     if (COMMISSION_QUEST_IDS.has(row.id)) return false;
     /**

@@ -47,7 +47,7 @@ export function difficultyFor(challenge: number, partyLevel: number): Difficulty
   const delta = challenge - level;
 
   if (delta <= -2) {
-    return { id: 'routine', label: 'Routine', tier: 0, reason: 'well within the guild' };
+    return { id: 'routine', label: 'Routine', tier: 0, reason: 'well within them' };
   }
   if (delta <= 0) {
     return { id: 'measured', label: 'Measured', tier: 1, reason: 'a fair match for them' };

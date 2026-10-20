@@ -102,15 +102,32 @@ describe('the board can be read through one band\u2019s eyes', () => {
     expect(moved.length).toBeGreaterThan(0);
   });
 
-  it('the reason says "them", never "the guild"', () => {
-    // Read through band 2's eyes, "over the guild" was nonsense: the guild's
-    // reach IS band 1.
+  it('the reason says "them", never "the guild" — for every difficulty word', () => {
+    /**
+     * ⚠ MUST EXERCISE EVERY REASON STRING, NOT JUST THE ONES ONE BAND HAPPENS
+     * TO SEE. A first version read only band 2's board, which is all hard
+     * words, so the 'Routine' string was never produced — and 'Routine' was
+     * exactly the one that still said "well within the guild" after the
+     * rewrite. (My own grep missed it too: the pattern covered "over/above/
+     * under the guild" but not "within".) This sweeps both bands across
+     * several weeks and asserts it saw a RANGE of words, so the sample cannot
+     * quietly shrink back to one.
+     */
     const s = lopsided('voice');
-    s.advanceWeek();
-    for (const entry of s.board(1)) {
-      expect(entry.difficulty.reason).not.toContain('the guild');
+    const seen = new Set<string>();
+    for (let w = 0; w < 6; w++) {
+      s.advanceWeek();
+      for (const band of [0, 1]) {
+        for (const entry of s.board(band)) {
+          seen.add(entry.difficulty.id);
+          expect(entry.difficulty.reason, `"${entry.difficulty.label}" still talks about the guild`)
+            .not.toContain('the guild');
+        }
+      }
     }
-  });
+    expect(seen.size, `only saw ${[...seen].join(',')} — too few words to prove anything`)
+      .toBeGreaterThan(2);
+  }, 120_000);
 });
 
 describe('the forecast is about the band that would actually go', () => {
@@ -124,7 +141,16 @@ describe('the forecast is about the band that would actually go', () => {
     s.advanceWeek();
     const board = s.board();
     expect(board.length).toBeGreaterThan(0);
-    const questId = board[0]!.questId;
+    /**
+     * ⚠ THE HARDEST POSTING, NOT `board()[0]`. Once the board started serving
+     * every band it also posts level-1 work, and both bands clear that 24/24 —
+     * the metric saturated and this test failed at "expected 24 to be greater
+     * than 24" while the code was correct. A comparison needs a job whose
+     * outcome is actually in doubt.
+     */
+    const questId = [...board]
+      .sort((a, b) => (questsById.get(b.questId)!.min_level as number)
+        - (questsById.get(a.questId)!.min_level as number))[0]!.questId;
     const cfg = { profile: 'fullExplore' as const, caution: 'standard' as const };
 
     const veteran = s.forecast(questId, cfg, 24, 0);
@@ -206,4 +232,87 @@ describe('the dungeon is scaled to the band that marches', () => {
     }
     expect(compared, 'no seed produced a trap roll for both bands — widen the sample').toBeGreaterThan(0);
   }, 180_000);
+});
+
+describe('the board gives every band something to do', () => {
+  it('a green second band is not shut out of the whole board', () => {
+    /**
+     * ⚠ THE FINDING THAT DECIDES WHETHER TWO BANDS ARE FUN AT ALL. The board
+     * was drawn against ONE level (`partyLevel()` with no argument), so for a
+     * guild with a level-5 first band and level-1 recruits it posted only
+     * min_level 4-7. Measured over 48 weeks: band 1 could take 93% of
+     * postings and band 2 could take **0 of 248** — every single job read
+     * "Beyond us". A second band had literally nothing to do, which made the
+     * whole M4 feature decoration, and no UI could have fixed it.
+     *
+     * Note the no-argument `partyLevel()` change (roster average -> guild
+     * reach) made this WORSE, not better: the average at least sat between the
+     * two bands. The real answer is that a shared board is not one level at
+     * all — a posting is eligible if it falls inside ANY band's window.
+     *
+     * After: band 1 100% usable, band 2 44%. Band 2 is not expected to reach
+     * 100% — a level-1 band SHOULD find a level-6 job beyond it. The claim is
+     * that it has work, not that everything is within reach.
+     */
+    const usable = [0, 0];
+    const beyond = [0, 0];
+    for (let i = 0; i < 6; i++) {
+      const s = lopsided(`board${i}`);
+      for (let w = 0; w < 5; w++) {
+        s.advanceWeek();
+        for (const band of [0, 1]) {
+          for (const entry of s.board(band)) {
+            if (entry.difficulty.id === 'beyond') beyond[band]! += 1;
+            else usable[band]! += 1;
+          }
+        }
+      }
+    }
+    expect(usable[0]! + beyond[0]!, 'no postings at all — the test proved nothing').toBeGreaterThan(50);
+    // The veteran band obviously has work.
+    expect(usable[0]!).toBeGreaterThan(beyond[0]!);
+    /**
+     * The green band must have a real share of the board. The floor is well
+     * under the measured 44% so ordinary content changes do not trip it, but
+     * far above the 0% that shipped.
+     */
+    const greenShare = usable[1]! / (usable[1]! + beyond[1]!);
+    expect(greenShare, 'the second band is shut out of the board again').toBeGreaterThan(0.15);
+  }, 180_000);
+
+  it('an EMPTY band does not drag the board down to level 1', () => {
+    /**
+     * `bandLevels` skips empty bands, because an empty band cannot take work
+     * (`acceptQuest` refuses it). Without the skip a guild that has unlocked
+     * a second barracks band but not yet staffed it would have beginner jobs
+     * posted forever alongside its real work.
+     */
+    const s = lopsided('emptyband');
+    for (const id of [...s.partyRosters()[1]!]) s.assignHero(id, null);
+    expect(s.partyRosters()[1]).toEqual([]);
+    const mins = new Set<number>();
+    for (let w = 0; w < 5; w++) {
+      s.advanceWeek();
+      for (const entry of s.board()) mins.add(questsById.get(entry.questId)!.min_level as number);
+    }
+    // Band 1 is level 5, so nothing near level 1 should be posted for a
+    // phantom band nobody is in.
+    expect(Math.min(...mins), `posted min_levels ${[...mins].sort((a, b) => a - b).join(',')}`)
+      .toBeGreaterThan(1);
+  }, 120_000);
+
+  it('the board spans more than one band\u2019s level window', () => {
+    // The direct witness: postings must cover a RANGE of min_levels, not a
+    // window around a single number.
+    const s = lopsided('span');
+    const mins = new Set<number>();
+    for (let w = 0; w < 5; w++) {
+      s.advanceWeek();
+      for (const entry of s.board()) mins.add(questsById.get(entry.questId)!.min_level as number);
+    }
+    const low = Math.min(...mins);
+    const high = Math.max(...mins);
+    expect(high - low, `board only spanned min_levels ${[...mins].sort((a, b) => a - b).join(',')}`)
+      .toBeGreaterThan(2);
+  }, 120_000);
 });
