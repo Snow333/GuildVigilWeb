@@ -5,3 +5,4 @@ dist/
 # Playwright
 test-results/
 playwright-report/
+output/art/map-mockups/*.png
