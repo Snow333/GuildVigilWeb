@@ -393,6 +393,8 @@ export interface SessionSaveState {
   reputation?: number;
   /** Secured resource sites, by the region they sit in. */
   sites?: { regionId: string; kind: string; securedWeek: number }[];
+  /** M4: world tiles the party has stood on ("x,y"). Absent in older saves. */
+  visited?: string[];
 }
 
 /** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
@@ -531,6 +533,15 @@ export class CampaignSession {
   private reputation = 0;
   /** Secured resource sites: regionId → the kind it pays, and when it was taken. */
   private sites: { regionId: string; kind: ResourceKind; securedWeek: number }[] = [];
+  /**
+   * M4 — every world tile the party has actually stood on, as "x,y".
+   *
+   * ⚠ THE VISIT LOG IS STATE; WHAT IT REVEALS IS DERIVED. Fog is computed from
+   * these points plus the guild's sight range (`@sim/world/reveal`), so
+   * widening sight with a Watchtower re-reveals history instead of leaving a
+   * permanent hole where the player walked before building it.
+   */
+  private visited = new Set<string>();
   private profile: MissionProfile = 'fullExplore';
   private caution: Caution = 'standard';
   /** Purchases against the current rotation week (stock itself derives from seeds). */
@@ -808,11 +819,16 @@ export class CampaignSession {
     const dispatchId = Ids.dispatch(this.dispatchN);
 
     // ── Travel out ──
+    // M4: the guild learns the land by walking it. Haven is always known.
+    this.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
+    this.visited.add(`${q.pos.x},${q.pos.y}`);
     const plan = planTravel(this.map, WORLD.haven, q.pos);
     if (plan) {
       this.world.emit(minute, 'dispatch.travel_leg_started', {
         fromX: WORLD.haven.x, fromY: WORLD.haven.y, toX: q.pos.x, toY: q.pos.y, etaMinutes: plan.etaMinutes,
       }, q.acceptSeq);
+      // Every tile on the road is seen in passing, not just the destination.
+      for (const step of plan.path) this.visited.add(`${step.x},${step.y}`);
       minute += plan.etaMinutes;
     }
 
@@ -1511,6 +1527,19 @@ export class CampaignSession {
   }
 
   /**
+   * Every world tile the party has stood on. The fog layer turns these into a
+   * revealed area; see `@sim/world/reveal`.
+   */
+  visitedTiles(): { x: number; y: number }[] {
+    const out: { x: number; y: number }[] = [];
+    for (const key of this.visited) {
+      const [x, y] = key.split(',').map(Number);
+      if (x !== undefined && y !== undefined) out.push({ x, y });
+    }
+    return out;
+  }
+
+  /**
    * Buy the next level of a building. Throws on anything the player could not
    * legitimately do, so the UI never has to guess — it reads `town()` for the
    * blockers and only calls this on an unblocked row.
@@ -1981,6 +2010,7 @@ export class CampaignSession {
       resources: RESOURCE_KINDS.map((k) => [k, this.resources[k]] as [string, number]),
       reputation: this.reputation,
       sites: this.sites.map((st) => ({ ...st })),
+      visited: [...this.visited].sort(),
     });
   }
 
@@ -2026,6 +2056,12 @@ export class CampaignSession {
       if ((RESOURCE_KINDS as readonly string[]).includes(kind)) session.resources[kind as ResourceKind] = n;
     }
     session.reputation = data.reputation ?? 0;
+    // M4: a pre-M4 save has walked the world but never recorded it. Haven is
+    // seeded so the map is never wholly black; the rest re-reveals as played.
+    session.visited = new Set(
+      (data.visited ?? []).filter((k) => typeof k === 'string' && /^\d+,\d+$/.test(k)),
+    );
+    session.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
     session.sites = (data.sites ?? [])
       .filter((st) => (RESOURCE_KINDS as readonly string[]).includes(st.kind))
       .map((st) => ({ regionId: st.regionId, kind: st.kind as ResourceKind, securedWeek: st.securedWeek }));
