@@ -605,6 +605,21 @@ export class CampaignSession {
      * restored sessions start from the same fact: the guild knows its own town.
      */
     this.visited.add(`${WORLD.haven.x},${WORLD.haven.y}`);
+    /**
+     * ⚠ THE FOUNDING PARTY IS SEEDED HERE, NOT LAZILY IN `syncParties`, FOR
+     * THE SAME REASON. `syncParties` used to refill band 1 whenever it found
+     * every band empty, on the assumption that this meant "brand-new
+     * campaign". It is indistinguishable from "the player deliberately sent
+     * everyone to the hall" — so benching the whole roster silently undid
+     * itself, and keeping a hero home was impossible. The reserve existed
+     * only as overflow, never as a choice.
+     *
+     * A fresh campaign gets its band here; a restored one gets whatever the
+     * save recorded (`deserialize` backfills band 1 only when the save has no
+     * `parties` field at all, i.e. it predates M4). Nothing invents a band
+     * after that.
+     */
+    this.parties = [config.party.slice(0, this.maxPartySize()).map((k) => k.hero.id)];
     this.world = new EventStream('world', config.campaignId);
     this.ledger = ledger;
   }
@@ -803,12 +818,24 @@ export class CampaignSession {
         `acceptQuest: party ${partyIndex + 1} is already on quest ${this.actives[partyIndex]!.questId}`,
       );
     }
+    /**
+     * ⚠ AN EMPTY BAND CANNOT TAKE A JOB, AND REFUSING HERE AVOIDS A SOFT-LOCK.
+     * Accepting first and staffing after looks reasonable, but taking a job
+     * marks the band as out — and `assignHero` refuses to reshuffle a band
+     * that is out, while `launchDispatch` refuses to send an empty one. The
+     * band ends up holding a job it can neither staff nor march, escapable
+     * only by abandoning. Staff the band, then give it work.
+     */
+    if ((this.parties[partyIndex] ?? []).length === 0) {
+      throw new Error(`acceptQuest: party ${partyIndex + 1} has no heroes — assign someone before taking a job`);
+    }
     const idx = this.open.findIndex((o) => o.questId === questId);
     if (idx < 0) throw new Error(`acceptQuest: quest ${questId} is not on the board`);
     const q = this.open[idx]!;
     this.open.splice(idx, 1);
     const acceptEv = this.world.emit(this.minute, 'world.quest_accepted', {
-      questId: String(q.questId), partyId: Ids.party(1),
+      // ⚠ The band that took it, not always band 1.
+      questId: String(q.questId), partyId: Ids.party(partyIndex + 1),
     });
     this.actives[partyIndex] = { ...q, acceptSeq: acceptEv.seq };
   }
@@ -1768,10 +1795,12 @@ export class CampaignSession {
       }
       this.parties[i] = kept;
     }
-    // A brand-new campaign: the founding party IS party 1.
-    if (this.parties[0]!.length === 0 && seen.size === 0) {
-      this.parties[0] = this.kits.slice(0, cap).map((k) => k.hero.id);
-    }
+    /**
+     * ⚠ DELIBERATELY DOES NOT REFILL AN EMPTY BAND 1. It used to, to seed the
+     * founding party, and that made benching the whole roster impossible — see
+     * the constructor. An empty band is now a legal, respected state: the
+     * player's arrangement is the player's.
+     */
   }
 
   /** The kits marching in a band, in roster order. */

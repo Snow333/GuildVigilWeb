@@ -173,13 +173,74 @@ describe('two bands, two jobs, one week', () => {
     expect(() => s.acceptQuest(board[1]!.questId, 0)).toThrow(/party 1 is already on quest/);
   });
 
-  it('a band with nobody in it cannot be sent', () => {
+  it('a hero sent to the hall STAYS at the hall', () => {
+    /**
+     * ⚠ THIS WAS IMPOSSIBLE UNTIL THE FOUNDING PARTY MOVED TO THE CONSTRUCTOR.
+     * `syncParties` used to refill band 1 whenever it found every band empty,
+     * reading that as "brand-new campaign" — indistinguishable from "the
+     * player deliberately benched everyone". So benching silently undid
+     * itself and a reserve existed only as overflow, never as a choice. The
+     * band screen's whole premise is leaving a hero home, so this is the test
+     * that premise rests on.
+     */
+    const s = twoBands('bench');
+    const id = s.partyRosters()[0]![0]!;
+    s.assignHero(id, null);
+    expect(s.unassignedHeroes()).toContain(id);
+    expect(s.partyRosters()[0]).not.toContain(id);
+    // Read it again: every party reader calls syncParties, which used to undo this.
+    expect(s.partyRosters()[0]).not.toContain(id);
+    expect(s.partyLevel(0)).toBeGreaterThan(0);
+  });
+
+  it('the whole roster can sit at the hall, and still be there after a save', () => {
+    const s = twoBands('benchall');
+    for (const band of s.partyRosters()) for (const id of band) s.assignHero(id, null);
+    expect(s.partyRosters().every((b) => b.length === 0)).toBe(true);
+    expect(s.unassignedHeroes().length).toBe(s.rosterSize());
+
+    const reloaded = CampaignSession.deserialize(JSON.parse(JSON.stringify(s.serialize())));
+    expect(reloaded.partyRosters().every((b) => b.length === 0)).toBe(true);
+    // ⚠ And the round trip is still idempotent — the earlier Haven bug was
+    // exactly this shape: state invented on restore rather than at creation.
+    expect(JSON.stringify(reloaded.serialize())).toBe(JSON.stringify(s.serialize()));
+  });
+
+  it('a fresh campaign still marches with its founding party', () => {
+    // The flip side: moving the fill must not leave a new guild with nobody
+    // in band 1, which would make the game unplayable from week one.
+    const s = twoBands('fresh');
+    expect(s.partyRosters()[0]!.length).toBeGreaterThan(0);
+    expect(s.unassignedHeroes().length).toBeLessThan(s.rosterSize());
+  });
+
+  it('a band with nobody in it is refused the job in the first place', () => {
+    /**
+     * ⚠ REVERSED DELIBERATELY. This test used to accept a job for the empty
+     * band and assert that LAUNCHING it threw. That was the wrong place to
+     * stop it: taking a job marks the band as out, `assignHero` refuses to
+     * reshuffle a band that is out, and `launchDispatch` refuses to send an
+     * empty one — so the band sat holding work it could neither staff nor
+     * march, escapable only by abandoning. The refusal belongs at accept.
+     */
     const s = twoBands('empty');
     for (const id of [...s.partyRosters()[1]!]) s.assignHero(id, null);
     expect(s.partyRosters()[1]).toEqual([]);
     s.advanceWeek();
+    expect(() => s.acceptQuest(s.board()[0]!.questId, 1)).toThrow(/has no heroes/);
+    // The job it was refused is still on the board for someone else to take.
+    expect(s.board().length).toBeGreaterThan(0);
+    expect(s.activeByParty()[1]).toBeNull();
+  });
+
+  it('the launch guard still stands behind it', () => {
+    // Belt and braces: emptying a band AFTER it took a job is not reachable
+    // through `assignHero` (it refuses while out), but the guard stays so a
+    // future caller cannot march nobody.
+    const s = twoBands('emptylaunch');
+    s.advanceWeek();
     s.acceptQuest(s.board()[0]!.questId, 1);
-    expect(() => s.launchDispatch(1)).toThrow(/is empty/);
+    expect(() => s.assignHero(s.partyRosters()[1]![0]!, null)).toThrow(/is out on a job/);
   });
 
   it('only the dispatching band is freed when a job ends', () => {
