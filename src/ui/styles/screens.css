@@ -236,6 +236,11 @@
   color: var(--gv-ink-soft);
   line-height: 1.6;
   margin: 8px 12px 6px;
+  /* ⚠ CLEARS THE THREAD SPOOL, which hangs off the sheet at left:-30 /
+     bottom:34. The fog legend made this note long enough to wrap to a third
+     line, and that line ran behind the spool so the sentence lost its first
+     few words. Found by screenshot, not by reading the CSS. */
+  padding-left: 3.25rem;
 }
 
 /* chart ink: geometry lives in the SVG, color lives here (tokens only) */
@@ -1091,3 +1096,24 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 .gv-tn-roster { margin: 0 0 8px; font-size: 14.5px; }
 .gv-tn-name { display: block; margin: 0 0 8px; font-size: 13.5px; color: var(--gv-ink-soft); }
 .gv-tn-name input { width: 100%; box-sizing: border-box; margin-top: 3px; }
+
+/* ============ M4: fog of war on the chart ============
+   Unsurveyed land is an opaque dark cover with a faint hatch — clearly "not
+   information", never just a dimmer map. */
+.gv-chart-fog {
+  fill: #2c2417;
+}
+.gv-chart-fog-line {
+  stroke: #54462d;
+}
+.gv-chart-rumour-ring {
+  fill: #2c2417;
+  stroke: var(--gv-vellum);
+}
+.gv-chart-rumour {
+  fill: var(--gv-vellum);
+  font-style: italic;
+  paint-order: stroke;
+  stroke: #2c2417;
+  stroke-width: 2.5px;
+}

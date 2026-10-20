@@ -241,8 +241,10 @@ export const EFFECT_COPY: Readonly<Record<string, EffectCopy>> = {
   recruit_common: { text: 'Fighters, rogues, clerics and wizards look for work here', wired: true },
   recruit_uncommon: { text: 'Rangers, bards, barbarians and monks turn up too', wired: true },
   recruit_rare: { text: 'Sorcerers and warlocks drift in', wired: true },
-  map_reveal_small: { text: 'See a little more of the map', wired: false },
-  map_reveal_large: { text: 'See much more of the map', wired: false },
+  // Measured in the fog layer: sight goes 3 -> 6 -> 9 tiles around every
+  // place the guild has walked, so a tower re-lights old roads too.
+  map_reveal_small: { text: 'See twice as far around every road you have walked', wired: true },
+  map_reveal_large: { text: 'See three times as far around every road you have walked', wired: true },
   remove_conditions: { text: 'The infirmary clears lingering ailments', wired: false },
   revive_dead: { text: 'The infirmary can bring back the dead', wired: false },
   train_level_5: { text: 'Train heroes up to level 5', wired: false },

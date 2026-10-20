@@ -86,8 +86,11 @@ describe('the content gate: every building has a price and every effect has word
     // note's promises change with it.
     const wired = Object.entries(EFFECT_COPY).filter(([, v]) => v.wired).map(([k]) => k).sort();
     expect(wired).toEqual([
+      // Both M4 tracks wired effects, hence the merge: fog took the
+      // Watchtower's map_reveal_*, parties took the Barracks' hero_cap_*.
       'armor', 'better_stock', 'consumables',
       'hero_cap_10', 'hero_cap_15', 'hero_cap_6',
+      'map_reveal_large', 'map_reveal_small',
       'masterwork',
       'party_size_4', 'party_size_5', 'party_size_6',
       'rare_items', 'recruit_common', 'recruit_rare', 'recruit_uncommon',
