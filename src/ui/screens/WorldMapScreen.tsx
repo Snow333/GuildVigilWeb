@@ -442,6 +442,8 @@ export function WorldMapScreen({ questId }: { questId: number | null }) {
 
             {/* compass rose */}
             <g transform={`translate(${W - 56},60)`} className="gv-chart-fill-ink">
+              {/* a vellum disc keeps the rose legible when it sits over unsurveyed dark */}
+              <circle r={26} className="gv-chart-cartouche" strokeWidth={0} stroke="none" opacity={0.92} />
               <circle r={17} className="gv-chart-ink" strokeWidth={1} />
               <circle r={12} className="gv-chart-ink" strokeWidth={0.5} />
               <path d="M0 -15 L4 0 L0 15 L-4 0 Z" />
