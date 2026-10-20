@@ -1117,3 +1117,85 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
   stroke: #2c2417;
   stroke-width: 2.5px;
 }
+
+
+/* ============ M4: the band screen (variant B, "job by band") ============
+   Additive only; everything is prefixed gv-bd-. Tokens only, no raw status hex.
+   Arrangement lives here; every decision is in src/ui/screens/bandPicks.ts. */
+.gv-bd { max-width: 1180px; margin: 0 auto; font-variant-numeric: lining-nums; }
+.gv-bd .gv-btn { white-space: nowrap; font-size: 14.5px; }
+.gv-bd .gv-bd-tiny { font-size: 12.5px; padding: 2px 9px; }
+.gv-bd-lead { margin: 0 0 12px; color: #e6cf98; font-size: 16.5px; max-width: 880px; line-height: 1.4; }
+.gv-bd-lead b { color: #fff3cf; }
+.gv-bd-dim { color: var(--gv-ink-muted); }
+/* the sim's refusal, on vellum: red ink on the dark leather was unreadable */
+.gv-bd-error { margin: 0 0 14px; padding: 8px 12px; background: var(--gv-vellum); border-left: 4px solid var(--gv-red-ink); border-radius: 2px; font-size: 15px; }
+.gv-bd-bad { color: var(--gv-red-ink); font-weight: 700; }
+.gv-bd-ico { vertical-align: -3px; flex: none; color: var(--gv-ink-muted); }
+.gv-bd .gv-sheet .gv-head { font-size: 19px; }
+.gv-bd .gv-sheet .gv-head .gv-sub { font-size: 12.5px; }
+
+.gv-bd-sheet { padding: 20px 20px 10px; margin-bottom: 24px; }
+.gv-bd-tab { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 14.5px; line-height: 1.35; }
+.gv-bd-tab th, .gv-bd-tab td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid #8c6a3a33; overflow-wrap: anywhere; }
+.gv-bd-tab th { font-weight: 400; border-bottom: 2px solid #8c6a3a88; }
+.gv-bd-jobh b { display: block; font-size: 19px; }
+.gv-bd-jobh small, .gv-bd-lockedh small { display: block; font-size: 12.5px; color: var(--gv-ink-muted); margin-top: 2px; }
+.gv-bd-bh { padding-left: 12px !important; border-left: 1px solid #8c6a3a44; background: #ffffff2a; }
+.gv-bd-bh.is-out { background: #9c342814; }
+.gv-bd-btop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.gv-bd-btop > b { font-size: 19px; }
+.gv-bd-lv { font-size: 11px; padding: 2px 8px; }
+.gv-bd-lv b { font-size: 17px; }
+.gv-bd-faces { display: flex; gap: 3px; margin: 8px 0 4px; flex-wrap: wrap; align-items: flex-start; }
+.gv-bd-faces .gv-paste--chip { width: 34px; }
+.gv-bd-freeslot { display: block; width: 34px; height: 42px; box-sizing: border-box; border: 1.5px dashed #8c6a3a77; border-radius: 2px; }
+.gv-bd-names { font-size: 12.5px; color: var(--gv-ink-soft); line-height: 1.4; }
+.gv-bd-nm { white-space: nowrap; }
+.gv-bd-outline { margin-top: 8px; }
+.gv-bd-lockline { display: flex; align-items: center; gap: 8px; color: var(--gv-red-ink); font-weight: 700; font-size: 14px; }
+.gv-bd-stamp { position: static; display: inline-block; transform: rotate(-2deg); font-size: 12.5px; padding: 2px 9px; }
+.gv-bd-outjob { font-weight: 700; font-size: 15px; margin-top: 3px; }
+.gv-bd-outacts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.gv-bd-lockedh { color: var(--gv-ink-muted); border-left: 1px dashed #8c6a3a66; padding-left: 10px !important; background: #00000010; font-size: 14px; }
+.gv-bd-lockedc { border-left: 1px dashed #8c6a3a66; background: #00000010; }
+.gv-bd-job b { display: block; font-size: 16.5px; line-height: 1.25; }
+.gv-bd-job small { display: block; font-size: 12.5px; color: var(--gv-ink-muted); margin-top: 2px; }
+.gv-bd-job small.gv-bd-tag { color: var(--gv-wax); font-weight: 700; }
+.gv-bd-cell { padding-left: 12px !important; border-left: 1px solid #8c6a3a33; }
+.gv-bd-cell .gv-difficulty { margin: 0 0 4px; }
+.gv-bd-word { font-size: 14px; }
+.gv-bd-word span { font-size: 13px; }
+.gv-bd-odds { font-size: 13px; margin: 0 0 7px; min-height: 22px; }
+.gv-bd-cell.is-best { background: #3f6d2e12; box-shadow: inset 3px 0 0 var(--gv-ch-resource); }
+.gv-bd-star { display: block; font-family: var(--gv-sans); font-size: 11.5px; letter-spacing: 1.4px; font-weight: 700; color: var(--gv-ch-resource); margin-bottom: 3px; }
+.gv-bd-cell.is-off, .is-taken .gv-bd-job { opacity: 0.62; }
+.is-taken .gv-bd-cell.is-mine { opacity: 1; background: #9c342812; }
+.gv-bd-hall { margin-bottom: 24px; }
+.gv-bd-hlist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; }
+.gv-bd-hh { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 4px 10px; align-items: center; border: 1.5px solid #8c6a3a55; border-radius: 3px; background: #ffffff30; padding: 8px 10px; }
+.gv-bd-hh .gv-paste--chip { width: 34px; }
+.gv-bd-hn { display: block; min-width: 0; line-height: 1.25; }
+.gv-bd-hn b { font-size: 15px; }
+.gv-bd-hn small { display: block; font-size: 12.5px; color: var(--gv-ink-muted); }
+.gv-bd-hurt { display: inline-block; font-size: 12px; font-weight: 700; color: var(--gv-ink-soft); border: 1px solid var(--gv-s2); background: color-mix(in srgb, var(--gv-s2) 19%, transparent); border-radius: 3px; padding: 0 5px; margin-left: 6px; line-height: 17px; }
+.gv-bd-hb { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.gv-bd-hh .gv-bd-hb { grid-column: 1 / -1; }
+.gv-bd-hb .gv-btn small { font-size: 11.5px; color: var(--gv-ink-muted); }
+.gv-bd-roster { margin-bottom: 24px; padding: 14px 20px; }
+.gv-bd-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 22px; margin-top: 12px; }
+.gv-bd-col h4 { margin: 0 0 6px; font-family: var(--gv-sans); font-size: 12.5px; letter-spacing: 1.4px; color: var(--gv-ink-muted); border-bottom: 1px solid #8c6a3a55; padding-bottom: 4px; }
+.gv-bd-col ul { list-style: none; margin: 0; padding: 0; }
+.gv-bd-rr { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid #8c6a3a22; }
+.gv-bd-rr .gv-bd-hb { flex: none; flex-wrap: nowrap; }
+.gv-bd-lock { color: var(--gv-red-ink); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.gv-bd-foot { color: #c9b98f; font-size: 13px; margin: 14px 0 0; line-height: 1.5; max-width: 880px; }
+.gv-bd-foot b { color: #e6cf98; }
+@media (max-width: 1100px) {
+  .gv-bd-sheet { padding: 16px 14px 8px; }
+  .gv-bd-cols { gap: 0 14px; }
+  .gv-bd-rr { flex-wrap: wrap; }
+  .gv-bd-rr .gv-bd-hb { flex-wrap: wrap; }
+  .gv-bd-tab { font-size: 14px; }
+  .gv-bd-btop > b { font-size: 17px; }
+}
