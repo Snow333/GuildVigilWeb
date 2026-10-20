@@ -52,6 +52,7 @@ import {
   RECRUIT_COST, RECRUIT_TIERS, RESOURCE_KINDS, STARTING_BUILDINGS, emptyStock,
   type RecruitTier, type ResourceKind, type ResourceStock,
 } from '@content/town';
+import { hireName } from '@content/heroNames';
 import { allSites, siteKey, type ResourceSite } from './sites';
 import { isSiteQuest, siteForQuestId, siteQuestFor } from '@content/siteQuests';
 import {
@@ -2104,7 +2105,16 @@ export class CampaignSession {
      * death), so ids stay unique. If removal is ever added, this needs a
      * monotonic counter instead or two heroes will share an id.
      */
-    const choice = { ...defaultChoiceFor(classId), ...(name.trim() ? { name: name.trim() } : {}) };
+    /**
+     * ⚠ A BLANK NAME USED TO MEAN `template.defaultName` — ONE NAME PER CLASS,
+     * so every Fighter hired from the Tavern was another "Torvald". The band
+     * screen made it glaring (a band reads "Torvald L1 · Torvald L1 · Torvald
+     * L1"), and deciding who marches is the entire point of a second band.
+     * Seeded on the roster index so the campaign still replays identically.
+     */
+    const base = defaultChoiceFor(classId);
+    const chosen = name.trim() ? name.trim() : hireName(base.ancestry, this.kits.length);
+    const choice = { ...base, name: chosen };
     const kit = musterHero(choice, this.kits.length);
     this.kits.push(kit);
     this.heroes.push(kit.hero);
