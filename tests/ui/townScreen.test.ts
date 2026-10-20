@@ -275,8 +275,22 @@ describe('rankPicks against the real town', () => {
       const key = [b.next.cost.gold, resourceUnits(b.next.cost), b.id] as const;
       return key[0] < lastKey[0] || (key[0] === lastKey[0] && (key[1] < lastKey[1] || (key[1] === lastKey[1] && key[2] < lastKey[2])));
     });
-    // at least one dead-effect upgrade out-ranks the third pick on price alone…
-    expect(beaten.length).toBeGreaterThan(0);
+    /**
+     * ⚠ THIS PREMISE IS CONTENT-DEPENDENT AND HAS ALREADY BROKEN ONCE. The
+     * example used to be the Barracks (100g, unwired); M4 wired its
+     * `hero_cap_*` effects, so it stopped qualifying and this test went red
+     * with "expected 0 to be greater than 0" — which reads like a ranking bug
+     * and was not one.
+     *
+     * The guard still matters while ANY unwired upgrade is cheap enough to
+     * out-rank a pick, so it is skipped rather than deleted when none is:
+     * there is nothing to prove, not a regression. If the day comes that every
+     * effect is wired, delete it and say so in the commit.
+     */
+    if (beaten.length === 0) {
+      expect(town.some((b) => b.next?.effect?.wired === false)).toBe(true);
+      return;
+    }
     // …and none of them is recommended.
     for (const b of beaten) expect(picks.map((p) => p.building.id)).not.toContain(b.id);
   });
@@ -347,8 +361,11 @@ describe('recruiting through the same session the screen drives', () => {
     s.upgradeBuilding(6); // Tavern → common recruits
     expect(s.recruitPool().length).toBeGreaterThan(0);
     expect(s.rosterSize()).toBe(s.maxPartySize());
-    expect(() => s.recruitHero(s.recruitPool()[0]!.classId, 'Nope')).toThrow(/guild hall holds/);
-    s.upgradeBuilding(1);
+    // M4: hiring is capped by the BARRACKS (how many you house), not the
+    // Guild Hall (how many you march). See tests/campaign/town.test.ts.
+    expect(() => s.recruitHero(s.recruitPool()[0]!.classId, 'Nope')).toThrow(/barracks houses/);
+    s.upgradeBuilding(2); // Barracks → room on the books
+    s.upgradeBuilding(1); // Guild Hall → room in the band
     const gold = s.goldAmount();
     const offer = s.recruitPool()[0]!;
     s.recruitHero(offer.classId, 'Wren');

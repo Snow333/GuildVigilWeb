@@ -54,7 +54,8 @@ import {
 } from '@content/town';
 import { allSites, siteKey, type ResourceSite } from './sites';
 import { isSiteQuest, siteForQuestId, siteQuestFor } from '@content/siteQuests';
-import { defaultChoiceFor, musterHero } from '@sim/campaign/muster';
+import {
+  FOUNDING_PARTY_SIZE, defaultChoiceFor, musterHero } from '@sim/campaign/muster';
 import {
   acLedger, attackLedger, attackPenaltyLedger, saveLedger, hpLedger, speedLedger,
   itemContributions, slotState,
@@ -395,6 +396,12 @@ export interface SessionSaveState {
   sites?: { regionId: string; kind: string; securedWeek: number }[];
   /** M4: world tiles the party has stood on ("x,y"). Absent in older saves. */
   visited?: string[];
+  /**
+   * M4: hero ids per band, and each band's job. Absent in older saves, which
+   * backfill to one band holding the whole roster — exactly how they played.
+   */
+  parties?: string[][];
+  partyActives?: ({ questId: number; postedWeek: number; acceptSeq: number } | null)[];
 }
 
 /** Shop v1 tunables: weekly rotation size per building; sell-back fraction. */
@@ -501,6 +508,19 @@ export class CampaignSession {
   private readonly rng: Rng;
   private readonly poiCache = new Map<string, { x: number; y: number }>();
 
+  /**
+   * Party 1's active job. ⚠ A GETTER/SETTER OVER `actives[0]`, not a field:
+   * ~18 call sites read or write `this.active`, and pointing them all at the
+   * same storage the party-aware code uses means the two can never disagree.
+   */
+  private get active(): ActiveQuest | null {
+    return this.actives[0] ?? null;
+  }
+
+  private set active(value: ActiveQuest | null) {
+    this.actives[0] = value;
+  }
+
   private week = 0;
   private minute = 0;
   private gold = 0;
@@ -514,7 +534,7 @@ export class CampaignSession {
    * visibly breathes instead of silently cycling). Balance change, re-baselined.
    */
   private expired = new Map<number, number>();
-  private active: ActiveQuest | null = null;
+
   /** Marshal letters (story_dialogue ids) the player has answered — they stop showing. */
   private answered = new Set<number>();
   private dispatchN = 0;
@@ -542,6 +562,25 @@ export class CampaignSession {
    * permanent hole where the player walked before building it.
    */
   private visited = new Set<string>();
+  /**
+   * M4 — THE ROSTER IS NOT THE PARTY ANY MORE.
+   *
+   * `kits` is everyone the guild employs. `parties` says who marches in which
+   * band: `parties[i]` is a list of hero ids. A hero in no list is at the
+   * guild hall, available but not assigned.
+   *
+   * ⚠ Party 1 is index 0 and ALWAYS exists, so every pre-M4 call path
+   * (`acceptQuest`, `launchDispatch` with no argument) keeps meaning exactly
+   * what it meant: the first band. That default is what lets this land without
+   * rewriting the whole UI and test suite at once.
+   */
+  private parties: string[][] = [[]];
+  /**
+   * The job each party is on, indexed alongside `parties`. Was a single
+   * `active`; the old field is kept as an accessor for party 1 so existing
+   * readers are unaffected.
+   */
+  private actives: (ActiveQuest | null)[] = [null];
   private profile: MissionProfile = 'fullExplore';
   private caution: Caution = 'standard';
   /** Purchases against the current rotation week (stock itself derives from seeds). */
@@ -709,7 +748,9 @@ export class CampaignSession {
     if (this.open.some((o) => o.questId === row.id)) return false;
     if (!this.storylineUnlocked(row.id)) return false; // arc quests post in sequence (brief #6)
     if (doneWeek !== undefined && storylineByQuestId.has(row.id)) return false; // arc beats happen ONCE
-    if (this.active?.questId === row.id) return false; // live play: an accepted quest is off the board
+    // ⚠ EVERY party's job, not just party 1's — otherwise band 2's quest
+    // stays on the board and both bands can accept the same posting.
+    if (this.actives.some((a) => a?.questId === row.id)) return false;
     const regionId = regionFor(this.questPos(row));
     const drift = this.ledger.effectsFor(regionId).questLevelDrift;
     if (row.min_level < pl - SCHEDULER.levelBandBelow) return false;
@@ -744,7 +785,8 @@ export class CampaignSession {
     const commission = COMMISSIONS.find((c) => c.dialogueId === dialogueId);
     if (!commission) return;
     const id = commission.quest.id;
-    if (this.completed.has(id) || this.open.some((o) => o.questId === id) || this.active?.questId === id) return;
+    if (this.completed.has(id) || this.open.some((o) => o.questId === id)
+      || this.actives.some((a) => a?.questId === id)) return;
     const pos = this.questPos(commission.quest);
     const regionId = regionFor(pos);
     this.open.push({ questId: id, postedWeek: this.week, regionId, pos });
@@ -754,8 +796,13 @@ export class CampaignSession {
   }
 
   /** Moves board → active; does NOT launch. One active quest at a time (v1). */
-  acceptQuest(questId: number): void {
-    if (this.active) throw new Error(`acceptQuest: quest ${this.active.questId} is already active`);
+  acceptQuest(questId: number, partyIndex = 0): void {
+    this.syncParties();
+    if (this.actives[partyIndex]) {
+      throw new Error(
+        `acceptQuest: party ${partyIndex + 1} is already on quest ${this.actives[partyIndex]!.questId}`,
+      );
+    }
     const idx = this.open.findIndex((o) => o.questId === questId);
     if (idx < 0) throw new Error(`acceptQuest: quest ${questId} is not on the board`);
     const q = this.open[idx]!;
@@ -763,7 +810,7 @@ export class CampaignSession {
     const acceptEv = this.world.emit(this.minute, 'world.quest_accepted', {
       questId: String(q.questId), partyId: Ids.party(1),
     });
-    this.active = { ...q, acceptSeq: acceptEv.seq };
+    this.actives[partyIndex] = { ...q, acceptSeq: acceptEv.seq };
   }
 
   /**
@@ -772,10 +819,11 @@ export class CampaignSession {
    * cannot park a quest by accept/abandon cycling; its expiry clock never
    * stopped. Re-emits quest_posted so feeds see it reappear.
    */
-  abandonQuest(): void {
-    const q = this.active;
-    if (!q) throw new Error('abandonQuest: no active quest');
-    this.active = null;
+  abandonQuest(partyIndex = 0): void {
+    this.syncParties();
+    const q = this.actives[partyIndex] ?? null;
+    if (!q) throw new Error(`abandonQuest: party ${partyIndex + 1} has no active quest`);
+    this.actives[partyIndex] = null;
     this.open.push({ questId: q.questId, postedWeek: q.postedWeek, regionId: q.regionId, pos: q.pos });
     this.world.emit(this.minute, 'world.quest_posted', {
       questId: String(q.questId), regionId: q.regionId, kind: 'story',
@@ -794,15 +842,25 @@ export class CampaignSession {
    * dispatch stream for playback. Level-ups are NOT applied here — XP is a sim
    * consequence, spending it is a player (or autopilot-policy) choice.
    */
-  launchDispatch(): QuestRecord {
-    const q = this.active;
-    if (!q) throw new Error('launchDispatch: no active quest');
+  launchDispatch(partyIndex = 0): QuestRecord {
+    this.syncParties();
+    const q = this.actives[partyIndex] ?? null;
+    if (!q) throw new Error(`launchDispatch: party ${partyIndex + 1} has no active quest`);
+    /**
+     * ⚠ EVERY `this.kits` / `this.heroes` BELOW BECAME THIS BAND'S MEMBERS.
+     * Resting, the quick-slot mask, `assembleParty`, the feat scan and the
+     * write-back must all see the SAME list in the SAME order, or a consumed
+     * potion is written back to the wrong hero.
+     */
+    const kits = this.partyKits(partyIndex);
+    if (kits.length === 0) throw new Error(`launchDispatch: party ${partyIndex + 1} is empty`);
+    const heroes = kits.map((k) => k.hero);
     const quest = questsById.get(q.questId)!;
     const week = this.week;
     const pl = this.partyLevel();
     let minute = this.minute;
 
-    for (const h of this.heroes) h.wounded = 0;
+    for (const h of heroes) h.wounded = 0;
     /**
      * ⚠ THE LONG REST HAPPENS HERE, AT THE HAVEN — NOT IN THE DUNGEON.
      * `dungeon/dispatch.ts` already has a rest and it declares itself SHORT
@@ -814,7 +872,7 @@ export class CampaignSession {
      * So the boundary is the dispatch: the party rests between expeditions,
      * at the same moment the wounded ratchet clears above.
      */
-    takeLongRestParty(this.heroes);
+    takeLongRestParty(heroes);
     /**
      * ⚠ THE MASK IS TAKEN BEFORE THE DISPATCH, AND THAT ORDER IS LOAD-BEARING.
      * `toCombatQuickSlots` mirrors only the items the ENGINE can execute, so a
@@ -822,8 +880,8 @@ export class CampaignSession {
      * distinguish "drunk" from "never tracked" — reading the mask afterwards
      * would therefore delete every inert consumable on the party's first fight.
      */
-    const quickSlotMasks = this.kits.map((k) => trackedMask(normalizeQuickSlots(k.quickSlots)));
-    const party = assembleParty(this.kits);
+    const quickSlotMasks = kits.map((k) => trackedMask(normalizeQuickSlots(k.quickSlots)));
+    const party = assembleParty(kits);
     this.dispatchN++;
     const dispatchId = Ids.dispatch(this.dispatchN);
 
@@ -866,7 +924,10 @@ export class CampaignSession {
         // The road won: quest failed before the dungeon; survivors limp home.
         this.world.emit(minute, 'world.quest_failed', { questId: String(q.questId), regionId: q.regionId });
         this.recordFact(week, q.regionId, 'quest_failed', String(q.questId), minute);
-        this.active = null;
+        // ⚠ `actives[partyIndex]`, NOT `this.active` — that getter is party 1,
+        // so an ambushed second band would have freed the FIRST band's slot
+        // and kept its own job forever.
+        this.actives[partyIndex] = null;
         this.minute = minute;
         return { week, questId: q.questId, outcome: 'ambushKilled', fights };
       }
@@ -913,7 +974,7 @@ export class CampaignSession {
         regionId: q.regionId,
         ...(bossRoster ? { bossRoster } : {}),
         autoDetectTraps: partyDungeonBonus(
-          this.kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
+          kits.map((k) => ({ hero: k.hero, feats: k.hero.feats })),
           'auto_detect_traps_adjacent',
         ).found,
       });
@@ -972,17 +1033,19 @@ export class CampaignSession {
      * on EVERY outcome — victory, retreat, wipe — because a potion drunk in a
      * fight you then lost is still gone.
      */
-    this.reconcilePartyQuickSlots(party, quickSlotMasks);
+    this.reconcilePartyQuickSlots(party, quickSlotMasks, kits);
 
-    this.active = null;
+    this.actives[partyIndex] = null;
     this.minute = minute;
     return { week, questId: q.questId, outcome, ...(dispatch ? { dispatch } : {}), ...(fights.length > 0 ? { fights } : {}) };
   }
 
   /** Write each hero's consumed quick-slots back from the dispatch mirror. */
-  private reconcilePartyQuickSlots(party: DispatchHero[], masks: readonly boolean[][]): void {
+  private reconcilePartyQuickSlots(
+    party: DispatchHero[], masks: readonly boolean[][], kits: readonly HeroKit[],
+  ): void {
     party.forEach((h, i) => {
-      const kit = this.kits[i];
+      const kit = kits[i];
       const mask = masks[i];
       if (!kit || !mask) return;
       const slots = normalizeQuickSlots(kit.quickSlots);
@@ -1291,7 +1354,7 @@ export class CampaignSession {
 
   /** Clears an in-flight quest so the board is usable again. */
   devClearActive(): void {
-    this.active = null;
+    this.actives = this.actives.map(() => null);
   }
 
   // ── Queries (pure, no mutation) ───────────────────────────────────────────
@@ -1514,6 +1577,149 @@ export class CampaignSession {
 
   // ── THE TOWN (M3) ────────────────────────────────────────────────────────
 
+  // ── PARTIES AND THE ROSTER (M4) ──────────────────────────────────────────
+
+  /**
+   * How many heroes the guild can KEEP. The BARRACKS governs this.
+   *
+   * ⚠ NOT THE SAME NUMBER AS `maxPartySize()`, AND M3 CONFLATED THEM.
+   * `recruitHero` used to cap on the Guild Hall, which meant a guild could
+   * never employ more heroes than it could march — so a reserve, and therefore
+   * a second party, was impossible. The Guild Hall says how many GO; the
+   * Barracks says how many you HOUSE.
+   *
+   * No Barracks → 4, the founding party: a guild with nowhere to put people
+   * keeps exactly the four who signed the charter.
+   */
+  heroCapacity(): number {
+    for (const n of [15, 10, 6]) {
+      if (hasEffect(this.buildingLevels, `hero_cap_${n}`)) return n;
+    }
+    return FOUNDING_PARTY_SIZE;
+  }
+
+  /**
+   * How many bands the guild can field at once.
+   *
+   * ⚠ DERIVED FROM THE BARRACKS' AUTHORED CAPACITY, WHICH IS WHY THE NUMBERS
+   * LAND WHERE THE ROADMAP SAID. The ladder is "1x4 → 1x5 → 1x6 → 6+4": a
+   * second party needs ten bodies, and `hero_cap_10` is exactly what Barracks
+   * level 2 already said. Nothing here is tuned; it reads the content.
+   */
+  partyCount(): number {
+    const capacity = this.heroCapacity();
+    if (capacity >= 15) return 3;
+    if (capacity >= 10) return 2;
+    return 1;
+  }
+
+  /** Hero ids in each band, index 0 being party 1. */
+  partyRosters(): string[][] {
+    this.syncParties();
+    return this.parties.map((ids) => [...ids]);
+  }
+
+  /** Heroes on the books but not assigned to a band. */
+  unassignedHeroes(): string[] {
+    this.syncParties();
+    const taken = new Set(this.parties.flat());
+    return this.kits.filter((k) => !taken.has(k.hero.id)).map((k) => k.hero.id);
+  }
+
+  /** The job each band is on, or null. */
+  activeByParty(): ({ questId: number; regionId: string } | null)[] {
+    this.syncParties();
+    return this.actives.map((a) => (a ? { questId: a.questId, regionId: a.regionId } : null));
+  }
+
+  /**
+   * Put a hero in a band, or pull them out with `null`.
+   *
+   * ⚠ Refuses while that band is OUT on a job — swapping a hero mid-expedition
+   * would change the party the dispatch is resolving, and the hero is not
+   * physically in town to be reassigned.
+   */
+  assignHero(heroId: string, partyIndex: number | null): void {
+    this.syncParties();
+    if (!this.kits.some((k) => k.hero.id === heroId)) {
+      throw new Error(`assignHero: no hero ${heroId}`);
+    }
+    const from = this.parties.findIndex((ids) => ids.includes(heroId));
+    if (from >= 0 && this.actives[from]) {
+      throw new Error(`assignHero: party ${from + 1} is out on a job`);
+    }
+    if (partyIndex !== null) {
+      if (!Number.isInteger(partyIndex) || partyIndex < 0 || partyIndex >= this.partyCount()) {
+        throw new Error(`assignHero: no party ${partyIndex + 1} — the barracks houses ${this.partyCount()} band(s)`);
+      }
+      if (this.actives[partyIndex]) {
+        throw new Error(`assignHero: party ${partyIndex + 1} is out on a job`);
+      }
+      const target = this.parties[partyIndex]!;
+      if (!target.includes(heroId) && target.length >= this.maxPartySize()) {
+        throw new Error(
+          `assignHero: party ${partyIndex + 1} already holds ${this.maxPartySize()} — the guild hall is the limit`,
+        );
+      }
+    }
+    if (from >= 0) this.parties[from] = this.parties[from]!.filter((id) => id !== heroId);
+    if (partyIndex !== null && !this.parties[partyIndex]!.includes(heroId)) {
+      this.parties[partyIndex]!.push(heroId);
+    }
+  }
+
+  /**
+   * Reconcile `parties` with the roster, the guild hall and the barracks.
+   *
+   * ⚠ CALLED FROM EVERY PARTY READER BECAUSE THE SHAPE HAS THREE MOVING
+   * INPUTS: hiring adds heroes, the Guild Hall changes how many fit in a band,
+   * and the Barracks changes how many bands exist. Doing this lazily rather
+   * than on every mutation means a save written before an upgrade still loads
+   * into a legal shape.
+   *
+   * Never DROPS a hero from a band it can still legally hold, so a player's
+   * arrangement survives; overflow spills to unassigned rather than silently
+   * moving someone to another band.
+   */
+  private syncParties(): void {
+    const want = this.partyCount();
+    while (this.parties.length < want) this.parties.push([]);
+    while (this.actives.length < this.parties.length) this.actives.push(null);
+    // Bands beyond capacity: only removable when empty AND idle, so losing a
+    // barracks level cannot strand a party that is currently out.
+    while (this.parties.length > want && this.parties.length > 1) {
+      const last = this.parties.length - 1;
+      if (this.actives[last]) break;
+      const stranded = this.parties.pop() ?? [];
+      this.actives.pop();
+      if (stranded.length > 0) this.parties[0]!.push(...stranded); // they come home
+    }
+    const known = new Set(this.kits.map((k) => k.hero.id));
+    const seen = new Set<string>();
+    const cap = this.maxPartySize();
+    for (let i = 0; i < this.parties.length; i++) {
+      const kept: string[] = [];
+      for (const id of this.parties[i]!) {
+        if (!known.has(id) || seen.has(id)) continue; // gone, or double-booked
+        if (kept.length >= cap) continue;             // band shrank; spill to unassigned
+        kept.push(id);
+        seen.add(id);
+      }
+      this.parties[i] = kept;
+    }
+    // A brand-new campaign: the founding party IS party 1.
+    if (this.parties[0]!.length === 0 && seen.size === 0) {
+      this.parties[0] = this.kits.slice(0, cap).map((k) => k.hero.id);
+    }
+  }
+
+  /** The kits marching in a band, in roster order. */
+  private partyKits(partyIndex: number): HeroKit[] {
+    this.syncParties();
+    const ids = new Set(this.parties[partyIndex] ?? []);
+    return this.kits.filter((k) => ids.has(k.hero.id));
+  }
+
   /** Every building, what it gives now, what the next level costs and why it is blocked. */
   town(): BuildingView[] {
     return townView(this.buildingLevels, this.gold, this.resources, this.reputation);
@@ -1618,18 +1824,21 @@ export class CampaignSession {
    *
    * ⚠ Does NOT secure the site. Winning does — see `launchDispatch`.
    */
-  acceptSiteExpedition(regionId: string, kind: ResourceKind): number {
+  acceptSiteExpedition(regionId: string, kind: ResourceKind, partyIndex = 0): number {
+    this.syncParties();
     const site = this.resourceSites().find((st) => st.regionId === regionId && st.kind === kind);
     if (!site) throw new Error(`acceptSiteExpedition: no ${kind} site in ${regionId}`);
     if (site.secured) throw new Error(`acceptSiteExpedition: the guild already holds the ${kind} site`);
-    if (this.active) throw new Error('acceptSiteExpedition: the party is already out on a job');
+    if (this.actives[partyIndex]) {
+      throw new Error(`acceptSiteExpedition: party ${partyIndex + 1} is already out on a job`);
+    }
     const link = siteQuestFor(regionId, kind);
     if (!link) throw new Error(`acceptSiteExpedition: no expedition exists for ${kind} in ${regionId}`);
 
     const ev = this.world.emit(this.minute, 'world.quest_accepted', {
       questId: String(link.questId), partyId: Ids.party(1),
     });
-    this.active = {
+    this.actives[partyIndex] = {
       questId: link.questId,
       postedWeek: this.week,
       regionId,
@@ -1736,9 +1945,14 @@ export class CampaignSession {
     if (!offer) {
       throw new Error(`recruitHero: no ${classId} available — the Tavern does not reach that tier yet`);
     }
-    if (this.kits.length >= this.maxPartySize()) {
+    /**
+     * ⚠ THE BARRACKS, NOT THE GUILD HALL. M3 capped hiring on `maxPartySize()`,
+     * which meant the guild could never employ more heroes than it could march
+     * — so a reserve, and therefore a second party, was impossible.
+     */
+    if (this.kits.length >= this.heroCapacity()) {
       throw new Error(
-        `recruitHero: the guild hall holds ${this.maxPartySize()} — upgrade it before hiring a ${offer.className}`,
+        `recruitHero: the barracks houses ${this.heroCapacity()} — upgrade it before hiring a ${offer.className}`,
       );
     }
     if (this.gold < offer.cost) {
@@ -1755,6 +1969,18 @@ export class CampaignSession {
     const kit = musterHero(choice, this.kits.length);
     this.kits.push(kit);
     this.heroes.push(kit.hero);
+    /**
+     * A new hire walks into the first band with a free seat. If every band is
+     * full they wait at the guild hall (unassigned) rather than being refused:
+     * the Barracks is what limits hiring, the Guild Hall what limits marching.
+     */
+    this.syncParties();
+    for (let i = 0; i < this.parties.length; i++) {
+      if (this.parties[i]!.length < this.maxPartySize() && !this.actives[i]) {
+        this.parties[i]!.push(kit.hero.id);
+        break;
+      }
+    }
     this.world.emit(this.minute, 'town.hero_recruited', {
       heroId: kit.hero.id, className: offer.className, cost: offer.cost,
     });
@@ -1830,7 +2056,7 @@ export class CampaignSession {
    */
   forecast(questId: number, cfg: ForecastConfig, n: number): ForecastResult {
     const posting = this.open.find((o) => o.questId === questId) ??
-      (this.active?.questId === questId ? this.active : null);
+      (this.actives.find((a) => a?.questId === questId) ?? null);
     if (!posting) throw new Error(`forecast: quest ${questId} is not available`);
     const quest = questsById.get(questId)!;
     const dungeonLevel = Math.max((quest.dungeon_level as number | null) ?? (quest.min_level as number), 1);
@@ -1982,7 +2208,8 @@ export class CampaignSession {
 
   /** A* path + ETA from Haven to a posted (or the active) quest's POI. */
   travelPreview(questId: number): TravelPlan | null {
-    const q = this.open.find((o) => o.questId === questId) ?? (this.active?.questId === questId ? this.active : null);
+    const q = this.open.find((o) => o.questId === questId)
+      ?? (this.actives.find((a) => a?.questId === questId) ?? null);
     if (!q) return null;
     return planTravel(this.map, WORLD.haven, q.pos);
   }
@@ -2020,6 +2247,10 @@ export class CampaignSession {
       reputation: this.reputation,
       sites: this.sites.map((st) => ({ ...st })),
       visited: [...this.visited].sort(),
+      parties: this.parties.map((ids) => [...ids]),
+      partyActives: this.actives.map((a) => (
+        a ? { questId: a.questId, postedWeek: a.postedWeek, acceptSeq: a.acceptSeq } : null
+      )),
     });
   }
 
@@ -2053,6 +2284,27 @@ export class CampaignSession {
     session.active = data.active
       ? { ...session.rehydrateQuest(data.active.questId, data.active.postedWeek), acceptSeq: data.active.acceptSeq }
       : null;
+    /**
+     * M4 bands. ⚠ ORDER MATTERS: `session.active` above writes `actives[0]`,
+     * so a pre-M4 save is already correct for band 1 and the block below only
+     * adds what a newer save recorded. `syncParties` then legalises the shape
+     * against the CURRENT buildings, so a save made at Barracks 2 that somehow
+     * loads at Barracks 1 folds its second band home instead of crashing.
+     */
+    if (Array.isArray(data.parties) && data.parties.length > 0) {
+      session.parties = data.parties.map((ids) => (Array.isArray(ids) ? ids.filter((x) => typeof x === 'string') : []));
+    } else {
+      session.parties = [session.kits.map((k) => k.hero.id)];
+    }
+    if (Array.isArray(data.partyActives)) {
+      session.actives = data.partyActives.map((a, i) => {
+        if (i === 0) return session.actives[0] ?? null; // already rehydrated from `active`
+        return a
+          ? { ...session.rehydrateQuest(a.questId, a.postedWeek), acceptSeq: a.acceptSeq }
+          : null;
+      });
+    }
+    while (session.actives.length < session.parties.length) session.actives.push(null);
     // Backfill (constraint 8 spirit): 2.0 saves predate the shop — empty ledger.
     session.shopSoldWeek = data.shopSold?.week ?? 0;
     session.shopSoldCounts = new Map(data.shopSold?.counts ?? []);
