@@ -193,7 +193,7 @@ export function BandBoard(p: BandBoardProps) {
           <span className="gv-plate">BANDS <b data-plate-bands="">{pl.bands} of {pl.bandsMax}</b></span>
           <span className="gv-plate">MARCH <b>{pl.march}</b> per band</span>
         </div>
-        {p.error && <p className="gv-marg" data-bd-error="" style={{ margin: '0 0 14px' }}><b>!</b> {p.error}</p>}
+        {p.error && <p className="gv-marg gv-bd-error" data-bd-error=""><b>!</b> {p.error}</p>}
 
         <section className="gv-sheet gv-bd-sheet" data-section="matrix" style={{ ['--gv-tilt' as never]: '0deg' }}>
           <span className="gv-pin" />

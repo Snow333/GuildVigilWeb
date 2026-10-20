@@ -1128,6 +1128,8 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 .gv-bd-lead { margin: 0 0 12px; color: #e6cf98; font-size: 16.5px; max-width: 880px; line-height: 1.4; }
 .gv-bd-lead b { color: #fff3cf; }
 .gv-bd-dim { color: var(--gv-ink-muted); }
+/* the sim's refusal, on vellum: red ink on the dark leather was unreadable */
+.gv-bd-error { margin: 0 0 14px; padding: 8px 12px; background: var(--gv-vellum); border-left: 4px solid var(--gv-red-ink); border-radius: 2px; font-size: 15px; }
 .gv-bd-bad { color: var(--gv-red-ink); font-weight: 700; }
 .gv-bd-ico { vertical-align: -3px; flex: none; color: var(--gv-ink-muted); }
 .gv-bd .gv-sheet .gv-head { font-size: 19px; }
@@ -1149,6 +1151,7 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 .gv-bd-faces .gv-paste--chip { width: 34px; }
 .gv-bd-freeslot { display: block; width: 34px; height: 42px; box-sizing: border-box; border: 1.5px dashed #8c6a3a77; border-radius: 2px; }
 .gv-bd-names { font-size: 12.5px; color: var(--gv-ink-soft); line-height: 1.4; }
+.gv-bd-nm { white-space: nowrap; }
 .gv-bd-outline { margin-top: 8px; }
 .gv-bd-lockline { display: flex; align-items: center; gap: 8px; color: var(--gv-red-ink); font-weight: 700; font-size: 14px; }
 .gv-bd-stamp { position: static; display: inline-block; transform: rotate(-2deg); font-size: 12.5px; padding: 2px 9px; }
@@ -1191,7 +1194,8 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 @media (max-width: 1100px) {
   .gv-bd-sheet { padding: 16px 14px 8px; }
   .gv-bd-cols { gap: 0 14px; }
-  .gv-bd-rr { flex-direction: column; align-items: flex-start; }
+  .gv-bd-rr { flex-wrap: wrap; }
+  .gv-bd-rr .gv-bd-hb { flex-wrap: wrap; }
   .gv-bd-tab { font-size: 14px; }
   .gv-bd-btop > b { font-size: 17px; }
 }
