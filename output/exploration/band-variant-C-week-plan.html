@@ -2040,6 +2040,8 @@ var GV = (function () {
     GV.s = s;
   }
   function members(i) { return GV.s.heroes.filter(function (h) { return h.band === i; }); }
+  /* every band, not just the first two — the 3-band week exposed this */
+  function bandCounts() { var o = []; for (var i = 0; i < PARTY_COUNT; i++) o.push('Band ' + (i + 1) + ': ' + members(i).length); return o.join(' · '); }
   function hall() { return GV.s.heroes.filter(function (h) { return h.band === null; }); }
   function lv(i) { return levelOf(members(i)); }
   function lvIf(h, to) { var m = members(to).filter(function (x) { return x.id !== h.id; }); m.push(h); return levelOf(m); }
@@ -2091,8 +2093,8 @@ var GV = (function () {
   function deskbar() {
     return '<div class="gv-deskbar" style="margin-bottom:14px"><span class="gv-plate">WEEK <b>' + WEEK + '</b></span>' +
       '<span class="gv-plate">GOLD <b>' + money(GOLD) + '</b></span>' +
-      '<span class="gv-plate">HEROES <b>10 of ' + BEDS + '</b> beds</span>' +
-      '<span class="gv-plate">BANDS <b>2 of 3</b></span>' +
+      '<span class="gv-plate">HEROES <b>' + HEROES0.length + ' of ' + BEDS + '</b> beds</span>' +
+      '<span class="gv-plate">BANDS <b>' + PARTY_COUNT + ' of 3</b></span>' +
       '<span class="gv-plate">MARCH <b>' + MAXP + '</b> per band</span></div>';
   }
   function banner(tag, title, sub) {
@@ -2117,7 +2119,7 @@ var GV = (function () {
     });
   }
   return { s: null, MAXP: MAXP, PARTY_COUNT: PARTY_COUNT, BEDS: BEDS, WEEK: WEEK, QUESTS: QUESTS, HEROES0: HEROES0, esc: esc, q: q, hero: hero, read: read, odds: odds,
-    levelOf: levelOf, init: init, members: members, hall: hall, lv: lv, lvIf: lvIf, canMove: canMove, move: move, taken: taken, rank: rank, best: best, send: send,
+    levelOf: levelOf, init: init, members: members, bandCounts: bandCounts, hall: hall, lv: lv, lvIf: lvIf, canMove: canMove, move: move, taken: taken, rank: rank, best: best, send: send,
     click: click, money: money, face: face, word: word, oddsLine: oddsLine, controls: controls, deskbar: deskbar, banner: banner, band3: band3, wire: wire };
 })();
 
@@ -2150,7 +2152,7 @@ var GV = (function () {
   }
   function meta(x) { return x.kind + ' · ' + x.region + ' · challenge ' + x.ch + ' · ends wk ' + x.exp; }
   function row(i, p) {
-    var s = GV.s, other = 1 - i, h = '';
+    var s = GV.s, other = (i + 1) % GV.PARTY_COUNT, h = '';
     if (p.out) {
       var x = GV.q(s.out[i]), r = GV.read(x.ch, GV.lv(i));
       h = '<div class="c-job is-out"><div class="mk-lockline">' + LOCK + '<span class="gv-stamp mk-stamp">OUT ON A JOB</span></div><p class="a-jn">' + x.name + '</p><p class="a-meta">' + meta(x) + '</p>' + GV.word(r) +
@@ -2182,7 +2184,9 @@ var GV = (function () {
     ps.forEach(function (p, i) { if (p.e) { go.push(i); gold += p.e.q.gold; xp += p.e.q.xp; } });
     var outN = s.out.filter(function (x) { return x != null; }).length;
     if (!go.length) return '<div class="c-foot"><p class="mk-bad" style="margin:0">' + (outN === GV.PARTY_COUNT ? 'Every band is out. Next: Advance Week.' : 'No band is set to go.') + '</p></div>';
-    var label = go.length === GV.PARTY_COUNT ? 'Send both bands ▸' : 'Send Band ' + (go[0] + 1) + ' ▸';
+    var label = go.length === GV.PARTY_COUNT
+      ? (GV.PARTY_COUNT === 2 ? 'Send both bands ▸' : 'Send all ' + GV.PARTY_COUNT + ' bands ▸')
+      : go.length === 1 ? 'Send Band ' + (go[0] + 1) + ' ▸' : 'Send ' + go.length + ' bands ▸';
     var what = go.map(function (i) { return 'Band ' + (i + 1) + ' → ' + ps[i].e.q.name; }).join('  ·  ');
     return '<div class="c-foot"><div><button class="gv-btn gv-btn--seal mk-big" data-act="sendall" data-orders="' + go.length + '">' + label + '</button></div>' +
       '<div class="c-what"><p><b>What happens:</b> ' + what + '. Each band takes its job and launches.</p><p class="mk-dim">If all win: +' + GV.money(gold) + 'g · +' + GV.money(xp) + ' xp. Nobody can be moved after.</p></div></div>';
@@ -2243,7 +2247,7 @@ var GV = (function () {
     root.innerHTML = GV.banner('VARIANT C · THE WEEK PLAN', 'This week’s orders',
       'The guild has picked a job for each band. Change one if you like. <b>One click</b> sends them all.') +
       GV.deskbar() + GV.controls() +
-      '<section class="gv-sheet c-plan" data-section="plan" style="--gv-tilt:-0.1deg"><span class="gv-pin"></span><h3 class="gv-head">Orders for week ' + GV.WEEK + ' <span class="gv-sub">' + GV.PARTY_COUNT + ' bands · 3rd band locked until Barracks level 3</span></h3>' +
+      '<section class="gv-sheet c-plan" data-section="plan" style="--gv-tilt:-0.1deg"><span class="gv-pin"></span><h3 class="gv-head">Orders for week ' + GV.WEEK + ' <span class="gv-sub">' + GV.PARTY_COUNT + ' bands' + (GV.PARTY_COUNT < 3 ? ' · 3rd band locked until Barracks level 3' : '') + '</span></h3>' +
       rows + foot(ps) + '</section>' + hallSheet() + rosterSheet() + allSheet() +
       '<p class="mk-foot"><b>Sample data.</b> Win odds are sample numbers from <code>forecast(job, config, 20, band)</code>. The guild’s pick = most XP among jobs that are not “Beyond us”, safe ones first; Band 2 chooses from what Band 1 leaves.</p>';
   }

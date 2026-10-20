@@ -2035,6 +2035,8 @@ var GV = (function () {
     GV.s = s;
   }
   function members(i) { return GV.s.heroes.filter(function (h) { return h.band === i; }); }
+  /* every band, not just the first two — the 3-band week exposed this */
+  function bandCounts() { var o = []; for (var i = 0; i < PARTY_COUNT; i++) o.push('Band ' + (i + 1) + ': ' + members(i).length); return o.join(' · '); }
   function hall() { return GV.s.heroes.filter(function (h) { return h.band === null; }); }
   function lv(i) { return levelOf(members(i)); }
   function lvIf(h, to) { var m = members(to).filter(function (x) { return x.id !== h.id; }); m.push(h); return levelOf(m); }
@@ -2086,8 +2088,8 @@ var GV = (function () {
   function deskbar() {
     return '<div class="gv-deskbar" style="margin-bottom:14px"><span class="gv-plate">WEEK <b>' + WEEK + '</b></span>' +
       '<span class="gv-plate">GOLD <b>' + money(GOLD) + '</b></span>' +
-      '<span class="gv-plate">HEROES <b>10 of ' + BEDS + '</b> beds</span>' +
-      '<span class="gv-plate">BANDS <b>2 of 3</b></span>' +
+      '<span class="gv-plate">HEROES <b>' + HEROES0.length + ' of ' + BEDS + '</b> beds</span>' +
+      '<span class="gv-plate">BANDS <b>' + PARTY_COUNT + ' of 3</b></span>' +
       '<span class="gv-plate">MARCH <b>' + MAXP + '</b> per band</span></div>';
   }
   function banner(tag, title, sub) {
@@ -2112,7 +2114,7 @@ var GV = (function () {
     });
   }
   return { s: null, MAXP: MAXP, PARTY_COUNT: PARTY_COUNT, BEDS: BEDS, WEEK: WEEK, QUESTS: QUESTS, HEROES0: HEROES0, esc: esc, q: q, hero: hero, read: read, odds: odds,
-    levelOf: levelOf, init: init, members: members, hall: hall, lv: lv, lvIf: lvIf, canMove: canMove, move: move, taken: taken, rank: rank, best: best, send: send,
+    levelOf: levelOf, init: init, members: members, bandCounts: bandCounts, hall: hall, lv: lv, lvIf: lvIf, canMove: canMove, move: move, taken: taken, rank: rank, best: best, send: send,
     click: click, money: money, face: face, word: word, oddsLine: oddsLine, controls: controls, deskbar: deskbar, banner: banner, band3: band3, wire: wire };
 })();
 
@@ -2141,18 +2143,45 @@ var GV = (function () {
       '<div class="b-odds">' + GV.oddsLine(o) + '</div>' +
       '<button class="gv-btn' + (best ? ' gv-btn--seal' : '') + ' mk-tiny" data-act="send" data-band="' + i + '" data-q="' + x.id + '"' + (r.tier === 3 ? ' title="Beyond them — expect losses"' : '') + '>Send Band ' + (i + 1) + ' ▸</button></td>';
   }
+  /**
+   * ⚠ ONE COLUMN PER UNLOCKED BAND. The grid used to draw exactly two band
+   * columns whatever the Barracks allowed, so a week-4 guild with ONE band
+   * still got a "Band 2" column — empty roster, live Send buttons — offering
+   * to march nobody. The sim refuses that outright (`acceptQuest`: a band with
+   * no heroes cannot take a job), so the screen must not offer it.
+   */
+  function cols() { var o = []; for (var i = 0; i < GV.PARTY_COUNT; i++) o.push(i); return o; }
   function table() {
     var s = GV.s, qs = GV.QUESTS.slice().sort(function (a, b) { return a.ch - b.ch || a.id - b.id; });
-    var bests = [0, 1].map(function (i) { var b = s.out[i] != null ? null : GV.best(i); return b ? b.q.id : null; });
-    if (bests[0] != null && bests[0] === bests[1]) bests[1] = (GV.best(1, [bests[0]]) || { q: {} }).q.id || null;
-    var h = '<table class="b-tab" data-board="matrix"><colgroup><col style="width:25%"><col style="width:31.5%"><col style="width:31.5%"><col style="width:12%"></colgroup><thead><tr>' +
-      '<th class="b-jobh"><b>The board</b><small>' + qs.length + ' jobs posted · week ' + GV.WEEK + '</small></th>' + head(0) + head(1) +
-      '<th class="b-b3h">' + LOCK + ' <b>Band 3</b><small>locked · needs Barracks 3</small></th></tr></thead><tbody>';
+    var bests = cols().map(function (i) { var b = s.out[i] != null ? null : GV.best(i); return b ? b.q.id : null; });
+    for (var bi = 1; bi < bests.length; bi++) {
+      if (bests[bi] != null && bests.indexOf(bests[bi]) < bi) {
+        bests[bi] = (GV.best(bi, bests.slice(0, bi)) || { q: {} }).q.id || null;
+      }
+    }
+    /**
+     * ⚠ COLUMN WIDTHS FOLLOW THE BAND COUNT. These were pinned at
+     * 25/31.5/31.5/12, so a third band inherited the 12% reserved for the
+     * LOCKED column and its cells wrapped to three lines while bands 1 and 2
+     * had room to spare. Derived, the two-band case still comes out at exactly
+     * 31.5% — the original numbers, now a consequence rather than a constant.
+     */
+    var lockW = GV.PARTY_COUNT < 3 ? 12 : 0;
+    var bandW = (100 - 25 - lockW) / GV.PARTY_COUNT;
+    var h = '<table class="b-tab" data-board="matrix"><colgroup><col style="width:25%">' +
+      cols().map(function () { return '<col style="width:' + bandW + '%">'; }).join('') +
+      (lockW ? '<col style="width:' + lockW + '%">' : '') + '</colgroup><thead><tr>' +
+      '<th class="b-jobh"><b>The board</b><small>' + qs.length + ' jobs posted · week ' + GV.WEEK + '</small></th>' + cols().map(head).join('') +
+      (GV.PARTY_COUNT < 3
+        ? '<th class="b-b3h">' + LOCK + ' <b>Band ' + (GV.PARTY_COUNT + 1) + '</b><small>locked · needs Barracks '
+          + (GV.PARTY_COUNT + 1) + '</small></th>'
+        : '') + '</tr></thead><tbody>';
     qs.forEach(function (x) {
       var tk = s.out.indexOf(x.id);
       h += '<tr data-q="' + x.id + '"' + (tk >= 0 ? ' class="is-taken"' : '') + '><td class="b-job"><b>' + x.name + '</b>' +
         '<small>' + x.kind + ' · ' + x.region + ' · challenge ' + x.ch + '</small><small>' + GV.money(x.gold) + 'g · ' + x.xp + ' xp · ends wk ' + x.exp + '</small></td>' +
-        cell(0, x, bests[0]) + cell(1, x, bests[1]) + '<td class="b-b3c"></td></tr>';
+        cols().map(function (i) { return cell(i, x, bests[i]); }).join('')
+        + (GV.PARTY_COUNT < 3 ? '<td class="b-b3c"></td>' : '') + '</tr>';
     });
     return h + '</tbody></table>';
   }
@@ -2176,7 +2205,7 @@ var GV = (function () {
   function rosterSheet() {
     var s = GV.s, open = !!s.ui.roster;
     var sum = '<button class="gv-btn" data-act="roster" aria-expanded="' + open + '">' + (open ? '▾' : '▸') + ' Change who is in each band</button> ' +
-      '<span class="mk-dim">Band 1: ' + GV.members(0).length + ' · Band 2: ' + GV.members(1).length + ' · Hall: ' + GV.hall().length + '</span>';
+      '<span class="mk-dim">' + GV.bandCounts() + ' · Hall: ' + GV.hall().length + '</span>';
     var body = '';
     if (open) {
       var col = function (title, list, bi) {
