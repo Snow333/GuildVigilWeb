@@ -25,6 +25,8 @@ export type Screen =
   | { kind: 'shop' }
   /** M3: the town's buildings, resources and recruiting (track T). */
   | { kind: 'townUpgrades' }
+  /** M4: who marches in each band, and which band takes which job. */
+  | { kind: 'bands' }
   | { kind: 'playback' }
   | { kind: 'afterAction' }
   | { kind: 'settings' };

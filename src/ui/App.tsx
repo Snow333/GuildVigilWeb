@@ -17,6 +17,7 @@ import { DispatchSetup } from './screens/DispatchSetup';
 import { WorldMapScreen } from './screens/WorldMapScreen';
 import { ShopScreen } from './screens/ShopScreen';
 import { TownScreen } from './screens/TownScreen';
+import { BandScreen } from './screens/BandScreen';
 import { PlaybackScreen } from './screens/PlaybackScreen';
 import { AfterActionScreen } from './screens/AfterActionScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -44,6 +45,8 @@ function Router() {
       return <ShopScreen />;
     case 'townUpgrades':
       return <TownScreen />;
+    case 'bands':
+      return <BandScreen />;
     case 'playback':
       return <PlaybackScreen />;
     case 'afterAction':
