@@ -14,6 +14,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { CampaignSession } from '@sim/campaign/session';
+import { autoLevelHero } from '@sim/campaign/campaign';
 import { starterParty } from '@sim/campaign/starterParty';
 import { RESOURCE_KINDS } from '@content/town';
 
@@ -171,6 +172,55 @@ describe('two bands, two jobs, one week', () => {
     const board = s.board();
     s.acceptQuest(board[0]!.questId, 0);
     expect(() => s.acceptQuest(board[1]!.questId, 0)).toThrow(/party 1 is already on quest/);
+  });
+
+  it('partyLevelIf answers what a band WOULD read, without changing anything', () => {
+    /**
+     * The band screen shows "stays 7" / "7 → 6" beside a hero at the hall, so
+     * this exists to stop the component re-implementing `partyLevel`'s
+     * mean-and-round rule where it could drift.
+     *
+     * ⚠ THE HYPOTHETICAL HERO MUST BE THE ONE THAT MOVES THE MEAN. Two earlier
+     * drafts were vacuous. The first used the stock roster, where every hero
+     * is level 1, so nothing could move it. The second benched a LEVEL-1 hero
+     * out of a mostly level-1 band — [6,1,1,1,1] rounds to 2 and
+     * [6,1,1,1,1,1] also rounds to 2, so dropping the hypothetical entirely
+     * still passed. Benching the HIGH-level hero makes its return visible.
+     */
+    const s = twoBands('wouldbe');
+    const climber = s.partyRosters()[0]![1]!;
+    for (let i = 0; i < 6; i++) { s.devGrantLevel(climber); autoLevelHero(s, climber); }
+    s.assignHero(climber, null); // the veteran waits at the hall
+    expect(s.unassignedHeroes()).toContain(climber);
+
+    const withoutHim = s.partyLevel(0);
+    const withHim = s.partyLevelIf(climber, 0);
+    expect(withHim, 'adding a veteran did not change the reading — the test is blind')
+      .toBeGreaterThan(withoutHim);
+
+    // Asking must not MOVE anybody.
+    const before = JSON.stringify(s.serialize());
+    s.partyLevelIf(climber, 0);
+    expect(JSON.stringify(s.serialize())).toBe(before);
+    expect(s.unassignedHeroes()).toContain(climber);
+    expect(s.partyLevel(0)).toBe(withoutHim);
+
+    // And it must agree with reality once the move actually happens.
+    s.assignHero(climber, 0);
+    expect(s.partyLevel(0)).toBe(withHim);
+  });
+
+  it('partyLevelIf(hero, null) reports the band it would LEAVE', () => {
+    const s = twoBands('leaving');
+    // Same requirement: a departure can only show up if levels differ.
+    const climber = s.partyRosters()[0]![1]!;
+    for (let i = 0; i < 5; i++) { s.devGrantLevel(climber); autoLevelHero(s, climber); }
+    const band = s.partyRosters()[0]!;
+    const id = climber;
+    expect(band).toContain(id);
+    const after = s.partyLevelIf(id, null);
+    s.assignHero(id, null);
+    expect(s.partyLevel(0)).toBe(after);
   });
 
   it('a hero sent to the hall STAYS at the hall', () => {

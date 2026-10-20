@@ -755,6 +755,34 @@ export class CampaignSession {
    * Commissions never post through the weekly scan — only a letter posts them.
    */
   /**
+   * The level a band WOULD read at if `heroId` joined it — or left it, when
+   * `bandIndex` is null.
+   *
+   * ⚠ EXISTS SO THE UI NEVER RE-IMPLEMENTS THE ROUNDING. The band screen shows
+   * "stays 7" or "7 → 6" beside a hero waiting at the hall, and computing that
+   * in the component would duplicate `partyLevel`'s mean-and-round rule in a
+   * second place, free to drift. Same reasoning as `partySizeAtLevel`: the UI
+   * asks the sim rather than copying its arithmetic.
+   */
+  partyLevelIf(heroId: string, bandIndex: number | null): number {
+    this.syncParties();
+    const kit = this.kits.find((k) => k.hero.id === heroId);
+    if (!kit) throw new Error(`partyLevelIf: no hero ${heroId}`);
+    if (bandIndex === null) {
+      const from = this.parties.findIndex((ids) => ids.includes(heroId));
+      if (from < 0) return this.partyLevel();
+      const left = this.kits.filter((k) => this.parties[from]!.includes(k.hero.id) && k.hero.id !== heroId);
+      return left.length === 0
+        ? 1
+        : Math.max(Math.round(left.reduce((n, k) => n + characterLevel(k.hero), 0) / left.length), 1);
+    }
+    const target = this.parties[bandIndex] ?? [];
+    const members = this.kits.filter((k) => target.includes(k.hero.id) && k.hero.id !== heroId);
+    members.push(kit);
+    return Math.max(Math.round(members.reduce((n, k) => n + characterLevel(k.hero), 0) / members.length), 1);
+  }
+
+  /**
    * Every band's level, strongest first — what the board must cater to.
    * An empty band is skipped: it cannot take work (see `acceptQuest`).
    */
