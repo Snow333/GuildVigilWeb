@@ -1178,7 +1178,7 @@ table.gv-tn-mini .w { color: var(--gv-ink-muted); font-size: 13px; }
 .gv-bd-hn { display: block; min-width: 0; line-height: 1.25; }
 .gv-bd-hn b { font-size: 15px; }
 .gv-bd-hn small { display: block; font-size: 12.5px; color: var(--gv-ink-muted); }
-.gv-bd-hurt { display: inline-block; font-size: 12px; font-weight: 700; color: var(--gv-ink-soft); border: 1px solid var(--gv-s2); background: #ec835a30; border-radius: 3px; padding: 0 5px; margin-left: 6px; line-height: 17px; }
+.gv-bd-hurt { display: inline-block; font-size: 12px; font-weight: 700; color: var(--gv-ink-soft); border: 1px solid var(--gv-s2); background: color-mix(in srgb, var(--gv-s2) 19%, transparent); border-radius: 3px; padding: 0 5px; margin-left: 6px; line-height: 17px; }
 .gv-bd-hb { display: inline-flex; gap: 6px; flex-wrap: wrap; }
 .gv-bd-hh .gv-bd-hb { grid-column: 1 / -1; }
 .gv-bd-hb .gv-btn small { font-size: 11.5px; color: var(--gv-ink-muted); }
